@@ -1,1 +1,0 @@
-function timerFirstSetup_Imaging
