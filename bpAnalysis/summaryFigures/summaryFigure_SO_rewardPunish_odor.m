@@ -10,7 +10,7 @@ function session = summaryFigure_SO_rewardPunish_odor(session, fCh)
 
 %     lickHistSpecs = [-3, 5, 0.25]; % start, stop and bin size of lick histograms
 %     lickHistSpecs = 0.25;
-    figName = 'SO_varyRewardSize_delay_summaryFigure';
+    figName = ['SO_varyRewardSize_delay_summaryFigure_ch' num2str(fCh)];
     fig = ensureFigure(figName, 1); % ensure figure, erase if preexisting
     fig=mcLandscapeFigSetup(fig);
     
@@ -49,6 +49,7 @@ function session = summaryFigure_SO_rewardPunish_odor(session, fCh)
     
 %% Figure Title
     [~, fig_title, ~] = fileparts(session.filename); % session name
+    fig_title = [fig_title '_ch' num2str(fCh)];
     title_ax = textAxes(fig, fig_title, 12);
     params.matpos = matpos_title;
     setaxesOnaxesmatrix(title_ax, 1, 1, 1, params, fig);
@@ -81,7 +82,7 @@ function session = summaryFigure_SO_rewardPunish_odor(session, fCh)
     rows = 2;
     columns = 3;
     nAxes = 6;
-    lookupFactor = 3; %4;
+    lookupFactor = 4; %4;
     
     % layout axes in grid
     hAx = axesmatrix(rows, columns, 1:nAxes, params, fig);

@@ -1,9 +1,0 @@
-function initPupil
-    
-
-    global state gh
-
-    gh.pupil = guihandles(pupil);
-
-    openini('pupil.ini');
-

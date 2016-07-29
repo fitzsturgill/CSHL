@@ -11,6 +11,7 @@ function phSessionRaster(analysis, type, outcome, fCh, varargin)
     secondsPerTick = 2; %
     downsample = 1; % factor by which to decimate/downsample
     lookupFactor = 4; % multiple of SD above and below mean to set CLim
+    CLim = []; % exclusive with lookupFactor, manually supply CLim for image
     % parse input parameter pairs
     counter = 1;
     while counter+1 <= length(varargin) 
@@ -32,6 +33,8 @@ function phSessionRaster(analysis, type, outcome, fCh, varargin)
                 downsample = val;
             case 'lookupFactor'
                 lookupFactor = val;
+            case 'CLim'
+                CLim = val;
             otherwise
         end
         counter=counter+2;
@@ -74,14 +77,20 @@ function phSessionRaster(analysis, type, outcome, fCh, varargin)
         
     x1 = min(analysis.Photometry.data(type, outcome).x(:,1));
     x2 = max(analysis.Photometry.data(type, outcome).x(:,1));
+    y1 = 1;
+    y2 = size(cData, 1);
     
-    ih = image('XData', [x1 x2], 'CData', cData, 'CDataMapping', 'Scaled', 'Parent', ax);
-    set(ax, 'XLim', [x1 x2]);
+    ih = image('XData', [x1 x2], 'YData', [y1 y2], 'CData', cData, 'CDataMapping', 'Scaled', 'Parent', ax);
+    set(ax, 'XLim', [x1 x2], 'YLim', [y1 y2]);
     
     if ~isempty(lookupFactor)
         m = mean(mean(cData, 'omitnan'));
         s = mean(std(cData, 'omitnan'));
         set(ax, 'CLim', [m - lookupFactor * s, m + lookupFactor * s]);
+    end
+    
+    if ~isempty(CLim)
+        set(ax, 'CLim', CLim);
     end
 
     

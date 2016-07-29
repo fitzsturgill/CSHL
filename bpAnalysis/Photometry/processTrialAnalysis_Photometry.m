@@ -11,13 +11,11 @@ function Photometry = processTrialAnalysis_Photometry(session, varargin)
         'dFFMode', 'byTrial';...
         'zeroField', 'DeliverStimulus';...
         'startField', 'PreCsRecording';... % TO DO: PROVIDE AUTOMATICALLY BY BPOD NIDAQ CODE 
-        'downsample', 100;...
+        'downsample', 500;...
         'constantLength', 1;...            % not currently implemented, idea is to set to 0 if acqs are going to be variable in length (store data in cell array)
         };
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
 
-        
-    
 %% Initialize
     try
         sampleRate = SessionData.TrialSettings(1).nidaq.sample_rate;
