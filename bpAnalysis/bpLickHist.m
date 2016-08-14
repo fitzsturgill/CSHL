@@ -36,7 +36,7 @@ function [ax, lh, lp] = bpLickHist(SessionData, type, outcome, binSpecs, zeroFie
     end
     
     if nargin < 8 || isempty(linespec)
-        linespec = {'k', 'r', 'b', 'g'}; % default linespecs
+        linespec = {'k', 'r', 'b', 'g', 'm'}; % default linespecs
     elseif ischar(linespec)
         linspec = {linespec};
     end
