@@ -29,7 +29,7 @@ function session = summaryFigure_SO_rewardPunish_odor(session, fCh)
     end
     
     if ~isfield(session, 'analysis') || ~isfield(session.analysis, 'Photometry')
-        session.analysis.Photometry = processAnalysis_Photometry(session,'zeroField', zeroField, 'downsample', 10);
+        session.analysis.Photometry = processAnalysis_Photometry(session,'zeroField', zeroField, 'downsample', 500);
     end
 
     %%
@@ -130,7 +130,7 @@ function session = summaryFigure_SO_rewardPunish_odor(session, fCh)
         [~, hl] = phPlotSessionAverage(session.analysis, [3 4 6], [2 3 2], fCh, 'ax', hAx(3), 'linespec', {'m', 'k', 'r'});
         legend(hl, {'cued', 'omit', 'uncued'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
         title('deltaF/F: Punished Odor'); ylabel('dF/F'); xlabel('time (s) from odor P');   
-    %     set(hAx(2:3), 'YLim', [-0.005 0.01]);
+%         set(hAx(2:3), 'YLim', [-0.005 0.02]);
         stimBars(hAx(3), 0.95, 0, odorTime, UsTime);
     end
     

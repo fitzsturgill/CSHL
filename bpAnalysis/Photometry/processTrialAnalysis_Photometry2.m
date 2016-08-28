@@ -3,7 +3,6 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, Photometry, var
     
 
     %% optional parameters, first set defaults
-    
     defaults = {...
         'channels', [];...
         'blStart', 1;...
@@ -87,7 +86,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, Photometry, var
             Photometry.data(fCh).blF = mean(blF, 2);
             Photometry.data(fCh).mod = modData;
         end
-end
+    end
     
 %% Old version      
 %     function Photometry = processTrialAnalysis_Photometry(session, varargin)

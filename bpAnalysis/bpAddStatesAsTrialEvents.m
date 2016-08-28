@@ -15,6 +15,3 @@ function states = bpAddStatesAsTrialEvents(session)
             states.(field){trial} = rawEvents{trial}.States.(field);
         end
     end
-            
-        
-        
