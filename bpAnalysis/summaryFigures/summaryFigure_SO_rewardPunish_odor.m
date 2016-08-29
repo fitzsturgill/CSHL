@@ -29,7 +29,7 @@ function session = summaryFigure_SO_rewardPunish_odor(session, fCh)
     end
     
     if ~isfield(session, 'analysis') || ~isfield(session.analysis, 'Photometry')
-        session.analysis.Photometry = processAnalysis_Photometry(session,'zeroField', zeroField, 'downsample', 500);
+        session.analysis.Photometry = processAnalysis_Photometry(session,'zeroField', zeroField, 'downsample', 305);
     end
 
     %%

@@ -4,19 +4,59 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, Photometry, var
 
     %% optional parameters, first set defaults
     defaults = {...
-        'channels', [];...
-        'blStart', 1;...
+        'channels', 1;... % 8/28/2016- changed channels default from [] to 1
+        'baseline', [1 3];... % 1 - 3 second into recording
         'dFFMode', 'byTrial';...
-        'zeroField', 'DeliverStimulus';...
+        'zeroField', 'Us';...
         'startField', 'PreCsRecording';... % TO DO: PROVIDE AUTOMATICALLY BY BPOD NIDAQ CODE 
-        'downsample', 500;...
+        'downsample', 305;...
         'uniformOutput', 1;...            % not currently implemented, idea is to set to 0 if acqs are going to be variable in length (store data in cell array)
         };
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
+    
+    % find total number of trials across selected sessions and size of
+    % nidaq data
+    scounter = zeros(size(sessions));
+    for i = 1:length(sessions)
+        scounter(i) = sessions(i).SessionData.nTrials;
+    end
+    totalTrials = sum(scounter);    
+    if s.uniformOutput
+        originalSamples = max(cellfun(@(x) size(x,1), sessions(1).SessionData.NidaqData(:,1)));
+        newSamples = ceil(originalSamples/s.downsample);
+    else
+        originalSamples = [];
+        newSamples = [];
+    end
 
 %% Initialize
+    Photometry = struct(...
+        'data', [],...          % length = number of Channels
+        'settings', cell(totalTrials, 1),...
+        'sampleRate', zeros(totalTrials, 1),... % downsampled sample rate
+        'startTime', NaN(totalTrials, 1)... % what if a trial didn't have photomtery...., make this NaN initially therefore
+    );
+    if s.uniformOutput
+        data = struct(...
+            'dFF', NaN(totalTrials, newSamples),... % deltaF/F
+            'raw', NaN(totalTrials, newSamples),... %
+            'blF', NaN(totalTrials, 1)...
+            );    
+    else
+        data = struct(...        
+            'dFF', cell(totalTrials, 1),... % deltaF/F
+            'raw', cell(totalTrials, 1),... %
+            'blF', NaN(totalTrials, 1)...
+            );    
+    end
+    Photometry.data = repmat(data, s.nChannels, 1); % length = # channels                
+
+    tcounter = 1;
     for si = 1:length(sessions);
         SessionData = session(si).SessionData;
+        if ~isfield(SessionData, 'demod');
+            SessionData = demodulateSession(SessionData); % don't necessarily want to save these back to sessions because that'd eat up memory
+        end
         try
             sampleRate = SessionData.TrialSettings(1).nidaq.sample_rate;
         catch
@@ -24,48 +64,22 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, Photometry, var
         end
         sampleRate = sampleRate / s.downsample; % I'm assuming downsample is a factor of sampleRate
         startTimes = cellfun(@(x) x.States.(s.startField)(1), session.SessionData.RawEvents.Trial); % take the beginning time stamp for the startField-specified Bpod state
-
-        Photometry = struct(...
-            'data', [],...          % length = number of Channels
-            'settings', s,...
-            'sampleRate', sampleRate,... % downsampled sample rate
-            'startTime',startTimes...
-        );
-
-        data = struct(...
-            'dFF', [],... %deltaF/F
-            'raw', [],... %
-            'blF', [],...
-            'mod', []...
-            );    
-        Photometry.data = repmat(data, s.nChannels, 1); % length = # channels
-
-        %% initialize
-        originalSamples = max(cellfun(@length, SessionData.demod(:,1))); % just check first channel
-        newSamples = ceil(originalSamples/s.downsample);
-        allData = NaN(SessionData.nTrials, newSamples);   
-        modData = NaN(SessionData.nTrials, newSamples);  % raw data that has not been demodulated         
-
+        nTrials = SessionData.nTrials;
+        allData = NaN(nTrials, newSamples);   
+%         modData = NaN(nTrials, newSamples);  % raw data that has not been demodulated           
         for fCh=1:s.nChannels
-            if s.constantLength
-                % baselineEndTime is relative to start of photometry recording
-                baselineEndTime = round(SessionData.RawEvents.Trial{1}.States.(s.zeroField)(1,1) - SessionData.RawEvents.Trial{1}.States.(s.startField)(1,1));
-            else
-                disp('*** variable trial length not yet implemented ***');
-            end
-            for trial = 1:SessionData.nTrials
+            for trial = 1:nTrials
                 trialData = SessionData.demod{trial, fCh}'; % convert to row vector
-                %% in case nidaq acquisition ended early for some reason, pad with NaNs
-                %   WHY DOES THIS STILL HAPPEN????
+                %% in case nidaq acquisition ended early for some reason, pad with NaNs, this should be fixed as of 8/2016
                 if size(trialData, 2) < originalSamples
                     samplesShort = originalSamples - size(trialData, 2);
                     thePad = NaN(size(trialData, 1), samplesShort);
                     allData(trial, :) = decimate([trialData thePad], s.downsample); % pad with NaNs
-                    modData(trial, :) = decimate([SessionData.NidaqData{trial, 1}( :,fCh)' thePad], s.downsample); 
+%                     modData(trial, :) = decimate([SessionData.NidaqData{trial, 1}( :,fCh)' thePad], s.downsample); 
                     disp(['*** short samples on trial ' num2str(trial) ' ***']);
                 else
                     allData(trial, :) = decimate(trialData, s.downsample);
-                    modData(trial, :) = decimate(SessionData.NidaqData{trial, 1}(:,fCh)', s.downsample);                        
+%                     modData(trial, :) = decimate(SessionData.NidaqData{trial, 1}(:,fCh)', s.downsample);                        
                 end
             end
 
@@ -81,11 +95,11 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, Photometry, var
                     blF = zeros(size(allData)) + blF;                        
                 otherwise
             end      
-            Photometry.data(fCh).dFF = (allData - blF) ./ blF;  
-            Photometry.data(fCh).raw = allData;                  
-            Photometry.data(fCh).blF = mean(blF, 2);
-            Photometry.data(fCh).mod = modData;
+            Photometry.data(fCh).dFF(tcounter:tcounter+nTrials - 1, :) = (allData - blF) ./ blF;  
+            Photometry.data(fCh).raw(tcounter:tcounter+nTrials - 1, :) = allData;                  
+            Photometry.data(fCh).blF(tcounter:tcounter+nTrials - 1, :) = mean(blF, 2);
         end
+        tcounter = tcounter + nTrials;
     end
     
 %% Old version      

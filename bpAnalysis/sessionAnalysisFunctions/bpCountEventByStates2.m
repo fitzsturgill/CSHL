@@ -1,7 +1,8 @@
-function eventCount = bpCountEventByStates2(sessions, event, referenceState, eventCount, varargin)
+function eventCount = bpCountEventByStates2(sessions, event, referenceState, varargin)
     % if end
     defaults = {...
-        'event', event;...        
+        'event', event;...    
+        'eventCount', [];... % create new eventCount by default (don't append)
         'referenceState', referenceState;... % event count is started at beginning of referenceState by default
         'referenceFromEnd', 0;...
         'window', [0 0];... % with respect to referenceState, limit or extend the window defined by state(s) boundaries       
@@ -11,18 +12,20 @@ function eventCount = bpCountEventByStates2(sessions, event, referenceState, eve
     
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
     if s.referenceFromEnd && isempty(s.endState) && isempty(find(s.window))
-        error('Error in bpCountEventByStates, provide endState or ending window');
+        error('Error in bpCountEventByStates, provide endState or ending window when starting at end of reference state');
     end
     
     % if eventCount provided, append otherwise, create new eventCount
     % structure
-    if isempty(eventCount)        
+    if isempty(s.eventCount)        
         eventCount = struct(...
             'count', [],...  % easier to just concatenate eventCount across sessions (build by accretion) rather than initializing in beginning
             'duration', [],...
             'rate', [],...
             'settings', []...
             );
+    else
+        eventCount = s.eventCount;
     end
     
     for si = 1:length(sessions) % si = session index
@@ -56,29 +59,29 @@ function eventCount = bpCountEventByStates2(sessions, event, referenceState, eve
                 end
                 if t2 < t1
                     warning('Invalid window in bpCountEventByStates'); % count should still be 0
-                    duration = NaN;
+                    tduration = NaN;
                 else
-                    duration = t2 - t1;
+                    tduration = t2 - t1;
                 end
 
                 if isfield(RawEvents.Trial{trial}.Events, s.event)
                     te = RawEvents.Trial{trial}.Events.(s.event);
-                    count = sum(te >= t1 & te <= t2);
+                    tcount = sum(te >= t1 & te <= t2);
                 else
-                    count = 0;
+                    tcount = 0;
                 end
-                rate = count/duration;
+                trate = tcount/tduration;
             else
-                count = NaN;
-                duration = NaN;
-                rate = NaN;
+                tcount = NaN;
+                tduration = NaN;
+                trate = NaN;
             end
-            count(trial) = count;
-            rate(trial) = rate;
-            duration(trial) = duration;
+            count(trial) = tcount;
+            rate(trial) = trate;
+            duration(trial) = tduration;
         end
         eventCount.count = [eventCount.count; count];
-        eventCount.rate = [eventCount.count; rate];
+        eventCount.rate = [eventCount.rate; rate];
         eventCount.duration = [eventCount.duration; duration];
         eventCount.settings = [eventCount.settings; settings];
     end

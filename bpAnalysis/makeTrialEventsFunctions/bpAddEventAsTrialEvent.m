@@ -15,7 +15,7 @@ function Event = bpAddEventAsTrialEvent(sessions, state, Event)
             trialStates = rawEvents{trial}.Events;
             if ~isfield(trialStates, state)
 %                 break % break out of loop
-                disp('**** WARNING in bpAddEventAsTrialEvent: are "missed" events (e.g. mouse did not lick ever during a trial) filled as NaNs or ommited for a trial s a field');
+%                 disp('**** WARNING in bpAddEventAsTrialEvent: are "missed" events (e.g. mouse did not lick ever during a trial) filled as NaNs or ommited for a trial s a field');
             else        
                 theseStates{trial} = trialStates.(state);
             end

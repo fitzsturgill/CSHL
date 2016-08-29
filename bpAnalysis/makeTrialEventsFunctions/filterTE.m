@@ -11,7 +11,6 @@ function validTrials = filterTE(TE, varargin)
             validTrials = ismember(TE.(prop), val); % initialize here
         else
             validTrials = validTrials & ismember(TE.(prop), val);
-        end
-        
+        end        
         counter=counter+2;
     end

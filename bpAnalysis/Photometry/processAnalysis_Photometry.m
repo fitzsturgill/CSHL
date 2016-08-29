@@ -28,7 +28,7 @@ function Photometry = processAnalysis_Photometry(session, varargin)
     startField = 'PreCsRecording'; % old startField was PreTrialRecording
     trialTypes = unique(SessionData.TrialTypes);
     outcomes = unique(SessionData.TrialOutcome);
-    downsample = 100; % factor by which to smooth and decimate
+    downsample = 305; % factor by which to smooth and decimate
     
     
     % parse input parameter pairs
