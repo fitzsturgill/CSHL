@@ -12,9 +12,13 @@ function [g, err] = parse_args(default_args,varargin)
 if isstruct(default_args)
     def = default_args;
 else
-    d = default_args';  % flip matrix
+%     d = default_args';  % flip matrix
+    d = default_args;  % DON'T flip matrix    
     try
-        def = struct(d{:});
+%         def = struct(d{:}); 
+        % avoid bug where user supplies a cell array (inadvertant expansion
+        % of scalar structure)
+        def = convertToStructure(d); % subfunction
     catch ME
         disp(ME.message)
         error('Argument error in default list');
@@ -24,7 +28,10 @@ end
 % If there are args, convert them into arg list
 if ~isempty(varargin)
     try
-        g = struct(varargin{:}); 
+%         g = struct(varargin{:}); 
+        % avoid bug where user supplies a cell array (inadvertant expansion
+        % of scalar structure)
+        g = convertToStructure(varargin); % subfunction
     catch ME
         disp(ME.message)
         error('Argument error in the {''param'', value} sequence');
@@ -48,3 +55,19 @@ toset_fields = setdiff(d_fields,g_fields);
 for iF = 1:length(toset_fields)
     g.(toset_fields{iF}) = def.(toset_fields{iF});
 end
+
+function s = convertToStructure(ca) % ca = cell array, e.g. varargin
+
+    % cell array (as supplied by functions that use parseargs) for example 
+    % consists of rows of parameter value pairs, we need to make this an alternating vector    
+    if size(ca, 1) > 1; 
+        ca = ca';
+        ca = reshape(ca, 1, numel(ca)); % now it's a row vector
+    end
+    counter = 1;
+    while counter+1 <= length(ca) 
+        prop = ca{counter};
+        val = ca{counter+1};
+        s(1).(prop) = val;  
+        counter = counter + 2;
+    end

@@ -70,6 +70,9 @@ function Photometry = processAnalysis_Photometry(session, varargin)
     catch
         sampleRate = 6100;
     end    
+    if rem(sampleRate, downsample)
+        error('downsample must be a factor of sampleRate');
+    end
     sampleRate = sampleRate / downsample;
 %     if ~isinteger(sampleRate)
 %         disp('error in processAnalysis_Photometry: pick an evenly divisible downsample factor');
