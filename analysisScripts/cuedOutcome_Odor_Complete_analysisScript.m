@@ -11,7 +11,8 @@
 % 
  
 
-savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
+% savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
+savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
 %% Make tiled array of licks in receipt of reward to visualize satiation/ lapsing behavior towards end of each session
 ensureFigure('RewardLickRate_crossSessions', 1);
 for tei = 1:6
@@ -24,13 +25,13 @@ end
 saveas(gcf, fullfile(savepath, 'RewardLickRate_crossSessions.fig'));
 
 %% make tiled array of antic. licks for low and high value odors vs trial number
-smoothFactor = 5;
-ensureFigure('RewardLickRate_crossSessions', 1);
-for tei = 6
+smoothFactor = 11;
+ensureFigure('AnticLickRate_crossSessions', 1);
+for tei = 1:6
     highTrials = filterTE(TE(tei), 'trialType', 1:3, 'reject', 0);
     lowTrials = filterTE(TE(tei), 'trialType', 4:6, 'reject', 0);
     rewardTrials = filterTE(TE(tei), 'trialOutcome', 1);    
-    subplot(1,1,1); plot(find(highTrials), smooth(TE(tei).csLicks.rate(highTrials), smoothFactor), 'b.'); hold on; 
+    subplot(3,2,tei); plot(find(highTrials), smooth(TE(tei).csLicks.rate(highTrials), smoothFactor), 'b.'); hold on; 
     plot(find(lowTrials), smooth(TE(tei).csLicks.rate(lowTrials), smoothFactor), 'r.');
     plot(find(rewardTrials), smooth(TE(tei).usLicks.rate(rewardTrials), smoothFactor), 'k.')    
     plot(1:length(TE(tei).trialNumber), [0; diff(TE(tei).sessionIndex)] * 10, 'g');
@@ -39,7 +40,7 @@ for tei = 6
 end
 saveas(gcf, fullfile(savepath, 'AnticLickRate_crossSessions.fig'));
 
-%% figure out at which trial mouse lapses/ becomes sated
+%% figure out at which trial mouse lapses/ becomes sated, go through all 6 mice and all the sessions
 si = 1; % session index [1:6 8:10]
 mi = 1; % mouse index
 trials = filterTE(TE(mi), 'sessionIndex', si, 'trialType', 1);
@@ -48,7 +49,7 @@ inputArgs = {'startField', 'PreCsRecording',...
     'endField', 'PostUsRecording',...
     'trialNumbering', 'singleSession'};
 ensureFigure('lickRaster', 1); axes; eventRasterFromTE(TE(mi), trials, 'Port1In', inputArgs{:});
-%% determined based upon inspection of when antic. licking for high value cue falls off
+%% determined based upon inspection of when antic. licking for high value cue falls off, see above
 TrialCutoffs{1} = [110 125 80 110 125 70 200 150];
 TrialCutoffs{2} = [87 140 100 85 115 115 120];
 TrialCutoffs{3} = [130 115 110 150 202 125];
