@@ -11,8 +11,10 @@ function TE = addPupilometryToTE(TE, rootPath, varargin)
     defaults = {...
         'frameRate', 60;... % 8/28/2016- changed channels default from [] to 1
         'duration', 10;...  % assumes constant trial duration across TE
-        'zeroField', 'Us';... 
+        'zeroField', 'Us';...
+        'startField', 'PreCsRecording';... % extract time stamp w.r.t. start of Bpod trial
         'rootPath', [];...
+        'normMode', 'bySession';...  % [bySession, byTrial]
         };
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings    
     if isempty(s.rootPath)
@@ -28,10 +30,16 @@ function TE = addPupilometryToTE(TE, rootPath, varargin)
     cd(rootPath);
     
     %% initialize pupil structure
-    dX = 1/s.frameRate;    
+    dX = 1/s.frameRate;
+    startX = []; % to be determined
     nFrames = round(s.frameRate * s.duration); % should be an integer anyway
-    matFields = {'eyeArea', 'blinkDetected',...
-        'pupArea', 'pupDiameter', 'pupResidual'};
+    normFields = {...
+        'eyeArea', 'eyeAreaNorm';...
+        'pupArea', 'pupAreaNorm';...
+        'pupDiameter', 'pupDiameterNorm';...
+        'pupResidual', 'pupResidualNorm';...
+        };
+    matFields = [{'startTime', 'blinkDetected'} reshape(normFields, 1, numel(normFields))];
     pupil = struct();
     pupil.loadSettings = s; % scalar
     pupil.settings = cell(length(TE.filename), 1);
@@ -42,7 +50,7 @@ function TE = addPupilometryToTE(TE, rootPath, varargin)
     
     %% extract session dates in TE and generate matching pupil folder names
     sessionnames = unique(TE.filename);
-    
+
     for counter = 1:length(sessionnames)
         sessionname = sessionnames{counter};
         pupilFolder = parseFileName(sessionname); % see subfunction
@@ -79,8 +87,29 @@ function TE = addPupilometryToTE(TE, rootPath, varargin)
             pupil.blinkDetected(tei, 1:framesToLoad) = loaded.pupilData.eye.blinkDetected(1:framesToLoad);
             pupil.pupArea(tei, 1:framesToLoad) = loaded.pupilData.pupil.area(1:framesToLoad);
             pupil.pupDiameter(tei, 1:framesToLoad) = loaded.pupilData.pupil.diameter(1:framesToLoad);
-            pupil.pupResidual(tei, 1:framesToLoad) = loaded.pupilData.pupil.circResidual(1:framesToLoad);            
-        end    
+            pupil.pupResidual(tei, 1:framesToLoad) = loaded.pupilData.pupil.circResidual(1:framesToLoad);
+            pupil.startTime(tei, 1) = TE.(s.startField){1}(1);
+            if counter == 1 && i == 1
+                startX = TE.(s.zeroField){1}(1) - TE.(s.startField){1}(1);
+                pupil.xData = pupil.xData - startX;
+                blStartP = 1; % just start at beginning of video for baseline
+                blEndP = bpX2pnt(0, s.frameRate, startX); % go to zero point        
+            end
+        end  
+        % baseline subtract
+        for i = 1:size(normFields, 1)
+            rawField = normFields{i, 1};
+            normField = normFields{i, 2};
+            rawData = pupil.(rawField)(si, :);
+            switch s.normMode
+                case 'byTrial'
+                    pupil.(normField)(si, :) = bsxfun(@rdivide, rawData, nanmean(rawData(:, blStartP:blEndP), 2));
+                case 'bySession'
+                    pupil.(normField)(si, :) = rawData / nanmean(nanmean(rawData(:, blStartP:blEndP), 2), 1); % divide by scalar
+            end
+        end
+                    
+            
     end
     TE.pupil = pupil;
 end

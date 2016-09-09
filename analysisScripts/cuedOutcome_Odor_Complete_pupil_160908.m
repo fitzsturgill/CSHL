@@ -45,18 +45,20 @@ end
 %%
 ensureFigure('test', 1);
 subplot(1,2,1);
-plot(TE.pupil.xData, nanmean(TE.pupil.pupDiameter(trialsByType{1}, :)), 'c'); % hi reward
+plot(TE.pupil.xData, nanmean(TE.pupil.pupDiameterNorm(trialsByType{1}, :)), 'c'); % hi reward
 hold on;
-plot(TE.pupil.xData, nanmean(TE.pupil.pupDiameter(trialsByType{7}, :)), 'b'); % uncued reward
-plot(TE.pupil.xData, nanmean(TE.pupil.pupDiameter(trialsByType{5}, :)), 'r'); % lo punish
-plot(TE.pupil.xData, nanmean(TE.pupil.pupDiameter(trialsByType{9}, :)), 'k'); % uncued neutral
+plot(TE.pupil.xData, nanmean(TE.pupil.pupDiameterNorm(trialsByType{7}, :)), 'b'); % uncued reward
+plot(TE.pupil.xData, nanmean(TE.pupil.pupDiameterNorm(trialsByType{5}, :)), 'r'); % lo punish
+plot(TE.pupil.xData, nanmean(TE.pupil.pupDiameterNorm(trialsByType{9}, :)), 'k'); % uncued neutral
+plot(TE.pupil.xData, nanmean(TE.pupil.pupDiameterNorm(:, :)), 'y'); % uncued neutral
+set(gca, 'YLim', [0.5 1.5]);
 
 subplot(1,2,2);
-plot(TE.pupil.xData, nanmean(TE.pupil.pupDiameter(trialsByType{1}, :)), 'b'); % hi reward
+plot(TE.pupil.xData, nanmean(TE.pupil.pupDiameterNorm(trialsByType{1}, :)), 'b'); % hi reward
 hold on;
-plot(TE.pupil.xData, nanmean(TE.pupil.pupDiameter(trialsByType{2}, :)), 'r'); % hi punish
-plot(TE.pupil.xData, nanmean(TE.pupil.pupDiameter(trialsByType{3}, :)), 'k'); % hi omission
-set(gca, 'YLim', [30 50]);
+plot(TE.pupil.xData, nanmean(TE.pupil.pupDiameterNorm(trialsByType{2}, :)), 'r'); % hi punish
+plot(TE.pupil.xData, nanmean(TE.pupil.pupDiameterNorm(trialsByType{3}, :)), 'k'); % hi omission
+set(gca, 'YLim', [0.5 1.5]);
 
 
 
