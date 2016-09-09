@@ -29,7 +29,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         catch
             sampleRate = 6100; % very early sessions don't have sample rate in settings
         end
-        if rem(sampleRate / s.downsample)
+        if rem(sampleRate, s.downsample)
             error('downsample must be a factor of sampleRate');
         end
         sampleRate = sampleRate / s.downsample; % downsample must be a factor of sampleRate      

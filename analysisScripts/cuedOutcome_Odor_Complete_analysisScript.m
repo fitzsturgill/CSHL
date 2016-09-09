@@ -55,7 +55,7 @@ TrialCutoffs{2} = [87 140 100 85 115 115 120];
 TrialCutoffs{3} = [130 115 110 150 202 125];
 TrialCutoffs{4} = [75 85 90 100 85 130];
 TrialCutoffs{5} = [100 170 100 115 160 200 204];
-TrialCutoffs{6} = [102 110 85 90 140 100 100 80 95 135];
+TrialCutoffs{6} = [102 110 85 90 140 100 100 80 95 135]; % ChAT_26
 %% use TrialCutoffs to add reject field to TE
 TE = ensureField(TE, 'reject', 'mat');
 for counter = 1:length(TrialCutoffs)
