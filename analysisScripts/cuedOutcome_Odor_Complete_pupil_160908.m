@@ -31,7 +31,7 @@ if nSessions == length(TrialCutoffs)
 end
 
 %% generate trial lookups for different combinations of conditions
-    includedSessions = 1:8;
+    includedSessions = 5;
     highValueTrials = filterTE(TE, 'trialType', 1:3, 'reject', 0, 'sessionIndex', includedSessions);
     lowValueTrials = filterTE(TE, 'trialType', 4:6, 'reject', 0, 'sessionIndex', includedSessions);
     rewardTrials = filterTE(TE, 'trialOutcome', 1, 'reject', 0, 'sessionIndex', includedSessions);

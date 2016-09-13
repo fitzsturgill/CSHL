@@ -7,10 +7,7 @@ function demod = phDemod(rawData, refData, sampleRate, modRate, lowCutoff)
     if nargin < 5
         lowCutoff = []; 
     end
-    
-
-    
-    
+        
 %     if nargin < 5
 %         tBaseline = []; % if empty, normalize (zscore) by entire range
 %     end

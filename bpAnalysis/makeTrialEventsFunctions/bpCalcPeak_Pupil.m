@@ -1,23 +1,16 @@
-function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
-% Photometry- output of processTrialAnalysis_Photometry, ch- channel,
+function peak = bpCalcPeak_Pupil(pupil, window, zeroTimes, varargin)
+% Pupil- output of addPupilometryToTE
 % Window (size = [1,2]): start and stop time for peak calculation in seconds
-% relative to zero time
+% relative to zero time recording during trial
 
-% I could just have the window calculated
-% This is a bare bones initial version, in future either:
-% 1) have a flexible wrrapper function OR
-% 2) do some of the following within this function:
-% implement flexible windows (window calculation function handle?), state name(s) instead of a
-% window, triggering event?
-% different "peak" methods, e.g. average, max, smoothed max, fitted peak,
-% etc.,  integral?
+% see also bpCalcPeak_dFF
 
     if nargin < 4
         zeroTimes = [];
     end
     defaults = {...
         'method', 'mean';...
-        'phField', 'dFF';...
+        'pupilField', 'dFF';...
 %         'zeroTimes', [];... % why didn't this work as optional? isssue
 %         with parseargs...
         'window', window;... % not optional
@@ -26,7 +19,7 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
     
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
 
-    nTrials = size(Photometry.data(ch).dFF, 1);
+    nTrials = size(pupil.data(ch).dFF, 1);
 
     peak = struct(...
         'data', zeros(nTrials, 1),...
@@ -49,7 +42,7 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
         w2 = s.window + zeroTimes2(trial) - trialStart;
         p1 = bpX2pnt(w2(1), Photometry.sampleRate);
         p2 = bpX2pnt(w2(2), Photometry.sampleRate);
-        trialData = Photometry.data(ch).(s.phField)(trial, p1:p2);
+        trialData = Photometry.data(ch).(s.pupilField)(trial, p1:p2);
         switch s.method
             case 'mean'
                 peak.data(trial) = mean(trialData);

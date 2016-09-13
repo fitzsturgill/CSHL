@@ -1,4 +1,4 @@
-function TE = addPupilometryToTE(TE, rootPath, varargin)
+function TE = addPupilometryToTE(TE, varargin)
 
 % Adds pupil data to TE.  Pupil data for every session loaded into TE
 % assumed to to be saved in a folder (e.g. \Pupil_160814\). Pupil data .mat
@@ -39,13 +39,16 @@ function TE = addPupilometryToTE(TE, rootPath, varargin)
         'pupDiameter', 'pupDiameterNorm';...
         'pupResidual', 'pupResidualNorm';...
         };
-    matFields = [{'startTime', 'blinkDetected'} reshape(normFields, 1, numel(normFields))];
     pupil = struct();
     pupil.loadSettings = s; % scalar
     pupil.settings = cell(length(TE.filename), 1);
     pupil.xData = 0:dX:(nFrames - 1) * dX;
-    for field = matFields
-        pupil.(field{:}) = NaN(length(TE.filename), nFrames); % fill with NaNs
+    pupil.startTime = NaN(length(TE.filename), 1);
+    pupil.frameRate = NaN(length(TE.filename), 1);
+    pupil.blinkDetected = NaN(length(TE.filename), nFrames);
+    
+    for counter = 1:numel(normFields)
+        pupil.(normFields{counter}) = NaN(length(TE.filename), nFrames); % fill with NaNs
     end
     
     %% extract session dates in TE and generate matching pupil folder names
@@ -82,6 +85,7 @@ function TE = addPupilometryToTE(TE, rootPath, varargin)
             end
             loaded = load(fileList{i});
             framesToLoad = min(nFrames, max(loaded.pupilData.currentFrame));
+            pupil.frameRate(tei,1) = s.frameRate;
             pupil.settings{tei} = loaded.pupilData.settings;          
             pupil.eyeArea(tei, 1:framesToLoad) = loaded.pupilData.eye.area(1:framesToLoad);
             pupil.blinkDetected(tei, 1:framesToLoad) = loaded.pupilData.eye.blinkDetected(1:framesToLoad);
