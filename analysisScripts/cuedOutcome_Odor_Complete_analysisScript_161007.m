@@ -9,8 +9,8 @@
 % and used makeTE_CuedOutcome_Odor_Complete to make a TE structure where each 
 % element in the structure was a TE corresponding to a single mouse
 % 
- 
-
+TE.Photometry = processTrialAnalysis_Photometry2(sessions);
+%%
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
 savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete_161007';
@@ -18,7 +18,7 @@ savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete_161007';
 ensureFigure('RewardLickRate_crossSessions', 1);
 for tei = 1:length(TE)
     rewardTrials = filterTE(TE(tei), 'trialOutcome', 1);
-    subplot(3,2,tei); plot(find(rewardTrials), smooth(TE(tei).usLicks.rate(rewardTrials), 5)); hold on; 
+    subplot(ceil(sqrt(length(TE))),ceil(sqrt(length(TE))),tei); plot(find(rewardTrials), smooth(TE(tei).usLicks.rate(rewardTrials), 5)); hold on; 
     plot(find(rewardTrials), [0; diff(TE(tei).sessionIndex(rewardTrials))] * 10);
     ylabel('Lick/s, Us'); xlabel('trial #'); textBox(TE(tei).filename{1}(1:7));
     set(gca, 'YLim', [0 10]);
@@ -28,11 +28,11 @@ saveas(gcf, fullfile(savepath, 'RewardLickRate_crossSessions.fig'));
 %% make tiled array of antic. licks for low and high value odors vs trial number
 smoothFactor = 11;
 ensureFigure('AnticLickRate_crossSessions', 1);
-for tei = 1:6
+for tei = 1:length(TE)
     highTrials = filterTE(TE(tei), 'trialType', 1:3, 'reject', 0);
     lowTrials = filterTE(TE(tei), 'trialType', 4:6, 'reject', 0);
     rewardTrials = filterTE(TE(tei), 'trialOutcome', 1);    
-    subplot(3,2,tei); plot(find(highTrials), smooth(TE(tei).csLicks.rate(highTrials), smoothFactor), 'b.'); hold on; 
+    subplot(ceil(sqrt(length(TE))), ceil(sqrt(length(TE))), tei); plot(find(highTrials), smooth(TE(tei).csLicks.rate(highTrials), smoothFactor), 'b.'); hold on; 
     plot(find(lowTrials), smooth(TE(tei).csLicks.rate(lowTrials), smoothFactor), 'r.');
     plot(find(rewardTrials), smooth(TE(tei).usLicks.rate(rewardTrials), smoothFactor), 'k.')    
     plot(1:length(TE(tei).trialNumber), [0; diff(TE(tei).sessionIndex)] * 10, 'g');
@@ -42,6 +42,7 @@ end
 saveas(gcf, fullfile(savepath, 'AnticLickRate_crossSessions.fig'));
 
 %% figure out at which trial mouse lapses/ becomes sated, go through all 6 mice and all the sessions
+% to find out num of trials in session: max(find(filterTE(TE(mi), 'sessionIndex', si))) - min(find(filterTE(TE(mi), 'sessionIndex', si)));
 si = 1; % session index [1:6 8:10]
 mi = 1; % mouse index
 trials = filterTE(TE(mi), 'sessionIndex', si, 'trialType', 1);
@@ -51,12 +52,13 @@ inputArgs = {'startField', 'PreCsRecording',...
     'trialNumbering', 'singleSession'};
 ensureFigure('lickRaster', 1); axes; eventRasterFromTE(TE(mi), trials, 'Port1In', inputArgs{:});
 %% determined based upon inspection of when antic. licking for high value cue falls off, see above
-TrialCutoffs{1} = [110 125 80 110 125 70 200 150];
-TrialCutoffs{2} = [87 140 100 85 115 115 120];
-TrialCutoffs{3} = [130 115 110 150 202 125];
-TrialCutoffs{4} = [75 85 90 100 85 130];
-TrialCutoffs{5} = [100 170 100 115 160 200 204];
-TrialCutoffs{6} = [102 110 85 90 140 100 100 80 95 135]; % ChAT_26
+TrialCutoffs{1} = [139 160 230 160 170 190 254 165]; % ChAT_39
+% TrialCutoffs{1} = [110 125 80 110 125 70 200 150];
+% TrialCutoffs{2} = [87 140 100 85 115 115 120];
+% TrialCutoffs{3} = [130 115 110 150 202 125];
+% TrialCutoffs{4} = [75 85 90 100 85 130];
+% TrialCutoffs{5} = [100 170 100 115 160 200 204];
+% TrialCutoffs{6} = [102 110 85 90 140 100 100 80 95 135]; % ChAT_26
 %% use TrialCutoffs to add reject field to TE
 TE = ensureField(TE, 'reject', 'mat');
 for counter = 1:length(TrialCutoffs)
@@ -76,8 +78,8 @@ for counter = 1:length(TrialCutoffs)
 end
 
 %% generate trial lookups for different combinations of conditions
-    tei = 6;
-    includedSessions = [2:6 8:10];
+    tei = 1;
+    includedSessions = [1:8];
     highValueTrials = filterTE(TE(tei), 'trialType', 1:3, 'reject', 0, 'sessionIndex', includedSessions);
     lowValueTrials = filterTE(TE(tei), 'trialType', 4:6, 'reject', 0, 'sessionIndex', includedSessions);
     rewardTrials = filterTE(TE(tei), 'trialOutcome', 1, 'reject', 0, 'sessionIndex', includedSessions);
@@ -141,6 +143,7 @@ end
     colormap default; title('hival, punish'); xlabel('time from reinforcement (s)'); 
     subplot(1,2,2); imshow(TE(end).Photometry.data(1).dFF(trialsByType{4}, :), [-.01 .01]); 
     colormap default; title('loval, reward'); xlabel('time from reinforcement (s)');     
+
     %% plot photometry rasters 2 lab meeting
     ensureFigure('phRasters_hival', 1); 
     prt = trialsByType{1};
@@ -158,6 +161,7 @@ end
     title('hival, reward'); xlabel('time from reinforcement (s)'); 
     set(gca, 'XLim', [-6 4]); 
     set(gca, 'FontSize', 14)
+    
     %% plot photometry rasters lab meeting low value
     ensureFigure('phRasters_lowVal', 1); 
     prt = trialsByType{5};
