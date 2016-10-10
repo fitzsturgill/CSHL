@@ -2,6 +2,8 @@ function peak = bpCalcPeak_Pupil(pupil, window, zeroTimes, varargin)
 % Pupil- output of addPupilometryToTE
 % Window (size = [1,2]): start and stop time for peak calculation in seconds
 % relative to zero time recording during trial
+% zeroTimes- can be cell array of state times (see also referenceFromEnd)
+% or vector (although this option hasn't yet been tested)
 
 % see also bpCalcPeak_dFF
 
@@ -9,8 +11,8 @@ function peak = bpCalcPeak_Pupil(pupil, window, zeroTimes, varargin)
         zeroTimes = [];
     end
     defaults = {...
-        'method', 'mean';...
-        'pupilField', 'dFF';...
+        'method', 'mean';... % mean or peak
+        'pupilField', 'pupDiameterNorm';...
 %         'zeroTimes', [];... % why didn't this work as optional? isssue
 %         with parseargs...
         'window', window;... % not optional
@@ -19,30 +21,37 @@ function peak = bpCalcPeak_Pupil(pupil, window, zeroTimes, varargin)
     
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
 
-    nTrials = size(pupil.data(ch).dFF, 1);
+    nTrials = size(pupil.startTime, 1);
 
     peak = struct(...
         'data', zeros(nTrials, 1),...
-        'settings', s,...
-        'channel', ch... 
+        'settings', s...
     );
 
 
     if isempty(zeroTimes)
         zeroTimes2 = zeros(1, nTrials); % zeroTimes2 = matrix
-    else
+    elseif iscell(zeroTimes)
         if ~s.referenceFromEnd
             zeroTimes2 = cellfun(@(x) x(1), zeroTimes); % matrix
         else
             zeroTimes2 = cellfun(@(x) x(end), zeroTimes); % matrix
         end
+    else
+        zeroTimes2 = zeroTimes; % not yet tested
     end
     for trial = 1:nTrials
-        trialStart = Photometry.startTime(trial);
-        w2 = s.window + zeroTimes2(trial) - trialStart;
-        p1 = bpX2pnt(w2(1), Photometry.sampleRate);
-        p2 = bpX2pnt(w2(2), Photometry.sampleRate);
-        trialData = Photometry.data(ch).(s.pupilField)(trial, p1:p2);
+        if isempty(zeroTimes)
+            w2 = s.window;
+        else
+            trialStart = pupil.startTime(trial);
+            w2 = s.window + zeroTimes2(trial) - trialStart;
+        end
+        frameRate = pupil.frameRate(trial);        
+        nFrames = length(pupil.(s.pupilField)(trial, :));
+        p1 = max(1, bpX2pnt(w2(1), frameRate));
+        p2 = min(nFrames, bpX2pnt(w2(2), frameRate));        
+        trialData = pupil.(s.pupilField)(trial, p1:p2);        
         switch s.method
             case 'mean'
                 peak.data(trial) = mean(trialData);

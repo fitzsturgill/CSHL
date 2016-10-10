@@ -28,7 +28,7 @@ function TE = addPupilometryToTE(TE, varargin)
         rootPath = s.rootPath;
     end
     cd(rootPath);
-    
+    maxDiameter = 200; % sometimes the diameter calculation blows up if this happens, set it to NaN
     %% initialize pupil structure
     dX = 1/s.frameRate;
     startX = []; % to be determined
@@ -59,7 +59,7 @@ function TE = addPupilometryToTE(TE, varargin)
         pupilFolder = parseFileName(sessionname); % see subfunction
         pupilPath = fullfile(rootPath, pupilFolder, filesep); % filesep returns system file separator character
         if ~isdir(pupilPath)
-            warning(['*** pupil director: ' pupilPath ' does not exist ***']);
+            warning(['*** pupil directory: ' pupilPath ' does not exist ***']);
             continue
         end
         cd(pupilPath);
@@ -94,13 +94,16 @@ function TE = addPupilometryToTE(TE, varargin)
             pupil.pupResidual(tei, 1:framesToLoad) = loaded.pupilData.pupil.circResidual(1:framesToLoad);
             pupil.startTime(tei, 1) = TE.(s.startField){1}(1);
             if counter == 1 && i == 1
-                startX = TE.(s.zeroField){1}(1) - TE.(s.startField){1}(1);
-                pupil.xData = pupil.xData - startX;
+                startX = TE.(s.startField){1}(1) - TE.(s.zeroField){1}(1);
+                pupil.xData = pupil.xData + startX;
                 blStartP = 1; % just start at beginning of video for baseline
                 blEndP = bpX2pnt(0, s.frameRate, startX); % go to zero point        
             end
         end  
-        % baseline subtract
+        %% remove outliers
+        pupil.pupDiameter(pupil.pupDiameter > maxDiameter) = NaN;
+        
+        %% baseline subtract
         for i = 1:size(normFields, 1)
             rawField = normFields{i, 1};
             normField = normFields{i, 2};

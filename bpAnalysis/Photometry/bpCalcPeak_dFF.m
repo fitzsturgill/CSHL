@@ -45,8 +45,12 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
         end
     end
     for trial = 1:nTrials
-        trialStart = Photometry.startTime(trial);
-        w2 = s.window + zeroTimes2(trial) - trialStart;
+        if isempty(zeroTimes) % just use window directly
+            w2 = s.window;
+        else
+            trialStart = Photometry.startTime(trial);
+            w2 = s.window + zeroTimes2(trial) - trialStart;
+        end
         p1 = bpX2pnt(w2(1), Photometry.sampleRate);
         p2 = bpX2pnt(w2(2), Photometry.sampleRate);
         trialData = Photometry.data(ch).(s.phField)(trial, p1:p2);
