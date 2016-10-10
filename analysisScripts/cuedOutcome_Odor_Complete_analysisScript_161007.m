@@ -8,12 +8,19 @@
 % ChAT_26, August 17 -> 20, 22 -> 24
 % and used makeTE_CuedOutcome_Odor_Complete to make a TE structure where each 
 % element in the structure was a TE corresponding to a single mouse
-% 
+%% 
+sessions = bpLoadSessions;
+%%
+TE = makeTE_CuedOutcome_Odor_Complete(sessions);
+%%
 TE.Photometry = processTrialAnalysis_Photometry2(sessions);
 %%
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
-savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete_161007';
+savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete_161007\ChAT_34';
+%%
+truncateSessionsFromTE(TE, 'init');
+
 %% Make tiled array of licks in receipt of reward to visualize satiation/ lapsing behavior towards end of each session
 ensureFigure('RewardLickRate_crossSessions', 1);
 for tei = 1:length(TE)
@@ -127,7 +134,8 @@ end
     subplot(1,2,1); imshow(TE(end).Photometry.data(1).dFF(trialsByType{1}, :), [-.01 .01]); 
     colormap default; title('hival, reward'); xlabel('time from reinforcement (s)'); 
     subplot(1,2,2); imshow(TE(end).Photometry.data(1).dFF(trialsByType{5}, :), [-.01 .01]); 
-    colormap default; title('loval, punish'); xlabel('time from reinforcement (s)'); 
+    colormap default; title('loval, punish'); xlabel('time from reinforcement (s)');
+     saveas(gcf, fullfile(savepath, 'phRasters.fig'));  
     
     %% plot photometry rasters- test phRasterFromTE
     ensureFigure('phRastersFromTE', 1); 
@@ -161,6 +169,7 @@ end
     title('hival, reward'); xlabel('time from reinforcement (s)'); 
     set(gca, 'XLim', [-6 4]); 
     set(gca, 'FontSize', 14)
+    saveas(gcf, fullfile(savepath, 'phRasters_hiVal.fig'));  
     
     %% plot photometry rasters lab meeting low value
     ensureFigure('phRasters_lowVal', 1); 
@@ -179,6 +188,7 @@ end
     title('hival, reward'); xlabel('time from reinforcement (s)'); 
     set(gca, 'XLim', [-6 4]);        
     set(gca, 'FontSize', 14)
+    saveas(gcf, fullfile(savepath, 'phRasters_lowVal.fig'));  
     %% plot lick rasters
     ensureFigure('lickRasters', 1);
     subplot(1,2,1);
