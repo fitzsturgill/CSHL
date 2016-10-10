@@ -22,7 +22,11 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     end
     totalTrials = sum(scounter);    
     if s.uniformOutput % not fully implemented
-        originalSamples = max(cellfun(@(x) size(x,1), sessions(1).SessionData.NidaqData(:,1)));
+        originalSamples = zeros(1,length(sessions));
+        for si = 1:length(sessions);
+            originalSamples(si) = max(cellfun(@(x) size(x,1), sessions(si).SessionData.NidaqData(:,1)));
+        end
+        originalSamples = max(originalSamples);
         newSamples = ceil(originalSamples/s.downsample);
         try
             sampleRate = sessions(1).SessionData.TrialSettings(1).nidaq.sample_rate;
