@@ -6,6 +6,10 @@ sessions = bpLoadSessions;
 TE = makeTE_CuedOutcome_Odor_Complete(sessions);
 %%
 TE.Photometry = processTrialAnalysis_Photometry2(sessions);
+
+%% extract peak trial dFF responses to cues and reinforcement
+TE.phPeak_cs = bpCalcPeak_dFF(TE.Photometry, 1, [0 3], TE.Cue, 'method', 'peak');
+
 %%
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';

@@ -30,7 +30,7 @@ function peak = bpCalcPeak_Pupil(pupil, window, zeroTimes, varargin)
 
 
     if isempty(zeroTimes)
-        zeroTimes2 = zeros(1, nTrials); % zeroTimes2 = matrix
+        zeroTimes2 = pupil.startTime; % use start of pupil recording if zeroTimes are undefined
     elseif iscell(zeroTimes)
         if ~s.referenceFromEnd
             zeroTimes2 = cellfun(@(x) x(1), zeroTimes); % matrix
@@ -40,23 +40,25 @@ function peak = bpCalcPeak_Pupil(pupil, window, zeroTimes, varargin)
     else
         zeroTimes2 = zeroTimes; % not yet tested
     end
+    
     for trial = 1:nTrials
-        if isempty(zeroTimes)
-            w2 = s.window;
-        else
-            trialStart = pupil.startTime(trial);
-            w2 = s.window + zeroTimes2(trial) - trialStart;
-        end
         frameRate = pupil.frameRate(trial);        
         nFrames = length(pupil.(s.pupilField)(trial, :));
-        p1 = max(1, bpX2pnt(w2(1), frameRate));
-        p2 = min(nFrames, bpX2pnt(w2(2), frameRate));        
+        trialZero = zeroTimes2(trial) - pupil.startTime(trial);        
+        p1 = bpX2pnt(s.window(1) + trialZero, frameRate);
+        p2 = bpX2pnt(s.window(2) + trialZero, frameRate);
+        
+%         p1 = max(1, bpX2pnt(w2(1), frameRate));
+%         p2 = min(nFrames, bpX2pnt(w2(2), frameRate));        
         trialData = pupil.(s.pupilField)(trial, p1:p2);        
         switch s.method
             case 'mean'
                 peak.data(trial) = mean(trialData);
             case 'max'
                 peak.data(trial) = max(trialData);
+            case 'min'
+                peak.data(trial) = min(trialData);                
             otherwise
+                error('*** incorrect peak determination method ***');                
         end
     end

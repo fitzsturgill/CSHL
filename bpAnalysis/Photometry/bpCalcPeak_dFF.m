@@ -3,6 +3,11 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
 % Window (size = [1,2]): start and stop time for peak calculation in seconds
 % relative to zero time
 
+% zeroTimes- can be cell array of state times (see also referenceFromEnd)
+% or vector (although this option hasn't yet been tested, see
+% bpCalcPeak_Pupil)
+
+
 % I could just have the window calculated
 % This is a bare bones initial version, in future either:
 % 1) have a flexible wrrapper function OR
@@ -16,14 +21,14 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
         zeroTimes = [];
     end
     defaults = {...
-        'method', 'mean';...
+        'method', 'mean';... % 'mean' or 'max' or 'min'
         'phField', 'dFF';...
 %         'zeroTimes', [];... % why didn't this work as optional? isssue
 %         with parseargs...
         'window', window;... % not optional
         'referenceFromEnd', 0;...
         };
-    
+
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
 
     nTrials = size(Photometry.data(ch).dFF, 1);
@@ -36,29 +41,30 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
 
 
     if isempty(zeroTimes)
-        zeroTimes2 = zeros(1, nTrials); % zeroTimes2 = matrix
-    else
+        zeroTimes2 = Photometry.startTime; % just use start of photometry recording if zeroTimes are undefined
+    elseif iscell(zeroTimes)
         if ~s.referenceFromEnd
             zeroTimes2 = cellfun(@(x) x(1), zeroTimes); % matrix
         else
             zeroTimes2 = cellfun(@(x) x(end), zeroTimes); % matrix
         end
+    else
+        zeroTimes2 = zeroTimes; % not yet tested
     end
+    
     for trial = 1:nTrials
-        if isempty(zeroTimes) % just use window directly
-            w2 = s.window;
-        else
-            trialStart = Photometry.startTime(trial);
-            w2 = s.window + zeroTimes2(trial) - trialStart;
-        end
-        p1 = bpX2pnt(w2(1), Photometry.sampleRate);
-        p2 = bpX2pnt(w2(2), Photometry.sampleRate);
+        trialZero = zeroTimes2(trial) - Photometry.startTime(trial);        
+        p1 = bpX2pnt(s.window(1) + trialZero, Photometry.sampleRate);
+        p2 = bpX2pnt(s.window(2) + trialZero, Photometry.sampleRate);
         trialData = Photometry.data(ch).(s.phField)(trial, p1:p2);
         switch s.method
             case 'mean'
                 peak.data(trial) = mean(trialData);
             case 'max'
                 peak.data(trial) = max(trialData);
+            case 'min'
+                peak.data(trial) = min(trialData);
             otherwise
+                error('*** incorrect peak determination method ***');
         end
     end
