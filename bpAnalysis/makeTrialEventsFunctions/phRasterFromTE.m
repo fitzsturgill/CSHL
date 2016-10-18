@@ -46,13 +46,15 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
     % determine CLim, use all trials so CLim/image scaling is consistent
     % across conditions or sets of trials
     if isempty(s.CLim)
-        imavg = mean(mean(TE.(Photometry).data(ch).dFF(:, startP:endP), 'omitnan')); 
-        imstd = mean(std(TE.(Photometry).data(ch).dFF(:, startP:endP), 'omitnan'));        
+        imavg = mean(mean(TE.(Photometry).data(ch).dFF(:, startP:endP), 'omitnan'));
+        imstd = mean(std(TE.(Photometry).data(ch).dFF(:, startP:endP), 'omitnan'));
         s.CLim = [imavg - s.CLimFactor * imstd, imavg + s.CLimFactor * imstd];
     end
-    cData = TE.(Photometry).data(ch).dFF(trials, startP:endP);    
-        
+    cData = TE.(Photometry).data(ch).dFF(trials, startP:endP);
     
+    
+    sessionBreaks = find(diff(TE.sessionIndex(trials)))';            
     ih = image('Xdata', s.window, 'YData', [1 size(cData, 1)],...
         'CData', cData, 'CDataMapping', 'Scaled', 'Parent', gca);
-    set(gca, 'YLim', [1 size(cData, 1)], 'XLim', s.window);
+    line(repmat(s.window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
+    set(gca, 'YLim', [1 size(cData, 1)], 'XLim', s.window, 'CLim', s.CLim);

@@ -44,7 +44,7 @@ function varargout = phPlotAverageFromTE(TE, trials, ch, varargin)
     end
     xData = xData(startP:endP);
     
-    hl = zeros(length(trials));
+
     ax = s.ax;
     for counter = 1:length(trials)
         thisLinespec = s.linespec{rem(counter - 1, length(s.linespec)) + 1}; % cycle through linespec if it isn't long enough        
