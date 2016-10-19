@@ -59,6 +59,6 @@ function peak = bpCalcPeak_Pupil(pupil, window, zeroTimes, varargin)
             case 'min'
                 peak.data(trial) = min(trialData);                
             otherwise
-                error('*** incorrect peak determination method ***');                
+                
         end
     end

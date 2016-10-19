@@ -8,7 +8,8 @@ TE = makeTE_CuedOutcome_Odor_Complete(sessions);
 TE.Photometry = processTrialAnalysis_Photometry2(sessions);
 
 %% extract peak trial dFF responses to cues and reinforcement
-TE.phPeak_cs = bpCalcPeak_dFF(TE.Photometry, 1, [0 3], TE.Cue, 'method', 'peak');
+TE.phPeak_cs = bpCalcPeak_dFF(TE.Photometry, 1, [0 3], TE.Cue, 'method', 'max');
+TE.phPeak_us = bpCalcPeak_dFF(TE.Photometry, 1, [0 2], TE.Us, 'method', 'max');
 
 %%
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';

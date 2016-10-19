@@ -19,9 +19,20 @@ function [eventTimes, eventTrials] = extractEventTimesFromTE(TE, trials, event, 
     end
     for counter = 1:length(trials)
         trial = trials(counter);
-        startTime = TE.(s.startField){trial}(1);
+        if ~isempty(s.startField)
+            startTime = TE.(s.startField){trial}(1);
+        else
+            startTime = 0;
+        end
+        if ~isempty(s.endField)
+            endTime = TE.(s.endField){trial}(end);
+        else
+            endTime = Inf;
+        end
+        
         zeroTime = TE.(s.zeroField){trial}(1);
-        endTime = TE.(s.endField){trial}(end);        
+        
+        
         trialEventTimes = TE.(event){trial};
         trialEventTimes = trialEventTimes((startTime < trialEventTimes) & (trialEventTimes < endTime));
         trialEventTimesZeroed = trialEventTimes - zeroTime; 
