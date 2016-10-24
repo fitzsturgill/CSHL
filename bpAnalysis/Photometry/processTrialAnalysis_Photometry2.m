@@ -111,7 +111,9 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                     blF = repmat(blF, 1, size(allData, 2));
                 case 'bySession' % not yet tested
                     blF = nanmean(nanmean(allData(:, blStartP:blEndP), 2)); % scalar mean across time and trials
-                    blF = zeros(size(allData)) + blF;                        
+                    blF = zeros(size(allData)) + blF;
+                case 'expFit'
+                    
                 otherwise
             end      
             Photometry.data(fCh).dFF(tcounter:tcounter+nTrials - 1, :) = (allData - blF) ./ blF;  

@@ -29,9 +29,10 @@ function TE = makeTE_CuedOutcome_Odor_Complete(sessions)
     TE(1).Port1In = bpAddEventAsTrialEvent(sessions, 'Port1In');
     TE.filename = cell(nTrials, 1);
 
+    %% bpCountEventByStates2 is outdated
+%     TE.csLicks = bpCountEventByStates2(sessions, 'Port1In', 'Cue', 'endState', 'Delay'); % #licks spanning Cue and Delay
+%     TE.usLicks = bpCountEventByStates2(sessions, 'Port1In', 'Us', 'endState', 'PostUsRecording'); % #licks spanning Us and PostUsRecording
 
-    TE.csLicks = bpCountEventByStates2(sessions, 'Port1In', 'Cue', 'endState', 'Delay'); % #licks spanning Cue and Delay
-    TE.usLicks = bpCountEventByStates2(sessions, 'Port1In', 'Us', 'endState', 'PostUsRecording'); % #licks spanning Us and PostUsRecording
     
     tcounter = 1;
     for sCounter = 1:length(sessions)

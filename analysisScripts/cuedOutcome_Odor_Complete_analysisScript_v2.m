@@ -7,9 +7,12 @@ TE = makeTE_CuedOutcome_Odor_Complete(sessions);
 %%
 TE.Photometry = processTrialAnalysis_Photometry2(sessions);
 
-%% extract peak trial dFF responses to cues and reinforcement
-TE.phPeak_cs = bpCalcPeak_dFF(TE.Photometry, 1, [0 3], TE.Cue, 'method', 'max');
-TE.phPeak_us = bpCalcPeak_dFF(TE.Photometry, 1, [0 2], TE.Us, 'method', 'max');
+%% extract peak trial dFF responses to cues and reinforcement and lick counts
+TE.phPeak_cs = bpCalcPeak_dFF(TE.Photometry, 1, [0 2], TE.Cue, 'method', 'mean');
+TE.phPeak_us = bpCalcPeak_dFF(TE.Photometry, 1, [0 1], TE.Us, 'method', 'mean');
+
+TE.csLicks = countEventFromTE(TE, 'Port1In', [-2 0], TE.Us);
+TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], TE.Us);
 
 %%
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
@@ -58,33 +61,34 @@ saveas(gcf, fullfile(savepath, 'AnticLickRate_crossSessions.jpg'));
     %% plot photometry averages
     h=ensureFigure('Photometry_Averages', 1); 
     mcLandscapeFigSetup(h);
-    pm = [3 2];
+
+    pm = [2 2];
     
     % - 6 0 4
-    subplot(pm(1), pm(2), 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 3 7]), 1); %high value, reward
+    subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 3 7]), 1); %high value, reward
     legend(hl, {'hival, rew', 'hival, omit', 'rew'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
     title('high value'); ylabel('dF/F'); xlabel('time from reinforcement (s)'); textBox(TE.filename{1}(1:7));
 
-    subplot(pm(1), pm(2), 2); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([5 6 8]), 1); % low value, punish
+    subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([5 6 8]), 1); % low value, punish
     legend(hl, {'loval, pun', 'loval, omit', 'pun'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
     title('low value'); ylabel('dF/F'); xlabel('time from reinforcement (s)'); 
 
-    subplot(pm(1), pm(2), 3); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 4 7]), 1); % reward, varying degrees of expectation
+    subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 4 7]), 1); % reward, varying degrees of expectation
     legend(hl, {'hival, rew', 'loval, rew', 'rew'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
     title('reward all'); ylabel('dF/F'); xlabel('time from reinforcement (s)');     
 
-    subplot(pm(1), pm(2), 4); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([5 2 8]), 1); % punishment, varying degrees of expectation
+    subplot(pm(1), pm(2), 4, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([5 2 8]), 1); % punishment, varying degrees of expectation
     legend(hl, {'loval, pun', 'hival, pun', 'pun'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
     title('punish all'); ylabel('dF/F'); xlabel('time from reinforcement (s)'); 
 
-    subplot(pm(1), pm(2), 5); [ha, hla] = phPlotAverageFromTE(TE, {lowValueTrials, highValueTrials}, 1,...
-        'window', [-6 0], 'linespec', {'m', 'g'}); hold on;
-    
-    subplot(pm(1), pm(2), 5); [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, omitTrials}, 1,...
-        'window', [0 4], 'linespec', {'b', 'r', 'k'});
-    hl = [hla hl];
-    legend(hl, {'loval', 'hival', 'rew', 'pun', 'omit'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-    title('Balazs'); ylabel('dF/F'); xlabel('time from reinforcement (s)'); 
+%     subplot(pm(1), pm(2), 5, 'FontSize', 12, 'LineWidth', 1); [ha, hla] = phPlotAverageFromTE(TE, {lowValueTrials, highValueTrials}, 1,...
+%         'window', [-6 0], 'linespec', {'m', 'g'}); hold on;
+%     
+%     subplot(pm(1), pm(2), 5); [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, omitTrials}, 1,...
+%         'window', [0 4], 'linespec', {'b', 'r', 'k'});
+%     hl = [hla hl];
+%     legend(hl, {'loval', 'hival', 'rew', 'pun', 'omit'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+%     title('Balazs'); ylabel('dF/F'); xlabel('time from reinforcement (s)'); 
     
     
     saveas(gcf, fullfile(savepath, 'phAverages.fig'));
@@ -200,6 +204,56 @@ saveas(gcf, fullfile(savepath, 'AnticLickRate_crossSessions.jpg'));
     set(gca, 'FontSize', 14)
     saveas(gcf, fullfile(savepath, 'licks_ph_comp_raster_punish.fig'));
     saveas(gcf, fullfile(savepath, 'licks_ph_comp_raster_punish.jpg'));    
+    
+    %% summary statistics
+    cComplete_summary = struct(...
+        'phCue_CV', zeros(1,9),...
+        'phCue_avg', zeros(1,9),...
+        'phOutcome_CV', zeros(1,9),...
+        'phOutcome_avg', zeros(1,9),...
+        'cueLicks_low', 0,...
+        'cueLicks_high', 0,...
+        'rewardLicks', 0);
+    for counter = 1:length(trialTypes)
+        trials = trialsByType{counter};
+        peaks = TE.phPeak_cs.data(trials);
+        cComplete_summary.phCue_CV(counter) = nanmean(peaks) / std(peaks, 'omitnan');
+        cComplete_summary.phCue_avg(counter) = nanmean(peaks);
+        peaks = TE.phPeak_us.data(trials);
+        cComplete_summary.phOutcome_CV(counter) = nanmean(peaks) / std(peaks, 'omitnan');
+        cComplete_summary.phOutcome_avg(counter) = nanmean(peaks); 
+    end
+    cComplete_summary.cueLicks_low = nanmean(TE.csLicks.rate(lowValueTrials));
+    cComplete_summary.cueLicks_high = nanmean(TE.csLicks.rate(highValueTrials));        
+    cComplete_summary.rewardLicks = nanmean(TE.usLicks.rate(rewardTrials));    
+    
+    save(fullfile(savepath, ['summary_' subjectName '.mat']), 'cComplete_summary');
+    disp(['*** saving: ' fullfile(savepath, ['summary_' subjectName '.mat']) ' ***']);
+    
+
+    
+    
+    
+    
+    
+    %% dFF vs licks scatter plot
+    ensureFigure('phVSLicks_Scatter', 1);
+    scatter(TE.usLicks.count(trialsByType{1}) + rand(length(find(trialsByType{1})), 1) - 0.5, TE.phPeak_us.data(trialsByType{1}), 'b'); hold on;
+    scatter(TE.usLicks.count(trialsByType{4}) + rand(length(find(trialsByType{4})), 1) - 0.5, TE.phPeak_us.data(trialsByType{4}), 'r');
+    set(gca, 'FontSize', 12); xlabel('reward licks (jittered)'); ylabel('phReward (dFF-avg)');
+    set(gca, 'XLim', [0 30], 'YLim');
+    %% us vs cs dFF for highValue reward condition
+    ensureFigure('phUSvsCS_Scatter', 1);
+    scatter(TE.phPeak_cs.data(trialsByType{1}), TE.phPeak_us.data(trialsByType{1}), 'b'); hold on;
+
+    
+    %% is the trough related to number of licks? 
+    TE.phTrough_us = bpCalcPeak_dFF(TE.Photometry, 1, [0 2], TE.Us, 'method', 'min');
+    ensureFigure('phDip_Scatter', 1);
+    scatter(TE.usLicks.count(rewardTrials) + rand(length(find(rewardTrials)), 1) - 0.5, TE.phTrough_us.data(rewardTrials), 'b'); 
+    
+    %% 
+    
 
 
     

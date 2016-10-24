@@ -1,31 +1,49 @@
-function count = countEventFromTE(TE)
-    
+function eventCount = countEventFromTE(TE, event, window, zeroTimes, varargin)
+    % used in conjunction with bpAddEventAsTrialEvent
+    % window- can be either a 1x2 row vector or a nTrials x 2 matrix (to
+    % provide specific windows for every trial)
 
 
-% remember to include varargin-supplied parameters to
-% extractEventTimesFromTE, e.g. 'zeroField', 'startField', 'endField'  
-    varargout = {};
-    defaults = {...
-        'ax', gca;...
-        'fig', gcf;...
-        'linespec', [];...
-        'window', [];...
-        'binWidth', 0.25;... % 0.5s bins by default
-        'trialNumbering', 'global';... % 'singleSession'- by session, 'consecutive', 'global' cross session        };    
+    defaults = {...    
+        'referenceFromEnd', 0;... % if you provide zeroTimes as a cell array of times (say extracted from state times), you can use start of first or end of last
         };    
     [s, ~] = parse_args(defaults, varargin{:});
+    %%
 
-    if isempty(s.linespec)
-        s.linespec = {'k', 'r', 'b', 'g'};
-    end
-    if isempty(s.fig)
-        s.fig = figure;
-    end
-    if isempty(s.ax)
-        figure(s.fig);
-        s.ax = axes;
+    nTrials = length(TE.trialNumber);
+    
+    eventCount = struct(...
+        'count', NaN(nTrials,1),...
+        'rate', NaN(nTrials,1),...
+        'duration', NaN(nTrials,1),...
+        'settings', s...
+        );
+    %%
+
+    if iscell(zeroTimes)
+        if ~s.referenceFromEnd
+            zeroTimes2 = cellfun(@(x) x(1), zeroTimes); 
+        else
+            zeroTimes2 = cellfun(@(x) x(end), zeroTimes);
+        end
+    else
+        zeroTimes2 = zeroTimes; % not yet tested
     end
     
-    if ~iscell(trials)
-        trials = {trials};
-    end    
+    if size(window, 1) == 1
+        window = repmat(window, nTrials, 1);
+    end
+    
+    %%
+    for trial = 1:nTrials
+        trialEvents = TE.(event){trial};
+        if ~isnan(trialEvents(1))
+            trialWindow = window(trial,:) + zeroTimes2(trial);
+            eventCount.count(trial) = length(find(trialWindow(1) < trialEvents & trialEvents < trialWindow(2)));
+            eventCount.duration(trial) = diff(trialWindow);
+            eventCount.rate(trial) = eventCount.count(trial) / eventCount.duration(trial);
+        end
+    end
+            
+    
+    
