@@ -11,7 +11,7 @@ function TE = truncateSessionsFromTE(TE, action)
     global TRUNC
     evalin('base', 'global TRUNC');
     % trunc trial is LAST INCLUDED TRIAL in each session
-    yMax = 10;
+    yMax = 20;
     switch action
         case 'init'
             nSessions = max(TE.sessionIndex);

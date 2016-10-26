@@ -5,11 +5,11 @@ sessions = bpLoadSessions;
 %%
 TE = makeTE_CuedOutcome_Odor_Complete(sessions);
 %%
-TE.Photometry = processTrialAnalysis_Photometry2(sessions);
+TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'expFit', 'blMode', 'byTrial');
 
 %% extract peak trial dFF responses to cues and reinforcement and lick counts
 TE.phPeak_cs = bpCalcPeak_dFF(TE.Photometry, 1, [0 2], TE.Cue, 'method', 'mean');
-TE.phPeak_us = bpCalcPeak_dFF(TE.Photometry, 1, [0 1], TE.Us, 'method', 'mean');
+TE.phPeak_us = bpCalcPeak_dFF(TE.Photometry, 1, [0 0.5], TE.Us, 'method', 'mean');
 
 TE.csLicks = countEventFromTE(TE, 'Port1In', [-2 0], TE.Us);
 TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], TE.Us);
@@ -26,6 +26,30 @@ truncateSessionsFromTE(TE, 'init');
 %%
 save(fullfile(savepath, 'TE.mat'), 'TE');
 disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
+
+
+%% cross sessions bleaching curve and dual exponential fits
+ensureFigure('sessionBleach_Correction', 1);
+plot(TE.Photometry.data(1).blF_raw, 'k'); hold on;
+plot(TE.Photometry.data(1).blF, 'r');
+saveas(gcf, fullfile(savepath, 'sessionBleach_correction.fig'));
+saveas(gcf, fullfile(savepath, 'sessionBleach_correction.jpg'));
+
+%% cross trial bleaching fits for each session plotted as axis array
+ensureFigure('trialBleach_Correction', 1);
+nSessions = length(TE.Photometry.bleachFit);
+subA = ceil(sqrt(nSessions));
+for counter = 1:nSessions
+    subplot(subA, subA, counter);
+    plot(TE.Photometry.bleachFit(counter).trialTemplate, 'k'); hold on;
+    plot(TE.Photometry.bleachFit(counter).trialFit, 'r');
+%     title(num2str(counter));    
+end
+
+saveas(gcf, fullfile(savepath, 'trialBleach_Correction.fig'));
+saveas(gcf, fullfile(savepath, 'trialBleach_Correction.jpg'));
+
+
 %% make tiled array of antic. licks for low and high value odors vs trial number
 smoothFactor = 11;
 ensureFigure('AnticLickRate_crossSessions', 1);
@@ -62,7 +86,7 @@ saveas(gcf, fullfile(savepath, 'AnticLickRate_crossSessions.jpg'));
     h=ensureFigure('Photometry_Averages', 1); 
     mcLandscapeFigSetup(h);
 
-    pm = [2 2];
+    pm = [3 2];
     
     % - 6 0 4
     subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 3 7]), 1); %high value, reward
@@ -81,14 +105,14 @@ saveas(gcf, fullfile(savepath, 'AnticLickRate_crossSessions.jpg'));
     legend(hl, {'loval, pun', 'hival, pun', 'pun'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
     title('punish all'); ylabel('dF/F'); xlabel('time from reinforcement (s)'); 
 
-%     subplot(pm(1), pm(2), 5, 'FontSize', 12, 'LineWidth', 1); [ha, hla] = phPlotAverageFromTE(TE, {lowValueTrials, highValueTrials}, 1,...
-%         'window', [-6 0], 'linespec', {'m', 'g'}); hold on;
-%     
-%     subplot(pm(1), pm(2), 5); [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, omitTrials}, 1,...
-%         'window', [0 4], 'linespec', {'b', 'r', 'k'});
-%     hl = [hla hl];
-%     legend(hl, {'loval', 'hival', 'rew', 'pun', 'omit'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-%     title('Balazs'); ylabel('dF/F'); xlabel('time from reinforcement (s)'); 
+    subplot(pm(1), pm(2), 5, 'FontSize', 12, 'LineWidth', 1); [ha, hla] = phPlotAverageFromTE(TE, {lowValueTrials, highValueTrials}, 1,...
+        'window', [-6 0], 'linespec', {'m', 'g'}); hold on;
+    
+    subplot(pm(1), pm(2), 5); [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, omitTrials}, 1,...
+        'window', [0 4], 'linespec', {'b', 'r', 'k'});
+    hl = [hla hl];
+    legend(hl, {'loval', 'hival', 'rew', 'pun', 'omit'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    title('Balazs'); ylabel('dF/F'); xlabel('time from reinforcement (s)'); 
     
     
     saveas(gcf, fullfile(savepath, 'phAverages.fig'));
@@ -233,8 +257,7 @@ saveas(gcf, fullfile(savepath, 'AnticLickRate_crossSessions.jpg'));
 
     
     
-    
-    
+
     
     %% dFF vs licks scatter plot
     ensureFigure('phVSLicks_Scatter', 1);
@@ -242,10 +265,13 @@ saveas(gcf, fullfile(savepath, 'AnticLickRate_crossSessions.jpg'));
     scatter(TE.usLicks.count(trialsByType{4}) + rand(length(find(trialsByType{4})), 1) - 0.5, TE.phPeak_us.data(trialsByType{4}), 'r');
     set(gca, 'FontSize', 12); xlabel('reward licks (jittered)'); ylabel('phReward (dFF-avg)');
     set(gca, 'XLim', [0 30], 'YLim');
+    saveas(gcf, fullfile(savepath, 'dFF_vs_licks.fig'));
+    saveas(gcf, fullfile(savepath, 'dFF_vs_licks.jpg'));        
     %% us vs cs dFF for highValue reward condition
     ensureFigure('phUSvsCS_Scatter', 1);
     scatter(TE.phPeak_cs.data(trialsByType{1}), TE.phPeak_us.data(trialsByType{1}), 'b'); hold on;
-
+    saveas(gcf, fullfile(savepath, 'us_vs_cs_dFF.fig'));
+    saveas(gcf, fullfile(savepath, 'us_vs_cs_dFF.jpg'));    
     
     %% is the trough related to number of licks? 
     TE.phTrough_us = bpCalcPeak_dFF(TE.Photometry, 1, [0 2], TE.Us, 'method', 'min');

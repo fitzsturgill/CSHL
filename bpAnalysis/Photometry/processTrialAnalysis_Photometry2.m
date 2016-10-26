@@ -6,7 +6,8 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     defaults = {...
         'channels', 1;... % 8/28/2016- changed channels default from [] to 1
         'baseline', [1 4];... % 1 - 3 second into recording
-        'dFFMode', 'byTrial';...
+        'blMode', 'byTrial';... % 'byTrial', 'bySession', 'expFit'  expFit- interpolates baseline from biexponential fit to raw fl baselines across trials
+        'dFFMode', 'simple';... % 'simple', 'expFit'    expFit- subtracts within-trial exponential bleaching trend using a biexponential fit to the trial average baseline period
         'zeroField', 'Us';...
         'startField', 'PreCsRecording';... % TO DO: PROVIDE AUTOMATICALLY BY BPOD NIDAQ CODE 
         'downsample', 305;...
@@ -50,8 +51,9 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     Photometry = struct(...
         'data', [],...          % length = number of Channels
         'settings', s,...
+        'bleachFit', [],... % length
         'sampleRate', sampleRate,... % downsampled sample rate
-        'startTime', NaN(totalTrials, 1),... % what if a trial didn't have photomtery...., make this NaN initially therefore
+        'startTime', NaN(totalTrials, 1),... % what if a trial didn't have photometry...., make this NaN initially therefore
         'xData', xData... % you don't have to use xData, you can also use startTime for more flexible alignment to trial events
     );
     if s.uniformOutput
@@ -59,6 +61,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             'dFF', NaN(totalTrials, newSamples),... % deltaF/F
             'raw', NaN(totalTrials, newSamples),... %
             'blF', NaN(totalTrials, 1),...
+            'blF_raw', NaN(totalTrials, 1),...
             'ch', []...
             );    
     else
@@ -66,9 +69,23 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             'dFF', {},... % deltaF/F
             'raw', {},... %
             'blF', NaN(totalTrials, 1),...
+            'blF_raw', NaN(totalTrials, 1),...
             'ch', []...
             );    
     end
+    
+    warning('Need to implement bleachFit by channels');
+    Photometry.bleachFit = struct(... % outputs from fit function in curve fitting toolbox
+        'fitobject_session', [],...
+        'gof_session', [],...
+        'output_session', [],...
+        'fitobject_trial', [],...
+        'gof_trial', [],...
+        'output_trial', [],...
+        'trialFit', [],...
+        'trialTemplate', []...
+        );
+
     Photometry.data = repmat(data, length(s.channels), 1); % length = # channels                
     h = waitbar(0, 'Processing Photometry');    
     
@@ -105,20 +122,58 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             % convert to deltaF/F
             blStartP = bpX2pnt(s.baseline(1), sampleRate);
             blEndP = bpX2pnt(s.baseline(2), sampleRate); 
-            switch s.dFFMode
+            switch s.blMode
                 case 'byTrial'
                     blF = nanmean(allData(:, blStartP:blEndP), 2); % take mean across time, not trials
+                    blF_raw = blF;                    
                     blF = repmat(blF, 1, size(allData, 2));
                 case 'bySession' % not yet tested
-                    blF = nanmean(nanmean(allData(:, blStartP:blEndP), 2)); % scalar mean across time and trials
+                    blF = nanmean(nanmean(allData(:, blStartP:blEndP), 2)); % SCALAR mean across time and trials
                     blF = zeros(size(allData)) + blF;
+                    blF_raw = mean(blF, 2);
                 case 'expFit'
-                    
+                    blF_raw = nanmean(allData(:, blStartP:blEndP), 2); % take mean across time, not trials
+                    [fitobject, gof, output] = ...
+                        fit((1:size(allData, 1))', blF_raw, 'exp2');
+                    Photometry.bleachFit(si).fitobject_session = fitobject;
+                    Photometry.bleachFit(si).gof_session = gof;
+                    Photometry.bleachFit(si).output_session = output;
+                    x = (1:length(blF_raw))';
+                    blF = fitobject.a * exp(fitobject.b * x) + fitobject.c * exp(fitobject.d * x);
+                    blF = repmat(blF, 1, size(allData, 2));                    
                 otherwise
-            end      
-            Photometry.data(fCh).dFF(tcounter:tcounter+nTrials - 1, :) = (allData - blF) ./ blF;  
+            end
+            
+            switch s.dFFMode
+                case 'simple'
+                    dF = allData - blF;
+                case 'expFit'
+                    trialMeanY = (nanmean(allData(:, 1:blEndP), 1))';
+                    trialMeanX = (1:length(trialMeanY))';    
+                    % fit from beginning of photometry trace (not beginning of baseline). Since
+                    % it is a biexponential fit, you want to include the initial bleaching
+                    % component
+                    fo = fitoptions('exp2');
+                    fo.Lower = [0 -Inf 0 -Inf];
+                    fo.Upper = [Inf 0 Inf 0];
+                    [fitobject, gof, output] = ...
+                        fit(trialMeanX, trialMeanY, 'exp2', fo);
+                    Photometry.bleachFit(si).fitobject_trial = fitobject;
+                    Photometry.bleachFit(si).gof_trial = gof;
+                    Photometry.bleachFit(si).output_trial = output;
+                    Photometry.bleachFit(si).trialTemplate = trialMeanY;
+                    x = (1:size(allData, 2));     
+                    trialFit = fitobject.a * exp(fitobject.b * x) + fitobject.c * exp(fitobject.d * x);
+                    Photometry.bleachFit(si).trialFit = trialFit;                    
+                    % set mean of true baseline period to zero
+                    trialFit = trialFit - nanmean(trialFit(1, blStartP:blEndP));
+                    blF = bsxfun(@plus, blF, trialFit);
+                    dF = allData - blF;
+                otherwise
+            end
+            Photometry.data(fCh).dFF(tcounter:tcounter+nTrials - 1, :) = dF ./ blF;  
             Photometry.data(fCh).raw(tcounter:tcounter+nTrials - 1, :) = allData;                  
-            Photometry.data(fCh).blF(tcounter:tcounter+nTrials - 1, 1) = mean(blF, 2);
+            Photometry.data(fCh).blF(tcounter:tcounter+nTrials - 1, 1) = mean(blF, 2);       
             Photometry.data(fCh).ch = fCh;
         end
         Photometry.startTime(tcounter:tcounter+nTrials - 1) = startTimes';
