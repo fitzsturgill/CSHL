@@ -6,6 +6,8 @@ function [sorted index]=cum(a)
         return
     end
     
+    a = a(~isnan(a));
+    
     sorted = sort(a);
     index = (0:numel(a) - 1) / (numel(a) - 1);
     
