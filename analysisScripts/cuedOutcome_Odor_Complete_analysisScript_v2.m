@@ -1,10 +1,9 @@
 
-
+saveOn = 1;
 %% 
 sessions = bpLoadSessions;
 %%
 TE = makeTE_CuedOutcome_Odor_Complete(sessions);
-%%
 TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'expFit', 'blMode', 'byTrial');
 
 %% extract peak trial dFF responses to cues and reinforcement and lick counts
@@ -19,22 +18,25 @@ TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], TE.Us);
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
 basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
 subjectName = TE.filename{1}(1:7);
+disp(subjectName);
 savepath = fullfile(basepath, subjectName);
 ensureDirectory(savepath);
 %%
 truncateSessionsFromTE(TE, 'init');
 %%
-save(fullfile(savepath, 'TE.mat'), 'TE');
-disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
-
+if saveOn
+    save(fullfile(savepath, 'TE.mat'), 'TE');
+    disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
+end
 
 %% cross sessions bleaching curve and dual exponential fits
 ensureFigure('sessionBleach_Correction', 1);
 plot(TE.Photometry.data(1).blF_raw, 'k'); hold on;
 plot(TE.Photometry.data(1).blF, 'r');
-saveas(gcf, fullfile(savepath, 'sessionBleach_correction.fig'));
-saveas(gcf, fullfile(savepath, 'sessionBleach_correction.jpg'));
-
+if saveOn
+    saveas(gcf, fullfile(savepath, 'sessionBleach_correction.fig'));
+    saveas(gcf, fullfile(savepath, 'sessionBleach_correction.jpg'));
+end
 %% cross trial bleaching fits for each session plotted as axis array
 ensureFigure('trialBleach_Correction', 1);
 nSessions = length(TE.Photometry.bleachFit);
@@ -45,10 +47,10 @@ for counter = 1:nSessions
     plot(TE.Photometry.bleachFit(counter).trialFit, 'r');
 %     title(num2str(counter));    
 end
-
-saveas(gcf, fullfile(savepath, 'trialBleach_Correction.fig'));
-saveas(gcf, fullfile(savepath, 'trialBleach_Correction.jpg'));
-
+if saveOn
+    saveas(gcf, fullfile(savepath, 'trialBleach_Correction.fig'));
+    saveas(gcf, fullfile(savepath, 'trialBleach_Correction.jpg'));
+end
 
 %% make tiled array of antic. licks for low and high value odors vs trial number
 smoothFactor = 11;
@@ -63,10 +65,10 @@ plot(find(rewardTrials), smooth(TE.usLicks.rate(rewardTrials), smoothFactor), 'k
 plot(1:length(TE.trialNumber), [0; diff(TE.sessionIndex)] * 10, 'g');
 ylabel('Lick/s, Us'); xlabel('trial #'); textBox(TE.filename{1}(1:7));
 set(gca, 'YLim', [0 10]);
-
-saveas(gcf, fullfile(savepath, 'AnticLickRate_crossSessions.fig'));
-saveas(gcf, fullfile(savepath, 'AnticLickRate_crossSessions.jpg'));
-
+if saveOn
+    saveas(gcf, fullfile(savepath, 'AnticLickRate_crossSessions.fig'));
+    saveas(gcf, fullfile(savepath, 'AnticLickRate_crossSessions.jpg'));
+end
 
 
 %% generate trial lookups for different combinations of conditions
@@ -114,10 +116,10 @@ saveas(gcf, fullfile(savepath, 'AnticLickRate_crossSessions.jpg'));
     legend(hl, {'loval', 'hival', 'rew', 'pun', 'omit'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
     title('Balazs'); ylabel('dF/F'); xlabel('time from reinforcement (s)'); 
     
-    
+if saveOn    
     saveas(gcf, fullfile(savepath, 'phAverages.fig'));
     saveas(gcf, fullfile(savepath, 'phAverages.jpg'));
-    
+end
     %% plot lick averages
     h = ensureFigure('Lick_Averages', 1);
 %     mcPortraitFigSetup(h);
@@ -152,13 +154,14 @@ saveas(gcf, fullfile(savepath, 'AnticLickRate_crossSessions.jpg'));
     title('Neutral'); ylabel('licks (s)'); xlabel('time r (s)');
     
     sameYScale(axh) % match y scaling
+if saveOn    
     saveas(gcf, fullfile(savepath, 'lickAverages.fig'));
     saveas(gcf, fullfile(savepath, 'lickAverages.jpg'));    
-   
+end
   
 
     %% plot photometry rasters
-    CLimFactor = 2;
+    CLimFactor = 4;
     h=ensureFigure('phRastersFromTE_reward', 1);
     mcPortraitFigSetup(h);
     subplot(1,4,1); phRasterFromTE(TE, trialsByType{1}, 1, 'CLimFactor', CLimFactor);
@@ -183,20 +186,54 @@ saveas(gcf, fullfile(savepath, 'AnticLickRate_crossSessions.jpg'));
     title('uncued, punish');
     subplot(1,4,4); phRasterFromTE(TE, trialsByType{6}, 1, 'CLimFactor', CLimFactor);
     title('loval, neutral'); xlabel('time from tone (s)'); 
-  
+if saveOn
     saveas(gcf, fullfile(savepath, 'phRasters_punish.fig'));
     saveas(gcf, fullfile(savepath, 'phRasters_punish.jpg'));    
+end
 
-    %% plot photometry rasters 2 lab meeting
+%%
+    %% plot photometry rasters reward- alternate for lab meeting
+    CLimFactor = 2;
+    h=ensureFigure('phRastersFromTE_reward', 1);
+    mcPortraitFigSetup(h);
+    
+
+%     prcd = TE.Photometry.data(1).dFF(prt, :);
+    subplot(1,4,1); 
+    eventRasterFromTE(TE, trialsByType{1}, 'Port1In', 'trialNumbering', 'consecutive',...
+        'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
+    title('hival, reward'); xlabel('time from reinforcement (s)'); ylabel('trial number');
+    set(gca, 'XLim', [-6 4]); 
+    set(gca, 'YLim', [0 length(find(trialsByType{1}))]);
+    set(gca, 'FontSize', 14)
+
+    
+    subplot(1,4,2); phRasterFromTE(TE, trialsByType{1}, 1, 'CLimFactor', CLimFactor);
+    title('hival, reward', 'Interpreter', 'none'); 
+        set(gca, 'FontSize', 14)
+    subplot(1,4,3); phRasterFromTE(TE, trialsByType{4}, 1, 'CLimFactor', CLimFactor);
+    title('loval, reward'); 
+        set(gca, 'FontSize', 14)
+    subplot(1,4,4); phRasterFromTE(TE, trialsByType{7}, 1, 'CLimFactor', CLimFactor);
+    title('uncued, reward');
+        set(gca, 'FontSize', 14)
+
+
+    saveas(gcf, fullfile(savepath, 'phRasters_reward_alternate.fig'));
+    saveas(gcf, fullfile(savepath, 'phRasters_reward_alternate.jpg'));    
+
+%% plot photometry rasters 2 lab meeting
     h=ensureFigure('phRasters_hival', 1);
     mcPortraitFigSetup(h);
     prt = trialsByType{1};
-    prcd = TE.Photometry.data(1).dFF(prt, :);
+%     prcd = TE.Photometry.data(1).dFF(prt, :);
     subplot(1,2,1); 
-    image('Xdata', [-6 4], 'YData', [1 find(length(prt))],...
-        'CData', prcd, 'CDataMapping', 'Scaled', 'Parent', gca);
-    set(gca, 'CLim', [-0.01 .01], 'YDir', 'Reverse');
+    phRasterFromTE(TE, trialsByType{1}, 1, 'CLimFactor', CLimFactor);
+%     image('Xdata', [-6 4], 'YData', [1 find(length(prt))],...
+%         'CData', prcd, 'CDataMapping', 'Scaled', 'Parent', gca);
+%     set(gca, 'CLim', [-0.01 .01], 'YDir', 'Reverse');
     set(gca, 'XLim', [-6 4]);
+    set(gca, 'YLim', [0 length(find(trialsByType{1}))]);
     set(gca, 'FontSize', 14)
     title('hival, reward'); xlabel('time from reinforcement (s)'); 
     subplot(1,2,2);
@@ -204,19 +241,23 @@ saveas(gcf, fullfile(savepath, 'AnticLickRate_crossSessions.jpg'));
         'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
     title('hival, reward'); xlabel('time from reinforcement (s)'); 
     set(gca, 'XLim', [-6 4]); 
+    set(gca, 'YLim', [0 length(find(trialsByType{1}))]);
     set(gca, 'FontSize', 14)
+if saveOn
     saveas(gcf, fullfile(savepath, 'licks_ph_comp_raster_reward.fig'));
     saveas(gcf, fullfile(savepath, 'licks_ph_comp_raster_reward.jpg'));    
-    
+end
     %% plot photometry rasters lab meeting low value
     h=ensureFigure('phRasters_lowVal', 1); 
     mcPortraitFigSetup(h);    
     prt = trialsByType{5};
-    prcd = TE.Photometry.data(1).dFF(prt, :);
+%     prcd = TE.Photometry.data(1).dFF(prt, :);
     subplot(1,2,1); 
-    image('Xdata', [-6 4], 'YData', [1 find(length(prt))],...
-        'CData', prcd, 'CDataMapping', 'Scaled', 'Parent', gca);
+    phRasterFromTE(TE, trialsByType{5}, 1, 'CLimFactor', CLimFactor);    
+%     image('Xdata', [-6 4], 'YData', [1 find(length(prt))],...
+%         'CData', prcd, 'CDataMapping', 'Scaled', 'Parent', gca);
     set(gca, 'CLim', [-0.01 .01], 'YDir', 'Reverse');
+    set(gca, 'YLim', [0 length(find(trialsByType{5}))]);   
     set(gca, 'XLim', [-6 4]);
     set(gca, 'FontSize', 14)
     title('loVal, punish'); xlabel('time from reinforcement (s)'); 
@@ -224,11 +265,13 @@ saveas(gcf, fullfile(savepath, 'AnticLickRate_crossSessions.jpg'));
     eventRasterFromTE(TE, prt, 'Port1In', 'trialNumbering', 'consecutive',...
         'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
     title('loVal, punish'); xlabel('time from reinforcement (s)'); 
-    set(gca, 'XLim', [-6 4]);        
+    set(gca, 'XLim', [-6 4]);     
+    set(gca, 'YLim', [0 length(find(trialsByType{5}))]);        
     set(gca, 'FontSize', 14)
+if saveOn
     saveas(gcf, fullfile(savepath, 'licks_ph_comp_raster_punish.fig'));
     saveas(gcf, fullfile(savepath, 'licks_ph_comp_raster_punish.jpg'));    
-    
+end
     %% summary statistics
     cComplete_summary = struct(...
         'phCue_CV', zeros(1,9),...
@@ -250,10 +293,10 @@ saveas(gcf, fullfile(savepath, 'AnticLickRate_crossSessions.jpg'));
     cComplete_summary.cueLicks_low = nanmean(TE.csLicks.rate(lowValueTrials));
     cComplete_summary.cueLicks_high = nanmean(TE.csLicks.rate(highValueTrials));        
     cComplete_summary.rewardLicks = nanmean(TE.usLicks.rate(rewardTrials));    
-    
+if saveOn
     save(fullfile(savepath, ['summary_' subjectName '.mat']), 'cComplete_summary');
     disp(['*** saving: ' fullfile(savepath, ['summary_' subjectName '.mat']) ' ***']);
-    
+end
 
     
     
@@ -263,16 +306,19 @@ saveas(gcf, fullfile(savepath, 'AnticLickRate_crossSessions.jpg'));
     ensureFigure('phVSLicks_Scatter', 1);
     scatter(TE.usLicks.count(trialsByType{1}) + rand(length(find(trialsByType{1})), 1) - 0.5, TE.phPeak_us.data(trialsByType{1}), 'b'); hold on;
     scatter(TE.usLicks.count(trialsByType{4}) + rand(length(find(trialsByType{4})), 1) - 0.5, TE.phPeak_us.data(trialsByType{4}), 'r');
-    set(gca, 'FontSize', 12); xlabel('reward licks (jittered)'); ylabel('phReward (dFF-avg)');
-    set(gca, 'XLim', [0 30], 'YLim');
+        set(gca, 'FontSize', 12); xlabel('reward licks (jittered)'); ylabel('phReward (dFF-avg)');
+    set(gca, 'XLim', [0 30]);
+if saveOn
     saveas(gcf, fullfile(savepath, 'dFF_vs_licks.fig'));
     saveas(gcf, fullfile(savepath, 'dFF_vs_licks.jpg'));        
+end
     %% us vs cs dFF for highValue reward condition
     ensureFigure('phUSvsCS_Scatter', 1);
     scatter(TE.phPeak_cs.data(trialsByType{1}), TE.phPeak_us.data(trialsByType{1}), 'b'); hold on;
+if saveOn
     saveas(gcf, fullfile(savepath, 'us_vs_cs_dFF.fig'));
     saveas(gcf, fullfile(savepath, 'us_vs_cs_dFF.jpg'));    
-    
+end
     %% is the trough related to number of licks? 
     TE.phTrough_us = bpCalcPeak_dFF(TE.Photometry, 1, [0 2], TE.Us, 'method', 'min');
     ensureFigure('phDip_Scatter', 1);

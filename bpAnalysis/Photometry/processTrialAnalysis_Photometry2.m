@@ -100,23 +100,16 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         allData = NaN(nTrials, newSamples);   
 %         modData = NaN(nTrials, newSamples);  % raw data that has not been demodulated   
 
-
         for i = 1:length(s.channels)
             fCh = s.channels(i);
             for trial = 1:nTrials
                 trialData = SessionData.demod{trial, fCh}'; % convert to row vector
                 %% in case nidaq acquisition ended early for some reason, pad with NaNs, this should be fixed as of 8/2016
-                if size(trialData, 2) < originalSamples
-                    samplesShort = originalSamples - size(trialData, 2);
-                    thePad = NaN(size(trialData, 1), samplesShort);
-                    allData(trial, :) = decimate([trialData thePad], s.downsample); % pad with NaNs
-%                     modData(trial, :) = decimate([SessionData.NidaqData{trial, 1}( :,fCh)' thePad], s.downsample); 
-                    disp(['*** short samples on trial ' num2str(trial) ' ***']);
-                else
-                    allData(trial, :) = decimate(trialData, s.downsample);
-%                     modData(trial, :) = decimate(SessionData.NidaqData{trial, 1}(:,fCh)', s.downsample);                        
+                downData = decimate(trialData, s.downsample);
+                if length(downData) < newSamples
+                    downData = [downData NaN(1, newSamples - length(downData))];
                 end
-                                 
+                allData(trial, :) = downData;                                 
             end
 
             % convert to deltaF/F
@@ -153,17 +146,31 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                     % fit from beginning of photometry trace (not beginning of baseline). Since
                     % it is a biexponential fit, you want to include the initial bleaching
                     % component
-                    fo = fitoptions('exp2');
-                    fo.Lower = [0 -Inf 0 -Inf];
-                    fo.Upper = [Inf 0 Inf 0];
+%                     fo = fitoptions('exp2');
+%                     fo.Lower = [0 -Inf 0 -Inf];
+%                     fo.Upper = [Inf 0 Inf 0];
+%                     [fitobject, gof, output] = ...
+%                         fit(trialMeanX, trialMeanY, 'exp2', fo);                    
+                    fo = fitoptions('Method', 'NonlinearLeastSquares',...
+                        'Lower', [min(trialMeanY) * 0.98, 0, -1,],...
+                        'Upper', [min(trialMeanY) Inf 0],...
+                        'StartPoint', [min(trialMeanY) * 0.99, 0.01, -0.1,]);
+%                     fo = fitoptions('Method', 'NonlinearLeastSquares',...
+%                         'Lower', [0 -Inf 0],...
+%                         'Upper', [Inf 0 Inf],...
+%                         'StartPoint', [1 -1 1]);
+                    ft = fittype('a + b*exp(c*x)', 'options', fo);
+%                     ft = fittype('a*exp(b*x) + c', 'options', fo);
                     [fitobject, gof, output] = ...
-                        fit(trialMeanX, trialMeanY, 'exp2', fo);
+                        fit(trialMeanX, trialMeanY, ft, fo);
                     Photometry.bleachFit(si).fitobject_trial = fitobject;
                     Photometry.bleachFit(si).gof_trial = gof;
                     Photometry.bleachFit(si).output_trial = output;
                     Photometry.bleachFit(si).trialTemplate = trialMeanY;
-                    x = (1:size(allData, 2));     
-                    trialFit = fitobject.a * exp(fitobject.b * x) + fitobject.c * exp(fitobject.d * x);
+                    x = (1:size(allData, 2));    
+%                     trialFit = fitobject.a * exp(fitobject.b * x) + fitobject.c * exp(fitobject.d * x);                    
+                    trialFit = fitobject.a + fitobject.b * exp(fitobject.c * x);% + fitobject.d * exp(fitobject.e * x);
+%                     trialFit = fitobject.a * exp(fitobject.b * x) + fitobject.c;                   
                     Photometry.bleachFit(si).trialFit = trialFit;                    
                     % set mean of true baseline period to zero
                     trialFit = trialFit - nanmean(trialFit(1, blStartP:blEndP));
