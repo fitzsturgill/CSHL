@@ -7,15 +7,12 @@ function ensureDirectory(fullpath)
     subpath = '';
     while 1
         [fname, fullpath] = strtok(fullpath, filesep);
+        subpath = fullfile(subpath, fname);        
         if isempty(fname)
             break
-        elseif ~exist(fname, 'dir')
-            if isempty(subpath)
-                error('root folder needs to exist');
-            end
+        elseif ~exist(subpath, 'dir')
             mkdir(subpath, fname);
         end
-        subpath = fullfile(subpath, fname);
     end
     
     

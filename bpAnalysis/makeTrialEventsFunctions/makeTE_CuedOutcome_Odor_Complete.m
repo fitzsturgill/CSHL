@@ -56,7 +56,7 @@ function TE = makeTE_CuedOutcome_Odor_Complete(sessions)
     TE.sessionIndex = TE.sessionIndex';
     TE.sessionChange = [0; diff(TE.sessionIndex)];    
     
-    
+    TE.cueCondition = ismember(TE.trialType, 1:3) * 2 + ismember(TE.trialType, 4:6) * 1;
     
 %     
 %     function TE = makeTE_CuedOutcome_Odor_Complete(TE, sessions)

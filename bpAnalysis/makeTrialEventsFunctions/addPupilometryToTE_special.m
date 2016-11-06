@@ -1,4 +1,7 @@
-function TE = addPupilometryToTE(TE, varargin)
+function TE = addPupilometryToTE_special(TE, varargin)
+%% 16 11 05: Deals with fact that sometimes frame rate is 30 sometimes 60 in recent sessions
+% upsample 30Hz sessions so that final frame rate is 60
+
 
 % Adds pupil data to TE.  Pupil data for every session loaded into TE
 % assumed to to be saved in a folder (e.g. \Pupil_160814\). Pupil data .mat
@@ -12,6 +15,7 @@ function TE = addPupilometryToTE(TE, varargin)
         'frameRate', 60;... % 8/28/2016- changed channels default from [] to 1
         'duration', 11;...  % assumes constant trial duration across TE
         'zeroField', 'Us';...
+        'blWindow', [1 4];...
         'startField', 'PreCsRecording';... % extract time stamp w.r.t. start of Bpod trial
         'rootPath', [];...
         'normMode', 'bySession';...  % [bySession, byTrial]
@@ -32,7 +36,7 @@ function TE = addPupilometryToTE(TE, varargin)
     %% initialize pupil structure
     dX = 1/s.frameRate;
     startX = []; % to be determined
-    nFrames = round(s.frameRate * s.duration); % should be an integer anyway
+    nFrames = round(s.frameRate * max(s.duration)); % should be an integer anyway
     normFields = {...
         'eyeArea', 'eyeAreaNorm';...
         'pupArea', 'pupAreaNorm';...
@@ -53,8 +57,14 @@ function TE = addPupilometryToTE(TE, varargin)
     
     %% extract session dates in TE and generate matching pupil folder names
     sessionnames = unique(TE.filename);
-
+    if ~isscalar(s.duration)
+        assert(length(s.duration) == length(sessionnames), 's.duration, if nonscalar, must have length equal to # sessions');
+    else
+        s.duration = repmat(s.duration, length(sessionnames), 1);
+    end
     for counter = 1:length(sessionnames)
+
+            
         sessionname = sessionnames{counter};
         pupilFolder = parseFileName(sessionname); % see subfunction
         pupilPath = fullfile(rootPath, pupilFolder, filesep); % filesep returns system file separator character
@@ -71,7 +81,7 @@ function TE = addPupilometryToTE(TE, varargin)
         fileList = {};
         [fileList{1:length(fs)}] = fs(:).name; % see deal documentation I think...
         [fileList,~] = sort_nat(fileList); % alphanumeric sorting
-        
+        framesDesired = round(s.frameRate * s.duration(counter));
         % find matching session indices within TE
         si = find(filterTE(TE, 'filename', sessionname));
         for i = 1:length(si)
@@ -84,20 +94,22 @@ function TE = addPupilometryToTE(TE, varargin)
                 break
             end
             loaded = load(fileList{i});
-            framesToLoad = min(nFrames, max(loaded.pupilData.currentFrame));
+            framesAvailable = max(loaded.pupilData.currentFrame);
+            
             pupil.frameRate(tei,1) = s.frameRate;
             pupil.settings{tei} = loaded.pupilData.settings;          
-            pupil.eyeArea(tei, 1:framesToLoad) = loaded.pupilData.eye.area(1:framesToLoad);
-            pupil.blinkDetected(tei, 1:framesToLoad) = loaded.pupilData.eye.blinkDetected(1:framesToLoad);
-            pupil.pupArea(tei, 1:framesToLoad) = loaded.pupilData.pupil.area(1:framesToLoad);
-            pupil.pupDiameter(tei, 1:framesToLoad) = loaded.pupilData.pupil.diameter(1:framesToLoad);
-            pupil.pupResidual(tei, 1:framesToLoad) = loaded.pupilData.pupil.circResidual(1:framesToLoad);
+            pupil.eyeArea(tei, 1:framesDesired) = resample(loaded.pupilData.eye.area, framesDesired, framesAvailable);
+            pupil.blinkDetected(tei, 1:framesDesired) = resample(loaded.pupilData.eye.blinkDetected, framesDesired, framesAvailable);
+            pupil.pupArea(tei, 1:framesDesired) = resample(loaded.pupilData.pupil.area, framesDesired, framesAvailable);
+            pupil.pupDiameter(tei, 1:framesDesired) = resample(loaded.pupilData.pupil.diameter, framesDesired, framesAvailable);
+            pupil.pupResidual(tei, 1:framesDesired) = resample(loaded.pupilData.pupil.circResidual, framesDesired, framesAvailable);
             pupil.startTime(tei, 1) = TE.(s.startField){tei}(1);
             if counter == 1 && i == 1
                 startX = TE.(s.startField){1}(1) - TE.(s.zeroField){1}(1);
                 pupil.xData = pupil.xData + startX;
-                blStartP = 1; % just start at beginning of video for baseline
-                blEndP = bpX2pnt(0, s.frameRate, startX); % go to zero point        
+%                 blStartP = 1; % just start at beginning of video for baseline
+                blStartP = bpX2pnt(s.blWindow(1), s.frameRate); % start 1s into video recording                
+                blEndP = bpX2pnt(s.blWindow(2), s.frameRate); % go to zero point        
             end
         end  
         %% remove outliers
@@ -114,9 +126,7 @@ function TE = addPupilometryToTE(TE, varargin)
                 case 'bySession'
                     pupil.(normField)(si, :) = rawData / nanmean(nanmean(rawData(:, blStartP:blEndP), 2), 1); % divide by scalar
             end
-        end
-                    
-            
+        end    
     end
     TE.pupil = pupil;
 end

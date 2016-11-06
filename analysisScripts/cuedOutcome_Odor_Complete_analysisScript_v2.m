@@ -72,7 +72,7 @@ end
 
 
 %% generate trial lookups for different combinations of conditions
-
+    validTrials = filterTE(TE, 'reject', 0);
     highValueTrials = filterTE(TE, 'trialType', 1:3, 'reject', 0);
     lowValueTrials = filterTE(TE, 'trialType', 4:6, 'reject', 0);
     uncuedTrials = filterTE(TE, 'trialType', 7:9, 'reject', 0);    
@@ -120,7 +120,15 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'phAverages.fig'));
     saveas(gcf, fullfile(savepath, 'phAverages.jpg'));
 end
-    %% plot lick averages
+
+%% graph to pick phasic and sustained analysis windows
+ensureFigure('windowPick', 1);
+axes;
+phPlotAverageFromTE(TE, {lowValueTrials, highValueTrials}, 1,...
+        'window', [-4 0], 'linespec', {'m', 'g'}); 
+    
+
+%% plot lick averages
     h = ensureFigure('Lick_Averages', 1);
 %     mcPortraitFigSetup(h);
     mcLandscapeFigSetup(h);

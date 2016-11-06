@@ -46,11 +46,15 @@ function peak = bpCalcPeak_Pupil(pupil, window, zeroTimes, varargin)
         nFrames = length(pupil.(s.pupilField)(trial, :));
         trialZero = zeroTimes2(trial) - pupil.startTime(trial);        
         p1 = bpX2pnt(s.window(1) + trialZero, frameRate);
-        p2 = bpX2pnt(s.window(2) + trialZero, frameRate);
+        p2 = bpX2pnt(s.window(2) + trialZero, frameRate);        
+        
+%         trialZero = zeroTimes2(trial) - pupil.startTime(trial);        
+%         p1 = bpX2pnt(s.window(1) + trialZero, frameRate);
+%         p2 = bpX2pnt(s.window(2) + trialZero, frameRate);
         
 %         p1 = max(1, bpX2pnt(w2(1), frameRate));
 %         p2 = min(nFrames, bpX2pnt(w2(2), frameRate));        
-        trialData = pupil.(s.pupilField)(trial, p1:p2);        
+        trialData = pupil.(s.pupilField)(trial, p1:p2);
         switch s.method
             case 'mean'
                 peak.data(trial) = mean(trialData);
