@@ -133,7 +133,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                     Photometry.bleachFit(si).output_session = output;
                     x = (1:length(blF_raw))';
                     blF = fitobject.a * exp(fitobject.b * x) + fitobject.c * exp(fitobject.d * x);
-                    blF = repmat(blF, 1, size(allData, 2));                    
+                    blF = repmat(blF, 1, size(allData, 2));
                 otherwise
             end
             
@@ -180,7 +180,8 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             end
             Photometry.data(fCh).dFF(tcounter:tcounter+nTrials - 1, :) = dF ./ blF;  
             Photometry.data(fCh).raw(tcounter:tcounter+nTrials - 1, :) = allData;                  
-            Photometry.data(fCh).blF(tcounter:tcounter+nTrials - 1, 1) = mean(blF, 2);       
+            Photometry.data(fCh).blF(tcounter:tcounter+nTrials - 1, 1) = mean(blF, 2); 
+            Photometry.data(fCh).blF_raw(tcounter:tcounter+nTrials - 1, 1) = blF_raw;                   
             Photometry.data(fCh).ch = fCh;
         end
         Photometry.startTime(tcounter:tcounter+nTrials - 1) = startTimes';

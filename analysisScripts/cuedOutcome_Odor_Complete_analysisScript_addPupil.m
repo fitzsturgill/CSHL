@@ -1,7 +1,8 @@
 % cuedOutcome_Odor_Complete_analysisScript_addPupil
 %%
 
-TE = addPupilometryToTE_special(TE, 'duration', [11; 11; 10; 10; 10; 10], 'normMode', 'byTrial');
+% TE = addPupilometryToTE_special(TE, 'duration', [11; 11; 10; 10; 10; 10], 'normMode', 'byTrial');
+TE = addPupilometryToTE_special(TE, 'normMode', 'byTrial');
 %%
 phasicWindow = [-2.7, -2.2];
 sustainedWindow = [-1.5, 0];
@@ -14,17 +15,19 @@ TE.sustainedLicks = countEventFromTE(TE, 'Port1In', sustainedWindow, TE.Us);
 pupLag = 0.3; % pupil dilation lags cholinergic signal (Nelson and Mooney)
 TE.phasicPup = bpCalcPeak_Pupil(TE.pupil, phasicWindow + pupLag, TE.Us);
 TE.sustainedPup = bpCalcPeak_Pupil(TE.pupil, sustainedWindow + pupLag, TE.Us);
+TE.pupBaseline = bpCalcPeak_Pupil(TE.pupil, [1 4]);
 
 TE.cueCondition = ismember(TE.trialType, 1:3) * 2 + ismember(TE.trialType, 4:6) * 1;
 
 %%
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
-basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
-subjectName = TE.filename{1}(1:7);
-disp(subjectName);
-savepath = fullfile(basepath, subjectName, '_pupil');
-ensureDirectory(savepath);
+% basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
+% basepath = uigetdir;
+% subjectName = TE.filename{1}(1:7);
+% disp(subjectName);
+% savepath = fullfile(basepath, subjectName, '_pupil');
+% ensureDirectory(savepath);
 
 %%
 if saveOn
@@ -63,11 +66,12 @@ end
 %% lets try and regress out the cue and then fit the residuals to the pupil measurements
 
 
-baselinePup = TE.pupBaseline.data(validTrials);
-sustainedPup = TE.sustainedPup.data(validTrials);
-sustainedLicks = TE.sustainedLicks.rate(validTrials);
-sustainedPh = TE.sustainedAvg.data(validTrials);
-cueCondition = categorical(TE.cueCondition(validTrials))'; % assert categorical data type
+trialsToTest = validTrials;
+sustainedPup = TE.sustainedPup.data(trialsToTest);
+sustainedLicks = TE.sustainedLicks.rate(trialsToTest);
+sustainedPh = TE.sustainedAvg.data(trialsToTest);
+cueCondition = categorical(TE.cueCondition(trialsToTest))'; % assert categorical data type
+baselinePup = TE.pupBaseline.data(trialsToTest);
 
 regressData = table(cueCondition, sustainedPh); 
 % default is for last table entry to be the response variable
@@ -78,6 +82,7 @@ residuals = mdl.Residuals.Raw;
 h = ensureFigure('sustainedCue_modelFig', 1);
 mcLandscapeFigSetup(h);
 mdl_pup = fitlm(table(sustainedPup, residuals), 'linear');
+% mdl_pup = fitlm(table(baselinePup, residuals), 'linear');
 mdl_licks = fitlm(table(sustainedLicks, residuals), 'linear');
 mdl_licks2 = fitlm(table(sustainedLicks, residuals), 'linear', 'Exclude', mdl_licks.Diagnostics.CooksDistance > 1);
 subplot(2,2,1);
