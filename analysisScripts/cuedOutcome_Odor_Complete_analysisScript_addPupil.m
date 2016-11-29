@@ -1,8 +1,8 @@
 % cuedOutcome_Odor_Complete_analysisScript_addPupil
 %%
 
-% TE = addPupilometryToTE_special(TE, 'duration', [11; 11; 10; 10; 10; 10], 'normMode', 'byTrial');
-TE = addPupilometryToTE_special(TE, 'normMode', 'byTrial');
+TE = addPupilometryToTE_special(TE, 'duration', [11; 11; 10; 10; 10; 10], 'normMode', 'byTrial');
+% TE = addPupilometryToTE_special(TE, 'normMode', 'byTrial');
 %%
 phasicWindow = [-2.7, -2.2];
 sustainedWindow = [-1.5, 0];
@@ -97,6 +97,8 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'sustainedCue_modelFig.jpg'));
 end
 
+
+
 %% do the same for phasic component
 
 phasicPup = TE.phasicPup.data(validTrials);
@@ -137,19 +139,57 @@ subplot(1,2,1);
 phPlotAverageFromTE(TE, {highValueTrials, lowValueTrials, uncuedTrials}, 1, 'linespec', {'b', 'r', 'k'}, 'window', [-7 0]); hold on;
 set(gca, 'XLim', [-7 0], 'XGrid', 'on');set(gca, 'FontSize', 12, 'TickDir', 'out');
 title('ChAT dF/F (hi vs lo value cue)');
-subplot(1,2,2); 
-plot(TE.pupil.xData(1:pupilZero), nanmean(TE.pupil.pupDiameterNorm(highValueTrials, (1:pupilZero))), 'b'); % 
-hold on;
-plot(TE.pupil.xData(1:pupilZero), nanmean(TE.pupil.pupDiameterNorm(lowValueTrials, (1:pupilZero))), 'r'); % 
-plot(TE.pupil.xData(1:pupilZero), nanmean(TE.pupil.pupDiameterNorm(uncuedTrials, (1:pupilZero))), 'k'); % 
+subplot(1,2,2);
+plotPupilAverageFromTE(TE, {highValueTrials, lowValueTrials, uncuedTrials}, 'linespec', {'b', 'r', 'k'}, 'window', [-7 0]);
+% plot(TE.pupil.xData(1:pupilZero), nanmean(TE.pupil.pupDiameterNorm(highValueTrials, (1:pupilZero))), 'b'); % 
+% hold on;
+% plot(TE.pupil.xData(1:pupilZero), nanmean(TE.pupil.pupDiameterNorm(lowValueTrials, (1:pupilZero))), 'r'); % 
+% plot(TE.pupil.xData(1:pupilZero), nanmean(TE.pupil.pupDiameterNorm(uncuedTrials, (1:pupilZero))), 'k'); % 
 set(gca, 'XLim', [-7 0], 'XGrid', 'on');set(gca, 'FontSize', 12, 'TickDir', 'out');
 xlabel('time from reinforcement (s)');
-ylabel('Pupil Diameter norm (by session)');
+ylabel('Pupil Diameter norm (by trial)');
 title('Pupil (hi vs lo value cue)');
 
 if saveOn
     saveas(gcf, fullfile(savepath, 'pupilAverages_cue.fig'));
     saveas(gcf, fullfile(savepath, 'pupilAverages_cue.jpg'));
+end
+
+%% lets plot all the pupil conditions....
+    h=ensureFigure('Pupil_Averages', 1); 
+    mcLandscapeFigSetup(h);
+
+    pm = [3 2];
+    pupField = 'pupDiameterNorm';
+    % - 6 0 4
+    subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = plotPupilAverageFromTE(TE, trialsByType([1 3 7]), 'measurementField', pupField); %high value, reward
+    legend(hl, {'hival, rew', 'hival, omit', 'rew'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    title('high value'); ylabel('Pupil Diam. (norm)'); xlabel('time from reinforcement (s)'); textBox(TE.filename{1}(1:7));
+
+    subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = plotPupilAverageFromTE(TE, trialsByType([5 6 8]), 'measurementField', pupField); % low value, punish
+    legend(hl, {'loval, pun', 'loval, omit', 'pun'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    title('low value'); ylabel('Pupil Diam. (norm)'); xlabel('time from reinforcement (s)'); 
+
+    subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = plotPupilAverageFromTE(TE, trialsByType([1 4 7]), 'measurementField', pupField); % reward, varying degrees of expectation
+    legend(hl, {'hival, rew', 'loval, rew', 'rew'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    title('reward all'); ylabel('Pupil Diam. (norm)'); xlabel('time from reinforcement (s)');     
+
+    subplot(pm(1), pm(2), 4, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = plotPupilAverageFromTE(TE, trialsByType([5 2 8]), 'measurementField', pupField); % punishment, varying degrees of expectation
+    legend(hl, {'loval, pun', 'hival, pun', 'pun'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    title('punish all'); ylabel('Pupil Diam. (norm)'); xlabel('time from reinforcement (s)'); 
+
+    subplot(pm(1), pm(2), 5, 'FontSize', 12, 'LineWidth', 1); [ha, hla] = plotPupilAverageFromTE(TE, {lowValueTrials, highValueTrials},...
+        'window', [-6 0], 'linespec', {'m', 'g'}, 'measurementField', pupField); hold on;
+    
+    subplot(pm(1), pm(2), 5); [ha, hl] = plotPupilAverageFromTE(TE, {rewardTrials, punishTrials, omitTrials},...
+        'window', [0 4], 'linespec', {'b', 'r', 'k'}, 'measurementField', pupField);
+    hl = [hla hl];
+    legend(hl, {'loval', 'hival', 'rew', 'pun', 'omit'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    title('Balazs'); ylabel('Pupil Diam. (norm)'); xlabel('time from reinforcement (s)'); 
+    
+if saveOn    
+    saveas(gcf, fullfile(savepath, 'phAverages.fig'));
+    saveas(gcf, fullfile(savepath, 'phAverages.jpg'));
 end
 
 %% wtf number of frames lower in certain sessions
@@ -170,3 +210,34 @@ for counter = 1:nSessions
     title(num2str(counter));
 end
 
+
+%% for sfn, ChAT_34
+window = [-5 0];
+allIndices = find(validTrials);
+windowPoints = bpX2pnt(window, TE.Photometry.sampleRate, -7);
+
+[~, allSortedIndices] = sort(TE.sustainedPup.data(allIndices));
+
+qsi.allTop = allSortedIndices(1:round(length(allIndices)/5));
+qsi.allBottom = allSortedIndices((end - round(length(allIndices)/5) + 1):end);
+
+ensureFigure('phAverages_byPupilQuintile', 1);
+axes;
+xData = TE.Photometry.xData(windowPoints(1):windowPoints(2));
+plot(xData, smooth(nanmean(TE.Photometry.data.dFF(qsi.allBottom, windowPoints(1):windowPoints(2)))), 'b'); hold on;
+plot(xData, smooth(nanmean(TE.Photometry.data.dFF(qsi.allTop, windowPoints(1):windowPoints(2)))), 'c');
+set(gca, 'XLim', window);
+formatFigureGRC([10 8]); 
+saveas(gcf, fullfile(sfnPath, 'phAverages_byPupilQuintile.epsc'));
+saveas(gcf, fullfile(sfnPath, 'phAverages_byPupilQuintile.fig'));
+
+%%
+ensureFigure('residualScatterPlot', 1);
+plot(mdl_pup);
+formatFigureGRC([10 8]);
+
+legend off;
+title(''); ylabel(''); xlabel('');
+set(gca, 'XLim', [0.75 1.45], 'YLim', [-8.5e-3, 4e-3]);
+saveas(gcf, fullfile(sfnPath, 'residualScatterPlot.epsc'));
+saveas(gcf, fullfile(sfnPath, 'residualScatterPlot.fig'));

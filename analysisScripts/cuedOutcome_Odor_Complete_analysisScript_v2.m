@@ -182,10 +182,10 @@ end
     title('uncued, reward');
     subplot(1,4,4); phRasterFromTE(TE, trialsByType{3}, 1, 'CLimFactor', CLimFactor);
     title('hival, neutral'); xlabel('time from tone (s)'); 
-
+if saveOn
     saveas(gcf, fullfile(savepath, 'phRasters_reward.fig'));
     saveas(gcf, fullfile(savepath, 'phRasters_reward.jpg'));    
-    
+end
     h = ensureFigure('phRastersFromTE_punish', 1); 
     mcPortraitFigSetup(h);
     subplot(1,4,1); phRasterFromTE(TE, trialsByType{2}, 1, 'CLimFactor', CLimFactor);

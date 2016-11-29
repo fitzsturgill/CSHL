@@ -46,6 +46,7 @@ function TE = addPupilometryToTE_special(TE, varargin)
     pupil = struct();
     pupil.loadSettings = s; % scalar
     pupil.settings = cell(length(TE.filename), 1);
+    
     pupil.xData = 0:dX:(nFrames - 1) * dX;
     pupil.startTime = NaN(length(TE.filename), 1);
     pupil.frameRate = NaN(length(TE.filename), 1);

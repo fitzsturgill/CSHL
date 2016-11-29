@@ -1,4 +1,4 @@
-function varargout = plotPupilAverageFromTE(TE, trials, ch, varargin)
+function varargout = plotPupilAverageFromTE(TE, trials, varargin)
 % vargout- first output is axis handle, second is vector of solid line handles to bounded plots
 
 % trials- may be cell array of trials for different conditions
@@ -6,14 +6,13 @@ function varargout = plotPupilAverageFromTE(TE, trials, ch, varargin)
         'ax', gca;...
         'fig', gcf;...
         'PupilField', 'pupil';...
+        'measurementField', 'pupDiameterNorm';...
         'linespec', [];...
         'window', [];...
         };    
     [s, ~] = parse_args(defaults, varargin{:});
 
-%     if isempty(s.PhotometryField)
-%         s.PhotometryField = 'Photometry';
-%     end
+
     if isempty(s.linespec)
         s.linespec = {'k', 'r', 'b', 'g'};
     end
@@ -24,7 +23,7 @@ function varargout = plotPupilAverageFromTE(TE, trials, ch, varargin)
         figure(s.fig);
         s.ax = axes;
     end
-    pupil = s.PhotometryField;
+    pupil = s.PupilField;
     
     if ~iscell(trials)
         trials = {trials};
@@ -34,10 +33,13 @@ function varargout = plotPupilAverageFromTE(TE, trials, ch, varargin)
         error([pupil ' field does not exist']);
     end
     
+
+    frameRate = max(TE.(pupil).frameRate);
+
     xData = TE.(pupil).xData;
     if ~isempty(s.window)
-        startP = max(1, bpX2pnt(s.window(1), TE.(pupil).sampleRate, xData(1)));
-        endP = min(length(xData), bpX2pnt(s.window(2), TE.(pupil).sampleRate, xData(1)));
+        startP = max(1, bpX2pnt(s.window(1), frameRate, xData(1)));
+        endP = min(length(xData), bpX2pnt(s.window(2), frameRate, xData(1)));
     else
         startP = 1;
         endP = length(xData);
@@ -49,7 +51,7 @@ function varargout = plotPupilAverageFromTE(TE, trials, ch, varargin)
     for counter = 1:length(trials)
         thisLinespec = s.linespec{rem(counter - 1, length(s.linespec)) + 1}; % cycle through linespec if it isn't long enough        
         currentTrials = trials{counter};
-        currentData = TE.(pupil).data(ch).dFF(currentTrials, startP:endP);
+        currentData = TE.(pupil).(s.measurementField)(currentTrials, startP:endP);
         avg = nanmean(currentData);
         avgSEM = std(currentData, 'omitnan') ./ sqrt(sum(~isnan(currentData), 1));
         thisHl = boundedline(xData, avg, avgSEM, thisLinespec, ax, 'alpha');       

@@ -54,6 +54,7 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
     
     
     sessionBreaks = find(diff(TE.sessionIndex(trials)))';            
+%     sessionBreaks = find(diff(TE.epoch(trials)))';     % kludge for sfn poster, show epoch change (reversal)
     ih = image('Xdata', s.window, 'YData', [1 size(cData, 1)],...
         'CData', cData, 'CDataMapping', 'Scaled', 'Parent', gca);
     line(repmat(s.window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
