@@ -51,7 +51,11 @@ function varargout = phPlotSessionAverage(analysis, type, outcome, fCh, varargin
 %         avgX = decimate(avgX, downsample);
 %         avg = decimate(avg, downsample);
 %         avgSEM = decimate(avgSEM, downsample); % this is wrong
-        thisHl = boundedline(avgX, avg, avgSEM, thisLinespec, ax, 'alpha');        
+        try
+            thisHl = boundedline(avgX, avg, avgSEM, thisLinespec, ax, 'alpha');        
+        catch
+            thisHl = plot(NaN, NaN); % kludge in case there is only one of that trial type
+        end
         hl(counter) = thisHl;
     end
         

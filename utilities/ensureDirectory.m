@@ -3,19 +3,17 @@ function ensureDirectory(fullpath)
 % recursively creates folders along a directory path
 % fullpath = fully specified directory path
     
-    % to do warning:
-    warning('I think subpath should be initialized as empty on pc and \ on mac');
-    
-    subpath = '';
+    if ispc
+        subpath = '';
+    else
+        subpath = '/'; % assumed to be a mac
+    end
     while 1
-        [fname, fullpath] = strtok(fullpath, filesep);
-        subpath = fullfile(subpath, fname);        
+        [fname, fullpath] = strtok(fullpath, filesep);     
         if isempty(fname)
             break
-        elseif ~exist(subpath, 'dir')
+        elseif ~exist(fullfile(subpath, fname), 'dir')
             mkdir(subpath, fname);
         end
+        subpath = fullfile(subpath, fname);           
     end
-    
-    
-        

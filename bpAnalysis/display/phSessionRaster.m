@@ -77,7 +77,7 @@ function phSessionRaster(analysis, type, outcome, fCh, varargin)
         
     x1 = min(analysis.Photometry.data(type, outcome).x(:,1));
     x2 = max(analysis.Photometry.data(type, outcome).x(:,1));
-    y1 = 1;
+    y1 = 0.99;
     y2 = size(cData, 1);
     
     ih = image('XData', [x1 x2], 'YData', [y1 y2], 'CData', cData, 'CDataMapping', 'Scaled', 'Parent', ax);
