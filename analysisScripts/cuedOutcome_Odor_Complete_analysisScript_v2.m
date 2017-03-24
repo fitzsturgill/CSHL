@@ -312,16 +312,37 @@ end
     
 
     
-    %% dFF vs licks scatter plot
+    %% dFF vs reward licks scatter plot
     ensureFigure('phVSLicks_Scatter', 1);
-    scatter(TE.usLicks.count(trialsByType{1}) + rand(length(find(trialsByType{1})), 1) - 0.5, TE.phPeak_us.data(trialsByType{1}), 'b'); hold on;
-    scatter(TE.usLicks.count(trialsByType{4}) + rand(length(find(trialsByType{4})), 1) - 0.5, TE.phPeak_us.data(trialsByType{4}), 'r');
-        set(gca, 'FontSize', 12); xlabel('reward licks (jittered)'); ylabel('phReward (dFF-avg)');
+    scatter(TE.csLicks.count(trialsByType{1}) + (rand(length(find(trialsByType{1})), 1) - 0.5) * .1, TE.phPeak_us.data(trialsByType{1}), 'b'); hold on;
+    scatter(TE.csLicks.count(trialsByType{4}) + (rand(length(find(trialsByType{4})), 1) - 0.5) * .1, TE.phPeak_us.data(trialsByType{4}), 'r');
+        set(gca, 'FontSize', 12); xlabel('cue licks (jittered)'); ylabel('phReward (dFF-avg)');
     set(gca, 'XLim', [0 30]);
 if saveOn
     saveas(gcf, fullfile(savepath, 'dFF_vs_licks.fig'));
     saveas(gcf, fullfile(savepath, 'dFF_vs_licks.jpg'));        
 end
+
+
+
+
+    %% dFF vs cue licks scatter plot
+    ensureFigure('phVS_cueLicks_Scatter_2', 1);
+    hrtrials = find(trialsByType{1});
+%     hrtrials = hrtrials([1:300 302:end]); % kludge for ChAT_42, NaN in
+%  lick count
+    lrtrials = find(trialsByType{4});
+    scatter(TE.csLicks.count(hrtrials), TE.phPeak_us.data(hrtrials), 'k'); hold on;
+    scatter(TE.csLicks.count(trialsByType{4}), TE.phPeak_us.data(lrtrials), 'r');
+%     fo = fitoptions('StartPoint', [-5e-4, .005]);
+%     fob = fit(TE.csLicks.count(hrtrials), TE.phPeak_us.data(hrtrials), 'poly1', 'options', fo);
+%     plot(fob);
+    set(gca, 'FontSize', 12); xlabel('cue licks (jittered)'); ylabel('phReward (dFF-avg)');
+    set(gca, 'XLim', [0 10]);
+% if saveOn
+%     saveas(gcf, fullfile(savepath, 'dFF_vs_cueLicks.fig'));
+%     saveas(gcf, fullfile(savepath, 'dFF_vs_cueLicks.jpg'));        
+% end
     %% us vs cs dFF for highValue reward condition
     ensureFigure('phUSvsCS_Scatter', 1);
     scatter(TE.phPeak_cs.data(trialsByType{1}), TE.phPeak_us.data(trialsByType{1}), 'b'); hold on;
