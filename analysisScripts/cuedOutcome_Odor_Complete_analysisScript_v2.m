@@ -4,7 +4,7 @@ saveOn = 1;
 sessions = bpLoadSessions;
 %%
 TE = makeTE_CuedOutcome_Odor_Complete(sessions);
-TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'expFit', 'blMode', 'byTrial');
+TE.Photometry = processTrialAnalyszis_Photometry2(sessions, 'dFFMode', 'expFit', 'blMode', 'byTrial');
 
 
 %% extract peak trial dFF responses to cues and reinforcement and lick counts

@@ -21,7 +21,8 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
         zeroTimes = [];
     end
     defaults = {...
-        'method', 'mean';... % 'mean' or 'max' or 'min'
+        'method', 'mean';... % 'mean' or 'max', 'min', or 'percentile'
+        'percentile', [];... % only used with percentile calculation
         'phField', 'dFF';...
 %         'zeroTimes', [];... % why didn't this work as optional? isssue
 %         with parseargs...
@@ -52,10 +53,14 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
         zeroTimes2 = zeroTimes; % not yet tested
     end
     
+    if size(s.window, 1) == 1
+        s.window = repmat(s.window, nTrials, 1);
+    end
+    
     for trial = 1:nTrials
         trialZero = zeroTimes2(trial) - Photometry.startTime(trial);        
-        p1 = bpX2pnt(s.window(1) + trialZero, Photometry.sampleRate);
-        p2 = bpX2pnt(s.window(2) + trialZero, Photometry.sampleRate);
+        p1 = bpX2pnt(s.window(trial,1) + trialZero, Photometry.sampleRate);
+        p2 = bpX2pnt(s.window(trial,2) + trialZero, Photometry.sampleRate);
         trialData = Photometry.data(ch).(s.phField)(trial, p1:p2);
         switch s.method
             case 'mean'
