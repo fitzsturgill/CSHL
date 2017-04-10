@@ -22,7 +22,7 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
     end
     defaults = {...
         'method', 'mean';... % 'mean' or 'max', 'min', or 'percentile'
-        'percentile', [];... % only used with percentile calculation
+        'percentile', 0.9;... % only used with percentile calculation, default = 0.9, for 90th%
         'phField', 'dFF';...
 %         'zeroTimes', [];... % why didn't this work as optional? isssue
 %         with parseargs...
@@ -69,6 +69,8 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
                 peak.data(trial) = max(trialData);
             case 'min'
                 peak.data(trial) = min(trialData);
+            case 'percentile'
+                peak.data(trial) = percentile(trialData, s.percentile);
             otherwise
                 error('*** incorrect peak determination method ***');
         end

@@ -61,7 +61,7 @@ function TE = makeTE_LNL_odor_V2(sessions)
         TE.sessionIndex(cellfun(@(x) strcmp(x, sname), TE.filename)) = counter;
     end
     TE.sessionIndex = TE.sessionIndex';
-    TE.sessionChange = [0; diff(TE.sessionIndex)];    
+    TE.sessionChange = [0; diff(TE.sessionIndex)];
     
-    TE.answerLicks = countEventFromTE(TE, 'Port1In', [-2 0], TE.Us);
+    
     

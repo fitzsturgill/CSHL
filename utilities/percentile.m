@@ -5,7 +5,7 @@ function out = percentile(a,f)
     n = numel(a);
     a = reshape(a, n, 1);
     b = sort(a);
-    out = b(max(1, round(n * f)));
+    out = b(min(n, max(1, round(n * f))));
     
     
 %     nd = ndims(a);   
