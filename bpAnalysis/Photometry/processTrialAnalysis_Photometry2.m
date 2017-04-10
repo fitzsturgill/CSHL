@@ -74,8 +74,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             );    
     end
     
-    warning('Need to implement bleachFit by channels');
-    Photometry.bleachFit = struct(... % outputs from fit function in curve fitting toolbox
+    bleachFit = struct(... % outputs from fit function in curve fitting toolbox
         'fitobject_session', [],...
         'gof_session', [],...
         'output_session', [],...
@@ -83,10 +82,12 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         'gof_trial', [],...
         'output_trial', [],...
         'trialFit', [],...
-        'trialTemplate', []...
+        'trialTemplate', [],...
+        'ch', []...
         );
 
-    Photometry.data = repmat(data, length(s.channels), 1); % length = # channels                
+    Photometry.data = repmat(data, length(s.channels), 1); % length = # channels  
+    Photometry.bleachFit = repmat(bleachFit, length(sessions), length(s.channels));
     h = waitbar(0, 'Processing Photometry');    
     
     tcounter = 1;    
@@ -115,6 +116,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             % convert to deltaF/F
             blStartP = bpX2pnt(s.baseline(1), sampleRate);
             blEndP = bpX2pnt(s.baseline(2), sampleRate); 
+            Photometry.bleachFit(si, i).ch = fCh;                  
             switch s.blMode
                 case 'byTrial'
                     blF = nanmean(allData(:, blStartP:blEndP), 2); % take mean across time, not trials
@@ -128,9 +130,9 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                     blF_raw = nanmean(allData(:, blStartP:blEndP), 2); % take mean across time, not trials
                     [fitobject, gof, output] = ...
                         fit((1:size(allData, 1))', blF_raw, 'exp2');
-                    Photometry.bleachFit(si).fitobject_session = fitobject;
-                    Photometry.bleachFit(si).gof_session = gof;
-                    Photometry.bleachFit(si).output_session = output;
+                    Photometry.bleachFit(si, i).fitobject_session = fitobject;
+                    Photometry.bleachFit(si, i).gof_session = gof;
+                    Photometry.bleachFit(si, i).output_session = output;
                     x = (1:length(blF_raw))';
                     blF = fitobject.a * exp(fitobject.b * x) + fitobject.c * exp(fitobject.d * x);
                     blF = repmat(blF, 1, size(allData, 2));
@@ -163,15 +165,15 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
 %                     ft = fittype('a*exp(b*x) + c', 'options', fo);
                     [fitobject, gof, output] = ...
                         fit(trialMeanX, trialMeanY, ft, fo);
-                    Photometry.bleachFit(si).fitobject_trial = fitobject;
-                    Photometry.bleachFit(si).gof_trial = gof;
-                    Photometry.bleachFit(si).output_trial = output;
-                    Photometry.bleachFit(si).trialTemplate = trialMeanY;
+                    Photometry.bleachFit(si, i).fitobject_trial = fitobject;
+                    Photometry.bleachFit(si, i).gof_trial = gof;
+                    Photometry.bleachFit(si, i).output_trial = output;
+                    Photometry.bleachFit(si, i).trialTemplate = trialMeanY;  
                     x = (1:size(allData, 2));    
 %                     trialFit = fitobject.a * exp(fitobject.b * x) + fitobject.c * exp(fitobject.d * x);                    
                     trialFit = fitobject.a + fitobject.b * exp(fitobject.c * x);% + fitobject.d * exp(fitobject.e * x);
 %                     trialFit = fitobject.a * exp(fitobject.b * x) + fitobject.c;                   
-                    Photometry.bleachFit(si).trialFit = trialFit;                    
+                    Photometry.bleachFit(si, i).trialFit = trialFit;                    
                     % set mean of true baseline period to zero
                     trialFit = trialFit - nanmean(trialFit(1, blStartP:blEndP));
                     blF = bsxfun(@plus, blF, trialFit);
