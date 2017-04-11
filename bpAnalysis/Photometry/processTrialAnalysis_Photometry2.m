@@ -15,6 +15,12 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         };
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
     
+    if ~iscell(s.blMode)
+        s.blMode = repmat({s.blMode}, 1, max(s.channels));
+    end
+    if ~iscell(s.dFFMode)
+        s.dFFMode = repmat({s.dFFMode}, 1, max(s.channels));
+    end
     % find total number of trials across selected sessions and size of
     % nidaq data
     scounter = zeros(size(sessions));
@@ -82,12 +88,11 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         'gof_trial', [],...
         'output_trial', [],...
         'trialFit', [],...
-        'trialTemplate', [],...
-        'ch', []...
+        'trialTemplate', []...
         );
 
     Photometry.data = repmat(data, length(s.channels), 1); % length = # channels  
-    Photometry.bleachFit = repmat(bleachFit, length(sessions), length(s.channels));
+    Photometry.bleachFit = repmat(bleachFit, length(sessions), max(s.channels));
     h = waitbar(0, 'Processing Photometry');    
     
     tcounter = 1;    
@@ -101,8 +106,9 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         allData = NaN(nTrials, newSamples);   
 %         modData = NaN(nTrials, newSamples);  % raw data that has not been demodulated   
 
-        for i = 1:length(s.channels)
-            fCh = s.channels(i);
+        for fCh = s.channels
+            blMode = s.blMode{fCh};
+            dFFMode = s.dFFMode{fCh};
             for trial = 1:nTrials
                 trialData = SessionData.demod{trial, fCh}'; % convert to row vector
                 %% in case nidaq acquisition ended early for some reason, pad with NaNs, this should be fixed as of 8/2016
@@ -116,8 +122,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             % convert to deltaF/F
             blStartP = bpX2pnt(s.baseline(1), sampleRate);
             blEndP = bpX2pnt(s.baseline(2), sampleRate); 
-            Photometry.bleachFit(si, i).ch = fCh;                  
-            switch s.blMode
+            switch blMode
                 case 'byTrial'
                     blF = nanmean(allData(:, blStartP:blEndP), 2); % take mean across time, not trials
                     blF_raw = blF;                    
@@ -130,16 +135,16 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                     blF_raw = nanmean(allData(:, blStartP:blEndP), 2); % take mean across time, not trials
                     [fitobject, gof, output] = ...
                         fit((1:size(allData, 1))', blF_raw, 'exp2');
-                    Photometry.bleachFit(si, i).fitobject_session = fitobject;
-                    Photometry.bleachFit(si, i).gof_session = gof;
-                    Photometry.bleachFit(si, i).output_session = output;
+                    Photometry.bleachFit(si, fCh).fitobject_session = fitobject;
+                    Photometry.bleachFit(si, fCh).gof_session = gof;
+                    Photometry.bleachFit(si, fCh).output_session = output;
                     x = (1:length(blF_raw))';
                     blF = fitobject.a * exp(fitobject.b * x) + fitobject.c * exp(fitobject.d * x);
                     blF = repmat(blF, 1, size(allData, 2));
                 otherwise
             end
             
-            switch s.dFFMode
+            switch dFFMode
                 case 'simple'
                     dF = allData - blF;
                 case 'expFit'
@@ -165,15 +170,15 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
 %                     ft = fittype('a*exp(b*x) + c', 'options', fo);
                     [fitobject, gof, output] = ...
                         fit(trialMeanX, trialMeanY, ft, fo);
-                    Photometry.bleachFit(si, i).fitobject_trial = fitobject;
-                    Photometry.bleachFit(si, i).gof_trial = gof;
-                    Photometry.bleachFit(si, i).output_trial = output;
-                    Photometry.bleachFit(si, i).trialTemplate = trialMeanY;  
+                    Photometry.bleachFit(si, fCh).fitobject_trial = fitobject;
+                    Photometry.bleachFit(si, fCh).gof_trial = gof;
+                    Photometry.bleachFit(si, fCh).output_trial = output;
+                    Photometry.bleachFit(si, fCh).trialTemplate = trialMeanY;  
                     x = (1:size(allData, 2));    
 %                     trialFit = fitobject.a * exp(fitobject.b * x) + fitobject.c * exp(fitobject.d * x);                    
                     trialFit = fitobject.a + fitobject.b * exp(fitobject.c * x);% + fitobject.d * exp(fitobject.e * x);
 %                     trialFit = fitobject.a * exp(fitobject.b * x) + fitobject.c;                   
-                    Photometry.bleachFit(si, i).trialFit = trialFit;                    
+                    Photometry.bleachFit(si, fCh).trialFit = trialFit;                    
                     % set mean of true baseline period to zero
                     trialFit = trialFit - nanmean(trialFit(1, blStartP:blEndP));
                     blF = bsxfun(@plus, blF, trialFit);

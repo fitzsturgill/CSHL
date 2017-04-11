@@ -14,7 +14,7 @@ function TE = makeTE_LNL_odor_V2(sessions)
 
     %% initialize TE
     TE = struct(...
-        'filename', {},... 
+        'filename', [],... 
         'trialNumber', zeros(nTrials, 1),...
         'trialType', zeros(nTrials, 1),...  
         'trialOutcome', NaN(nTrials, 1),... 
@@ -25,10 +25,10 @@ function TE = makeTE_LNL_odor_V2(sessions)
         'OdorValve', zeros(nTrials, 1),...
         'OdorValveIndex', zeros(nTrials, 1),...
         'CSValence', zeros(nTrials, 1),...        
-        'ReinforcementOutcome', {},...            
+        'ReinforcementOutcome', [],...            
         'BlockNumber', zeros(nTrials, 1),...                
         'BlockFcn', zeros(nTrials, 1),...                        
-        'LickAction', {}...                        
+        'LickAction', []...                        
         );
 
     for i = 1:length(statesToAdd)
@@ -41,16 +41,16 @@ function TE = makeTE_LNL_odor_V2(sessions)
     for sCounter = 1:length(sessions)
         session = sessions(sCounter);
         for counter = 1:session.SessionData.nTrials
-            TE.filename{tcounter} = session.filename;
-            TE.trialNumber(tcounter) = counter;
-            TE.trialType(tcounter) = session.SessionData.TrialTypes(counter);
-            TE.trialOutcome(tcounter) = session.SessionData.TrialOutcome(counter);
-            TE.epoch(tcounter) = session.SessionData.Epoch(counter);
-            TE.OdorValve(tcounter) = session.SessionData.OdorValve(counter);
-            TE.OdorValveIndex(tcounter) = session.SessionData.OdorValveIndex(counter);
-            TE.CSValence(tcounter) = session.SessionData.CSValence(counter);
-            TE.BlockNumber(tcounter) = session.SessionData.BlockNumber(counter);
-            TE.LickAction{tcounter} = session.SessionData.LickAction{counter};
+            TE.filename{tcounter,1} = session.filename;
+            TE.trialNumber(tcounter,1) = counter;
+            TE.trialType(tcounter,1) = session.SessionData.TrialTypes(counter);
+            TE.trialOutcome(tcounter,1) = session.SessionData.TrialOutcome(counter);
+            TE.epoch(tcounter,1) = session.SessionData.Epoch(counter);
+            TE.OdorValve(tcounter,1) = session.SessionData.OdorValve(counter);
+            TE.OdorValveIndex(tcounter,1) = session.SessionData.OdorValveIndex(counter);
+            TE.CSValence(tcounter,1) = session.SessionData.CSValence(counter);
+            TE.BlockNumber(tcounter,1) = session.SessionData.BlockNumber(counter);
+            TE.LickAction{tcounter,1} = session.SessionData.LickAction{counter};
             tcounter = tcounter + 1; % don't forget :)            
         end
     end
@@ -60,8 +60,8 @@ function TE = makeTE_LNL_odor_V2(sessions)
         sname = sessionNames{counter};
         TE.sessionIndex(cellfun(@(x) strcmp(x, sname), TE.filename)) = counter;
     end
-    TE.sessionIndex = TE.sessionIndex';
     TE.sessionChange = [0; diff(TE.sessionIndex)];
+    TE.BlockChange = [0; abs(diff(TE.BlockNumber))];
     
     
     

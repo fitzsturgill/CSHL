@@ -50,8 +50,10 @@ function TE = truncateSessionsFromTE(TE, action)
                     'MarkerFacecolor', 'm'); 
             end
             set(TRUNC.truncTrialHandle(TRUNC.currentSession), 'MarkerFaceColor', 'g'); % highlight current session trunc marker
-                
-            ylabel('Lick/s, Us'); xlabel('trial #'); textBox(TE.filename{1}(1:7));
+
+            sep = strfind(TE.filename{1}, '_');
+            subjectName = TE.filename{1}(1:sep(2)-1);
+            ylabel('Lick/s, Us'); xlabel('trial #'); textBox(subjectName);
             set(gca, 'YLim', [0 yMax]);
             
             % attempt to use truncation points implied by reject field in

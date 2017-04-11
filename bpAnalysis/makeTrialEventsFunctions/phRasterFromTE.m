@@ -6,6 +6,7 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
         'PhotometryField', 'Photometry';...
         'window', [];...
         'CLimFactor', 3;...
+        'trialNumbering', 'consecutive';... % 'consecutive' or 'global'
         'CLim', [];... % if specified, CLimMode set manually
         };
     [s, ~] = parse_args(defaults, varargin{:});
@@ -50,12 +51,21 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
         imstd = mean(std(TE.(Photometry).data(ch).dFF(:, startP:endP), 'omitnan'));
         s.CLim = [imavg - s.CLimFactor * imstd, imavg + s.CLimFactor * imstd];
     end
-    cData = TE.(Photometry).data(ch).dFF(trials, startP:endP);
-    
-    
-    sessionBreaks = find(diff(TE.sessionIndex(trials)))';            
-%     sessionBreaks = find(diff(TE.epoch(trials)))';     % kludge for sfn poster, show epoch change (reversal)
-    ih = image('Xdata', s.window, 'YData', [1 size(cData, 1)],...
-        'CData', cData, 'CDataMapping', 'Scaled', 'Parent', gca);
-    line(repmat(s.window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
+    switch s.trialNumbering
+        case 'consecutive'
+            cData = TE.(Photometry).data(ch).dFF(trials, startP:endP);
+            sessionBreaks = find(diff(TE.sessionIndex(trials)))';            
+        %     sessionBreaks = find(diff(TE.epoch(trials)))';     % kludge for sfn poster, show epoch change (reversal)
+            ih = image('Xdata', s.window, 'YData', [1 size(cData, 1)],...
+                'CData', cData, 'CDataMapping', 'Scaled', 'Parent', gca);
+            line(repmat(s.window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
+
+        case 'global'
+            cData = NaN(length(TE.filename), endP-startP+1);
+            cData(trials,:) = TE.(Photometry).data(ch).dFF(trials, startP:endP);
+            ih = image('Xdata', s.window, 'YData', [1 size(cData, 1)],...
+                'CData', cData, 'CDataMapping', 'Scaled', 'Parent', gca);
+            sessionBreaks = find(diff(TE.sessionIndex))';  
+    end
+    line(repmat(s.window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks            
     set(gca, 'YLim', [1 size(cData, 1)], 'XLim', s.window, 'CLim', s.CLim);
