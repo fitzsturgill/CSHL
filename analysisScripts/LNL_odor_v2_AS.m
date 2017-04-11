@@ -24,7 +24,7 @@ nTrials = length(TE.filename);
 csWindow = zeros(nTrials, 2);
 csWindow(:,1) = cellfun(@(x) x(1), TE.Cue);
 csWindow(:,2) = cellfun(@(x,y) max(x(end), y(end)), TE.AnswerLick, TE.AnswerNoLick); % max- to select either AnswerLick or AnswerNoLick timestamp (unused state contains NaN)
-
+csWindow = bsxfun(@minus, csWindow, TE.Photometry.startTime);
 
 
 
