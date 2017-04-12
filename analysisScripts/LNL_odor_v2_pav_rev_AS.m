@@ -171,7 +171,7 @@ ylabel('VTA: US DF/F (90%)');
 end
 
 if saveOn
-    saveas(gcf, [subjectName '_longitudinalCueResponses.fig']);
+    saveas(gcf, fullfile(savepath, [subjectName '_longitudinalCueResponses.fig']));
     disp('figure saved');
 end
 
