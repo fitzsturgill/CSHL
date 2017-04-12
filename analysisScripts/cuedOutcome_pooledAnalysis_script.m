@@ -58,4 +58,16 @@ xlabel('hival reward dFF'); ylabel('loval reward dFF');
 
 saveas(gcf, fullfile(savepath, 'pooledAnalysis_scatterPlots.fig'));
 saveas(gcf, fullfile(savepath, 'pooledAnalysis_scatterPlots.jpg'));
+
+%% 
+savename = 'phCue_low_vs_high';
+h=ensureFigure(savename, 1);
+% mcLandscapeFigSetup(h);
+subplot(1, 1, 1, 'FontSize', 12, 'LineWidth', 1);
+scatter(allData.phCue_avg(:,5), allData.phCue_avg(:,1));
+addUnityLine;
+xlabel('Low Value Cue (dF/F)');ylabel('High Value Cue (dF/F)');
+saveas(gcf, fullfile(savepath, [savename '.fig']));
+saveas(gcf, fullfile(savepath, [savename '.jpg']));
+
         

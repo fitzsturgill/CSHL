@@ -44,10 +44,14 @@ usWindow = [0 0.5];
 usZeros = cellfun(@(x,y,z,a) max(x(1), max(y(1), max(z(1), a(1)))), TE.Reward, TE.Punish, TE.WNoise, TE.Neutral); %'Reward', 'Punish', 'WNoise', 'Neutral'
 
 for channel = channels
-    TE.phPeakMean_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 1], TE.Cue, 'method', 'mean');
-    TE.phPeakPercentile_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 1], TE.Cue, 'method', 'percentile', 'percentile', 0.9);
-    TE.phPeakMean_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 0.5], usZeros, 'method', 'mean');
-    TE.phPeakPercentile_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 0.5], usZeros, 'method', 'percentile', 'percentile', 0.9);
+    TE.phPeakPercentile_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0.5 1.5], TE.Cue, 'method', 'mean');
+    TE.phPeakPercentile_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0.5 1.5], TE.Cue, 'method', 'percentile', 'percentile', 0.8);
+    TE.phPeakPercentile_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 0.75], usZeros, 'method', 'mean');
+    if channel == 1
+        TE.phPeakPercentile_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 0.75], usZeros, 'method', 'percentile', 'percentile', 0.8);
+    elseif channel == 2
+        TE.phPeakPercentile_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 0.75], usZeros, 'method', 'percentile', 'percentile', 0.5);  
+    end
 end
 
 
@@ -109,6 +113,8 @@ end
     Odor2Trials = filterTE(TE, 'OdorValveIndex', 2, 'reject', 0);    
     
     rewardTrials = filterTE(TE, 'trialType', 1, 'reject', 0);
+    hitTrials = filterTE(TE, 'trialOutcome', 1, 'reject', 0);
+    missTrials = filterTE(TE, 'trialOutcome', -1, 'reject', 0);
     punishTrials = filterTE(TE, 'trialType', 3, 'reject', 0);    
     neutralTrials = filterTE(TE, 'trialType', [2 4], 'reject', 0);
     block2Trials = filterTE(TE, 'BlockNumber', 2, 'reject', 0);
@@ -123,59 +129,119 @@ end
 
 trialCount = [1:length(TE.filename)]';
 %%
-ensureFigure([subjectName '_longitudinalCueResponses'], 1); 
-subplot(5,1,1); scatter(trialCount(csPlusTrials), TE.csLicks.rate(csPlusTrials),'.'); % both blLicks and anticipatoryLicks2 are from 2s periods
+saveName = [subjectName '_longitudinalCueResponses_CS+'];
+h=ensureFigure(saveName, 1); 
+mcLandscapeFigSetup(h);
+subplot(5,1,1); scatter(trialCount(csPlusTrials), TE.csLicks.rate(csPlusTrials),'o'); % both blLicks and anticipatoryLicks2 are from 2s periods
 % subplot(4,1,1); scatter(1:length(allTE.epoch), cuedReward.anticipatoryLicks2);
 maxLR = max(TE.csLicks.rate(csPlusTrials));
 % subplot(4,1,1); plot(smooth(cuedReward.anticipatoryLicks2 / mean(cuedReward.blLicks)));
 % maxLR = smooth(max(cuedReward.anticipatoryLicks2 / mean(cuedReward.blLicks)));
 hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxLR, 'g', 'Marker', 'none');
 hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxLR, 'r', 'Marker', 'none');
-ylabel('antic. licks'); title('CS+ reward trials');
+ylabel('antic. licks'); title('CS+ and/or reward trials');
 set(gca, 'XLim', [1 length(trialCount)]);
 
 if ismember(1, channels)
-    subplot(5,1,2); scatter(trialCount(csPlusTrials), TE.phPeakMean_cs(1).data(csPlusTrials), '.');
-    maxP = max(TE.phPeakMean_cs(1).data(csPlusTrials));
+    subplot(5,1,2); scatter(trialCount(csPlusTrials), TE.phPeakPercentile_cs(1).data(csPlusTrials), '.');
+    maxP = max(TE.phPeakPercentile_cs(1).data(csPlusTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-    ylabel('BF: CS DF/F (90%)');
+    ylabel('BF: CS DF/F (80%)');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
 if ismember(2, channels)
-    subplot(5,1,3); scatter(trialCount(csPlusTrials), TE.phPeakMean_cs(2).data(csPlusTrials), '.');
-    maxP = max(TE.phPeakMean_cs(2).data(csPlusTrials));
+    subplot(5,1,3); scatter(trialCount(csPlusTrials), TE.phPeakPercentile_cs(2).data(csPlusTrials), '.');
+    maxP = max(TE.phPeakPercentile_cs(2).data(csPlusTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-ylabel('VTA:CS DF/F (90%)');
+ylabel('VTA:CS DF/F (80%)');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
 if ismember(1, channels)
-    subplot(5,1,4); scatter(trialCount(csPlusTrials), TE.phPeakMean_us(1).data(csPlusTrials), '.');
-    maxP = max(TE.phPeakMean_us(1).data(csPlusTrials));
+    subplot(5,1,4); scatter(trialCount(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials), '.');
+    maxP = max(TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-    ylabel('BF: US DF/F (90%)');
+    ylabel('BF: US DF/F (80%)');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
 if ismember(2, channels)
-    subplot(5,1,5); scatter(trialCount(csPlusTrials), TE.phPeakMean_us(2).data(csPlusTrials), '.');
-    maxP = max(TE.phPeakMean_us(2).data(csPlusTrials));
+    subplot(5,1,5); scatter(trialCount(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(2).data(csPlusTrials & rewardTrials), '.');
+    maxP = max(TE.phPeakPercentile_us(2).data(csPlusTrials & rewardTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-ylabel('VTA: US DF/F (90%)');
+ylabel('VTA: US DF/F (50%)');
+    set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
+     xlabel('Trial Count');
+end
+
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));    
+    disp('figure saved');
+end
+
+
+%% CS Minus
+saveName = [subjectName '_longitudinalCueResponses_CSminus'];
+h=ensureFigure(saveName, 1); 
+mcLandscapeFigSetup(h);
+subplot(5,1,1); scatter(trialCount(csMinusTrials), TE.csLicks.rate(csMinusTrials),'o'); % both blLicks and anticipatoryLicks2 are from 2s periods
+% subplot(4,1,1); scatter(1:length(allTE.epoch), cuedReward.anticipatoryLicks2);
+maxLR = max(TE.csLicks.rate(csMinusTrials));
+% subplot(4,1,1); plot(smooth(cuedReward.anticipatoryLicks2 / mean(cuedReward.blLicks)));
+% maxLR = smooth(max(cuedReward.anticipatoryLicks2 / mean(cuedReward.blLicks)));
+hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxLR, 'g', 'Marker', 'none');
+hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxLR, 'r', 'Marker', 'none');
+ylabel('antic. licks'); title('CS- and/or punish trials');
+set(gca, 'XLim', [1 length(trialCount)]);
+
+if ismember(1, channels)
+    subplot(5,1,2); scatter(trialCount(csMinusTrials), TE.phPeakPercentile_cs(1).data(csMinusTrials), '.');
+    maxP = max(TE.phPeakPercentile_cs(1).data(csMinusTrials));
+    hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
+    hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
+    ylabel('BF: CS DF/F (80%)');
+    set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
+end
+
+if ismember(2, channels)
+    subplot(5,1,3); scatter(trialCount(csMinusTrials), TE.phPeakPercentile_cs(2).data(csMinusTrials), '.');
+    maxP = max(TE.phPeakPercentile_cs(2).data(csMinusTrials));
+    hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
+    hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
+ylabel('VTA:CS DF/F (80%)');
+    set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
+end
+
+if ismember(1, channels)
+    subplot(5,1,4); scatter(trialCount(csMinusTrials & punishTrials), TE.phPeakPercentile_us(1).data(csMinusTrials & punishTrials), '.');
+    maxP = max(TE.phPeakPercentile_us(1).data(csMinusTrials & punishTrials));
+    hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
+    hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
+    ylabel('BF: US DF/F (80%)');
+    set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
+end
+
+if ismember(2, channels)
+    subplot(5,1,5); scatter(trialCount(csMinusTrials & punishTrials), TE.phPeakPercentile_us(2).data(csMinusTrials & punishTrials), '.');
+    maxP = max(TE.phPeakPercentile_us(2).data(csMinusTrials & punishTrials));
+    hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
+    hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
+ylabel('VTA: US DF/F (50%)'); xlabel('Trial Count');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
 if saveOn
-    saveas(gcf, fullfile(savepath, [subjectName '_longitudinalCueResponses.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));    
     disp('figure saved');
 end
-
-%%
+%% PH Rasters, CS+, CS-
 CLimFactor = 2;
 
 reversals = find(TE.BlockChange);
@@ -222,5 +288,97 @@ for channel = channels
     end
 end
 
+%%
+    saveName = [subjectName '_phAvgs'];  
+    h=ensureFigure(saveName, 1); 
+    mcLandscapeFigSetup(h);
 
+    pm = [2 2];
+    
+    % - 6 0 4
+    subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); 
+    [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials}, 1, 'window', [3, 7], 'linespec', {'b', 'r', 'k'}); %high value, reward
+    legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    title('Reinforcement'); ylabel('BF dF/F'); textBox(subjectName);
+    
+    subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1); 
+    [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials}, 2, 'window', [3, 7], 'linespec', {'b', 'r', 'k'}); %high value, reward
+    legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    ylabel('VTA dF/F'); xlabel('time from cue (s)'); 
+    
+    % - 6 0 4
+    subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1); 
+    [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 1, 'window', [-4, 7], 'linespec', {'c', 'm'}); %high value, reward
+    legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    title('CS+, outcomes'); set(gca, 'XLim', [-4, 7]);
+    
+    subplot(pm(1), pm(2), 4, 'FontSize', 12, 'LineWidth', 1); 
+    [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 2, 'window', [-4, 7], 'linespec', {'c', 'm'}); %high value, reward
+    legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    xlabel('time from cue (s)');     set(gca, 'XLim', [-4, 7]);
+    
+    if saveOn
+        saveas(gcf, fullfile(savepath, [saveName '.fig']));
+        saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    end    
+    
+    %%
+    saveName = [subjectName '_scatter'];
+    h=ensureFigure(saveName, 1); 
+    mcLandscapeFigSetup(h);
+    pm = [2 2];    
+    subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1);
+    scatter(TE.phPeakPercentile_cs(2).data(csPlusTrials), TE.phPeakPercentile_cs(1).data(csPlusTrials), '.'); hold on;
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(TE.phPeakPercentile_cs(2).data(csPlusTrials), TE.phPeakPercentile_cs(1).data(csPlusTrials), 'poly1', fo); 
+    plot(fob,'predfunc'); legend off;
+    title('CS+, Cue'); ylabel('BF dF/F'); xlabel('VTA dF/F'); textBox(subjectName);
+
+    subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1);
+    scatter(TE.phPeakPercentile_us(2).data(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials), '.'); hold on;
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(TE.phPeakPercentile_us(2).data(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials), 'poly1', fo); 
+    plot(fob,'predfunc'); legend off;    
+    title('CS+, Reward'); ylabel('BF dF/F'); xlabel('VTA dF/F');     
+    
+    subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1);
+    scatter(TE.csLicks.rate(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials), 'o'); hold on;
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(TE.csLicks.rate(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials), 'poly1', fo); 
+    plot(fob,'predfunc'); legend off;       
+    title('CS+, reward vs. cue licks'); ylabel('BF dF/F'); xlabel('Antic. Lick Rate');    
+    
+    subplot(pm(1), pm(2), 4, 'FontSize', 12, 'LineWidth', 1);
+    scatter(TE.csLicks.rate(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(2).data(csPlusTrials & rewardTrials), 'o'); hold on;
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(TE.csLicks.rate(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(2).data(csPlusTrials & rewardTrials), 'poly1', fo); 
+    plot(fob,'predfunc'); legend off;         
+    ylabel('VTA dF/F'); xlabel('Antic. Lick Rate');
+    
+    if saveOn
+        saveas(gcf, fullfile(savepath, [saveName '.fig']));
+        saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    end    
+
+ %% single trial traces
+    nTraces = 50;
+    saveName = [subjectName '_singleTrial3'];  
+    h=ensureFigure(saveName, 1); 
+    mcLandscapeFigSetup(h);
+    csPlusRewardTrials = find(csPlusTrials & rewardTrials & hitTrials);
+    rn = rand(length(csPlusRewardTrials), 1);
+    [~, I] = sort(rn);
+    %
+    subplot(2,1,1, 'FontSize', 12, 'LineWidth', 1); plot(TE.Photometry.xData, TE.Photometry.data(1).dFF(I(1:nTraces), :)', 'k'); hold on;
+    phPlotAverageFromTE(TE, csPlusTrials & rewardTrials & hitTrials, 1, 'window', [-4, 7], 'linespec', {'r'});
+    set(gca, 'XLim', [-4, 7]); ylabel('BF dF/F'); xlabel('time from cue (s)');
+    
+    
+    subplot(2,1,2, 'FontSize', 12, 'LineWidth', 1); plot(TE.Photometry.xData, TE.Photometry.data(1).dFF(I(1:5), :)', 'k');
+    set(gca, 'XLim', [-4, 7]); ylabel('BF dF/F'); xlabel('time from cue (s)');
+    
+    if saveOn
+        saveas(gcf, fullfile(savepath, [saveName '.fig']));
+        saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    end    
 
