@@ -24,7 +24,7 @@ end
 
     
 
-TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'expFit', 'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels);
+TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels);
 
 
 %% extract peak trial dFF responses to cues and reinforcement and lick counts
@@ -288,7 +288,7 @@ for channel = channels
     end
 end
 
-%%
+%% photometry averages
     saveName = [subjectName '_phAvgs'];  
     h=ensureFigure(saveName, 1); 
     mcLandscapeFigSetup(h);
@@ -296,26 +296,32 @@ end
     pm = [2 2];
     
     % - 6 0 4
-    subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); 
-    [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials}, 1, 'window', [3, 7], 'linespec', {'b', 'r', 'k'}); %high value, reward
-    legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-    title('Reinforcement'); ylabel('BF dF/F'); textBox(subjectName);
-    
-    subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1); 
-    [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials}, 2, 'window', [3, 7], 'linespec', {'b', 'r', 'k'}); %high value, reward
-    legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-    ylabel('VTA dF/F'); xlabel('time from cue (s)'); 
+    if ismember(1, channels)
+        subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); 
+        [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials}, 1, 'window', [3, 7], 'linespec', {'b', 'r', 'k'}); %high value, reward
+        legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+        title('Reinforcement'); ylabel('BF dF/F'); textBox(subjectName);
+    end
+    if ismember(2, channels)    
+        subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1); 
+        [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials}, 2, 'window', [3, 7], 'linespec', {'b', 'r', 'k'}); %high value, reward
+        legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+        ylabel('VTA dF/F'); xlabel('time from cue (s)'); 
+    end
     
     % - 6 0 4
-    subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1); 
-    [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 1, 'window', [-4, 7], 'linespec', {'c', 'm'}); %high value, reward
-    legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-    title('CS+, outcomes'); set(gca, 'XLim', [-4, 7]);
-    
-    subplot(pm(1), pm(2), 4, 'FontSize', 12, 'LineWidth', 1); 
-    [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 2, 'window', [-4, 7], 'linespec', {'c', 'm'}); %high value, reward
-    legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-    xlabel('time from cue (s)');     set(gca, 'XLim', [-4, 7]);
+    if ismember(1, channels)    
+        subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1); 
+        [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 1, 'window', [-4, 7], 'linespec', {'c', 'm'}); %high value, reward
+        legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+        title('CS+, outcomes'); set(gca, 'XLim', [-4, 7]);
+    end
+    if ismember(2, channels)    
+        subplot(pm(1), pm(2), 4, 'FontSize', 12, 'LineWidth', 1); 
+        [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 2, 'window', [-4, 7], 'linespec', {'c', 'm'}); %high value, reward
+        legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+        xlabel('time from cue (s)');     set(gca, 'XLim', [-4, 7]);
+    end
     
     if saveOn
         saveas(gcf, fullfile(savepath, [saveName '.fig']));
@@ -327,33 +333,45 @@ end
     h=ensureFigure(saveName, 1); 
     mcLandscapeFigSetup(h);
     pm = [2 2];    
-    subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1);
-    scatter(TE.phPeakPercentile_cs(2).data(csPlusTrials), TE.phPeakPercentile_cs(1).data(csPlusTrials), '.'); hold on;
-    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
-    fob = fit(TE.phPeakPercentile_cs(2).data(csPlusTrials), TE.phPeakPercentile_cs(1).data(csPlusTrials), 'poly1', fo); 
-    plot(fob,'predfunc'); legend off;
-    title('CS+, Cue'); ylabel('BF dF/F'); xlabel('VTA dF/F'); textBox(subjectName);
+    if all(ismember([1 2], channels))    
+        subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1);
+        scatter(TE.phPeakPercentile_cs(2).data(csPlusTrials), TE.phPeakPercentile_cs(1).data(csPlusTrials), '.'); hold on;
+        fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+        fob = fit(TE.phPeakPercentile_cs(2).data(csPlusTrials), TE.phPeakPercentile_cs(1).data(csPlusTrials), 'poly1', fo); 
+        plot(fob,'predfunc'); legend off;
+        title('CS+, Cue'); ylabel('BF dF/F'); xlabel('VTA dF/F'); textBox(subjectName);
+    end
 
-    subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1);
-    scatter(TE.phPeakPercentile_us(2).data(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials), '.'); hold on;
-    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
-    fob = fit(TE.phPeakPercentile_us(2).data(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials), 'poly1', fo); 
-    plot(fob,'predfunc'); legend off;    
-    title('CS+, Reward'); ylabel('BF dF/F'); xlabel('VTA dF/F');     
+    if all(ismember([1 2], channels))    
+        subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1);
+        scatter(TE.phPeakPercentile_us(2).data(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials), '.'); hold on;
+        fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+        fob = fit(TE.phPeakPercentile_us(2).data(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials), 'poly1', fo); 
+        plot(fob,'predfunc'); legend off;    
+        title('CS+, Reward'); ylabel('BF dF/F'); xlabel('VTA dF/F');  
+    end
     
-    subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1);
-    scatter(TE.csLicks.rate(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials), 'o'); hold on;
-    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
-    fob = fit(TE.csLicks.rate(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials), 'poly1', fo); 
-    plot(fob,'predfunc'); legend off;       
-    title('CS+, reward vs. cue licks'); ylabel('BF dF/F'); xlabel('Antic. Lick Rate');    
+    if ismember(1, channels)    
+        subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1);
+        scatter(TE.csLicks.rate(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials), 'o'); hold on;
+        fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+        try
+            fob = fit(TE.csLicks.rate(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials), 'poly1', fo); 
+            plot(fob,'predfunc'); legend off;      
+        end
+        title('CS+, reward vs. cue licks'); ylabel('BF dF/F'); xlabel('Antic. Lick Rate');    
+    end
     
-    subplot(pm(1), pm(2), 4, 'FontSize', 12, 'LineWidth', 1);
-    scatter(TE.csLicks.rate(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(2).data(csPlusTrials & rewardTrials), 'o'); hold on;
-    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
-    fob = fit(TE.csLicks.rate(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(2).data(csPlusTrials & rewardTrials), 'poly1', fo); 
-    plot(fob,'predfunc'); legend off;         
-    ylabel('VTA dF/F'); xlabel('Antic. Lick Rate');
+    if ismember(2, channels)        
+        subplot(pm(1), pm(2), 4, 'FontSize', 12, 'LineWidth', 1);
+        scatter(TE.csLicks.rate(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(2).data(csPlusTrials & rewardTrials), 'o'); hold on;
+        fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+        try
+            fob = fit(TE.csLicks.rate(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(2).data(csPlusTrials & rewardTrials), 'poly1', fo); 
+            plot(fob,'predfunc'); legend off;         
+        end
+        ylabel('VTA dF/F'); xlabel('Antic. Lick Rate');
+    end
     
     if saveOn
         saveas(gcf, fullfile(savepath, [saveName '.fig']));
