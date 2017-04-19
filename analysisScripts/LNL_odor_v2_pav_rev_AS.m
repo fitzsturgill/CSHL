@@ -44,9 +44,9 @@ usWindow = [0 0.5];
 usZeros = cellfun(@(x,y,z,a) max(x(1), max(y(1), max(z(1), a(1)))), TE.Reward, TE.Punish, TE.WNoise, TE.Neutral); %'Reward', 'Punish', 'WNoise', 'Neutral'
 
 for channel = channels
-    TE.phPeakPercentile_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0.5 1.5], TE.Cue, 'method', 'mean');
+    TE.phPeakMean_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0.5 1.5], TE.Cue, 'method', 'mean');
     TE.phPeakPercentile_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0.5 1.5], TE.Cue, 'method', 'percentile', 'percentile', 0.8);
-    TE.phPeakPercentile_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 0.75], usZeros, 'method', 'mean');
+    TE.phPeakMean_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 0.75], usZeros, 'method', 'mean');
     if channel == 1
         TE.phPeakPercentile_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 0.75], usZeros, 'method', 'percentile', 'percentile', 0.8);
     elseif channel == 2
@@ -399,4 +399,75 @@ end
         saveas(gcf, fullfile(savepath, [saveName '.fig']));
         saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
     end    
+    
+    %% post-reversal analysis, assuming you always have photometry in channel 1, but not necessarily in channel 2
+    
+    dataToPull = {...
+        'csLicks', TE.csLicks.rate,...
+        'phPeakMean_cs_ch1', TE.phPeakMean_cs(1).data,...
+        'phPeakPercentile_cs_ch1', TE.phPeakPercentile_cs(1).data,...
+        'phPeakMean_us_ch1', TE.phPeakMean_us(1).data,...
+        'phPeakPercentile_us_ch1', TE.phPeakPercentile_us(1).data,...
+        'trialOutcome', TE.trialOutcome};
+    
+    if ismember(2, channels)
+        dataToPull = [dataToPull...
+            {...
+        'phPeakMean_cs_ch2', TE.phPeakMean_cs(2).data,...
+        'phPeakPercentile_cs_ch2', TE.phPeakPercentile_cs(2).data,...
+        'phPeakMean_us_ch2', TE.phPeakMean_us(2).data,...
+        'phPeakPercentile_us_ch2', TE.phPeakPercentile_us(2).data}...
+        ];
+    end
+    RE = struct();
+    RE.csPlus = extractReversalsFromTE(TE, csPlusTrials, dataToPull);
+    RE.csMinus = extractReversalsFromTE(TE, csMinusTrials, dataToPull);
+    RE.csPlusReward = extractReversalsFromTE(TE, csPlusTrials & rewardTrials, dataToPull);
+    
+    %%
+    ensureFigure('csLicksArray', 1);
+    nReversals = size(RE.csPlus.csLicks.after, 1);
+    ass = ceil(sqrt(nReversals));
+    for counter = 1:nReversals
+        subplot(ass,ass,counter);
+        plot([RE.csPlus.trialsBefore RE.csPlus.trialsAfter],[RE.csPlus.csLicks.before(counter,:) RE.csPlus.csLicks.after(counter,:)]);
+    end
+    %%
+    ensureFigure('csDFF_ch1_Array', 1);
+    nReversals = size(RE.csPlus.csLicks.after, 1);
+    ass = ceil(sqrt(nReversals));
+    for counter = 1:nReversals
+        subplot(ass,ass,counter);
+        plot([RE.csMinus.trialsBefore RE.csPlus.trialsAfter],...
+            [RE.csMinus.phPeakPercentile_cs_ch1.before(counter,:) RE.csPlus.phPeakPercentile_cs_ch1.after(counter,:)]);
+    end
+    %%
+    ensureFigure('csDFF_ch2_Array', 1);
+    nReversals = size(RE.csPlus.csLicks.after, 1);
+    ass = ceil(sqrt(nReversals));
+    for counter = 1:nReversals
+        subplot(ass,ass,counter);
+        plot(smooth(RE.csPlus.phPeakPercentile_cs_ch2.after(counter,1:45)), '.');
+    end
+    %%
+    ensureFigure('phCue_reversal', 1);
+    xData = [RE.csMinus.trialsBefore RE.csPlus.trialsAfter];
+    bl(1) = nearest(xData, -30);bl(2) = nearest(xData, 0);bl(3) = nearest(xData, 0);
+    revNormAvg_ch1 = [RE.csMinus.phPeakPercentile_cs_ch1.before RE.csPlus.phPeakPercentile_cs_ch1.after];
+    revNormAvg_ch1 = nanmean(revNormAvg_ch1);
+    revNormAvg_ch1 = revNormAvg_ch1 - nanmean(revNormAvg_ch1(bl(1):bl(2)));
+    revNormAvg_ch1 = revNormAvg_ch1 / percentile(revNormAvg_ch1(bl(2):end), 0.90);
 
+
+    
+    revNormAvg_ch2 = [RE.csMinus.phPeakPercentile_cs_ch2.before RE.csPlus.phPeakPercentile_cs_ch2.after];
+    revNormAvg_ch2 = nanmean(revNormAvg_ch2);
+    revNormAvg_ch2 = revNormAvg_ch2 - nanmean(revNormAvg_ch2(bl(1):bl(2)));
+    revNormAvg_ch2 = revNormAvg_ch2 / percentile(revNormAvg_ch2(bl(2):end), 0.90);
+
+    plot(xData, revNormAvg_ch1, 'g'); hold on;
+    plot(xData, revNormAvg_ch2, 'r');
+    set(gca, 'XLim', [-40 80]);xlabel('Trials of new CS+ odor from reversal');
+    ylabel('Cue dFF normalized'); title('average across 4 reversals');
+    
+    
