@@ -65,6 +65,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     if s.uniformOutput
         data = struct(...
             'dFF', NaN(totalTrials, newSamples),... % deltaF/F
+            'ZS', NaN(totalTrials, newSamples),... % deltaF/F            
             'raw', NaN(totalTrials, newSamples),... %
             'blF', NaN(totalTrials, 1),...
             'blF_raw', NaN(totalTrials, 1),...
@@ -73,6 +74,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     else
         data = struct(...        
             'dFF', {},... % deltaF/F
+            'ZS', {},... % deltaF/F            
             'raw', {},... %
             'blF', NaN(totalTrials, 1),...
             'blF_raw', NaN(totalTrials, 1),...
@@ -184,11 +186,13 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                     blF = bsxfun(@plus, blF, trialFit);
                     dF = allData - blF;
                 otherwise
-            end
-            Photometry.data(fCh).dFF(tcounter:tcounter+nTrials - 1, :) = dF ./ blF;  
+            end            
+            Photometry.data(fCh).dFF(tcounter:tcounter+nTrials - 1, :) = dF ./ blF; 
+            sd = nanmean(nanstd(dF(:,blStartP:blEndP), 0, 2));
+            Photometry.data(fCh).ZS(tcounter:tcounter+nTrials - 1, :) = dF / sd; % z-scored
             Photometry.data(fCh).raw(tcounter:tcounter+nTrials - 1, :) = allData;                  
             Photometry.data(fCh).blF(tcounter:tcounter+nTrials - 1, 1) = mean(blF, 2); 
-            Photometry.data(fCh).blF_raw(tcounter:tcounter+nTrials - 1, 1) = blF_raw;                   
+            Photometry.data(fCh).blF_raw(tcounter:tcounter+nTrials - 1, 1) = blF_raw;            
             Photometry.data(fCh).ch = fCh;
         end
         Photometry.startTime(tcounter:tcounter+nTrials - 1) = startTimes';
