@@ -52,7 +52,7 @@ function SessionData = demodulateSession(SessionData, lowpass, varargin)
             catch % if data acq hiccupped and somehow didn't acquire during trial
 %                 attempty to replace data with NaNs of size from previous
 %                 trial
-                SessionData.demod{trial,fCh} = NaN(size(rawData, 1), nChannels); % rawData from previous loop iteration
+                SessionData.demod{trial,fCh} = NaN(size(rawData)); % rawData from previous loop iteration
                 SessionData.NidaqData{trial, 1}(:,fCh) = NaN(size(rawData));
                 disp(['*** demodulateSession: Trial lacks NidaqData: # ' num2str(trial) ' ***']);
             end
