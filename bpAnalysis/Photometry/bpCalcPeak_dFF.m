@@ -6,6 +6,8 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
 % zeroTimes- can be cell array of state times (see also referenceFromEnd)
 % or vector (although this option hasn't yet been tested, see
 % bpCalcPeak_Pupil)
+% zeroTimes- if left blank zero is defined as beginning of photometry
+% recording
 
 
 % I could just have the window calculated

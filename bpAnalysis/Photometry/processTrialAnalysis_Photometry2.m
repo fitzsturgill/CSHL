@@ -21,6 +21,10 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     if ~iscell(s.dFFMode)
         s.dFFMode = repmat({s.dFFMode}, 1, max(s.channels));
     end
+    if ~iscell(s.baseline)
+        s.baseline = repmat({s.baseline}, 1, max(s.channels));
+    end
+        
     % find total number of trials across selected sessions and size of
     % nidaq data
     scounter = zeros(size(sessions));
@@ -122,8 +126,8 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             end
 
             % convert to deltaF/F
-            blStartP = bpX2pnt(s.baseline(1), sampleRate);
-            blEndP = bpX2pnt(s.baseline(2), sampleRate); 
+            blStartP = bpX2pnt(s.baseline{fCh}(1), sampleRate);
+            blEndP = bpX2pnt(s.baseline{fCh}(2), sampleRate); 
             switch blMode
                 case 'byTrial'
                     blF = nanmean(allData(:, blStartP:blEndP), 2); % take mean across time, not trials
