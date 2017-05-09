@@ -16,11 +16,11 @@
 D = 12.7; % diameter of wheel in cm
 pr = 200; % pulses/rotation 
 dpp = pi * 12.7 / 200;
-rawTimes = sessions(1).SessionData.RawEvents.Trial{2}.Events.Port3In;
+rawTimes = sessions(1).SessionData.RawEvents.Trial{5}.Events.Port3In;
 wheelTimes = rawTimes(rawTimes < 30);
 edges = 0:1/20:30;
-wheel_X = cumsum(histcounts(rawTimes, edges) * dpp);
-% wheel_X = smooth(cumsum(histcounts(rawTimes, edges)), 20);  
+% wheel_X = cumsum(histcounts(rawTimes, edges) * dpp);
+wheel_X = smooth(cumsum(histcounts(rawTimes, edges)), 20);  
 wheel_t = 0:1/20:30-1/20;
   
 ensureFigure('test', 1);
