@@ -34,7 +34,7 @@ function [eventTimes, eventTrials] = extractEventTimesFromTE(TE, trials, event, 
         
         
         trialEventTimes = TE.(event){trial};
-        trialEventTimes = trialEventTimes((startTime < trialEventTimes) & (trialEventTimes < endTime));
+        trialEventTimes = trialEventTimes((startTime <= trialEventTimes) & (trialEventTimes < endTime));
         trialEventTimesZeroed = trialEventTimes - zeroTime; 
         if size(trialEventTimesZeroed, 2) > 1
             trialEventTimesZeroed = trialEventTimesZeroed';

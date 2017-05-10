@@ -33,15 +33,15 @@ plot(wheel_t(1:end-1), diff(wheel_X), 'b'); hold on
 plot(wheel_t, gradient(wheel_X), 'g');
 
 %%
-
-[rewards_dat, ts, tn] = extractDataByTimeStamps(TE.Photometry.data(2).raw, TE.Photometry.startTime, 20, TE.Reward, [-3 3]);
-rewards_chat = extractDataByTimeStamps(TE.Photometry.data(1).raw, TE.Photometry.startTime, 20, TE.Reward, [-3 3]);
+window = [-2 2];
+[rewards_dat, ts, tn] = extractDataByTimeStamps(TE.Photometry.data(2).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2]);
+rewards_chat = extractDataByTimeStamps(TE.Photometry.data(1).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2]);
 
 % local dFF
-bl_dat = nanmean(rewards_dat(:,1:60), 2);
+bl_dat = nanmean(rewards_dat(:,1:40), 2);
 rewards_dat = bsxfun(@minus, rewards_dat, bl_dat);
 rewards_dat = bsxfun(@rdivide, rewards_dat, bl_dat);
-bl_chat = nanmean(rewards_chat(:,1:60), 2);
+bl_chat = nanmean(rewards_chat(:,1:40), 2);
 rewards_chat = bsxfun(@minus, rewards_chat, bl_chat);
 rewards_chat = bsxfun(@rdivide, rewards_chat, bl_chat);
 
@@ -59,13 +59,59 @@ iri_pre_sorted = iri_pre(I);
 rewards_dat_sorted = rewards_dat(I, :);
 rewards_chat_sorted = rewards_chat(I, :);
 
-ensureFigure('rewards_sorted', 1); 
-subplot(3,2,1); imshow(rewards_chat_sorted, [min(min(rewards_chat_sorted)), max(max(rewards_chat_sorted))]); colormap('jet'); title('chat'); ylabel('sorted');
-subplot(3,2,2); imshow(rewards_dat_sorted, [min(min(rewards_dat_sorted)), max(max(rewards_dat_sorted))]); colormap('jet'); title('dat');
-subplot(3,2,3); imshow(rewards_chat, [min(min(rewards_chat_sorted)), max(max(rewards_chat_sorted))]); colormap('jet'); ylabel('unsorted');
-subplot(3,2,4); imshow(rewards_dat, [min(min(rewards_dat_sorted)), max(max(rewards_dat_sorted))]); colormap('jet');
-subplot(3,2,5); plot(nanmean(rewards_chat));
-subplot(3,2,6); plot(nanmean(rewards_dat));
+ensureFigure('random_rewards', 1); 
+% subplot(3,2,1); imshow(rewards_chat_sorted, [min(min(rewards_chat_sorted)), max(max(rewards_chat_sorted))]); colormap('jet'); title('chat'); ylabel('sorted');
+% subplot(3,2,2); imshow(rewards_dat_sorted, [min(min(rewards_dat_sorted)), max(max(rewards_dat_sorted))]); colormap('jet'); title('dat');
+subplot(3,2,1); image(rewards_chat, 'XData', window, 'CDataMapping', 'Scaled'); set(gca, 'CLim', [min(min(rewards_chat_sorted)), max(max(rewards_chat_sorted))]); colormap('jet');  title('ChAT');
+subplot(3,2,2); image(rewards_dat, 'XData', window,  'CDataMapping', 'Scaled'); set(gca, 'CLim', [min(min(rewards_dat_sorted)), max(max(rewards_dat_sorted))]); colormap('jet');    title('DAT');
+xdata = linspace(window(1), window(2), size(rewards_chat, 2));
+subplot(3,2,3); plot(xdata, nanmean(rewards_chat));
+subplot(3,2,4); plot(xdata, nanmean(rewards_dat));
+subplot(3,2,5); triggeredEventRasterFromTE(TE, 'Port1In', TE.Reward);
+
+if saveOn
+    saveas(gcf, fullfile(savepath, 'random_rewards.fig'));
+    saveas(gcf, fullfile(savepath, 'random_rewards.jpg'));
+end
+
+%% coherence
+data_chat = TE.Photometry.data(1).raw;
+data_chat = data_chat(:,2:end) - data_chat(:,1:end-1); % whiten
+data_chat = data_chat';
+data_dat = TE.Photometry.data(2).raw;
+data_dat = data_dat(:,2:end) - data_dat(:,1:end-1); % whiten
+data_dat = data_dat';
+
+
+params.Fs = 20;
+params.trialave = 1;
+params.err = [2 0.05];
+params.tapers = [3 5];
+
+
+[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat, data_dat, params);
+ensureFigure('coherence', 1);
+subplot(1,1,1); plot(f,C, 'r'); hold on;
+% plot(f, Cerr(1,:), 'm');
+% plot(f, Cerr(2,:), 'm');
+
+% scramble trial labels
+si = randperm(size(data_dat, 2));
+
+[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat(:,si), data_dat, params);
+
+plot(f,C, 'b'); 
+% plot(f, Cerr(1,:), 'c');
+% plot(f, Cerr(2,:), 'c');
+set(gca, 'XScale', 'log');
+xlabel('Frequency');
+ylabel('Coherence');
+
+if saveOn
+    saveas(gcf, fullfile(savepath, 'coherence.fig'));
+    saveas(gcf, fullfile(savepath, 'coherence.jpg'));
+end
+
 
 
 
