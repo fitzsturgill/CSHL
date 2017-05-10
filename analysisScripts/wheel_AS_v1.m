@@ -28,6 +28,8 @@ end
 TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit',...
     'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 2], 'startField', 'Baseline');
 
+%%
+TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', 30, 'Fs', 20, 'startField', 'Start');
 %% plot raw and smoothed scatter plots of all the data (excepting the first few trials)
 nPoints = numel(TE.Photometry.data(2).ZS(4:end,:)); 
 ensureFigure('scatter', 1); 
@@ -39,3 +41,4 @@ a(1) = subplot(1,2,1); scatter(DAT_raw, ChAT_raw, '.'); xlabel('DAT fluor (Zscor
 a(2) = subplot(1,2,2); scatter(smooth(DAT_raw, smoothfactor), smooth(ChAT_raw, smoothfactor), '.'); xlabel('DAT fluor (Zscored)'); ylabel('ChAT fluor (Zscored)'); title('smoothed');
 sameXYScale(a); %sameXScale(a);sameYScale(a);
 % setXYsameLimit(a(1), 0);setXYsameLimit(a(2), 0);
+%%

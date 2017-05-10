@@ -1,23 +1,22 @@
-function Photometry = processTrialAnalysis_Wheel(sessions, varargin)
-
-% Fs - sample rate
-% Ns - number of samples/trial  (currently a scalar value, uniformOutput =
-% 0 is not yet implemented
-    
-% !!!! Note you can have wheel increment values outside of the time span of
-% the photometry acquisition, you need startField or zero or something, dT and nSamples
+function Wheel = processTrialAnalysis_Wheel(sessions, varargin)
+% process wheel running speed measurements from wheel connected to rotary
+% encoder.  Assumes that rotary pulses are unidirectional.
     %% optional parameters, first set defaults
     defaults = {...
-        'dX', 5;... %unit length in cm traveled for each advance of the rotary encoder, (currently a weakly founded guess)
         'uniformOutput', 1;...            % not currently implemented, idea is to set to 0 if acqs are going to be variable in length (store data in cell array)
         'startField', 'Start';...
         'zeroField', '';... % if empty, startField defines zero
         'Fs', 20;...
+        'dpp', pi * 12.7 / 200; % distance per pulse
         'duration', 30;...
-        'dataField', 'Port3In';...
+        'dataField', 'Port3In';... % field providing pulse times from rotary encoder
+        'smoothWindow', 1;... % smoothing window in seconds
         };
-    
+
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings 
+    if rem(s.duration * s.Fs, 1)
+        error('*** duration must contain an integer number of samples ***');
+    end    
     if isempty(s.zeroField)
         s.zeroField = s.startField;
     end
@@ -31,7 +30,7 @@ function Photometry = processTrialAnalysis_Wheel(sessions, varargin)
     if s.uniformOutput        
         zeroTime = sessions(1).SessionData.RawEvents.Trial{1}.States.(s.zeroField)(1) - ...
             sessions(1).SessionData.RawEvents.Trial{1}.States.(s.startField)(1);
-        xData = linspace(-zeroTime, -zeroTime + s.duration, round(s.duration/s.Fs));
+        xData = -zeroTime:1/s.Fs:(-zeroTime + s.duration) - 1/s.Fs;
     else
         error(' uniformOutput == 0 mode not yet implemented ');
     end
@@ -40,49 +39,39 @@ function Photometry = processTrialAnalysis_Wheel(sessions, varargin)
         'data', [],...
         'settings', s,...
         'startTime', NaN(totalTrials, 1),...
+        'Fs', s.Fs,...
         'xData', xData...
         );
+    s.smoothWindow = s.smoothWindow * s.Fs; % convert smooth window from time to samples
     if s.uniformOutput
         data = struct(...
             'V', NaN(totalTrials, length(xData)),...
+            'X', NaN(totalTrials, length(xData))...            
             );
     else
         data = struct(...
-            'V', {}...
+            'V', {},...
+            'X', {}...
             );        
     end
     
-     %%
-D = 12.7; % diameter of wheel in cm
-pr = 200; % pulses/rotation 
-dpp = pi * 12.7 / 200;
-rawTimes = sessions(1).SessionData.RawEvents.Trial{5}.Events.Port3In;
-wheelTimes = rawTimes(rawTimes < 30);
-edges = 0:1/20:30;
-% wheel_X = cumsum(histcounts(rawTimes, edges) * dpp);
-wheel_X = smooth(cumsum(histcounts(rawTimes, edges)), 20);  
-wheel_t = 0:1/20:30-1/20;
-  
-ensureFigure('test', 1);
-subplot(2,1,1);
-plot(wheelTimes, cumsum(ones(size(wheelTimes)) * dpp), 'b'); hold on;
-plot(wheel_t, wheel_X, 'g');
 
-subplot(2,1,2);
-plot(wheel_t(1:end-1), diff(wheel_X), 'b'); hold on
-plot(wheel_t, gradient(wheel_X), 'g');
- 
+    Wheel.data = data;
     tcounter = 1;    
     for si = 1:length(sessions);
         SessionData = sessions(si).SessionData;
-        startTimes = cellfun(@(x) x.States.(s.startField)(1), sessions(si).SessionData.RawEvents.Trial); % take the beginning time stamp for the startField-specified Bpod state
         nTrials = SessionData.nTrials;
-        allData = NaN(nTrials, newSamples);   
-            for trial = 1:nTrials
-                
-                
-            end
-        Wheel.startTime(tcounter:tcounter+nTrials - 1) = startTimes';
-        tcounter = tcounter + nTrials;            
+        for trial = 1:nTrials
+            startTime = SessionData.RawEvents.Trial{trial}.States.(s.startField)(1);
+            pulseTimes = SessionData.RawEvents.Trial{trial}.Events.(s.dataField) - startTime;
+            edges = 0:1/s.Fs:s.duration;
+            position = cumsum(histcounts(pulseTimes, edges));
+            position = smooth(position, s.smoothWindow);
+            velocity = gradient(position); % gradient preserves number of points unlike diff
+            Wheel.startTime(tcounter) = startTime;
+            Wheel.data.X(tcounter,:) = position;
+            Wheel.data.V(tcounter,:) = velocity;            
+            tcounter = tcounter + 1;              
+        end                                          
     end
                 

@@ -19,8 +19,6 @@ function stateEvent = bpAddStateAsTrialEvent(sessions, state, stateEvent, matchM
     if state(end) == '*'
         matchMode = true;
         state = state(1:end-1);
-    else
-        matchMode = false;
     end
     
     for si = 1:length(sessions)

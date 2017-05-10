@@ -49,4 +49,6 @@ function [eventTimes, eventTrials] = extractEventTimesFromTE(TE, trials, event, 
                 eventTrials = [eventTrials; repmat(TE.trialNumber(trial), length(trialEventTimesZeroed), 1)];
         end
     end
+    
+
         
