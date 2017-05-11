@@ -76,11 +76,13 @@ end
 
 %% coherence
 data_chat = TE.Photometry.data(1).raw;
-data_chat = data_chat(:,2:end) - data_chat(:,1:end-1); % whiten
+% data_chat = data_chat(:,2:end) - data_chat(:,1:end-1); % whiten
 data_chat = data_chat';
+data_chat = nanzscore(data_chat); % standardize
 data_dat = TE.Photometry.data(2).raw;
-data_dat = data_dat(:,2:end) - data_dat(:,1:end-1); % whiten
+% data_dat = data_dat(:,2:end) - data_dat(:,1:end-1); % whiten
 data_dat = data_dat';
+data_dat = nanzscore(data_dat); % standardize
 
 
 params.Fs = 20;
@@ -136,9 +138,25 @@ for trial = 1:18
     plot(tsx, tsy, 'r');
 end
 
+%% cross correlation
+trial = 1;
+maxLagInSeconds = 10;
+Fs = 20;
+maxLag = round(maxLagInSeconds * Fs);
+% [r, lags] = xcorr(data_chat(:,trial), data_dat(:,trial), maxLag);
+[r, shiftR, rawR, lags] = correctedXCorr(data_chat, data_dat, maxLag);
+ensureFigure('xcorr', 1);
+plot(lags * (1/20), r, 'k'); hold on;
+plot(lags * (1/20), rawR, 'r');
+plot(lags * (1/20), shiftR, 'b');
+xlabel('Time (s)'); ylabel('ChAT x DAT XCorr'); 
+legend({'corrected', 'raw', 'shift predictor'});
 
 
-
+if saveOn
+    saveas(gcf, fullfile(savepath, 'xcorr.fig'));
+    saveas(gcf, fullfile(savepath, 'xcorr.jpg'));
+end
 
 
 
