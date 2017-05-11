@@ -9,14 +9,19 @@ function TE = addPupilometryToTE(TE, varargin)
 
     %% optional parameters, first set defaults
     defaults = {...
-        'frameRate', 60;... % 8/28/2016- changed channels default from [] to 1
+        'frameRate', 60;...
+        'frameRateNew', 20;... 
         'duration', 11;...  % assumes constant trial duration across TE
-        'zeroField', 'Us';...
+        'zeroField', 'Us';... % kludge, if zeroField matches startField, use end of startField as zero point, e.g. 'Baseline' for wheel_v1.m
         'startField', 'PreCsRecording';... % extract time stamp w.r.t. start of Bpod trial
         'rootPath', [];...
         'normMode', 'bySession';...  % [bySession, byTrial]
         };
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings    
+    if isempty(s.frameRateNew)
+        s.frameRateNew = s.frameRate;
+    end
+        
     if isempty(s.rootPath)
         [~, rootPath] = uiputfile('path', 'Choose data folder containing pupil subdirectories...');
         if rootPath == 0
@@ -42,13 +47,14 @@ function TE = addPupilometryToTE(TE, varargin)
     pupil = struct();
     pupil.loadSettings = s; % scalar
     pupil.settings = cell(length(TE.filename), 1);
-    pupil.xData = 0:dX:(nFrames - 1) * dX;
+    pupil.xData = changeRate(0:dX:(nFrames - 1) * dX);
+    nFramesNew = length(pupil.xData);
     pupil.startTime = NaN(length(TE.filename), 1);
     pupil.frameRate = NaN(length(TE.filename), 1);
-    pupil.blinkDetected = NaN(length(TE.filename), nFrames);
+    pupil.blinkDetected = NaN(length(TE.filename), nFramesNew);
     
     for counter = 1:numel(normFields)
-        pupil.(normFields{counter}) = NaN(length(TE.filename), nFrames); % fill with NaNs
+        pupil.(normFields{counter}) = NaN(length(TE.filename), nFramesNew); % fill with NaNs
     end
     
     %% extract session dates in TE and generate matching pupil folder names
@@ -85,19 +91,25 @@ function TE = addPupilometryToTE(TE, varargin)
             end
             loaded = load(fileList{i});
             framesToLoad = min(nFrames, max(loaded.pupilData.currentFrame));
-            pupil.frameRate(tei,1) = s.frameRate;
+            newFrames = round(framesToLoad * (s.frameRateNew/s.frameRate)); % is round correct? 
+            pupil.frameRate(tei,1) = s.frameRateNew;
             pupil.settings{tei} = loaded.pupilData.settings;          
-            pupil.eyeArea(tei, 1:framesToLoad) = loaded.pupilData.eye.area(1:framesToLoad);
-            pupil.blinkDetected(tei, 1:framesToLoad) = loaded.pupilData.eye.blinkDetected(1:framesToLoad);
-            pupil.pupArea(tei, 1:framesToLoad) = loaded.pupilData.pupil.area(1:framesToLoad);
-            pupil.pupDiameter(tei, 1:framesToLoad) = loaded.pupilData.pupil.diameter(1:framesToLoad);
-            pupil.pupResidual(tei, 1:framesToLoad) = loaded.pupilData.pupil.circResidual(1:framesToLoad);
+            pupil.eyeArea(tei, 1:newFrames) = changeRate(loaded.pupilData.eye.area(1:framesToLoad));
+            pupil.blinkDetected(tei, 1:newFrames) = changeRate(loaded.pupilData.eye.blinkDetected(1:framesToLoad));
+            pupil.pupArea(tei, 1:newFrames) = changeRate(loaded.pupilData.pupil.area(1:framesToLoad));
+            pupil.pupDiameter(tei, 1:newFrames) = changeRate(loaded.pupilData.pupil.diameter(1:framesToLoad));
+            pupil.pupResidual(tei, 1:newFrames) = changeRate(loaded.pupilData.pupil.circResidual(1:framesToLoad));
             pupil.startTime(tei, 1) = TE.(s.startField){tei}(1);
+
             if counter == 1 && i == 1
-                startX = TE.(s.startField){1}(1) - TE.(s.zeroField){1}(1);
+                if all(s.startField == s.zeroField)                
+                    startX = TE.(s.startField){1}(end) - TE.(s.zeroField){1}(1); % kludge, use end of startField/zeroField as zero point
+                else
+                    startX = TE.(s.startField){1}(1) - TE.(s.zeroField){1}(1);
+                end
                 pupil.xData = pupil.xData + startX;
                 blStartP = 1; % just start at beginning of video for baseline
-                blEndP = bpX2pnt(0, s.frameRate, startX); % go to zero point        
+                blEndP = bpX2pnt(0, s.frameRateNew, startX); % go to zero point        
             end
         end  
         %% remove outliers
@@ -119,6 +131,17 @@ function TE = addPupilometryToTE(TE, varargin)
             
     end
     TE.pupil = pupil;
+
+    %% nested function
+    function out = changeRate(data)
+        if s.frameRateNew == s.frameRate || isempty(s.frameRateNew)
+            out = data;
+        else
+            [p, q] = rat(s.frameRateNew/s.frameRate);
+            out = resample(data, p, q);
+        end
+    end
+        
 end
 %%
 function pupilFolder = parseFileName(filename)
@@ -140,7 +163,8 @@ function pupilFolder = parseFileName(filename)
     pupilFolder = ['Pupil_' y m2 d];
 end
     
-    
+
+
         
     
 

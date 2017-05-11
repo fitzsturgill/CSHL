@@ -75,13 +75,13 @@ if saveOn
 end
 
 %% coherence
-data_chat = TE.Photometry.data(1).raw;
+data_chat = TE.Photometry.data(1).raw';
 % data_chat = data_chat(:,2:end) - data_chat(:,1:end-1); % whiten
-data_chat = data_chat';
+% data_chat = nanzscore2(data_chat); % standardize
 data_chat = nanzscore(data_chat); % standardize
-data_dat = TE.Photometry.data(2).raw;
+data_dat = TE.Photometry.data(2).raw';
 % data_dat = data_dat(:,2:end) - data_dat(:,1:end-1); % whiten
-data_dat = data_dat';
+% data_dat = nanzscore2(data_dat); % standardize
 data_dat = nanzscore(data_dat); % standardize
 
 
@@ -158,10 +158,101 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'xcorr.jpg'));
 end
 
+%% pupil data
+%  [wheelY_new, wheelTimes_new] = resample(wheelY, wheelTimes, 20, 'linear');
+
+TE = addPupilometryToTE(TE, 'duration', 30, 'zeroField', 'Baseline', 'startField', 'Baseline', 'frameRate', 60, 'frameRateNew', 20);
+
+%%
+data_pupil = TE.pupil.pupDiameter';
+% data_pupil = nanzscore2(data_pupil);
+data_pupil = nanzscore(data_pupil);
+maxLagInSeconds = 10;
+Fs = 20;
+maxLag = round(maxLagInSeconds * Fs);
+% [r, lags] = xcorr(data_chat(:,trial), data_dat(:,trial), maxLag);
+[r, shiftR, rawR, lags] = correctedXCorr(data_chat, data_pupil, maxLag);
+ensureFigure('xcorr_pupil', 1);
+subplot(2,1,1);
+plot(lags * (1/20), r, 'k'); hold on;
+plot(lags * (1/20), rawR, 'r');
+plot(lags * (1/20), shiftR, 'b');
+xlabel('Time (s)'); ylabel('ChAT x pupil XCorr'); 
+legend({'corrected', 'raw', 'shift predictor'});
+
+[r, shiftR, rawR, lags] = correctedXCorr(data_dat, data_pupil, maxLag);
+subplot(2,1,2);
+plot(lags * (1/20), r, 'k'); hold on;
+plot(lags * (1/20), rawR, 'r');
+plot(lags * (1/20), shiftR, 'b');
+xlabel('Time (s)'); ylabel('DAT x pupil XCorr'); 
+legend({'corrected', 'raw', 'shift predictor'});
 
 
 
+if saveOn
+    saveas(gcf, fullfile(savepath, 'xcorr_pupil.fig'));
+    saveas(gcf, fullfile(savepath, 'xcorr_pupil.jpg'));
+end
+%%
+%% coherence with pupil
+
+validTrials = find(isnan(data_pupil)) == 0;
+
+params.Fs = 20;
+params.trialave = 1;
+params.err = [2 0.05];
+params.tapers = [3 5];
 
 
+[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat(:,validTrials), data_pupil(:,validTrials), params);
+ensureFigure('coherence_pupil', 1);
+subplot(1,2,1); plot(f,C, 'r'); hold on;
+plot(f, Cerr(1,:), 'm');
+plot(f, Cerr(2,:), 'm');
 
- 
+% scramble trial labels
+si = randperm(length(validTrials));
+si2 = validTrials(si);
+
+[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat(:,si2), data_pupil(:,validTrials), params);
+
+plot(f,C, 'b'); 
+plot(f, Cerr(1,:), 'c');
+plot(f, Cerr(2,:), 'c');
+set(gca, 'XScale', 'log');
+xlabel('Frequency');
+ylabel('Coherence, chat vs pupil');
+
+
+[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_dat, data_pupil, params);
+subplot(1,2,2); plot(f,C, 'r'); hold on;
+plot(f, Cerr(1,:), 'm');
+plot(f, Cerr(2,:), 'm');
+
+% scramble trial labels
+si = randperm(size(data_dat, 2));
+
+[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_dat(:,si), data_pupil, params);
+
+plot(f,C, 'b'); 
+plot(f, Cerr(1,:), 'c');
+plot(f, Cerr(2,:), 'c');
+set(gca, 'XScale', 'log');
+xlabel('Frequency');
+ylabel('Coherence, dat vs pupil');
+
+if saveOn
+    saveas(gcf, fullfile(savepath, 'coherence_pupil.fig'));
+    saveas(gcf, fullfile(savepath, 'coherence_pupil.jpg'));
+end
+
+%% scatter
+ensureFigure('scatter_pupil', 1); 
+subplot(2,2,1); scatter(reshape(data_chat, numel(data_chat), 1), reshape(data_pupil, numel(data_pupil), 1), '.');
+ylabel('pupil'); xlabel('chat');
+subplot(2,2,2); scatter(reshape(data_dat, numel(data_dat), 1), reshape(data_pupil, numel(data_pupil), 1), '.');
+ylabel('pupil'); xlabel('dat');
+subplot(2,2,3); scatter(reshape(TE.Wheel.data.V, numel(data_dat), 1), reshape(data_pupil, numel(data_pupil), 1), '.');
+ylabel('pupil'); xlabel('velocity');
+%% 

@@ -24,8 +24,10 @@ function [R, shiftR, rawR, lags] = correctedXCorr(x, y, maxlag, dim)
         maxlag = size(x,1) - 1;
     end
     
-    x = nanzscore(x, 0);
-    y = nanzscore(y, 0);
+%     x = nanzscore(x, 0);
+%     y = nanzscore(y, 0);
+%     x = nanzscore2(x);
+%     y = nanzscore2(y);
     
     [rawR, lags] = avgXCorr(x, y, maxlag); % uncorrected
 
