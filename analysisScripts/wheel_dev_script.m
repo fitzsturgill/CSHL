@@ -94,8 +94,8 @@ params.tapers = [3 5];
 [C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat, data_dat, params);
 ensureFigure('coherence', 1);
 subplot(1,1,1); plot(f,C, 'r'); hold on;
-% plot(f, Cerr(1,:), 'm');
-% plot(f, Cerr(2,:), 'm');
+plot(f, Cerr(1,:), 'm');
+plot(f, Cerr(2,:), 'm');
 
 % scramble trial labels
 si = randperm(size(data_dat, 2));
@@ -103,8 +103,8 @@ si = randperm(size(data_dat, 2));
 [C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat(:,si), data_dat, params);
 
 plot(f,C, 'b'); 
-% plot(f, Cerr(1,:), 'c');
-% plot(f, Cerr(2,:), 'c');
+plot(f, Cerr(1,:), 'c');
+plot(f, Cerr(2,:), 'c');
 set(gca, 'XScale', 'log');
 xlabel('Frequency');
 ylabel('Coherence');
