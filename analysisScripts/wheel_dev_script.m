@@ -164,29 +164,69 @@ end
 TE = addPupilometryToTE(TE, 'duration', 30, 'zeroField', 'Baseline', 'startField', 'Baseline', 'frameRate', 60, 'frameRateNew', 20);
 
 %%
+
+maxLagInSeconds = 10;
+Fs = 20;
+maxLag = round(maxLagInSeconds * Fs);
+% [r, lags] = xcorr(data_chat(:,trial), data_dat(:,trial), maxLag);
+
+h = ensureFigure('xcorr_pupil', 1);
+mcPortraitFigSetup(h);
+
+subplot(3,2,1);
+[r, shiftR, rawR, lags] = correctedXCorr(data_chat, data_dat, maxLag);
+plot(lags * (1/20), r, 'k'); hold on;
+plot(lags * (1/20), rawR, 'r');
+plot(lags * (1/20), shiftR, 'b');
+xlabel('Time (s)'); ylabel('ChAT x DAT XCorr'); 
+% legend({'corrected', 'raw', 'shift predictor'}, 'Location', 'northwest');
+
+subplot(3,2,2);
+[r, shiftR, rawR, lags] = correctedXCorr(data_chat, data_chat, maxLag);
+plot(lags * (1/20), r, 'k'); hold on;
+plot(lags * (1/20), rawR, 'r');
+plot(lags * (1/20), shiftR, 'b');
+xlabel('Time (s)'); ylabel('ChAT AutoCorr'); 
+legend({'corrected', 'raw', 'shift predictor', 'Location', 'northwest'});
+
+subplot(3,2,3);
+[r, shiftR, rawR, lags] = correctedXCorr(data_chat, data_chat, maxLag);
+plot(lags * (1/20), r, 'k'); hold on;
+plot(lags * (1/20), rawR, 'r');
+plot(lags * (1/20), shiftR, 'b');
+xlabel('Time (s)'); ylabel('DAT AutoCorr'); 
+% legend({'corrected', 'raw', 'shift predictor'});
+
 data_pupil = TE.pupil.pupDiameter';
-% data_pupil = nanzscore2(data_pupil);
-data_pupil = nanzscore(data_pupil);
+data_pupil = nanzscore2(data_pupil);
+% data_pupil = nanzscore(data_pupil);
 maxLagInSeconds = 10;
 Fs = 20;
 maxLag = round(maxLagInSeconds * Fs);
 % [r, lags] = xcorr(data_chat(:,trial), data_dat(:,trial), maxLag);
 [r, shiftR, rawR, lags] = correctedXCorr(data_chat, data_pupil, maxLag);
-ensureFigure('xcorr_pupil', 1);
-subplot(2,1,1);
+subplot(3,2,4);
 plot(lags * (1/20), r, 'k'); hold on;
 plot(lags * (1/20), rawR, 'r');
 plot(lags * (1/20), shiftR, 'b');
 xlabel('Time (s)'); ylabel('ChAT x pupil XCorr'); 
-legend({'corrected', 'raw', 'shift predictor'});
+% legend({'corrected', 'raw', 'shift predictor'});
 
 [r, shiftR, rawR, lags] = correctedXCorr(data_dat, data_pupil, maxLag);
-subplot(2,1,2);
+subplot(3,2,5);
 plot(lags * (1/20), r, 'k'); hold on;
 plot(lags * (1/20), rawR, 'r');
 plot(lags * (1/20), shiftR, 'b');
 xlabel('Time (s)'); ylabel('DAT x pupil XCorr'); 
-legend({'corrected', 'raw', 'shift predictor'});
+% legend({'corrected', 'raw', 'shift predictor'});
+
+[r, shiftR, rawR, lags] = correctedXCorr(data_pupil, data_pupil, maxLag);
+subplot(3,2,6);
+plot(lags * (1/20), r, 'k'); hold on;
+plot(lags * (1/20), rawR, 'r');
+plot(lags * (1/20), shiftR, 'b');
+xlabel('Time (s)'); ylabel('Pupil AutoCorr'); 
+% legend({'corrected', 'raw', 'shift predictor'});
 
 
 
@@ -197,7 +237,7 @@ end
 %%
 %% coherence with pupil
 
-validTrials = find(isnan(data_pupil)) == 0;
+validTrials = find(sum(isnan(data_pupil)) == 0);
 
 params.Fs = 20;
 params.trialave = 1;
@@ -225,7 +265,7 @@ xlabel('Frequency');
 ylabel('Coherence, chat vs pupil');
 
 
-[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_dat, data_pupil, params);
+[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_dat(:,validTrials), data_pupil(:,validTrials), params);
 subplot(1,2,2); plot(f,C, 'r'); hold on;
 plot(f, Cerr(1,:), 'm');
 plot(f, Cerr(2,:), 'm');
@@ -233,7 +273,7 @@ plot(f, Cerr(2,:), 'm');
 % scramble trial labels
 si = randperm(size(data_dat, 2));
 
-[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_dat(:,si), data_pupil, params);
+[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_dat(:,si2), data_pupil(:,validTrials), params);
 
 plot(f,C, 'b'); 
 plot(f, Cerr(1,:), 'c');
