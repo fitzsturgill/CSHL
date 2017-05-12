@@ -198,8 +198,9 @@ xlabel('Time (s)'); ylabel('DAT AutoCorr');
 % legend({'corrected', 'raw', 'shift predictor'});
 
 data_pupil = TE.pupil.pupDiameter';
-data_pupil = nanzscore2(data_pupil);
-% data_pupil = nanzscore(data_pupil);
+% data_pupil = data_pupil(:,2:end) - data_pupil(:,1:end-1); % whiten
+% data_pupil = nanzscore2(data_pupil);
+data_pupil = nanzscore(data_pupil);
 maxLagInSeconds = 10;
 Fs = 20;
 maxLag = round(maxLagInSeconds * Fs);
