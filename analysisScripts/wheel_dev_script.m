@@ -89,29 +89,37 @@ params.Fs = 20;
 params.trialave = 1;
 params.err = [2 0.05];
 params.tapers = [3 5];
-
+params.pad = 1;
 
 [C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat, data_dat, params);
+f(1) = eps;
 ensureFigure('coherence', 1);
-subplot(1,1,1); plot(f,C, 'r'); hold on;
-plot(f, Cerr(1,:), 'm');
-plot(f, Cerr(2,:), 'm');
+% boundedline(f, C, Cerr
+subplot(1,1,1); %plot(f,C, 'r'); hold on;
+boundedline(f, C, Cerr(1,:)' - C, 'r', 'alpha')
+% plot(f, Cerr(1,:), 'm');
+% plot(f, Cerr(2,:), 'm');
 
+%
+% subplot(1,2,2); plot(f, phi, 'r'); hold on;
+% plot(f, phi + 2 * phistd, 'm');
+% plot(f, phi - 2 * phistd, 'm');
+%
 % scramble trial labels
 si = randperm(size(data_dat, 2));
 
 [C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat(:,si), data_dat, params);
-
-plot(f,C, 'b'); 
-plot(f, Cerr(1,:), 'c');
-plot(f, Cerr(2,:), 'c');
-set(gca, 'XScale', 'log');
+f(1) = eps;
+subplot(1,1,1); %plot(f,C, 'k'); hold on;
+boundedline(f, C, Cerr(1,:)' - C, 'k');
+set(gca, 'XScale', 'log', 'XLim', [0.01 10]);
 xlabel('Frequency');
 ylabel('Coherence');
-
+formatFigureGRC;
 if saveOn
     saveas(gcf, fullfile(savepath, 'coherence.fig'));
     saveas(gcf, fullfile(savepath, 'coherence.jpg'));
+    saveas(gcf, fullfile(savepath, 'coherence.epsc'));
 end
 
 
@@ -242,7 +250,7 @@ validTrials = find(sum(isnan(data_pupil)) == 0);
 
 params.Fs = 20;
 params.trialave = 1;
-params.err = [2 0.05];
+params.err = [2 0.1];
 params.tapers = [3 5];
 
 
@@ -251,7 +259,7 @@ ensureFigure('coherence_pupil', 1);
 subplot(1,2,1); plot(f,C, 'r'); hold on;
 plot(f, Cerr(1,:), 'm');
 plot(f, Cerr(2,:), 'm');
-
+%
 % scramble trial labels
 si = randperm(length(validTrials));
 si2 = validTrials(si);
@@ -296,4 +304,135 @@ subplot(2,2,2); scatter(reshape(data_dat, numel(data_dat), 1), reshape(data_pupi
 ylabel('pupil'); xlabel('dat');
 subplot(2,2,3); scatter(reshape(TE.Wheel.data.V, numel(data_dat), 1), reshape(data_pupil, numel(data_pupil), 1), '.');
 ylabel('pupil'); xlabel('velocity');
+%% coherence bar graph
+
+
+data_chat = TE.Photometry.data(1).raw';
+% data_chat = data_chat(:,2:end) - data_chat(:,1:end-1); % whiten
+% data_chat = nanzscore2(data_chat); % standardize
+data_chat = nanzscore(data_chat); % standardize
+data_dat = TE.Photometry.data(2).raw';
+% data_dat = data_dat(:,2:end) - data_dat(:,1:end-1); % whiten
+% data_dat = nanzscore2(data_dat); % standardize
+data_dat = nanzscore(data_dat); % standardize
+
+
+params.Fs = 20;
+params.trialave = 1;
+params.err = [2 0.05];
+params.tapers = [3 5];
+params.pad = 1;
+
+tf = 0.1; % test frequency
+cohAll_C = zeros(3,2); % chat x dat, chat x pupil, dat x pupil
+cohAll_confC = zeros(3,2);
+
+% chat vs dat
+[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat, data_dat, params);
+tfp = nearest(f, tf);
+cohAll_C(1,1) = C(tfp);
+cohAll_confC(1,1) = confC;
+si = randperm(size(data_dat, 2));
+[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat(:,si), data_dat, params);
+cohAll_C(1,2) = C(tfp);
+cohAll_confC(1,2) = confC;
+
+% chat vs pupil
+validTrials = find(sum(isnan(data_pupil)) == 0);
+[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat(:,validTrials), data_pupil(:,validTrials), params);
+cohAll_C(2,1) = C(tfp);
+cohAll_confC(2,1) = confC;
+si = randperm(length(validTrials));
+si2 = validTrials(si);
+[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat(:,si2), data_pupil(:,validTrials), params);
+cohAll_C(2,2) = C(tfp);
+cohAll_confC(2,2) = confC;
+% dat vs pupil
+[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_dat(:,validTrials), data_pupil(:,validTrials), params);
+cohAll_C(3,1) = C(tfp);
+cohAll_confC(3,1) = confC;
+si = randperm(size(data_dat, 2));
+[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_dat(:,si2), data_pupil(:,validTrials), params);
+cohAll_C(3,2) = C(tfp);
+cohAll_confC(3,2) = confC;
+
+
+%%
+% figure; axes; hold on;
+xe = 1:3;
+offset = 0.1;
+ensureFigure('coherence_barGraph', 1); hold on;
+bar([1 3 5], cohAll_C(:,1), .3,  'r');
+bar([2 4 6], cohAll_C(:,2), .3, 'k');
+legend({'matched trials', 'scrambled trials'});
+errorbar([1 3 5], cohAll_C(:,1), cohAll_confC(:,1), 'r.', 'linewidth', 2);
+errorbar([2 4 6], cohAll_C(:,2), cohAll_confC(:,2), 'k.', 'linewidth', 2);
+
+set(gca, 'TickDir', 'out', 'YLim', [0 1]);
+formatFigureGRC;
+ylabel('Coherence (0.1Hz)');
+if saveOn
+    saveas(gcf, fullfile(savepath, 'coherence_barGraph.fig'));
+    saveas(gcf, fullfile(savepath, 'coherence_barGraph.jpg'));
+    saveas(gcf, fullfile(savepath, 'coherence_barGraph.epsc'));
+end
+
 %% 
+xdata = TE.Wheel.xData;
+mult = 6;
+trials = 1:5;
+trials = trials + 5 * mult;
+data_wheel = TE.Wheel.data.V';
+figName = ['pickTrials_' num2str(trials(1)) ' +'];
+ensureFigure('pickTrials', 1);
+phax = 1:3:13;
+puax = phax + 1;
+vax = phax + 2;
+for counter = 1:5
+    trial = trials(counter);
+    subplot(5, 3, phax(counter)); 
+    plot(xdata, data_chat(:,trial), 'g'); hold on;
+    plot(xdata, data_dat(:,trial), 'r'); set(gca, 'XLim', [0 30]); ylabel(['trial ' num2str(trial)]); 
+    if counter == 1
+        title('photometry');
+    end
+    subplot(5, 3, puax(counter));
+    plot(xdata, data_pupil(:, trial));set(gca, 'XLim', [0 30]); 
+    if counter == 1
+        title('pupil');
+    end
+    subplot(5, 3, vax(counter));
+    plot(xdata, data_wheel(:, trial));set(gca, 'XLim', [0 30]);
+    if counter == 1
+        title('velocity');
+    end
+end
+if saveOn
+    saveas(gcf, fullfile(savepath, [figName '.fig']));
+    saveas(gcf, fullfile(savepath, [figName '.jpg']));    
+end
+
+%% try overlaying everything
+xdata = TE.Wheel.xData;
+mult = 16;
+trials = [1:2];
+trials = trials + 2 * mult;
+data_wheel = TE.Wheel.data.V';
+figName = ['pickTrials_combined_' num2str(trials(1)) ' +'];
+ensureFigure('pickTrials', 1);
+
+for counter = 1:2
+    trial = trials(counter);
+    subplot(2, 1, counter); 
+    plot(xdata, data_chat(:,trial), 'g'); hold on;
+    plot(xdata, data_dat(:,trial), 'r'); 
+    plot(xdata, nanzscore(data_pupil(:, trial)), 'b');
+    plot(xdata, nanzscore(data_wheel(:, trial)), 'k');
+    
+    set(gca, 'XLim', [0 30], 'YLim', [-5 10]); ylabel(['trial ' num2str(trial)]); 
+end
+if saveOn
+    saveas(gcf, fullfile(savepath, [figName '.fig']));
+    saveas(gcf, fullfile(savepath, [figName '.jpg']));    
+end
+
