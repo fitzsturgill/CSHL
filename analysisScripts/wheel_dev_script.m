@@ -96,7 +96,7 @@ f(1) = eps;
 ensureFigure('coherence', 1);
 % boundedline(f, C, Cerr
 subplot(1,1,1); %plot(f,C, 'r'); hold on;
-boundedline(f, C, Cerr(1,:)' - C, 'r', 'alpha')
+boundedline(f, C, Cerr(1,:)' - C, 'b', 'alpha')
 % plot(f, Cerr(1,:), 'm');
 % plot(f, Cerr(2,:), 'm');
 
@@ -111,7 +111,7 @@ si = randperm(size(data_dat, 2));
 [C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat(:,si), data_dat, params);
 f(1) = eps;
 subplot(1,1,1); %plot(f,C, 'k'); hold on;
-boundedline(f, C, Cerr(1,:)' - C, 'k');
+boundedline(f, C, Cerr(1,:)' - C, 'alpha', 'k');
 set(gca, 'XScale', 'log', 'XLim', [0.01 10]);
 xlabel('Frequency');
 ylabel('Coherence');
@@ -362,10 +362,10 @@ cohAll_confC(3,2) = confC;
 xe = 1:3;
 offset = 0.1;
 ensureFigure('coherence_barGraph', 1); hold on;
-bar([1 3 5], cohAll_C(:,1), .3,  'r');
+bar([1 3 5], cohAll_C(:,1), .3,  'b');
 bar([2 4 6], cohAll_C(:,2), .3, 'k');
 legend({'matched trials', 'scrambled trials'});
-errorbar([1 3 5], cohAll_C(:,1), cohAll_confC(:,1), 'r.', 'linewidth', 2);
+errorbar([1 3 5], cohAll_C(:,1), cohAll_confC(:,1), 'b.', 'linewidth', 2);
 errorbar([2 4 6], cohAll_C(:,2), cohAll_confC(:,2), 'k.', 'linewidth', 2);
 
 set(gca, 'TickDir', 'out', 'YLim', [0 1]);
@@ -435,4 +435,18 @@ if saveOn
     saveas(gcf, fullfile(savepath, [figName '.fig']));
     saveas(gcf, fullfile(savepath, [figName '.jpg']));    
 end
-
+%% final example
+trial = 34;
+figName = ['coherence_ex_trial_' num2str(trial)];
+ensureFigure(figName, 1);
+plot(xdata, nanzscore(data_pupil(:, trial))-1, 'Color', [0.8 0.8 0.8], 'LineWidth', 2); hold on;
+plot(xdata, data_chat(:, trial), 'g'); 
+plot(xdata, data_dat(:, trial), 'r'); 
+set(gca, 'YLim', [-3 7]);
+legend({'ChAT', 'DAT', 'Pupil'}); legend('boxoff');
+formatFigureGRC;
+if saveOn
+    saveas(gcf, fullfile(savepath, [figName '.fig']));
+    saveas(gcf, fullfile(savepath, [figName '.jpg']));    
+    saveas(gcf, fullfile(savepath, [figName '.epsc'])); 
+end
