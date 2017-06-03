@@ -63,7 +63,11 @@ function Wheel = processTrialAnalysis_Wheel(sessions, varargin)
         nTrials = SessionData.nTrials;
         for trial = 1:nTrials
             startTime = SessionData.RawEvents.Trial{trial}.States.(s.startField)(1);
-            pulseTimes = SessionData.RawEvents.Trial{trial}.Events.(s.dataField) - startTime;
+            if isfield(SessionData.RawEvents.Trial{trial}.Events, s.dataField)
+                pulseTimes = SessionData.RawEvents.Trial{trial}.Events.(s.dataField) - startTime;
+            else
+                pulseTimes = [];
+            end
             edges = 0:1/s.Fs:s.duration;
             position = cumsum(histcounts(pulseTimes, edges));
             position = smooth(position, s.smoothWindow);

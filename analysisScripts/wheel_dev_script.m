@@ -16,7 +16,7 @@
 D = 12.7; % diameter of wheel in cm
 pr = 200; % pulses/rotation 
 dpp = pi * 12.7 / 200;
-rawTimes = sessions(1).SessionData.RawEvents.Trial{5}.Events.Port3In;
+
 wheelTimes = rawTimes(rawTimes < 30);
 edges = 0:1/20:30;
 % wheel_X = cumsum(histcounts(rawTimes, edges) * dpp);
@@ -135,7 +135,7 @@ plot(nanmean(rewards_wheel));
 
 channel = 2;
 ensureFigure(['annotated_' num2str(channel)], 1);
-for trial = 1:18
+for trial = 1:18;
 
     subplot(6,3,trial);
     trial = trial + 18 * 0;
