@@ -9,10 +9,10 @@ function TE = addPupilometryToTE(TE, varargin)
 
     %% optional parameters, first set defaults
     defaults = {...
-        'frameRate', 60;...
+        'frameRate', 60;... % integer
         'frameRateNew', 20;... 
         'duration', 11;...  % assumes constant trial duration across TE
-        'zeroField', 'Us';... % kludge, if zeroField matches startField, use end of startField as zero point, e.g. 'Baseline' for wheel_v1.m
+        'zeroField', 'Us';... 
         'startField', 'PreCsRecording';... % extract time stamp w.r.t. start of Bpod trial
         'rootPath', [];...
         'normMode', 'bySession';...  % [bySession, byTrial]
@@ -35,9 +35,9 @@ function TE = addPupilometryToTE(TE, varargin)
     cd(rootPath);
     maxDiameter = 200; % sometimes the diameter calculation blows up if this happens, set it to NaN
     %% initialize pupil structure
-    dX = 1/s.frameRate;
+    dX = 1/s.frameRateNew;
     startX = []; % to be determined
-    nFrames = round(s.frameRate * s.duration); % should be an integer anyway
+    nFrames = s.frameRate * s.duration; 
     normFields = {...
         'eyeArea', 'eyeAreaNorm';...
         'pupArea', 'pupAreaNorm';...
@@ -47,7 +47,8 @@ function TE = addPupilometryToTE(TE, varargin)
     pupil = struct();
     pupil.loadSettings = s; % scalar
     pupil.settings = cell(length(TE.filename), 1);
-    pupil.xData = changeRate(0:dX:(nFrames - 1) * dX);
+%     pupil.xData = 0:dX:(nFrames - 1) * dX;
+    pupil.xData = linspace(0, s.duration - dX, s.duration * s.frameRateNew);
     nFramesNew = length(pupil.xData);
     pupil.startTime = NaN(length(TE.filename), 1);
     pupil.frameRate = NaN(length(TE.filename), 1);
@@ -90,23 +91,20 @@ function TE = addPupilometryToTE(TE, varargin)
                 break
             end
             loaded = load(fileList{i});
-            framesToLoad = min(nFrames, max(loaded.pupilData.currentFrame));
+            framesAvailable = loaded.pupilData.currentFrame(end);
+            framesToLoad = min(nFrames, max(loaded.pupilData.currentFrame)); % bonsai seems most often to add one extra frame, still handling case where a few frames are dropped, see below
             newFrames = round(framesToLoad * (s.frameRateNew/s.frameRate)); % is round correct? 
             pupil.frameRate(tei,1) = s.frameRateNew;
             pupil.settings{tei} = loaded.pupilData.settings;          
-            pupil.eyeArea(tei, 1:newFrames) = changeRate(loaded.pupilData.eye.area(1:framesToLoad));
-            pupil.blinkDetected(tei, 1:newFrames) = changeRate(loaded.pupilData.eye.blinkDetected(1:framesToLoad));
-            pupil.pupArea(tei, 1:newFrames) = changeRate(loaded.pupilData.pupil.area(1:framesToLoad));
-            pupil.pupDiameter(tei, 1:newFrames) = changeRate(loaded.pupilData.pupil.diameter(1:framesToLoad));
-            pupil.pupResidual(tei, 1:newFrames) = changeRate(loaded.pupilData.pupil.circResidual(1:framesToLoad));
+            pupil.eyeArea(tei, 1:newFrames) = changeRate([loaded.pupilData.eye.area(1:framesToLoad) repmat(loaded.pupilData.eye.area(end), 1, nFrames - framesToLoad)]);
+            pupil.blinkDetected(tei, 1:newFrames) = changeRate([loaded.pupilData.eye.blinkDetected(1:framesToLoad) repmat(loaded.pupilData.eye.blinkDetected(end), 1, nFrames - framesToLoad)]);
+            pupil.pupArea(tei, 1:newFrames) = changeRate([loaded.pupilData.pupil.area(1:framesToLoad) repmat(loaded.pupilData.pupil.area(end), 1, nFrames - framesToLoad)]);
+            pupil.pupDiameter(tei, 1:newFrames) = changeRate([loaded.pupilData.pupil.diameter(1:framesToLoad) repmat(loaded.pupilData.pupil.diameter(end), 1, nFrames - framesToLoad)]);
+            pupil.pupResidual(tei, 1:newFrames) = changeRate([loaded.pupilData.pupil.circResidual(1:framesToLoad) repmat(loaded.pupilData.pupil.circResidual(end), 1, nFrames - framesToLoad)]);
             pupil.startTime(tei, 1) = TE.(s.startField){tei}(1);
 
             if counter == 1 && i == 1
-                if all(s.startField == s.zeroField)                
-                    startX = TE.(s.startField){1}(end) - TE.(s.zeroField){1}(1); % kludge, use end of startField/zeroField as zero point
-                else
-                    startX = TE.(s.startField){1}(1) - TE.(s.zeroField){1}(1);
-                end
+                startX = TE.(s.startField){1}(1) - TE.(s.zeroField){1}(1);
                 pupil.xData = pupil.xData + startX;
                 blStartP = 1; % just start at beginning of video for baseline
                 blEndP = bpX2pnt(0, s.frameRateNew, startX); % go to zero point        

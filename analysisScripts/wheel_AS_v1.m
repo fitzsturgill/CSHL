@@ -1,9 +1,9 @@
 % 4/10/17  Analysis script for pavlovian reversals using LickNoLick_Odor_V2
 % protocol
 
-
-
 saveOn = 0;
+%%
+saveOn = 1;
 %%
 sessions = bpLoadSessions; % load sessions
 %% 
@@ -30,6 +30,11 @@ TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, '
 
 %%
 TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', 30, 'Fs', 20, 'startField', 'Start');
+
+%% pupil data
+%  [wheelY_new, wheelTimes_new] = resample(wheelY, wheelTimes, 20, 'linear');
+
+TE = addPupilometryToTE(TE, 'duration', 30, 'zeroField', 'Baseline', 'startField', 'Baseline', 'frameRate', 60, 'frameRateNew', 20);
 %%
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
@@ -57,11 +62,16 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'scatter.fig'));
     saveas(gcf, fullfile(savepath, 'scatter.jpg'));
 end
-%%
+%% 
+% good trials,  7
+% good trials with pupil traces that needed gap filling: 12
 trial = 7;
-ensureFigure('examples', 1);
-subplot(2,1,1); plot(TE.Photometry.xData, TE.Photometry.data(1).raw(trial,:)); ylabel('ChAT');
-subplot(2,1,2); plot(TE.Photometry.xData, TE.Photometry.data(2).raw(trial,:)); ylabel('DAT');
+ensureFigure('examles', 1);
+subplot(4,1,1); plot(TE.Photometry.xData, TE.Photometry.data(1).raw(trial,:)); ylabel('ChAT');
+subplot(4,1,2); plot(TE.Photometry.xData, TE.Photometry.data(2).raw(trial,:)); ylabel('DAT');
+subplot(4,1,3); plot(TE.pupil.xData, TE.pupil.pupDiameter(trial, :)); ylabel('Pupil Diameter');
+set(gca, 'YLim', [percentile(TE.pupil.pupDiameter(trial, :), 0.03), percentile(TE.pupil.pupDiameter(trial, :), 0.97)]);
+subplot(4,1,4); plot(TE.Wheel.xData, TE.Wheel.data.V(trial, :)); ylabel('Velocity');
 
 if saveOn
     saveas(gcf, fullfile(savepath, 'examples.fig'));
