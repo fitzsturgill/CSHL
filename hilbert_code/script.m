@@ -1,4 +1,4 @@
-clear
+% clear
 %Script to demonstarte Hilbert Transfom - by Dan Hill 24 April 2010
 % set these
 varname = 'rmidwf25'; 

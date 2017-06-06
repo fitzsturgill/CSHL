@@ -11,7 +11,6 @@
  plot(wheelTimes, wheelY); hold on;
  plot(wheelTimes_new, wheelY_new);
  
- 
  %%
 D = 12.7; % diameter of wheel in cm
 pr = 200; % pulses/rotation 
@@ -75,6 +74,7 @@ if saveOn
 end
 
 %% coherence
+trials = 1:
 data_chat = TE.Photometry.data(1).raw';
 % data_chat = data_chat(:,2:end) - data_chat(:,1:end-1); % whiten
 % data_chat = nanzscore2(data_chat); % standardize
@@ -414,7 +414,7 @@ end
 
 %% try overlaying everything
 xdata = TE.Wheel.xData;
-mult = 16;
+mult = 0;
 trials = [1:2];
 trials = trials + 2 * mult;
 data_wheel = TE.Wheel.data.V';
@@ -426,7 +426,7 @@ for counter = 1:2
     subplot(2, 1, counter); 
     plot(xdata, data_chat(:,trial), 'g'); hold on;
     plot(xdata, data_dat(:,trial), 'r'); 
-    plot(xdata, nanzscore(data_pupil(:, trial)), 'b');
+%     plot(xdata, nanzscore(data_pupil(:, trial)), 'b');
     plot(xdata, nanzscore(data_wheel(:, trial)), 'k');
     
     set(gca, 'XLim', [0 30], 'YLim', [-5 10]); ylabel(['trial ' num2str(trial)]); 
