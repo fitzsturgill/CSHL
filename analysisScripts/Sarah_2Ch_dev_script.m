@@ -4,8 +4,7 @@ sessions = bpLoadSessions;
 %%
 TE = makeTE_LNL_odor_V2(sessions);
 %%
-% assume that photometry channels are consistent across sessions, bleach
-% fit dFF for GCaMP6f (ch1) and simple dFF for jRGECO1a (ch2)
+% assume that photometry channels are consistent across sessions
 channels=[]; dFFMode = {}; BL = {};
 if sessions(1).SessionData.Settings.GUI.LED1_amp > 0
     channels(end+1) = 1;
