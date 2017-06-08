@@ -46,6 +46,11 @@ disp(subjectName);
 savepath = fullfile(basepath, subjectName);
 ensureDirectory(savepath);
 
+%%
+if saveOn
+    save(fullfile(savepath, 'TE.mat'), 'TE');
+    disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
+end
 %% plot raw and smoothed scatter plots of all the data (excepting the first few trials)
 nPoints = numel(TE.Photometry.data(2).ZS(1:end,:)); 
 ensureFigure('scatter', 1); 
@@ -181,3 +186,40 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'ChAT_vs_DAT_randomReward_example.jpg'));
     saveas(gcf, fullfile(savepath, 'ChAT_vs_DAT_randomReward_example.epsc'));
 end
+
+%% phase analysis (hilbert transform)
+trial = 4;
+Fs = 20;
+bp = [0.1 2];
+
+% de-trend the signal with a band-pass filter
+% you may need the signal processing toolbox ....
+bp = bp * 2 / Fs; % convert Hz to radians/S
+[N, Wn] = buttord( bp, bp .* [.5 1.5], 3, 20); 
+[B,A] = butter(N,Wn);
+
+hdata = struct(...
+    'data', [],...
+    'filtData', [],...
+    'hilb', [],...
+    'phase', [],...
+    'amp', []...
+    );
+hdata = repmat(hdata, size(channels));
+hdata(1).data = TE.Photometry.data(1).ZS(trial, :);    
+hdata(2).data = TE.Photometry.data(2).ZS(trial, :);    
+hdata(1).filtData = filtfilt(B,A,hdata(1).data); % zero-phase filtering
+hdata(2).filtData = filtfilt(B,A,hdata(2).data); % zero-phase filtering
+hdata(1).hilb = hilbert(hdata(1).filtData);
+hdata(2).hilb = hilbert(hdata(2).filtData);
+hdata(1).phase = angle(hdata(1).hilb);
+hdata(2).phase = angle(hdata(2).hilb);
+hdata(1).amp = abs(hdata(1).hilb);
+hdata(2).amp = abs(hdata(2).hilb);
+pm = [4 1];
+ensureFigure('Hilbert', 1);
+subplot(pm(1), pm(2), 1); plot(hdata(1).data, 'g'); hold on; plot(hdata(2).data, 'r');
+subplot(pm(1), pm(2), 2); plot(hdata(1).filtData, 'g'); plot(hdata(2).filtData, 'r');
+subplot(pm(1), pm(2), 3); plot(hdata(1).phase, 'g'); hold on; plot(hdata(2).phase, 'r');
+subplot(pm(1), pm(2), 4); plot(hdata(1).amp, 'g'); hold on; plot(hdata(2).amp, 'r');
+
