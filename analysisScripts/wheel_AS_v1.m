@@ -197,29 +197,38 @@ bp = [0.1 2];
 bp = bp * 2 / Fs; % convert Hz to radians/S
 [N, Wn] = buttord( bp, bp .* [.5 1.5], 3, 20); 
 [B,A] = butter(N,Wn);
-
+sizeData = size(TE.Photometry.data(1).raw);
+nSamples = numel(TE.Photometry.data(1).raw);
 hdata = struct(...
-    'data', [],...
-    'filtData', [],...
-    'hilb', [],...
-    'phase', [],...
-    'amp', []...
+    'data', zeros(sizeData),...
+    'filtData', zeros(sizeData),...
+    'hilb', zeros(sizeData),...
+    'phase', zeros(sizeData),...
+    'amp', zeros(sizeData)...
     );
 hdata = repmat(hdata, size(channels));
-hdata(1).data = TE.Photometry.data(1).ZS(trial, :);    
-hdata(2).data = TE.Photometry.data(2).ZS(trial, :);    
-hdata(1).filtData = filtfilt(B,A,hdata(1).data); % zero-phase filtering
-hdata(2).filtData = filtfilt(B,A,hdata(2).data); % zero-phase filtering
-hdata(1).hilb = hilbert(hdata(1).filtData);
-hdata(2).hilb = hilbert(hdata(2).filtData);
-hdata(1).phase = angle(hdata(1).hilb);
-hdata(2).phase = angle(hdata(2).hilb);
-hdata(1).amp = abs(hdata(1).hilb);
-hdata(2).amp = abs(hdata(2).hilb);
+for channel = 1:2
+    for trial = 1:length(TE.filename)
+        hdata(channel).data(trial,:) = TE.Photometry.data(1).ZS(trial, :);    
+        hdata(channel).filtData(trial, :) = filtfilt(B,A,hdata(channel).data(trial,:)); % zero-phase filtering
+        hdata(channel).hilb(trial, :) = hilbert(hdata(channel).filtData(trial,:));
+        hdata(channel).phase(trial, :) = angle(hdata(channel).hilb(trial,:));
+        hdata(channel).amp(trial, :) = abs(hdata(channel).hilb(trial,:));
+    end
+end
 pm = [4 1];
-ensureFigure('Hilbert', 1);
-subplot(pm(1), pm(2), 1); plot(hdata(1).data, 'g'); hold on; plot(hdata(2).data, 'r');
-subplot(pm(1), pm(2), 2); plot(hdata(1).filtData, 'g'); plot(hdata(2).filtData, 'r');
-subplot(pm(1), pm(2), 3); plot(hdata(1).phase, 'g'); hold on; plot(hdata(2).phase, 'r');
-subplot(pm(1), pm(2), 4); plot(hdata(1).amp, 'g'); hold on; plot(hdata(2).amp, 'r');
+trial = 1;
+ensureFigure('Hilbert_examples', 1);
+subplot(pm(1), pm(2), 1); plot(hdata(1).data(trial,:), 'g'); hold on; plot(hdata(2).data(trial,:), 'r');
+subplot(pm(1), pm(2), 2); plot(hdata(1).filtData(trial,:), 'g'); plot(hdata(2).filtData(trial,:), 'r');
+subplot(pm(1), pm(2), 3); plot(hdata(1).phase(trial,:), 'g'); hold on; plot(hdata(2).phase(trial,:), 'r');
+subplot(pm(1), pm(2), 4); plot(hdata(1).amp(trial,:), 'g'); hold on; plot(hdata(2).amp(trial,:), 'r');
+
+ensureFigure('Hilbert_scatter', 1);
+% subplot(2,2,1); scatter(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(1).phase, nSamples, 1), '.', 'MarkerFaceColor', 'g'); 
+% subplot(2,2,2); scatter(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(2).phase, nSamples, 1), '.', 'MarkerFaceColor', 'r');
+% subplot(2,2,3); scatter(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(1).amp, nSamples, 1), '.', 'MarkerFaceColor', 'g'); 
+% subplot(2,2,4); scatter(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(2).amp, nSamples, 1), '.', 'MarkerFaceColor', 'r');
+subplot(1,2,1); scatter3(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(1).phase, nSamples, 1), reshape(hdata(2).phase, nSamples, 1)); %, '.', 'MarkerFaceColor', 'r');
+subplot(1,2,2); scatter3(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(1).amp, nSamples, 1), reshape(hdata(2).amp, nSamples, 1)); %, '.', 'MarkerFaceColor', 'g'); 
 
