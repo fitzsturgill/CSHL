@@ -189,8 +189,12 @@ end
 
 %% phase analysis (hilbert transform)
 trial = 4;
+trials = [1:20];
 Fs = 20;
 bp = [0.1 2];
+
+
+TE.timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.trialStartTimeStamp);
 
 % de-trend the signal with a band-pass filter
 % you may need the signal processing toolbox ....
@@ -209,7 +213,7 @@ hdata = struct(...
 hdata = repmat(hdata, size(channels));
 for channel = 1:2
     for trial = 1:length(TE.filename)
-        hdata(channel).data(trial,:) = TE.Photometry.data(1).ZS(trial, :);    
+        hdata(channel).data(trial,:) = TE.Photometry.data(channel).ZS(trial, :);    
         hdata(channel).filtData(trial, :) = filtfilt(B,A,hdata(channel).data(trial,:)); % zero-phase filtering
         hdata(channel).hilb(trial, :) = hilbert(hdata(channel).filtData(trial,:));
         hdata(channel).phase(trial, :) = angle(hdata(channel).hilb(trial,:));
@@ -229,6 +233,25 @@ ensureFigure('Hilbert_scatter', 1);
 % subplot(2,2,2); scatter(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(2).phase, nSamples, 1), '.', 'MarkerFaceColor', 'r');
 % subplot(2,2,3); scatter(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(1).amp, nSamples, 1), '.', 'MarkerFaceColor', 'g'); 
 % subplot(2,2,4); scatter(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(2).amp, nSamples, 1), '.', 'MarkerFaceColor', 'r');
-subplot(1,2,1); scatter3(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(1).phase, nSamples, 1), reshape(hdata(2).phase, nSamples, 1)); %, '.', 'MarkerFaceColor', 'r');
-subplot(1,2,2); scatter3(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(1).amp, nSamples, 1), reshape(hdata(2).amp, nSamples, 1)); %, '.', 'MarkerFaceColor', 'g'); 
+% subplot(1,2,1); scatter3(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(1).phase, nSamples, 1), reshape(hdata(2).phase, nSamples, 1)); %, '.', 'MarkerFaceColor', 'r');
+% subplot(1,2,2); scatter3(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(1).amp, nSamples, 1), reshape(hdata(2).amp, nSamples, 1)); %, '.', 'MarkerFaceColor', 'g'); 
+subplot(1,2,1);
+scatter(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(1).phase, nSamples, 1) - reshape(hdata(2).phase, nSamples, 1), '.');
+subplot(1,2,2);
+histogram2(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(1).phase, nSamples, 1) - reshape(hdata(2).phase, nSamples, 1));
 
+ampPercentileForThresh = 0.5;
+ampThresh1 = percentile(hdata(1).amp(trials, :), ampPercentileForThresh);
+ampThresh2 = percentile(hdata(2).amp(trials, :), ampPercentileForThresh);
+
+timeFromReward = TE.timeFromReward(trials, :);
+phaseDiff = hdata(1).phase(trials, :) - hdata(2).phase(trials, :);
+ensureFigure('binnedPhases', 1);
+validPoints = ~isinf(timeFromReward) & hdata(1).amp(trials, :) > ampThresh1 & hdata(2).amp(trials, :) > ampThresh2;
+[phaseMeans, phaseErrors, timeFromReward] = binnedMeansXY(timeFromReward(validPoints), phaseDiff(validPoints), 20);
+errorbar(timeFromReward, phaseMeans, phaseErrors); xlabel('time from reward'); ylabel('hilbert phase');
+if saveOn
+    saveas(gcf, fullfile(savepath, 'binnedPhases.fig'));
+    saveas(gcf, fullfile(savepath, 'binnedPhases.jpg'));
+    saveas(gcf, fullfile(savepath, 'binnedPhases.epsc'));
+end
