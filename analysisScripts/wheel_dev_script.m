@@ -74,7 +74,7 @@ if saveOn
 end
 
 %% coherence
-trials = 1:
+
 data_chat = TE.Photometry.data(1).raw';
 % data_chat = data_chat(:,2:end) - data_chat(:,1:end-1); % whiten
 % data_chat = nanzscore2(data_chat); % standardize
@@ -138,7 +138,7 @@ ensureFigure(['annotated_' num2str(channel)], 1);
 for trial = 1:18;
 
     subplot(6,3,trial);
-    trial = trial + 18 * 0;
+    trial = trial + 18 * 1;
     ydata = TE.Photometry.data(channel).raw(trial, :);    
     plot(TE.Photometry.xData, ydata, 'k'); hold on;
     tsx = repmat(TE.Reward{trial}(:,1), 1, 2)';

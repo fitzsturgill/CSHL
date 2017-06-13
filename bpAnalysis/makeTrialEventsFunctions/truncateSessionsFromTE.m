@@ -1,16 +1,39 @@
  
-function TE = truncateSessionsFromTE(TE, action)
-    % interactively adjust session truncation points
-    % designed with cuedOutcome_Odor_Complete TE structure in mind
-    % needs to be updated for other TEs- i.e. don't hardcode rewardLicks
-    % TE field (currently usLicks)
+function TE = truncateSessionsFromTE(TE, action, lickField, rewardTrials)
+%  TE- trial event structure
+% action-  'init', 'update', see below for use of update (you normally
+% don't call it with update)
+% lickField-  TE field containing lick event count structure, if empty
+% defaults to 'usLicks'
+% rewardTrials- trials with reward, defaults to trialOutcome = 1.
+
+
+
+    % Use truncateSessionsFromTE to interactively adjust session truncation points
+    % designed initially with cuedOutcome_Odor_Complete TE structure in mind
+    
     % WARNING! currently there are two ways to update
     % 1) call with 'update' as action, this will not overwrite TE, except
     % via output argument
-    % 2) 'u' keypres- this WILL overwrite TE
+    % 2) 'u' keypres- this WILL overwrite TE, changing only the reject
+    % field Normally you use the 'u' keypress unless you want alternate
+    % reject fields or something like that.
+    
+    % keyboard shortcuts-  left or right error- adjust truncation point for
+    % a session.  Up or down arrow-  switch sessions.  Shift + left or
+    % right error -> skip 10 trials rather than just 1 
     global TRUNC
     evalin('base', 'global TRUNC');
     % trunc trial is LAST INCLUDED TRIAL in each session
+    
+    if nargin < 3 || isempty(lickField)
+        lickField = 'usLicks';
+    end
+    
+    if nargin < 4
+        rewardTrials = []; 
+    end   
+    
     yMax = 20;
     switch action
         case 'init'
@@ -36,12 +59,25 @@ function TE = truncateSessionsFromTE(TE, action)
             TRUNC.fig = ensureFigure('truncFigure', 1);
             set(TRUNC.fig, 'WindowKeyPressFcn', @truncKeyPressFcn,...
                 'CloseReq', @truncClose);
-            TRUNC.rewardTrials = find(filterTE(TE, 'trialOutcome', 1));
-            TRUNC.rewardLicks = smooth(TE.usLicks.rate(TRUNC.rewardTrials), 5);
+            if isempty(rewardTrials)
+                TRUNC.rewardTrials = find(filterTE(TE, 'trialOutcome', 1));
+            elseif islogical(rewardTrials)
+                rewardTrials = find(rewardTrials);
+                TRUNC.rewardTrials = rewardTrials;
+            else
+                TRUNC.rewardTrials = rewardTrials;
+            end
+            if isempty(lickField)
+                TRUNC.rewardLicks = smooth(TE.usLicks.rate(TRUNC.rewardTrials), 5);
+            else
+                TRUNC.rewardLicks = smooth(TE.(lickField).rate(TRUNC.rewardTrials), 5);
+            end
             TRUNC.truncTrialHandle = zeros(1, nSessions); % will contain handles for trunc trial indicators
             
-            TRUNC.licksHandle = plot(TRUNC.rewardTrials, smooth(TE.usLicks.rate(TRUNC.rewardTrials), 5)); hold on; 
-            plot(TRUNC.rewardTrials, [0; diff(TE.sessionIndex(TRUNC.rewardTrials))] * yMax);
+            TRUNC.licksHandle = plot(TRUNC.rewardTrials, TRUNC.rewardLicks); hold on; 
+            
+            sessionChange = [0; diff(TE.sessionIndex(rewardTrials))];
+            plot(TRUNC.rewardTrials,  sessionChange * yMax);
             % plot trunc trial indicators
             for session = 1:TRUNC.nSessions
                 truncIndex = nearest(TRUNC.rewardTrials, TRUNC.truncTrial(session)); % take nearest reward outcome trial to trunc trial, better to step along along trials than just reward trials

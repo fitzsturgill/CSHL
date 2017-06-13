@@ -25,7 +25,7 @@ if sessions(1).SessionData.Settings.GUI.LED2_amp > 0
 end
 
 
-TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial',...
+TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit',...
     'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 29], 'startField', 'Baseline', 'downsample', 305);
 
 %%
@@ -189,7 +189,7 @@ end
 
 %% phase analysis (hilbert transform)
 trial = 4;
-trials = [1:20];
+trials = [1:39];
 Fs = 20;
 bp = [0.1 2];
 
@@ -240,7 +240,7 @@ scatter(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(1).phase, nSample
 subplot(1,2,2);
 histogram2(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(1).phase, nSamples, 1) - reshape(hdata(2).phase, nSamples, 1));
 
-ampPercentileForThresh = 0.5;
+ampPercentileForThresh = 0.2;
 ampThresh1 = percentile(hdata(1).amp(trials, :), ampPercentileForThresh);
 ampThresh2 = percentile(hdata(2).amp(trials, :), ampPercentileForThresh);
 
