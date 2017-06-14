@@ -1,4 +1,4 @@
-%%
+%% wheel development script
  rawTimes = sessions(1).SessionData.RawEvents.Trial{1}.Events.Port3In;
  wheelTimes = rawTimes(rawTimes < 30);
  wheelY = ones(size(wheelTimes));

@@ -1,3 +1,6 @@
+%% shujing's analysis script
+
+% what is going on
 saveOn = 0;
 %%
 saveOn = 1;

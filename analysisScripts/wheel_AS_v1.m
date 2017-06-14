@@ -1,5 +1,4 @@
-% 4/10/17  Analysis script for pavlovian reversals using LickNoLick_Odor_V2
-% protocol
+% wheel analysis script
 
 saveOn = 0;
 %%
