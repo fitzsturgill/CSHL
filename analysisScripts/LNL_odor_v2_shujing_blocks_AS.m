@@ -33,7 +33,7 @@ TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, '
 % processTrialAnalysis_Photometry2
 nTrials = length(TE.filename);
 
-csWindow = [0 1];
+csWindow = [0.5 1.5];
 TE.csLicks = countEventFromTE(TE, 'Port1In', csWindow, TE.Cue);
 
 usWindow = [0 0.75];
@@ -126,6 +126,13 @@ end
     end
 
     trialCount = [1:length(TE.filename)]';
+    
+    % example of how to select subset of trials- select trials from
+%     range 1-100
+    % 
+%     cuedReward_subset = logical(zeros(size(cuedReward)));
+%     cuedReward_subset(1:100) = cuedReward(1:100);
+    
     
     %% lick and photometry rasters
     

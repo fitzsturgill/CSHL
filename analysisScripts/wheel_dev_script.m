@@ -95,26 +95,30 @@ params.pad = 1;
 f(1) = eps;
 ensureFigure('coherence', 1);
 % boundedline(f, C, Cerr
-subplot(1,1,1); %plot(f,C, 'r'); hold on;
+subplot(1,2,1); hold on; %plot(f,C, 'r'); hold on;
 boundedline(f, C, Cerr(1,:)' - C, 'b', 'alpha')
 % plot(f, Cerr(1,:), 'm');
 % plot(f, Cerr(2,:), 'm');
 
 %
-% subplot(1,2,2); plot(f, phi, 'r'); hold on;
+subplot(1,2,2); plot(f, phi, 'r'); hold on;
+boundedline(f, phi, phistd * 2, 'alpha', 'b');
 % plot(f, phi + 2 * phistd, 'm');
 % plot(f, phi - 2 * phistd, 'm');
+set(gca, 'YLim', [-2 2], 'XScale', 'log', 'XLim', [0.01 10]);
 %
 % scramble trial labels
 si = randperm(size(data_dat, 2));
 
 [C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat(:,si), data_dat, params);
 f(1) = eps;
-subplot(1,1,1); %plot(f,C, 'k'); hold on;
+subplot(1,2,1); %plot(f,C, 'k'); hold on;
 boundedline(f, C, Cerr(1,:)' - C, 'alpha', 'k');
 set(gca, 'XScale', 'log', 'XLim', [0.01 10]);
 xlabel('Frequency');
 ylabel('Coherence');
+subplot(1,2,2); 
+% boundedline(f, phi, phistd * 2, 'alpha', 'k');
 formatFigureGRC;
 if saveOn
     saveas(gcf, fullfile(savepath, 'coherence.fig'));

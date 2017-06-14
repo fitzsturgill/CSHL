@@ -82,10 +82,10 @@ bl_chat = nanmean(rewards_chat(:,1:blSamples), 2);
 rewards_chat = bsxfun(@minus, rewards_chat, bl_chat);
 rewards_chat = bsxfun(@rdivide, rewards_chat, bl_chat);
 sd_chat = nanmean(nanstd(rewards_chat(:,1:blSamples)));
-nTrials = length(sessions.SessionData.nTrials);
+nTrials = length(TE.filename);
 ts_abs = zeros(size(ts));
 for counter = 1:length(ts)
-    ts_abs(counter) = ts(counter) + sessions.SessionData.TrialStartTimestamp(tn(counter));    
+    ts_abs(counter) = ts(counter) + TE.trialStartTimeStamp(tn(counter));    
 end
 
 iri_pre = [Inf; diff(ts_abs)];
@@ -109,16 +109,16 @@ subplot(3,2,4); plot(xdata, nanmean(rewards_dat));
 subplot(3,2,5); triggeredEventRasterFromTE(TE, 'Port1In', TE.Reward);
 set(gca, 'YLim', [0 size(rewards_chat, 1)]);
 
-% reward licks vs. trial number to truncate
-rl = extractTriggeredEvents(TE, 'Port1In', TE.Reward);
-ensureFigure('truncate', 1);
-rl_trials = unique(rl.eventTrials);
-rl_count = zeros(size(rl_trials));
-for counter = 1:length(rl_trials)
-    trial = rl_trials(counter);
-    rl_count(counter) = sum(rl.eventTimes > 0 & rl.eventTrials == trial);    
-end
-plot(rl_trials, smooth(rl_count)); ylabel('# reward licks'); xlabel('trial #');
+% % reward licks vs. trial number to truncate
+% rl = extractTriggeredEvents(TE, 'Port1In', TE.Reward);
+% ensureFigure('truncate', 1);
+% rl_trials = unique(rl.eventTrials);
+% rl_count = zeros(size(rl_trials));
+% for counter = 1:length(rl_trials)
+%     trial = rl_trials(counter);
+%     rl_count(counter) = sum(rl.eventTimes > 0 & rl.eventTrials == trial);    
+% end
+% plot(rl_trials, smooth(rl_count)); ylabel('# reward licks'); xlabel('trial #');
     
 
 if saveOn
@@ -187,8 +187,8 @@ if saveOn
 end
 
 %% phase analysis (hilbert transform)
-trial = 4;
-trials = [1:39];
+trial = 1;
+trials = 1:length(TE.filename);
 Fs = 20;
 bp = [0.1 2];
 
@@ -220,7 +220,7 @@ for channel = 1:2
     end
 end
 pm = [4 1];
-trial = 1;
+trial = 4;
 ensureFigure('Hilbert_examples', 1);
 subplot(pm(1), pm(2), 1); plot(hdata(1).data(trial,:), 'g'); hold on; plot(hdata(2).data(trial,:), 'r');
 subplot(pm(1), pm(2), 2); plot(hdata(1).filtData(trial,:), 'g'); plot(hdata(2).filtData(trial,:), 'r');
