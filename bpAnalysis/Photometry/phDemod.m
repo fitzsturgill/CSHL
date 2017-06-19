@@ -8,47 +8,31 @@ function demod = phDemod(rawData, refData, sampleRate, modRate, lowCutoff)
         lowCutoff = []; 
     end
     
-
-    
-    
-%     if nargin < 5
-%         tBaseline = []; % if empty, normalize (zscore) by entire range
-%     end
-    
-    if size(rawData, 2) ~= 1 ||size(refData, 2) ~= 1
-        disp('*** Error in phDemod, refData and rawData must be column vectors ***');
-        demod = [];
-        return
+    if isnumeric(refData)
+        demodMode = 1;
+        refData = refData(:); % ensure column vector
+        rawData = rawData(:); % ensure column vector
+    elseif isstruct(refData)
+        demodMode = 2;
     end
-%     rawData(:,1) = rawData; % ensure column vectors
-%     refData(:,1) = refData; 
-
 
     nSamples = length(rawData);
+    switch demodMode
+        case 1
+            refData_0 = refData(1:nSamples,1); % shorten refData to same size as rawData    
+            refData_0 = refData_0 - mean(refData_0); % *** get rid of DC offset!!!! 
+            % generate 90degree shifted copy of refData
+            samplesPerPeriod = 1/modRate / (1/sampleRate);
+            quarterPeriod = round(samplesPerPeriod / 4); % ideally you shouldn't have to round, i.e. mod frequencies should be close to factors of sample freq
+            refData_90 = circshift(refData_0, [1 quarterPeriod]);
+        case 2
+            dt = 1/sampleRate;    
+            t = (0:dt:(nSamples - 1) * dt);
+            t = t(:);
+            refData = sin(2*pi*refData.freq*t + refData.)  * S.GUI.LED1_amp;
 
-    refData = refData(1:nSamples,1); % shorten refData to same size as rawData
-    
-    refData = refData - mean(refData); % *** get rid of DC offset!!!!
-    
-%     if ~isempty(tBaseline)
-%         useForBaseline = rawData(1:floor(tBaseline / (1/sampleRate)));        
-% %         [processedData, ~, ~] = zscoreByRange(rawData, 1, preSamples);
-%     else
-%         useForBaseline = rawData; 
-% %         [processedData, ~, ~] = zscore(rawData);        % just use the whole thing
-%     end
-%     blMean = mean(useForBaseline);
-%     blSD = std(useForBaseline);    
-%     refData = 
-%     [refData, ~, ~] = zscore(refData);
-
-    % generate 90degree shifted copy of refData
-    samplesPerPeriod = 1/modRate / (1/sampleRate);
-    quarterPeriod = round(samplesPerPeriod / 4); % ideally you shouldn't have to round, i.e. mod frequencies should be close to factors of sample freq
-    refData90 = circshift(refData, [1 quarterPeriod]);
-
-    processedData_0 = rawData .* refData;
-    processedData_90 = rawData .* refData90;
+    processedData_0 = rawData .* refData_0;
+    processedData_90 = rawData .* refData_90;
     %% try filtering first
     % note-   5 pole Butterworth filter in Matlab used in Frohlich and McCormick  
      % Create butterworth filter
@@ -86,7 +70,7 @@ function demod = phDemod(rawData, refData, sampleRate, modRate, lowCutoff)
     % you filter out the second term
     % multiply by two and divide by Vref to get Vsig
 
-    modAmp = calcSinusoidAmp(refData);
+    modAmp = calcSinusoidAmp(refData_0);
     demod = demod * 2 / modAmp;
 %     fig = ensureFigure('test', 1);
 %     plot(demodDataFilt);
