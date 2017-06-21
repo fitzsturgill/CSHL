@@ -131,9 +131,13 @@ end
 
 %%
 
-[rewards_wheel, ts, tn] = extractDataByTimeStamps(TE.Wheel.data.V, TE.Wheel.startTime, 20, TE.Reward, [-1 1]);
-ensureFigure('rewards_wheel', 1);
-plot(nanmean(rewards_wheel));
+[rewards_wheel, ts, tn] = extractDataByTimeStamps(TE.Wheel.data.V, TE.Wheel.startTime, 20, TE.Reward, [-2 2]);
+ensureFigure('rewards_velocity', 1);
+plot(xdata, nanmean(rewards_wheel)); ylabel('velocity'); xlabel('time from reward (s)');
+if saveOn
+    saveas(gcf, fullfile(savepath, 'rewards_velocity.fig'));
+    saveas(gcf, fullfile(savepath, 'rewards_velocity.jpg'));
+end
 
 %% plot individual trials with reward times annotated
 
@@ -308,6 +312,12 @@ subplot(2,2,2); scatter(reshape(data_dat, numel(data_dat), 1), reshape(data_pupi
 ylabel('pupil'); xlabel('dat');
 subplot(2,2,3); scatter(reshape(TE.Wheel.data.V, numel(data_dat), 1), reshape(data_pupil, numel(data_pupil), 1), '.');
 ylabel('pupil'); xlabel('velocity');
+
+if saveOn
+    saveas(gcf, fullfile(savepath, ['coherence_pupil.fig']));
+    saveas(gcf, fullfile(savepath, ['coherence_pupil.jpg']));    
+end
+
 %% coherence bar graph
 
 

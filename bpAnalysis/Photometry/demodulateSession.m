@@ -1,16 +1,14 @@
-function SessionData = demodulateSession(SessionData, lowpass, varargin)
+function SessionData = demodulateSession(SessionData, varargin)
 %% 1/17/2015 Fitz Sturgill
 % demodulates the whole session and places it in nidaqData.demod field
 
-%%
-if nargin < 2 || isempty(lowpass)
-    lowpass = 15;  % corner frequency for lowpass filtering, default = 15Hz
-end
+
 %% default values
     defaults = {...
         'channels', [1 2];...
         'ACfilter', [0 0];...
         'refChannels', [1 2];...
+        'lowpass', 15;...% corner frequency for lowpass filtering, default = 15Hz
         };
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
 
@@ -68,7 +66,7 @@ for trial = 1:SessionData.nTrials
         switch demodMode
             case 1
                 refData = SessionData.NidaqData{trial,2}(1:nSamples,fCh);
-                finalData = phDemod(rawData, refData, sampleRate, modF, lowpass); % lowpass corner freq                
+                finalData = phDemod(rawData, refData, sampleRate, modF, s.lowpass); % lowpass corner freq                
             case 2
                 refData = SessionData.NidaqData{trial,2};
                 finalData = phDemod_v2(rawData, refData, s.refChannels(counter), sampleRate); 

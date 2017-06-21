@@ -16,12 +16,13 @@ function TE = addPupilometryToTE(TE, varargin)
         'startField', 'PreCsRecording';... % extract time stamp w.r.t. start of Bpod trial
         'rootPath', [];...
         'normMode', 'bySession';...  % [bySession, byTrial]
+        'folderSuffix', '';...
         };
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings    
     if isempty(s.frameRateNew)
         s.frameRateNew = s.frameRate;
-    end
-        
+    end        
+    
     if isempty(s.rootPath)
         [~, rootPath] = uiputfile('path', 'Choose data folder containing pupil subdirectories...');
         if rootPath == 0
@@ -60,17 +61,19 @@ function TE = addPupilometryToTE(TE, varargin)
     
     %% extract session dates in TE and generate matching pupil folder names
     sessionnames = unique(TE.filename);
-
+    if ischar(s.folderSuffix)
+        s.folderSuffix = repmat({s.folderSuffix}, length(sessionnames));
+    end
     for counter = 1:length(sessionnames)
         sessionname = sessionnames{counter};
         pupilFolder = parseFileName(sessionname); % see subfunction
-        pupilPath = fullfile(rootPath, pupilFolder, filesep); % filesep returns system file separator character
+        pupilPath = fullfile(rootPath, [pupilFolder s.folderSuffix{counter}], filesep); % filesep returns system file separator character
         if ~isdir(pupilPath)
             warning(['*** pupil directory: ' pupilPath ' does not exist ***']);
             continue
         end
         cd(pupilPath);
-        fs = dir('Pupil_*.mat');
+        fs = dir('*upil_*.mat');
         if length(fs) == 0
             warning(['*** No Pupil_ files found in ' pupilFolder]); % you need to analyze it first!
             continue;

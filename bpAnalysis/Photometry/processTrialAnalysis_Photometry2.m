@@ -5,6 +5,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     %% optional parameters, first set defaults
     defaults = {...
         'channels', 1;... % 8/28/2016- changed channels default from [] to 1
+        'refChannels', [];...
         'baseline', [1 4];... % 1 - 3 second into recording
         'blMode', 'byTrial';... % 'byTrial', 'bySession', 'expFit'  expFit- interpolates baseline from biexponential fit to raw fl baselines across trials
         'dFFMode', 'simple';... % 'simple', 'expFit'    expFit- subtracts within-trial exponential bleaching trend using a biexponential fit to the trial average baseline period
@@ -23,6 +24,10 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     end
     if ~iscell(s.baseline)
         s.baseline = repmat({s.baseline}, 1, max(s.channels));
+    end
+    
+    if isempty(s.refChannels)
+        s.refChannels = s.channels; % use same reference by default
     end
         
     % find total number of trials across selected sessions and size of
@@ -105,7 +110,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     for si = 1:length(sessions);
         SessionData = sessions(si).SessionData;
         if ~isfield(SessionData, 'demod');
-            SessionData = demodulateSession(SessionData); % don't necessarily want to save these back to sessions because that'd eat up memory
+            SessionData = demodulateSession(SessionData, 'channels', s.channels, 'refChannels', s.refChannels); % don't necessarily want to save these back to sessions because that'd eat up memory
         end
         startTimes = cellfun(@(x) x.States.(s.startField)(1), sessions(si).SessionData.RawEvents.Trial); % take the beginning time stamp for the startField-specified Bpod state
         nTrials = SessionData.nTrials;
