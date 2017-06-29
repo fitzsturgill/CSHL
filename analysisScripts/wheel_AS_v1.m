@@ -54,8 +54,8 @@ end
 %% plot raw and smoothed scatter plots of all the data (excepting the first few trials)
 nPoints = numel(TE.Photometry.data(2).ZS(1:end,:)); 
 ensureFigure('scatter', 1); 
-ChAT_raw = reshape(TE.Photometry.data(1).ZS(1:end,:), nPoints, 1);
-DAT_raw = reshape(TE.Photometry.data(2).ZS(1:end,:), nPoints, 1);
+ChAT_raw = TE.Photometry.data(1).ZS(:);
+DAT_raw = TE.Photometry.data(2).ZS(:);
 a=zeros(2,1);
 smoothfactor = 100;
 a(1) = subplot(1,2,1); scatter(DAT_raw, ChAT_raw, '.'); xlabel('DAT fluor (Zscored)'); ylabel('ChAT fluor (Zscored)'); title('raw');
@@ -134,7 +134,7 @@ end
 % and ChAT correlations with reward and without but doesn't have nice pupil
 % diameter
 % good trials with pupil traces that needed gap filling: 12
-trial = 8;
+trial = 1;
 ensureFigure('examples', 1);
 subplot(4,1,1);
 ydata = TE.Photometry.data(1).raw(trial, :);    
@@ -236,9 +236,9 @@ ensureFigure('Hilbert_scatter', 1);
 % subplot(1,2,1); scatter3(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(1).phase, nSamples, 1), reshape(hdata(2).phase, nSamples, 1)); %, '.', 'MarkerFaceColor', 'r');
 % subplot(1,2,2); scatter3(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(1).amp, nSamples, 1), reshape(hdata(2).amp, nSamples, 1)); %, '.', 'MarkerFaceColor', 'g'); 
 subplot(1,2,1);
-scatter(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(1).phase, nSamples, 1) - reshape(hdata(2).phase, nSamples, 1), '.');
+scatter(TE.timeFromReward(:), hdata(1).phase(:) - hdata(2).phase(:), '.');
 subplot(1,2,2);
-histogram2(reshape(TE.timeFromReward, nSamples, 1), reshape(hdata(1).phase, nSamples, 1) - reshape(hdata(2).phase, nSamples, 1));
+histogram2(TE.timeFromReward, hdata(1).phase - hdata(2).phase);
 
 ampPercentileForThresh = 0.2;
 ampThresh1 = percentile(hdata(1).amp(trials, :), ampPercentileForThresh);
