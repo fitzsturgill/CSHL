@@ -56,7 +56,7 @@ for channel = channels
     if channel == 1
         TE.phPeakMean_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, ch1CsWindow, TE.Cue, 'method', 'mean', 'phField', 'ZS');
         TE.phPeakPercentile_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, ch1CsWindow, TE.Cue, 'method', 'percentile', 'percentile', 0.9, 'phField', 'ZS');
-        TE.phPeakPercentile_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 0.75], usZeros, 'method', 'percentile', 'percentile', 0.5, 'phField', 'ZS');
+        TE.phPeakPercentile_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 0.75], usZeros, 'method', 'percentile', 'percentile', 0.9, 'phField', 'ZS');
     elseif channel == 2
         TE.phPeakMean_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, ch2CsWindow, TE.Cue, 'method', 'mean', 'phField', 'ZS');
         TE.phPeakPercentile_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, ch2CsWindow, TE.Cue, 'method', 'percentile', 'percentile', 0.9, 'phField', 'ZS');        
@@ -67,6 +67,9 @@ end
 
 
 TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], usZeros);
+
+%%
+TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', 11, 'Fs', 20, 'startField', 'Start');
 
 %%
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
@@ -157,7 +160,7 @@ if ismember(1, channels)
     maxP = max(TE.phPeakPercentile_cs(1).data(csPlusTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-    ylabel('BF: CS DF/F (50%)');
+    ylabel('BF: CS DF/F (90%)');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
@@ -166,7 +169,7 @@ if ismember(2, channels)
     maxP = max(TE.phPeakPercentile_cs(2).data(csPlusTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-ylabel('VTA:CS DF/F (50%)');
+ylabel('VTA:CS DF/F (90%)');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
@@ -175,7 +178,7 @@ if ismember(1, channels)
     maxP = max(TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-    ylabel('BF: US DF/F (50%)');
+    ylabel('BF: US DF/F (90%)');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
@@ -215,7 +218,7 @@ if ismember(1, channels)
     maxP = max(TE.phPeakPercentile_cs(1).data(csMinusTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-    ylabel('BF: CS DF/F (50%)');
+    ylabel('BF: CS DF/F (90%)');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
@@ -224,7 +227,7 @@ if ismember(2, channels)
     maxP = max(TE.phPeakPercentile_cs(2).data(csMinusTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-ylabel('VTA:CS DF/F (50%)');
+ylabel('VTA:CS DF/F (90%)');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
@@ -233,7 +236,7 @@ if ismember(1, channels)
     maxP = max(TE.phPeakPercentile_us(1).data(csMinusTrials & punishTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-    ylabel('BF: US DF/F (50%)');
+    ylabel('BF: US DF/F (90%)');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
@@ -442,10 +445,10 @@ end
     RE.csPlusReward = extractReversalsFromTE(TE, csPlusTrials & rewardTrials, dataToPull, 'maxReversals', 3);    
     nReversals = size(RE.csPlus.phPeakPercentile_cs_ch1.after, 1);
     %% reversal averages
-    peakFieldCh1 = 'phPeakMean_cs_ch1';
-    peakFieldCh2 = 'phPeakMean_cs_ch2';    
-%     peakFieldCh1 = 'phPeakPercentile_cs_ch1';
-%     peakFieldCh2 = 'phPeakPercentile_cs_ch2';        
+%     peakFieldCh1 = 'phPeakMean_cs_ch1';
+%     peakFieldCh2 = 'phPeakMean_cs_ch2';    
+    peakFieldCh1 = 'phPeakPercentile_cs_ch1';
+    peakFieldCh2 = 'phPeakPercentile_cs_ch2';        
     saveName = [subjectName '_' strtok(strtok(peakFieldCh1, '_'), '_') '_phCue_revAvg'];  
     h=ensureFigure(saveName, 1);
     mcLandscapeFigSetup(h);
@@ -476,14 +479,14 @@ end
     xData = [RE.csPlusReward.trialsBefore RE.csPlusReward.trialsAfter];
     bl(1) = nearest(xData, -30);bl(2) = nearest(xData, 0);bl(3) = nearest(xData, 80);
     revRewNormAvg_ch1 = [RE.csPlusReward.phPeakPercentile_us_ch1.before RE.csPlusReward.phPeakPercentile_us_ch1.after];
-    revRewNormAvg_ch1 = nanfastsmooth(nanmean(revRewNormAvg_ch1), 5);
-%     revNormAvg_ch1 = nanmean(revNormAvg_ch1);
-    revRewNormAvg_ch1 = revRewNormAvg_ch1 - nanmean(revRewNormAvg_ch1(bl(1):bl(2)));
-    revRewNormAvg_ch1 = revRewNormAvg_ch1 / percentile(revRewNormAvg_ch1(bl(2):bl(3)), 0.90);
+%     revRewNormAvg_ch1 = nanfastsmooth(nanmean(revRewNormAvg_ch1), 5);
+    revRewNormAvg_ch1 = nanmean(revRewNormAvg_ch1);
+%     revRewNormAvg_ch1 = revRewNormAvg_ch1 - nanmean(revRewNormAvg_ch1(bl(1):bl(2)));
+%     revRewNormAvg_ch1 = revRewNormAvg_ch1 / percentile(revRewNormAvg_ch1(bl(2):bl(3)), 0.90);
     
     revRewNormAvg_ch2 = [RE.csPlusReward.(peakFieldCh2).before RE.csPlusReward.(peakFieldCh2).after];
-    revRewNormAvg_ch2 = nanfastsmooth(nanmean(revRewNormAvg_ch2), 5);
-%     revNormAvg_ch2 = nanmean(revNormAvg_ch2);
+%     revRewNormAvg_ch2 = nanfastsmooth(nanmean(revRewNormAvg_ch2), 5);
+    revRewNormAvg_ch2 = nanmean(revRewNormAvg_ch2);
 %     revRewNormAvg_ch2 = revRewNormAvg_ch2 - nanmean(revRewNormAvg_ch2(bl(1):bl(2)));
 %     revRewNormAvg_ch2 = revRewNormAvg_ch2 / max(revRewNormAvg_ch2); %percentile(revRewNormAvg_ch2(bl(2):bl(3)), 0.90);
 
@@ -510,6 +513,53 @@ end
     bl(1) = nearest(xData, -30);bl(2) = nearest(xData, 0);bl(3) = nearest(xData, 0);
     for counter = 1:nReversals
         subplot(ass,ass,counter);
+        revNorm_ch1 = [RE.csMinus.(peakFieldCh1).before(counter,:) RE.csPlus.(peakFieldCh1).after(counter,:)];
+        revNorm_ch1 = nanfastsmooth(revNorm_ch1, 5,1);
+%         revNorm_ch1 = revNorm_ch1 - nanmean(revNorm_ch1(bl(1):bl(2)));
+%         revNorm_ch1 = revNorm_ch1 / percentile(revNorm_ch1(bl(2):end), 0.90);
+        rev_phBaseline_ch1 = [RE.csMinus.phBaseline_ch1.before(counter,:) RE.csPlus.phBaseline_ch1.after(counter,:)];   
+        rev_phBaseline_ch1 = nanfastsmooth(rev_phBaseline_ch1, 5, 1);
+
+    
+        revNorm_ch2 = [RE.csMinus.(peakFieldCh2).before(counter,:) RE.csPlus.(peakFieldCh2).after(counter,:)];
+        revNorm_ch2 = nanfastsmooth(revNorm_ch2, 5,1);
+%         revNorm_ch2 = revNorm_ch2 - nanmean(revNorm_ch2(bl(1):bl(2)));
+%         revNorm_ch2 = revNorm_ch2 / percentile(revNorm_ch2(bl(2):end), 0.90);
+        rev_phBaseline_ch2 = [RE.csMinus.phBaseline_ch2.before(counter,:) RE.csPlus.phBaseline_ch2.after(counter,:)];   
+        rev_phBaseline_ch2 = nanfastsmooth(rev_phBaseline_ch2, 5, 1);
+
+        revCsLicks = [RE.csMinus.csLicks.before(counter,:) RE.csPlus.csLicks.after(counter,:)];
+%         revCsLicks = nanfastsmooth(revCsLicks, 5,1);
+
+%         plot(xData, revNorm_ch1, 'b'); hold on;
+%         plot(xData, revNorm_ch2, 'r'); hold on;
+        plot(xData, rev_phBaseline_ch1, 'c'); hold on;
+        plot(xData, rev_phBaseline_ch2, 'm');        
+%         plot(xData, revCsLicks, 'b');
+        set(gca, 'XLim', [-40 80]); 
+        if counter == 1
+            title(['Peak method: ' peakFieldCh1], 'Interpreter', 'none');
+            xlabel('Trials of new CS+ odor from reversal');
+            ylabel('Cue dF Zscored'); 
+        end
+    end
+    if saveOn
+        saveas(gcf, fullfile(savepath, [saveName '.fig']));
+        saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    end
+    
+      %% phOutcome Reversal array
+    saveName = [subjectName '_' strtok(strtok(peakFieldCh1, '_'), '_') '_phOutcome_revArray'];  
+    h = ensureFigure(saveName, 1);
+    mcLandscapeFigSetup(h);
+    nReversals = size(RE.csPlus.(peakFieldCh1).after, 1);
+    ass = ceil(sqrt(nReversals));
+    xData = [RE.csMinus.trialsBefore RE.csPlus.trialsAfter];
+    bl(1) = nearest(xData, -30);bl(2) = nearest(xData, 0);bl(3) = nearest(xData, 0);
+    for counter = 1:nReversals
+        subplot(ass,ass,counter);
+        revRewNormAvg_ch1 = [RE.csPlusReward.phPeakPercentile_us_ch1.before RE.csPlusReward.phPeakPercentile_us_ch1.after];
+        
         revNorm_ch1 = [RE.csMinus.(peakFieldCh1).before(counter,:) RE.csPlus.(peakFieldCh1).after(counter,:)];
         revNorm_ch1 = nanfastsmooth(revNorm_ch1, 5,1);
 %         revNorm_ch1 = revNorm_ch1 - nanmean(revNorm_ch1(bl(1):bl(2)));
