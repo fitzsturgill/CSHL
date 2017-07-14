@@ -57,7 +57,7 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
         case 'consecutive'
             cData = TE.(Photometry).data(ch).dFF(trials, startP:endP);
 
-            cData = MEDFILT(cData);
+%             cData = MEDFILT(cData);
             sessionBreaks = find(diff(TE.sessionIndex(trials)))';            
         %     sessionBreaks = find(diff(TE.epoch(trials)))';     % kludge for sfn poster, show epoch change (reversal)
             ih = image('Xdata', s.window, 'YData', [1 size(cData, 1)],...

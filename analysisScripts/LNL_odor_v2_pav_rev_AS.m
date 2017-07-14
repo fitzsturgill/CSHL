@@ -14,7 +14,8 @@ TE = makeTE_LNL_odor_V2(sessions);
 channels=[]; dFFMode = {}; BL = {};
 if sessions(1).SessionData.Settings.GUI.LED1_amp > 0
     channels(end+1) = 1;
-    dFFMode{end+1} = 'expFit';
+%     dFFMode{end+1} = 'expFit';
+    dFFMode{end+1} = 'simple';    
     BL{end + 1} = [1 4];
 end
 
@@ -27,7 +28,8 @@ end
 
     
 
-TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL);
+% TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL);
+TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL);
 %%
 % if you are reloading TE do this:
 channels = [1 2];
@@ -256,7 +258,8 @@ if saveOn
 end
 %% PH Rasters, CS+, CS-
 CLimFactor = 2;
-
+CLim = {[-0.005 0.005], [-0.1 0.1]};
+trialStart = TE.Photometry.xData(1);
 reversals = find(TE.BlockChange);
 for channel = channels
 
@@ -276,7 +279,7 @@ for channel = channels
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines    
 
     
-    subplot(1,4,2); phRasterFromTE(TE, csPlusTrials, channel, 'CLimFactor', CLimFactor, 'trialNumbering', 'global');
+    subplot(1,4,2); phRasterFromTE(TE, csPlusTrials, channel, 'CLimFactor', CLimFactor, 'CLim', CLim{channel}, 'trialNumbering', 'global');
         set(gca, 'FontSize', 14)
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines        
         
@@ -289,7 +292,7 @@ for channel = channels
     set(gca, 'YLim', [0 max(trialCount)]);
     set(gca, 'FontSize', 14)
     
-    subplot(1,4,4); phRasterFromTE(TE, csMinusTrials, channel, 'CLimFactor', CLimFactor, 'trialNumbering', 'global');
+    subplot(1,4,4); phRasterFromTE(TE, csMinusTrials, channel, 'CLimFactor', CLimFactor, 'CLim', CLim{channel}, 'trialNumbering', 'global');
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines    
     set(gca, 'FontSize', 14)
     xlabel('time from cue (s)');         
@@ -317,6 +320,7 @@ end
         legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
         title('Reinforcement'); ylabel('BF dF/F Zscored'); textBox(subjectName);
     end
+    
     if ismember(2, channels)    
         subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1); 
         [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials}, 2,...
