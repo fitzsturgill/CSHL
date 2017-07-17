@@ -43,12 +43,9 @@ rewards_dat = bsxfun(@rdivide, rewards_dat, bl_dat);
 bl_chat = nanmean(rewards_chat(:,1:40), 2);
 rewards_chat = bsxfun(@minus, rewards_chat, bl_chat);
 rewards_chat = bsxfun(@rdivide, rewards_chat, bl_chat);
+% 
 
-nTrials = length(sessions.SessionData.nTrials);
-ts_abs = zeros(size(ts));
-for counter = 1:length(ts)
-    ts_abs(counter) = ts(counter) + sessions.SessionData.TrialStartTimestamp(tn(counter));    
-end
+ts_abs = TE.trialStartTimeStamp;
 
 iri_pre = [Inf; diff(ts_abs)];
 iri_post = [diff(ts_abs); Inf];
@@ -125,9 +122,38 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'coherence.jpg'));
     saveas(gcf, fullfile(savepath, 'coherence.epsc'));
 end
+%% spectrogram-  spectra calculated across moving window
+
+data_chat = TE.Photometry.data(1).raw';
+data_chat = diff(data_chat, 1, 1);
+data_dat = TE.Photometry.data(2).raw';
+data_dat = diff(data_dat, 1, 1);
+
+params.Fs = 20;
+params.trialave = 0;
+params.err = [2 0.05];
+params.tapers = [3 5];
+params.pad = 1;
+
+dc_sg = struct(...
+    'C', [],...
+    'phi', [],...
+    'S12', [],...
+    'S1', [],...
+    'S2', [],...
+    't', [],...    
+    'f', []...        
+    );
+
+trial = 1;
+[dc_sg.C, dc_sg.phi, dc_sg.S12, dc_sg.S1, dc_sg.S2, dc_sg.t, dc_sg.f] = cohgramc(data_chat, data_dat, [0.5, 0.1], params);
 
 
-
+%%
+ ensureFigure('test'); image(dc_sg.t, dc_sg.f, dc_sg.C, 'CDataMapping', 'Scaled');
+ colormap('jet');
+ set(gca, 'Clim', [min(dc_sg.C(:)), max(dc_sg.C(:))]);
+% set(gca, 'Clim', [0 1]);
 
 %%
 
