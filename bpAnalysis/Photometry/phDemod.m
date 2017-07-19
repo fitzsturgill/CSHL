@@ -26,10 +26,12 @@ function demod = phDemod(rawData, refData, sampleRate, modRate, lowCutoff)
             quarterPeriod = round(samplesPerPeriod / 4); % ideally you shouldn't have to round, i.e. mod frequencies should be close to factors of sample freq
             refData_90 = circshift(refData_0, [1 quarterPeriod]);
         case 2
-            dt = 1/sampleRate;    
-            t = (0:dt:(nSamples - 1) * dt);
-            t = t(:);
-            refData = sin(2*pi*refData.freq*t + refData.phaseShift)  * S.GUI.LED1_amp;
+            error(' refData mode not implemented- see phDemod_v2 and demodulateSession');
+%             dt = 1/sampleRate;    
+%             t = (0:dt:(nSamples - 1) * dt);
+%             t = t(:);
+%             refData = sin(2*pi*refData.freq*t + refData.phaseShift)  * S.GUI.LED1_amp;
+    end
 
     processedData_0 = rawData .* refData_0;
     processedData_90 = rawData .* refData_90;

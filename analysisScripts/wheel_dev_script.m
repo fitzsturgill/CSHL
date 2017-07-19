@@ -144,6 +144,13 @@ end
 TE.PhotometryHF = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit',...
     'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 29], 'startField', 'Baseline', 'downsample', 10);
 
+%%
+trial = 1;
+ensureFigure('HFexamples', 1); subplot(3,1,1);
+plot(TE.PhotometryHF.xData, TE.PhotometryHF.data(1).ZS(trial, :));
+subplot(3,1,2);
+plot(TE.PhotometryHF.xData, TE.PhotometryHF.data(2).ZS(trial, :));
+
 
 
 data_chat = TE.PhotometryHF.data(1).raw';
@@ -151,11 +158,12 @@ data_chat = diff(data_chat, 1, 1);
 data_dat = TE.PhotometryHF.data(2).raw';
 data_dat = diff(data_dat, 1, 1);
 
-params.Fs = 20;
+params.Fs = 610;
 params.trialave = 0;
 params.err = [2 0.05];
-params.tapers = [3 5];
+params.tapers = [5 9];
 params.pad = 1;
+params.fpass = [0 20];
 
 dc_sg = struct(...
     'C', [],...
@@ -167,11 +175,11 @@ dc_sg = struct(...
     'f', []...        
     );
 
-trial = 4;
-[dc_sg.C, dc_sg.phi, dc_sg.S12, dc_sg.S1, dc_sg.S2, dc_sg.t, dc_sg.f] = cohgramc(data_chat(:,trial), data_dat(:,trial), [0.5, 0.1], params);
+
+[dc_sg.C, dc_sg.phi, dc_sg.S12, dc_sg.S1, dc_sg.S2, dc_sg.t, dc_sg.f] = cohgramc(data_chat(:,trial), data_dat(:,trial), [5, 1], params);
 
 
- ensureFigure('test', 1); image(dc_sg.t, dc_sg.f, dc_sg.C, 'CDataMapping', 'Scaled');
+ subplot(3,1,3); image(dc_sg.t, dc_sg.f, dc_sg.C, 'CDataMapping', 'Scaled');
  colormap('jet');
  set(gca, 'Clim', [min(dc_sg.C(:)), max(dc_sg.C(:))]);
 % set(gca, 'Clim', [0 1]);
