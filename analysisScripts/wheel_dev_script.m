@@ -124,9 +124,31 @@ if saveOn
 end
 %% spectrogram-  spectra calculated across moving window
 
-data_chat = TE.Photometry.data(1).raw';
+%%
+% assume that photometry channels are consistent across sessions, bleach
+% fit dFF for GCaMP6f (ch1) and simple dFF for jRGECO1a (ch2)
+channels=[]; dFFMode = {}; %BL = {};
+if sessions(1).SessionData.Settings.GUI.LED1_amp > 0
+    channels(end+1) = 1;
+    dFFMode{end+1} = 'simple';
+%     BL{end + 1} = [1 4];
+end
+
+if sessions(1).SessionData.Settings.GUI.LED2_amp > 0
+    channels(end+1) = 2;
+    dFFMode{end+1} = 'simple';
+%     BL{end + 1} = [2 4];    
+end
+
+
+TE.PhotometryHF = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit',...
+    'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 29], 'startField', 'Baseline', 'downsample', 10);
+
+
+
+data_chat = TE.PhotometryHF.data(1).raw';
 data_chat = diff(data_chat, 1, 1);
-data_dat = TE.Photometry.data(2).raw';
+data_dat = TE.PhotometryHF.data(2).raw';
 data_dat = diff(data_dat, 1, 1);
 
 params.Fs = 20;
@@ -145,12 +167,11 @@ dc_sg = struct(...
     'f', []...        
     );
 
-trial = 1;
-[dc_sg.C, dc_sg.phi, dc_sg.S12, dc_sg.S1, dc_sg.S2, dc_sg.t, dc_sg.f] = cohgramc(data_chat, data_dat, [0.5, 0.1], params);
+trial = 4;
+[dc_sg.C, dc_sg.phi, dc_sg.S12, dc_sg.S1, dc_sg.S2, dc_sg.t, dc_sg.f] = cohgramc(data_chat(:,trial), data_dat(:,trial), [0.5, 0.1], params);
 
 
-%%
- ensureFigure('test'); image(dc_sg.t, dc_sg.f, dc_sg.C, 'CDataMapping', 'Scaled');
+ ensureFigure('test', 1); image(dc_sg.t, dc_sg.f, dc_sg.C, 'CDataMapping', 'Scaled');
  colormap('jet');
  set(gca, 'Clim', [min(dc_sg.C(:)), max(dc_sg.C(:))]);
 % set(gca, 'Clim', [0 1]);

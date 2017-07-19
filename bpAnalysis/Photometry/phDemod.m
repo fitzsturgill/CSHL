@@ -29,7 +29,7 @@ function demod = phDemod(rawData, refData, sampleRate, modRate, lowCutoff)
             dt = 1/sampleRate;    
             t = (0:dt:(nSamples - 1) * dt);
             t = t(:);
-            refData = sin(2*pi*refData.freq*t + refData.)  * S.GUI.LED1_amp;
+            refData = sin(2*pi*refData.freq*t + refData.phaseShift)  * S.GUI.LED1_amp;
 
     processedData_0 = rawData .* refData_0;
     processedData_90 = rawData .* refData_90;

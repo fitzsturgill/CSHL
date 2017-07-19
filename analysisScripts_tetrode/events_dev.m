@@ -1,6 +1,6 @@
             
 %%
-pname = 'Z:\FitzTetrode\2017-07-13_16-20-52\';
+pname = 'Z:\Fitz_data\2017-07-17_16-04-34\';
 % pname = 'Z:\FitzTetrode\';
 fname = 'Events.nev';new_fname='EVENTS';
 param2 = [1 1 1 1 1];
@@ -19,5 +19,24 @@ for counter = 1:length(uniqueEvents)
 end
 [counts_sorted, counts_sortIndices] = sort(eventCounts);
 events_sorted = uniqueEvents(counts_sortIndices);
+
+%% extract the binary representations
+
+events_bin = dec2bin(events_sorted);
+events_binTrunc = events_bin(:, 1:4);
+events_trunc = bin2dec(events_binTrunc);
+
+%% ITIs of event 128
+
+laser_idx = Events_Nttls == 128;
+laser_times = Events_TimeStamps(laser_idx);
+laser_itis = diff(laser_times);
+
+ensureFigure('laser_times', 1);
+stem(laser_times, ones(size(laser_times)));
+
+
+
+
 
 

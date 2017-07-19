@@ -139,7 +139,7 @@ end
 % and ChAT correlations with reward and without but doesn't have nice pupil
 % diameter
 % good trials with pupil traces that needed gap filling: 12
-trial = 1;
+trial = 4;
 ensureFigure('examples', 1);
 subplot(4,1,1);
 ydata = TE.Photometry.data(1).raw(trial, :);    
