@@ -124,7 +124,6 @@ if saveOn
 end
 %% spectrogram-  spectra calculated across moving window
 
-%%
 % assume that photometry channels are consistent across sessions, bleach
 % fit dFF for GCaMP6f (ch1) and simple dFF for jRGECO1a (ch2)
 channels=[]; dFFMode = {}; %BL = {};
@@ -143,6 +142,52 @@ end
 
 TE.PhotometryHF = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit',...
     'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 29], 'startField', 'Baseline', 'downsample', 10);
+%%
+movingwin = [5 1]; % 1 .1
+tapers = [5 9];     %3 5
+dc_sg = bpCalcCrossCorrelogram(TE.PhotometryHF.data(1).raw', TE.PhotometryHF.data(2).raw', 610, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
+
+% permute(dc_sg.C, [3 1 2])
+% extract cross-spectra aligned by reward
+[rewards_dc_sg, ts, tn, xdata] = extractDataByTimeStamps(permute(dc_sg.C, [3 1 2]), TE.Photometry.startTime + dc_sg.t(1), 1/(dc_sg.t(2) - dc_sg.t(1)), TE.Reward, [-4 4]);
+rewards_mean_sg = squeeze(nanmean(rewards_dc_sg, 1));
+%%
+% calculate average, aligned spectrogram with trial labels shuffled
+nShuffles = 30;
+allShuffled = repmat(NaN(size(dc_sg.C)), 1, 1, 1, nShuffles);
+nTrials = length(TE.filename);
+for counter = 1:nShuffles
+    counter
+    idx = randperm(nTrials);
+    dc_sg_shuff = bpCalcCrossCorrelogram(TE.PhotometryHF.data(1).raw', TE.PhotometryHF.data(2).raw(idx, :)', 610, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
+    allShuffled(:,:,:,counter) = dc_sg_shuff.C;
+end
+allShuffled = nanmean(allShuffled, 4);
+[rewards_dc_sg_shuffled, ts, tn, xdata] = extractDataByTimeStamps(permute(allShuffled, [3 1 2]), TE.Photometry.startTime + dc_sg.t(1), 1/(dc_sg.t(2) - dc_sg.t(1)), TE.Reward, [-4 4]);
+rewards_mean_sg_shuffled = squeeze(nanmean(rewards_dc_sg_shuffled, 1));
+
+rewards_mean_sg_corrected = rewards_mean_sg - rewards_mean_sg_shuffled;
+
+%%
+ensureFigure('rewards_mean_sg_corrected', 1);
+image(xdata, dc_sg.f, rewards_mean_sg_corrected, 'CDataMapping', 'Scaled');
+colormap('jet');
+set(gca, 'Clim', [min(rewards_mean_sg_corrected(:)), max(rewards_mean_sg_corrected(:))]);
+if saveOn
+    saveas(gcf, fullfile(savepath, 'rewards_mean_sg_corrected.fig'));
+    saveas(gcf, fullfile(savepath, 'rewards_mean_sg_corrected.jpg'));
+end
+
+
+
+ensureFigure('rewards_mean_sg', 1);
+image(xdata, dc_sg.f, rewards_mean_sg, 'CDataMapping', 'Scaled');
+colormap('jet');
+set(gca, 'Clim', [min(rewards_mean_sg(:)), max(rewards_mean_sg(:))]);
+if saveOn
+    saveas(gcf, fullfile(savepath, 'rewards_mean_sg.fig'));
+    saveas(gcf, fullfile(savepath, 'rewards_mean_sg.jpg'));
+end
 
 %%
 trial = 1;
@@ -153,33 +198,15 @@ plot(TE.PhotometryHF.xData, TE.PhotometryHF.data(2).ZS(trial, :));
 
 
 
-data_chat = TE.PhotometryHF.data(1).raw';
-data_chat = diff(data_chat, 1, 1);
-data_dat = TE.PhotometryHF.data(2).raw';
-data_dat = diff(data_dat, 1, 1);
 
-params.Fs = 610;
-params.trialave = 0;
-params.err = [2 0.05];
-params.tapers = [5 9];
-params.pad = 1;
-params.fpass = [0 20];
-
-dc_sg = struct(...
-    'C', [],...
-    'phi', [],...
-    'S12', [],...
-    'S1', [],...
-    'S2', [],...
-    't', [],...    
-    'f', []...        
-    );
+ subplot(3,1,3); image(dc_sg.t, dc_sg.f, squeeze(dc_sg.C(:,:,trial)), 'CDataMapping', 'Scaled');
+ colormap('jet');
+ set(gca, 'Clim', [min(dc_sg.C(:)), max(dc_sg.C(:))]);
+% set(gca, 'Clim', [0 1]);
 
 
-[dc_sg.C, dc_sg.phi, dc_sg.S12, dc_sg.S1, dc_sg.S2, dc_sg.t, dc_sg.f] = cohgramc(data_chat(:,trial), data_dat(:,trial), [5, 1], params);
-
-
- subplot(3,1,3); image(dc_sg.t, dc_sg.f, dc_sg.C, 'CDataMapping', 'Scaled');
+ensureFigure('test', 1);
+image(dc_sg.t, dc_sg.f, squeeze(dc_sg.C(:,:,trial)), 'CDataMapping', 'Scaled');
  colormap('jet');
  set(gca, 'Clim', [min(dc_sg.C(:)), max(dc_sg.C(:))]);
 % set(gca, 'Clim', [0 1]);

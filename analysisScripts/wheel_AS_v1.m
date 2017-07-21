@@ -40,18 +40,20 @@ TE = addPupilometryToTE(TE, 'duration', 30, 'zeroField', 'Baseline', 'startField
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
 basepath = uigetdir;
-sep = strfind(TE.filename{1}, '.');
+
 
 if length(unique(TE.filename)) > 1
-    subjectName = TE.filename{1}(1:sep(1)-1);
-else
+    sep = strfind(TE.filename{1}, '_');
     subjectName = TE.filename{1}(1:sep(2)-1);
+else
+    sep = strfind(TE.filename{1}, '.');
+    subjectName = TE.filename{1}(1:sep(1)-1);
 end
 disp(subjectName);
 savepath = fullfile(basepath, subjectName);
 ensureDirectory(savepath);
 
-%%
+%
 if saveOn
     save(fullfile(savepath, 'TE.mat'), 'TE');
     disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);

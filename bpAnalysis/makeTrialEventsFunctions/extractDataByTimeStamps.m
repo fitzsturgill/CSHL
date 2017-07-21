@@ -2,7 +2,9 @@ function varargout = extractDataByTimeStamps(data, startTimes, Fs, TS, window, t
 % outputs [eventData, timeStamps, trialNumbers];
 % extracts time stamp triggered windows of continuous data derived from a
 % TE structure containing data from dataField contains following field
-% data- continuous data, nTrials x nSamples
+% data- continuous data, nTrials x nSamples or nTrials x nSamplesY x
+% nSamplesZ (for 3 dimensional data, 2nd dimension size is == to number of
+% time points
 % startTimes- startTimes of continuous data relative to trial start (scalar or nTrials x 1)
 % Fs- sample rate of continuous data
 % TS, time stamps, cell array nTrials x 1, assumes that time stamps are in
@@ -12,6 +14,7 @@ function varargout = extractDataByTimeStamps(data, startTimes, Fs, TS, window, t
     if nargin < 6
         trials = 1:length(TS);
     end
+    
 
 
 
@@ -26,7 +29,8 @@ function varargout = extractDataByTimeStamps(data, startTimes, Fs, TS, window, t
     end
     nWindows = sum(validTrials(trials));
     samplesPerWindow = floor((window(2) - window(1)) * Fs);
-    eventData = NaN(nWindows, samplesPerWindow);
+    eventData = NaN(nWindows, samplesPerWindow, size(data, 3)); % singleton 3rd dimension in case of 2d data
+    
     dT = 1/Fs;    
     eventCounter = 1;
     validTrials = intersect(find(validTrials), trials);
@@ -36,11 +40,14 @@ function varargout = extractDataByTimeStamps(data, startTimes, Fs, TS, window, t
     for trial = validTrials
         startTime = startTimes(trial);
         if iscell(data)
-            trialData = data{trial};            
+            trialData = data{trial}(:,:,:);
         else
-            trialData = data(trial, :);            
+            trialData = data(trial, :, :);
+            if size(trialData, 1) > 1
+                trialData = shiftdim(trialData, -1); % add singleton leading dimension in case you are dealing with 3d data, i.e. 2d data for a given trial
+            end
         end
-        nPoints = length(trialData);
+        nPoints = size(trialData, 2);
         stamps = (TS{trial}(:,1)); % use first column of time stamps (in case you are using output of bpAddStateAsTrialEvent);
         stamps = stamps(:)'; % ensure row
         for stamp = stamps; 
@@ -49,7 +56,7 @@ function varargout = extractDataByTimeStamps(data, startTimes, Fs, TS, window, t
             startP = round(1 + trialWindow(1)/dT); % see bpX2Pnt
             sourcePoints = startP:startP + (samplesPerWindow - 1);
             destPoints = find(sourcePoints >= 1 & sourcePoints <= nPoints);
-            eventData(eventCounter, destPoints) = trialData(sourcePoints(destPoints));
+            eventData(eventCounter, destPoints, :) = trialData(1, sourcePoints(destPoints), :);
             timeStamps(eventCounter) = stamp;
             trialNumbers(eventCounter) = trial;
             eventCounter = eventCounter + 1;
@@ -66,6 +73,11 @@ function varargout = extractDataByTimeStamps(data, startTimes, Fs, TS, window, t
     
     if nargout > 2
         varargout{3} = trialNumbers;
+    end
+    
+    if nargout > 3
+        timeVector = 0:dT:(samplesPerWindow - 1) * dT;
+        varargout{4} = timeVector + window(1);
     end
     
     
