@@ -143,11 +143,9 @@ end
 TE.PhotometryHF = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit',...
     'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 29], 'startField', 'Baseline', 'downsample', 10);
 %% cross correlogram
-lag = -0.2
-lagp = lag * 610;
 movingwin = [5 1]; % 1 .1
 tapers = [5 9];     %3 5
-dc_sg = bpCalcCrossCorrelogram(TE.PhotometryHF.data(1).raw', circshift(TE.PhotometryHF.data(2).raw', lagp, 1), 610, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
+dc_sg = bpCalcCrossCorrelogram(TE.PhotometryHF.data(1).raw', TE.PhotometryHF.data(2).raw', 610, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
 
 % permute(dc_sg.C, [3 1 2])
 % extract cross-spectra aligned by reward
@@ -161,8 +159,7 @@ nTrials = length(TE.filename);
 for counter = 1:nShuffles
     counter
     idx = randperm(nTrials);
-    data2 = circshift(TE.PhotometryHF.data(2).raw(idx, :)', lagp, 1);
-    dc_sg_shuff = bpCalcCrossCorrelogram(TE.PhotometryHF.data(1).raw', data2, 610, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
+    dc_sg_shuff = bpCalcCrossCorrelogram(TE.PhotometryHF.data(1).raw', TE.PhotometryHF.data(2).raw(idx, :)', 610, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
     allShuffled(:,:,:,counter) = dc_sg_shuff.C;
 end
 allShuffled = nanmean(allShuffled, 4);
@@ -195,19 +192,14 @@ d_sg = bpCalcSpectrogram(TE.PhotometryHF.data(2).raw', 610, 'movingwin', movingw
 % extract cross-spectra aligned by reward
 [rewards_c_sg, ts, tn, xdata] = extractDataByTimeStamps(permute(c_sg.S, [3 1 2]), TE.Photometry.startTime + c_sg.t(1), 1/(c_sg.t(2) - c_sg.t(1)), TE.Reward, [-4 4]);
 [rewards_d_sg, ts, tn, xdata] = extractDataByTimeStamps(permute(d_sg.S, [3 1 2]), TE.Photometry.startTime + d_sg.t(1), 1/(d_sg.t(2) - d_sg.t(1)), TE.Reward, [-4 4]);
-rewards_mean_sg_c = squeeze(nanmean(rewards_c_sg, 1));
-rewards_mean_sg_d = squeeze(nanmean(rewards_d_sg, 1));
+rewards_mean_sg = squeeze(nanmean(rewards_dc_sg, 1));
 
 
 ensureFigure('rewards_mean_sg_c_and_d', 1);
 subplot(1,2,1);
-image(xdata, c_sg.f, rewards_mean_sg_c, 'CDataMapping', 'Scaled');
+image(xdata, c_sg.f, rewards_c_sg, 'CDataMapping', 'Scaled');
 colormap('jet');
-set(gca, 'Clim', [min(rewards_mean_sg_c(:)), max(rewards_mean_sg_c(:))]);
-subplot(1,2,2);
-image(xdata, d_sg.f, rewards_mean_sg_d, 'CDataMapping', 'Scaled');
-colormap('jet');
-set(gca, 'Clim', [min(rewards_mean_sg_d(:)), max(rewards_mean_sg_d(:))]);
+set(gca, 'Clim', [min(rewards_c_sg(:)), max(rewards_c_sg(:))]);
 if saveOn
     saveas(gcf, fullfile(savepath, 'rewards_mean_sg_c_and_d.fig'));
     saveas(gcf, fullfile(savepath, 'rewards_mean_sg_c_and_d.jpg'));

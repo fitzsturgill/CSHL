@@ -28,13 +28,13 @@ TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, '
     'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 29], 'startField', 'Baseline', 'downsample', 305);
 
 %%
-TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', 30, 'Fs', 20, 'startField', 'Start');
+TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', 120, 'Fs', 20, 'startField', 'Start');
 
 %% pupil data
 %  [wheelY_new, wheelTimes_new] = resample(wheelY, wheelTimes, 20, 'linear');
 folderSuffix = ''; % or enter folder suffix on command line
 %%
-TE = addPupilometryToTE(TE, 'duration', 30, 'zeroField', 'Baseline', 'startField', 'Baseline', 'frameRate', 60, 'frameRateNew', 20, 'folderSuffix', folderSuffix);
+TE = addPupilometryToTE(TE, 'duration', 120, 'zeroField', 'Baseline', 'startField', 'Baseline', 'frameRate', 60, 'frameRateNew', 20, 'folderSuffix', folderSuffix);
 %% Now saved in directory according to first session filename
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
@@ -141,7 +141,7 @@ end
 % and ChAT correlations with reward and without but doesn't have nice pupil
 % diameter
 % good trials with pupil traces that needed gap filling: 12
-trial = 4;
+trial = 2;
 ensureFigure('examples', 1);
 subplot(4,1,1);
 ydata = TE.Photometry.data(1).raw(trial, :);    
@@ -174,7 +174,7 @@ end
 % and ChAT correlations with reward and without but doesn't have nice pupil
 % diameter
 % good trials with pupil traces that needed gap filling: 12
-trial = 1;
+trial = 3;
 ensureFigure('examples', 1);
 subplot(2,1,1);
 ydata = TE.Photometry.data(1).ZS(trial, :);    
@@ -201,7 +201,7 @@ Fs = 20;
 bp = [0.1 2];
 
 
-TE.timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.trialStartTimeStamp);
+TE.timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.trialStartTimeStamp, 'duration', 120);
 
 % de-trend the signal with a band-pass filter
 % you may need the signal processing toolbox ....
@@ -228,7 +228,7 @@ for channel = 1:2
     end
 end
 pm = [4 1];
-trial = 4;
+trial = 1;
 ensureFigure('Hilbert_examples', 1);
 subplot(pm(1), pm(2), 1); plot(hdata(1).data(trial,:), 'g'); hold on; plot(hdata(2).data(trial,:), 'r');
 subplot(pm(1), pm(2), 2); plot(hdata(1).filtData(trial,:), 'g'); plot(hdata(2).filtData(trial,:), 'r');
