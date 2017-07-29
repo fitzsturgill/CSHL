@@ -56,3 +56,20 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'ChAT_13_averages.jpg'));
     saveas(gcf, fullfile(savepath, 'ChAT_13_averages.epsc'));    
 end
+
+%%
+%%
+h=ensureFigure('Averages_ch2', 1); 
+pm = [1 1];
+subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 5]), 2,...
+    'linespec', {'c', 'b'}, 'window', [-0.25 2]); % cued, unexpected reward
+legend(hl, {'cued', 'uncued'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+% title('Photometry'); ylabel('dF/F'); xlabel('time from reinforcement (s)');
+textBox(TE.filename{1}(1:7));
+set(gca, 'XLim', [-0.25 2], 'TickDir', 'out');
+%%
+if saveOn
+    saveas(gcf, fullfile(savepath, 'ChAT_13_averages_ch2.fig'));
+    saveas(gcf, fullfile(savepath, 'ChAT_13_averages_ch2.jpg'));
+    saveas(gcf, fullfile(savepath, 'ChAT_13_averages_ch2.epsc'));    
+end

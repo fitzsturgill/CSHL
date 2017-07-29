@@ -8,7 +8,7 @@ sessions = bpLoadSessions; % load sessions
 %% 
 TE = makeTE_wheel_v1(sessions); % make TE structure
 %%
-% assume that photometry channels are consistent across sessions, bleach
+assume that photometry channels are consistent across sessions, bleach
 % fit dFF for GCaMP6f (ch1) and simple dFF for jRGECO1a (ch2)
 channels=[]; dFFMode = {}; %BL = {};
 if sessions(1).SessionData.Settings.GUI.LED1_amp > 0
