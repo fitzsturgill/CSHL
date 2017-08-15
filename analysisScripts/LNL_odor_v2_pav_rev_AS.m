@@ -306,6 +306,7 @@ end
 
 
 %% photometry averages, zscored
+%     ylim = [-2 8];
     saveName = [subjectName '_phAvgs'];  
     h=ensureFigure(saveName, 1); 
     mcLandscapeFigSetup(h);
@@ -318,7 +319,7 @@ end
         [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials}, 1,...
             'FluorDataField', 'ZS', 'window', [3, 7], 'linespec', {'b', 'r', 'k'}); %high value, reward
         legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-        title('Reinforcement'); ylabel('BF dF/F Zscored'); textBox(subjectName);
+        title('Reinforcement'); ylabel('BF dF/F Zscored'); textBox(subjectName);%set(gca, 'YLim', ylim);
     end
     
     if ismember(2, channels)    
@@ -326,7 +327,7 @@ end
         [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials}, 2,...
             'FluorDataField', 'ZS', 'window', [3, 7], 'linespec', {'b', 'r', 'k'}); %high value, reward
         legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-        ylabel('VTA dF/F Zscored'); xlabel('time from cue (s)'); 
+        ylabel('VTA dF/F Zscored'); xlabel('time from cue (s)'); %set(gca, 'YLim', ylim);
     end
     
     % - 6 0 4
@@ -335,14 +336,14 @@ end
         [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 1,...
         'FluorDataField', 'ZS', 'window', [-4, 7], 'linespec', {'c', 'm'}); %high value, reward
         legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-        title('CS+, outcomes'); set(gca, 'XLim', [-4, 7]);
+        title('CS+, outcomes'); set(gca, 'XLim', [-4, 7]);%set(gca, 'YLim', ylim);
     end
     if ismember(2, channels)    
         subplot(pm(1), pm(2), 4, 'FontSize', 12, 'LineWidth', 1); 
         [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 2,...
             'FluorDataField', 'ZS', 'window', [-4, 7], 'linespec', {'c', 'm'}); %high value, reward
         legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-        xlabel('time from cue (s)');     set(gca, 'XLim', [-4, 7]);
+        xlabel('time from cue (s)');     set(gca, 'XLim', [-4, 7]);%set(gca, 'YLim', ylim);
     end
     
     if saveOn
@@ -401,7 +402,7 @@ end
     end    
 
  %% single trial traces
-    nTraces = 50;
+    nTraces = 20;
     saveName = [subjectName '_singleTrial3'];  
     h=ensureFigure(saveName, 1); 
     mcLandscapeFigSetup(h);
@@ -449,6 +450,7 @@ end
     RE.csPlusReward = extractReversalsFromTE(TE, csPlusTrials & rewardTrials, dataToPull, 'maxReversals', 3);    
     nReversals = size(RE.csPlus.phPeakPercentile_cs_ch1.after, 1);
     %% reversal averages
+
 %     peakFieldCh1 = 'phPeakMean_cs_ch1';
 %     peakFieldCh2 = 'phPeakMean_cs_ch2';    
     peakFieldCh1 = 'phPeakPercentile_cs_ch1';
@@ -475,7 +477,7 @@ end
 
     plot(xData, revNormAvg_ch1, 'g'); hold on;
     plot(xData, revNormAvg_ch2, 'r');
-    set(gca, 'XLim', [-40 80]);xlabel('Trials of new CS+ odor from reversal');
+    set(gca, 'XLim', [-40 80]);xlabel('Trials of new CS+ odor from reversal'); 
     ylabel('Cue dFF ZScored'); title([strtok(peakFieldCh1, '_') ', avg ' num2str(nReversals) ' reversals'], 'Interpreter', 'none');
 
     % reinforcment response

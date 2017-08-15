@@ -143,9 +143,9 @@ end
 TE.PhotometryHF = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit',...
     'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 29], 'startField', 'Baseline', 'downsample', 10);
 %% cross correlogram
-lag = -0.2
+lag = 0;
 lagp = lag * 610;
-movingwin = [5 1]; % 1 .1
+movingwin = [3 0.5]; % 1 .1
 tapers = [5 9];     %3 5
 dc_sg = bpCalcCrossCorrelogram(TE.PhotometryHF.data(1).raw', circshift(TE.PhotometryHF.data(2).raw', lagp, 1), 610, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
 
@@ -153,6 +153,29 @@ dc_sg = bpCalcCrossCorrelogram(TE.PhotometryHF.data(1).raw', circshift(TE.Photom
 % extract cross-spectra aligned by reward
 [rewards_dc_sg, ts, tn, xdata] = extractDataByTimeStamps(permute(dc_sg.C, [3 1 2]), TE.Photometry.startTime + dc_sg.t(1), 1/(dc_sg.t(2) - dc_sg.t(1)), TE.Reward, [-4 4]);
 rewards_mean_sg = squeeze(nanmean(rewards_dc_sg, 1));
+%%
+trial = 4;
+ensureFigure('HFexamples', 1); subplot(3,1,1);
+plot(TE.PhotometryHF.xData, TE.PhotometryHF.data(1).ZS(trial, :));
+subplot(3,1,2);
+plot(TE.PhotometryHF.xData, TE.PhotometryHF.data(2).ZS(trial, :));
+
+
+
+
+ subplot(3,1,3); image(dc_sg.t, dc_sg.f, squeeze(dc_sg.C(:,:,trial)), 'CDataMapping', 'Scaled');
+ colormap('jet');
+ set(gca, 'Clim', [min(dc_sg.C(:)), max(dc_sg.C(:))]);
+% set(gca, 'Clim', [0 1]);
+
+
+ensureFigure('test', 1);
+image(dc_sg.t, dc_sg.f, squeeze(dc_sg.C(:,:,trial)), 'CDataMapping', 'Scaled');
+ colormap('jet');
+ set(gca, 'Clim', [min(dc_sg.C(:)), max(dc_sg.C(:))]);
+% set(gca, 'Clim', [0 1]);
+
+
 %%
 % calculate average, aligned spectrogram with trial labels shuffled
 nShuffles = 10;
@@ -212,65 +235,8 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'rewards_mean_sg_c_and_d.fig'));
     saveas(gcf, fullfile(savepath, 'rewards_mean_sg_c_and_d.jpg'));
 end
-%%
-% calculate average, aligned spectrogram with trial labels shuffled
-nShuffles = 30;
-allShuffled = repmat(NaN(size(dc_sg.C)), 1, 1, 1, nShuffles);
-nTrials = length(TE.filename);
-for counter = 1:nShuffles
-    counter
-    idx = randperm(nTrials);
-    dc_sg_shuff = bpCalcCrossCorrelogram(TE.PhotometryHF.data(1).raw', TE.PhotometryHF.data(2).raw(idx, :)', 610, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
-    allShuffled(:,:,:,counter) = dc_sg_shuff.C;
-end
-allShuffled = nanmean(allShuffled, 4);
-[rewards_dc_sg_shuffled, ts, tn, xdata] = extractDataByTimeStamps(permute(allShuffled, [3 1 2]), TE.Photometry.startTime + dc_sg.t(1), 1/(dc_sg.t(2) - dc_sg.t(1)), TE.Reward, [-4 4]);
-rewards_mean_sg_shuffled = squeeze(nanmean(rewards_dc_sg_shuffled, 1));
-
-rewards_mean_sg_corrected = rewards_mean_sg - rewards_mean_sg_shuffled;
-
-%%
-ensureFigure('rewards_mean_sg_corrected', 1);
-image(xdata, dc_sg.f, rewards_mean_sg_corrected, 'CDataMapping', 'Scaled');
-colormap('jet');
-set(gca, 'Clim', [min(rewards_mean_sg_corrected(:)), max(rewards_mean_sg_corrected(:))]);
-if saveOn
-    saveas(gcf, fullfile(savepath, 'rewards_mean_sg_corrected.fig'));
-    saveas(gcf, fullfile(savepath, 'rewards_mean_sg_corrected.jpg'));
-end
-
-%%
-
-ensureFigure('rewards_mean_sg', 1);
-image(xdata, dc_sg.f, rewards_mean_sg, 'CDataMapping', 'Scaled');
-colormap('jet');
-set(gca, 'Clim', [min(rewards_mean_sg(:)), max(rewards_mean_sg(:))]);
-if saveOn
-    saveas(gcf, fullfile(savepath, 'rewards_mean_sg.fig'));
-    saveas(gcf, fullfile(savepath, 'rewards_mean_sg.jpg'));
-end
-
-%%
-trial = 1;
-ensureFigure('HFexamples', 1); subplot(3,1,1);
-plot(TE.PhotometryHF.xData, TE.PhotometryHF.data(1).ZS(trial, :));
-subplot(3,1,2);
-plot(TE.PhotometryHF.xData, TE.PhotometryHF.data(2).ZS(trial, :));
 
 
-
-
- subplot(3,1,3); image(dc_sg.t, dc_sg.f, squeeze(dc_sg.C(:,:,trial)), 'CDataMapping', 'Scaled');
- colormap('jet');
- set(gca, 'Clim', [min(dc_sg.C(:)), max(dc_sg.C(:))]);
-% set(gca, 'Clim', [0 1]);
-
-
-ensureFigure('test', 1);
-image(dc_sg.t, dc_sg.f, squeeze(dc_sg.C(:,:,trial)), 'CDataMapping', 'Scaled');
- colormap('jet');
- set(gca, 'Clim', [min(dc_sg.C(:)), max(dc_sg.C(:))]);
-% set(gca, 'Clim', [0 1]);
 
 %%
 
@@ -536,7 +502,7 @@ end
 
 %% 
 xdata = TE.Wheel.xData;
-mult = 6;
+mult = 1;
 trials = 1:5;
 trials = trials + 5 * mult;
 data_wheel = TE.Wheel.data.V';
@@ -593,7 +559,7 @@ if saveOn
     saveas(gcf, fullfile(savepath, [figName '.jpg']));    
 end
 %% final example
-trial = 34;
+trial = 3;
 figName = ['coherence_ex_trial_' num2str(trial)];
 ensureFigure(figName, 1);
 plot(xdata, nanzscore(data_pupil(:, trial))-1, 'Color', [0.8 0.8 0.8], 'LineWidth', 2); hold on;

@@ -40,6 +40,7 @@ function varargout = extractDataByTimeStamps(data, startTimes, Fs, TS, window, t
     for trial = validTrials
         startTime = startTimes(trial);
         if iscell(data)
+            warning('Take a look at code below, do I need to use shiftdim, why do I use a colon in the 3rd dimension?');
             trialData = data{trial}(:,:,:);
         else
             trialData = data(trial, :, :);
