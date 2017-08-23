@@ -55,6 +55,8 @@ addParamValue(prs,'ProtocolStartNttl',1,@isnumeric)   % TTL sent at the beginnin
 addParamValue(prs,'PulseNttl',16384,@isnumeric)   % TTL signalling pulse onset and offset time
 addParamValue(prs,'PulseEventID',0,@isnumeric)   % event ID for pulse TTL in the recording system
 addParamValue(prs,'ProtocolList',{'LaserStimProtocol2'; 'BackNForthTask2'},@iscellstr)  % names
+addParamValue(prs, 'PulsePort', 0, @isnumeric) % Port number of PulseNttl
+
 %           of simulation and behavior protocols (cell array); no action is
 %           implemented in the current version for behavior protocols 
 parse(prs,sessionpath,varargin{:})
