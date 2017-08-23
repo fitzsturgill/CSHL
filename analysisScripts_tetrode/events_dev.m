@@ -1,6 +1,6 @@
             
 %%
-pname = 'C:\FitzData\Cellbase_dev\CD_3\170821a\';
+pname = 'C:\Fitz_Data\Cellbase_dev\CD_3\170821a\';
 % pname = 'Z:\FitzTetrode\';
 fname = 'Events.nev';new_fname='EVENTS';
 param2 = [1 1 1 1 1];

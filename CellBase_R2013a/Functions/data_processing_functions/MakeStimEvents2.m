@@ -53,7 +53,7 @@ addRequired(prs,'sessionpath',@ischar)  % pathname for session
 addParamValue(prs,'BurstStartNttl',2,@isnumeric)   % TTL for start of burst stimulation
 addParamValue(prs,'ProtocolStartNttl',1,@isnumeric)   % TTL sent at the beginning of each stimulation protocol
 addParamValue(prs,'PulseNttl',16384,@isnumeric)   % TTL signalling pulse onset and offset time
-addParamValue(prs,'PulseEventID',0,@isnumeric)   % event ID for pulse TTL in the recording system
+addParamValue(prs,'PulseEventID',[],@isnumeric)   % event ID for pulse TTL in the recording system, if empty, all pulses matching PulseNttl are included
 addParamValue(prs,'ProtocolList',{'LaserStimProtocol2'; 'BackNForthTask2'},@iscellstr)  % names
 addParamValue(prs, 'PulsePort', 0, @isnumeric) % Port number of PulseNttl
 
@@ -130,6 +130,8 @@ pepon = find(onttl(:,inx));
 pepoff = find(offttl(:,inx));
 Epon = intersect(find(Events_EventIDs==g.PulseEventID),pepon);   % pulse on
 Epoff = intersect(find(Events_EventIDs==g.PulseEventID),pepoff);   % pulse off
+if ~isempty(g.PulsePort)
+    Epon = intersect(
 BSInfo = find(Events_EventIDs==3&Events_Nttls==g.BurstStartNttl);  % burst start info indices
 
 % Count bursts and pulses for each protocol
