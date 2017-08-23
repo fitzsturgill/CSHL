@@ -1,6 +1,6 @@
             
 %%
-pname = 'Z:\Fitz_data\2017-07-17_16-04-34\';
+pname = 'C:\FitzData\Cellbase_dev\CD_3\170821a\';
 % pname = 'Z:\FitzTetrode\';
 fname = 'Events.nev';new_fname='EVENTS';
 param2 = [1 1 1 1 1];
@@ -8,6 +8,25 @@ param3 = 1;
 param4 = 1;
 param5 = [];
 [Events_TimeStamps, Events_EventIDs, Events_Nttls, Events_Extras, Events_EventStrings, Events_NlxHeader] = Nlx2MatEV([pname fname],param2,param3,param4,param5);
+
+%%
+stimN = 128;
+stimIdx = Events_Nttls == stimN;
+stim_IDs = Events_EventStrings(stimIdx);
+
+%u
+%% 
+
+fitz = 'TTL Input on AcqSystem1_0 board 0 port 1 value (0x0080).';
+expr = '(?<=port.).(?=.value)';
+portS = regexp(fitz, expr, 'match');
+
+% event 128:
+% parsed_ttls(2,:)
+% 
+% ans =
+% 
+%      1     0     0     0     0     0     0     0
 
 %% find the most common event (should be the laser TTL event)
 

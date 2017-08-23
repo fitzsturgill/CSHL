@@ -23,18 +23,19 @@ if sessions(1).SessionData.Settings.GUI.LED2_amp > 0
 %     BL{end + 1} = [2 4];    
 end
 
-
+% baselineEnd = 119;
+baselineEnd = 29;
 TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit',...
-    'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 119], 'startField', 'Baseline', 'downsample', 305);
+    'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 baselineEnd], 'startField', 'Baseline', 'downsample', 305);
 
 %%
-TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', 120, 'Fs', 20, 'startField', 'Start');
+TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', baselineEnd + 1, 'Fs', 20, 'startField', 'Start');
 
 %% pupil data
 %  [wheelY_new, wheelTimes_new] = resample(wheelY, wheelTimes, 20, 'linear');
 folderSuffix = ''; % or enter folder suffix on command line
 %%
-TE = addPupilometryToTE(TE, 'duration', 120, 'zeroField', 'Baseline', 'startField', 'Baseline', 'frameRate', 60, 'frameRateNew', 20, 'folderSuffix', folderSuffix);
+TE = addPupilometryToTE(TE, 'duration', baselineEnd + 1, 'zeroField', 'Baseline', 'startField', 'Baseline', 'frameRate', 60, 'frameRateNew', 20, 'folderSuffix', folderSuffix);
 %% Now saved in directory according to first session filename
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
@@ -141,7 +142,7 @@ end
 % and ChAT correlations with reward and without but doesn't have nice pupil
 % diameter
 % good trials with pupil traces that needed gap filling: 12
-trial = 3;
+trial = 7;
 ensureFigure('examples', 1);
 subplot(4,1,1);
 ydata = TE.Photometry.data(1).raw(trial, :);    
