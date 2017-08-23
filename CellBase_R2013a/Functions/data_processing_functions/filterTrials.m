@@ -63,7 +63,7 @@ switch event_type
             error(ME.message)
         end
         
-    case 'trial'
+    case 'tria'
         
         % Load trial events
         try
