@@ -1,4 +1,6 @@
-function MakeStimEvents2(sessionpath,varargin)
+function MakeStimEvents_Bpod(sessionpath,varargin)
+
+%% FS MOD of Balazs' makeStimEvents function, relies solely on Neuralynx TTLs to capture stim events
 %MAKESTIMEVENTS2   Create stimulus events structure.
 %   MAKESTIMEVENTS2(SESSIONPATH) constructs and saves stimulus events
 %   structure ('StimEvents') for the stimulation session in the folder
@@ -19,18 +21,10 @@ function MakeStimEvents2(sessionpath,varargin)
 %   By using the MAKESTIMEVENTS2(SESSIONPATH,PARAMETER1,VALUE1,...) syntax, 
 %   the TTLs actually used during the recording as well as the name of
 %   stimulus protocol file can be specified (default values provided):
-%       'BurstStartNttl', 2 - TTL for start of burst stimulation
-%           (stimulation information sent to Neuralynx as directly 
-%           executable event string)
-%       'ProtocolStartNttl', 1 - TTL sent at the beginning of each
-%           stimulation protocol
+
 %       'PulseNttl', 16384 - TTL signalling pulse onset and offset time
 %           (TTL split between stimulation device and data acquisition
 %           system)
-%       'PulseEventID', 0 - event ID for pulse TTL in the recording system
-%       'ProtocolList', {'LaserStimProtocol2'; 'BackNForthTask2'} - names
-%           of simulation and behavior protocols; no action is implemented
-%           in the current version for behavior protocols.
 %
 %   See also PARSETTLS.
 
@@ -38,24 +32,15 @@ function MakeStimEvents2(sessionpath,varargin)
 
 % Parse input arguments
 % default_args={...
-%     'BurstStartNttl',      2;...   % TTL for start of burst stimulation
-%     'ProtocolStartNttl',   1;...   % TTL sent at the beginning of each stimulation protocol
 %     'PulseNttl',           16384;... % TTL signalling pulse onset and offset time
-%     'PulseEventID',        0;...   % event ID for pulse TTL in the recording system
-%     'ProtocolList'        {'LaserStimProtocol2'; 'BackNForthTask2'};... % names
-% %           of simulation and behavior protocols (cell array); no action is
-% %           implemented in the current version for behavior protocols 
+%     'PulsePort', 
 %     };
 % [g, error] = parse_args(default_args,varargin{:});
 
 prs = inputParser;
 addRequired(prs,'sessionpath',@ischar)  % pathname for session
-addParamValue(prs,'BurstStartNttl',2,@isnumeric)   % TTL for start of burst stimulation
-addParamValue(prs,'ProtocolStartNttl',1,@isnumeric)   % TTL sent at the beginning of each stimulation protocol
-addParamValue(prs,'PulseNttl',16384,@isnumeric)   % TTL signalling pulse onset and offset time
-addParamValue(prs,'PulseEventID',[],@isnumeric)   % event ID for pulse TTL in the recording system, if empty, all pulses matching PulseNttl are included
-addParamValue(prs,'ProtocolList',{'LaserStimProtocol2'; 'BackNForthTask2'},@iscellstr)  % names
-addParamValue(prs, 'PulsePort', 0, @isnumeric) % Port number of PulseNttl
+addParamValue(prs,'PulseNttl',128,@isnumeric)   % TTL signalling pulse onset and offset time
+addParamValue(prs, 'PulsePort', [], @isnumeric) % Port number of PulseNttl
 
 %           of simulation and behavior protocols (cell array); no action is
 %           implemented in the current version for behavior protocols 
@@ -68,8 +53,6 @@ if ~isdir(sessionpath)
 end
 cd(sessionpath)
 
-% Protocol tags
-ProtocolList = g.ProtocolList;   % no action for behavior protocols implemented in this version
 
 % Load Neuralynx events
 try
@@ -78,50 +61,9 @@ catch
     error('EVENTS file not found; make sure Nlx files have been converted.');
 end
 
-% Find stimulation protocols
-PS = find(Events_EventIDs==3&Events_Nttls==g.ProtocolStartNttl);   % protocol start, based on ProtocolStartNttl
-PE = find(Events_EventIDs==3&Events_Nttls==1&cellfun(@(s)~isempty(s),...
-    strfind(Events_EventStrings,'Protocol End'))'); %#ok<USENS>  % find protocol end - not stored in trial events (last pulse offset is used instead)
-if isempty(PE)  % no protocol end detected
-    PE = [PS(2:end) length(Events_EventIDs)];   % next protocol start / last TTL is used as protocol end
-end
-if length(PS) > length(PE)   % last protocol was not stopped before stopping recoring
-    PE = [PE length(Events_EventIDs)];  % last TTL is used as last protocol end
-end
-ProtEvents = [PS; PE];   % 1st row: protocol start; 2nd row: protocol end; indices to events variables
-NumProt = length(PS);   % number of protocol files
 
-% Assign protocol ID (S1,... and B1,... for stim. and behav. protocols) and
-% name (protocol file name); e.g.
-% ProtocolName = '2009-12-23_13-29-34_LaserStimProtocol2';
-% ProtocolID='S1';
-StimProtco = 1;   % stim. protocol counter
-BehavProtco = 1;   % behav. protocol counter
-val_stim_protocols = zeros(NumProt,1);   % indicator for vaid stim. protocols
-[PID, PName] = deal(cell(NumProt,1));   % protocol ID, protocol name
-for iProt = 1:NumProt
-    ProtocolName = Events_EventStrings{PS(iProt)}...
-        (find(Events_EventStrings{PS(iProt)}=='\',1,'last')+1:end);  % protocol name
-    
-    lenpl = length(ProtocolList);  % compare protocol name with the protocol list
-    ProtID = nan(1,lenpl);
-    for iPrList = 1:lenpl
-        ProtID(iPrList) = ~isempty(strfind(Events_EventStrings{PS(iProt)},ProtocolList{iPrList}));
-    end
-    
-    switch ProtocolList{ProtID==1}   % assign the appropriate protocol ID
-        case 'LaserStimProtocol2'
-            PID{iProt} = sprintf('S%d',StimProtco);   % stimulation protocol
-            StimProtco = StimProtco + 1;
-            PName{iProt} = ProtocolName;
-            val_stim_protocols(iProt) = 1;   % valid stim. protocol
-        case 'BackNForthTask2'   % no action implemented
-            PID{iProt} = sprintf('B%d',BehavProtco);   % behavioral protocol
-            BehavProtco = BehavProtco + 1;
-            PName{iProt} = ProtocolName;
-            val_stim_protocols(iProt) = 0;   % not a valid stim. protocol
-    end
-end
+
+
 
 % Pulse TTL's
 [parsed_ttls onttl offttl] = parseTTLs(Events_Nttls);   %#ok<ASGLU> % parse TTL's
