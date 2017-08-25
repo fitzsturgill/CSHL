@@ -29,7 +29,7 @@ end
     
 
 % TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL);
-TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL);
+TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL, 'downsample', 10);
 %%
 % if you are reloading TE do this:
 channels = [1 2];
@@ -257,7 +257,8 @@ if saveOn
     disp('figure saved');
 end
 %% PH Rasters, CS+, CS-
-CLimFactor = 2;
+CLimFactor = 4;
+CLim = {[-0.005 0.005], [-0.1 0.1]};
 CLim = {[-0.005 0.005], [-0.1 0.1]};
 trialStart = TE.Photometry.xData(1);
 reversals = find(TE.BlockChange);
@@ -279,7 +280,9 @@ for channel = channels
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines    
 
     
-    subplot(1,4,2); phRasterFromTE(TE, csPlusTrials, channel, 'CLimFactor', CLimFactor, 'CLim', CLim{channel}, 'trialNumbering', 'global');
+%     subplot(1,4,2); phRasterFromTE(TE, csPlusTrials, channel, 'CLimFactor', CLimFactor, 'CLim', CLim{channel}, 'trialNumbering', 'global');
+%         set(gca, 'FontSize', 14)
+    subplot(1,4,2); phRasterFromTE(TE, csPlusTrials, channel, 'CLimFactor', CLimFactor, 'trialNumbering', 'global');
         set(gca, 'FontSize', 14)
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines        
         

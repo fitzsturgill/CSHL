@@ -53,9 +53,9 @@ addRequired(prs,'sessionpath',@ischar)  % pathname for session
 addParamValue(prs,'BurstStartNttl',2,@isnumeric)   % TTL for start of burst stimulation
 addParamValue(prs,'ProtocolStartNttl',1,@isnumeric)   % TTL sent at the beginning of each stimulation protocol
 addParamValue(prs,'PulseNttl',16384,@isnumeric)   % TTL signalling pulse onset and offset time
-addParamValue(prs,'PulseEventID',[],@isnumeric)   % event ID for pulse TTL in the recording system, if empty, all pulses matching PulseNttl are included
+addParamValue(prs,'PulseEventID',11,@isnumeric)   % event ID for pulse TTL in the recording system, if empty, all pulses matching PulseNttl are included
 addParamValue(prs,'ProtocolList',{'LaserStimProtocol2'; 'BackNForthTask2'},@iscellstr)  % names
-addParamValue(prs, 'PulsePort', 0, @isnumeric) % Port number of PulseNttl
+addParamValue(prs, 'PulsePort', [], @isnumeric) % Port number of PulseNttl
 
 %           of simulation and behavior protocols (cell array); no action is
 %           implemented in the current version for behavior protocols 
@@ -79,8 +79,8 @@ catch
 end
 
 % Find stimulation protocols
-PS = find(Events_EventIDs==3&Events_Nttls==g.ProtocolStartNttl);   % protocol start, based on ProtocolStartNttl
-PE = find(Events_EventIDs==3&Events_Nttls==1&cellfun(@(s)~isempty(s),...
+PS = find(Events_EventIDs==11&Events_Nttls==g.ProtocolStartNttl);   % protocol start, based on ProtocolStartNttl
+PE = find(Events_EventIDs==11&Events_Nttls==1&cellfun(@(s)~isempty(s),...
     strfind(Events_EventStrings,'Protocol End'))'); %#ok<USENS>  % find protocol end - not stored in trial events (last pulse offset is used instead)
 if isempty(PE)  % no protocol end detected
     PE = [PS(2:end) length(Events_EventIDs)];   % next protocol start / last TTL is used as protocol end
