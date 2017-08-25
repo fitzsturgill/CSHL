@@ -1,4 +1,4 @@
-function quickAnalysis_Bpod(animalNO,sessionID,sessionspec,protocoltag)
+function quickAnalysis_Bpod(animalID,sessionID,sessionspec,protocoltag)
 %QUICKANALYSIS2   Analysis of tetrode data.
 %   QUICKANALYSIS2 is designed as an offline analysis tool for tetrode data
 %   and behavior, which can be executed in an unsupervised manner on a
@@ -43,8 +43,8 @@ if nargin < 1
     animalID2 = 'nb046';
     animalID = 'n046';
 else
-    animalID2 = ['nb0' num2str(animalNO)];
-    animalID = ['n0' num2str(animalNO)];
+%     animalID2 = ['nb0' num2str(animalNO)];
+%     animalID = ['n0' num2str(animalNO)];
 end
 
 fullpth = [getpref('cellbase','datapath') '\' animalID '\' sessionID '\'];
@@ -53,16 +53,20 @@ fullpth = [getpref('cellbase','datapath') '\' animalID '\' sessionID '\'];
 dbstop if error
 
 % Directories
-global DATAPATH
-resdir = [DATAPATH 'NB\_response_profiles\' animalID2 '\'];
-if ~isdir(resdir)
-    mkdir(resdir)
-end
-resdir2 = [DATAPATH 'NB\_behavior\' animalID2 '\'];
-if ~isdir(resdir2)
-    mkdir(resdir2)
-end
+% global DATAPATH
+% resdir = [DATAPATH 'NB\_response_profiles\' animalID2 '\'];
+% if ~isdir(resdir)
+%     mkdir(resdir)
+% end
+% resdir2 = [DATAPATH 'NB\_behavior\' animalID2 '\'];
+% if ~isdir(resdir2)
+%     mkdir(resdir2)
+% end
 
+% Convert events file
+if isrec
+    nlxcsc2mat2(fullpth,'Channels','Events')
+end
 
 % Create trial events structure
 if isbeh
@@ -170,14 +174,14 @@ end
 if isrec && isstim
     
     % Create stimulus events
-    MakeStimEvents2(fullpth,'BurstStartNttl',4)
+    MakeStimEvents_Bpod(fullpth,'PulseNttl',128, 'PulsePort', 0); % FS
     
     % Prealign spikes to stimulus events
     problem_stim_cellid = [];
     for iC = 1:length(cellids)
         cellid = cellids(iC);
         try
-            prealignSpikes(cellid,'FUNdefineEventsEpochs',@defineEventsEpochs_laserstim,'filetype','stim','ifsave',1,'ifappend',0)
+            prealignSpikes(cellid,'FUNdefineEventsEpochs',@defineEventsEpochs_laserstim_Bpod,'filetype','stim','ifsave',1,'ifappend',0)
         catch
             disp('Error in prealignSpikes.');
             problem_stim_cellid = [problem_stim_cellid cellid];
@@ -185,15 +189,15 @@ if isrec && isstim
     end
     
     % View light-triggered raster and PSTH
-    TrigEvent = 'BurstOn';
-    SEvent = 'BurstOff';
+    TrigEvent = 'Pulse';
+    SEvent = 'Pulse';
     win = [-0.2 0.5];
     % parts = 'all';
     parts = '#BurstNPulse';
     dt = 0.001;
     sigma = 0.001;
     PSTHstd = 'on';
-    ShEvent = {{'PulseOn','PulseOff','BurstOff'}};
+    ShEvent = {{'Pulse'}};
     ShEvColors = hsv(length(ShEvent{1}));
     ShEvColors = mat2cell(ShEvColors,ones(size(ShEvColors,1),1),3);
     for iCell = 1:length(cellids)
@@ -206,16 +210,16 @@ if isrec && isstim
         
         cellidt = cellid{1};
         cellidt(cellidt=='.') = '_';
-        fnm = [resdir cellidt '_LS.jpg'];   % save
+        fnm = [fullpth cellidt '_LS.jpg'];   % save
         saveas(H,fnm)
         close(H)
     end
 end
 
 % Cluster quality
-if isrec
-    BatchSessionClust(fullpth)
-end
+% if isrec
+%     BatchSessionClust(fullpth)
+% end
 
 % Behavior
 if isbeh

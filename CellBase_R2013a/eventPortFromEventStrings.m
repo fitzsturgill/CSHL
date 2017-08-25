@@ -4,7 +4,7 @@ function port = eventPortFromEventStrings(eventStrings)
     % without port (e.g. starting recording)
     expr = '(?<=port.).(?=.value)';
     
-    port = NaN(size(eventStrings));
+    port = NaN(size(eventStrings))';
     
     for counter = 1:length(eventStrings)
         es = eventStrings{counter};

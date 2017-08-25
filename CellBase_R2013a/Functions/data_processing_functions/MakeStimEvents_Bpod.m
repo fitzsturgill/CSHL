@@ -77,7 +77,7 @@ end
 % Epoff = intersect(find(Events_EventIDs==g.PulseEventID),pepoff);   % pulse off
 %% FS MOD
 % if ~isempty(g.PulsePort)
-    PortID = eventPortFromEventString(Events_EventStrings);
+    PortID = eventPortFromEventStrings(Events_EventStrings);
     Pulses = PortID == g.PulsePort & Events_Nttls == g.PulseNttl;
 %     Epon = intersect(find(PortID == g.PulsePort), Epon);
 %     Epoff = intersect(find(PortID == g.PulsePort), Epoff);   
