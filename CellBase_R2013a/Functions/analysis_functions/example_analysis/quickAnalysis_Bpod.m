@@ -192,18 +192,18 @@ if isrec && isstim
     TrigEvent = 'Pulse';
     SEvent = 'Pulse';
     win = [-0.2 0.5];
-    % parts = 'all';
-    parts = '#BurstNPulse';
+    parts = 'all';
+%     parts = '#BurstNPulse';
     dt = 0.001;
     sigma = 0.001;
     PSTHstd = 'on';
-    ShEvent = {{'Pulse'}};
+    ShEvent = {'Pulse'};
     ShEvColors = hsv(length(ShEvent{1}));
     ShEvColors = mat2cell(ShEvColors,ones(size(ShEvColors,1),1),3);
     for iCell = 1:length(cellids)
         cellid = cellids(iCell);
         H = figure;
-        viewcell2b(cellid,'TriggerName',TrigEvent,'SortEvent',SEvent,'ShowEvents',ShEvent,'ShowEventsColors',{ShEvColors},...
+        viewcell2b(cellid,'TriggerName',TrigEvent,'SortEvent',SEvent,'ShowEvents',ShEvent,'ShowEventsColors',ShEvColors,...
             'FigureNum',H,'eventtype','stim','window',win,'dt',dt,'sigma',sigma,'PSTHstd',PSTHstd,'Partitions',parts,...
             'EventMarkerWidth',0,'PlotZeroLine','off')
         maximize_figure(H)
@@ -212,7 +212,7 @@ if isrec && isstim
         cellidt(cellidt=='.') = '_';
         fnm = [fullpth cellidt '_LS.jpg'];   % save
         saveas(H,fnm)
-        close(H)
+%         close(H)
     end
 end
 

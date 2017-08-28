@@ -184,8 +184,12 @@ YLabel = 'Rate (Hz)';
 %-----------------------------
 
 % Plot the raster
-fhandle0 = plot_raster2a(stimes,time,valid_trials,COMPTRIALS,mylabels,EventTimes,window_margin,ev_windows,sort_var,g,'Colors',{mycolors},'Colors2',{mycolors2},'NumTrials2Plot',g.Num2Plot);
-if isfield(g,'Legend'),
+fhandle0 = plot_raster2a(stimes,time,valid_trials,COMPTRIALS,mylabels,EventTimes,window_margin,ev_windows,sort_var,...
+    g,'Colors',mycolors,'Colors2',mycolors2,'NumTrials2Plot',g.Num2Plot);
+% fhandle0 = plot_raster2a(stimes,time,valid_trials,COMPTRIALS,mylabels,EventTimes,window_margin,ev_windows,sort_var,...
+%     varargin,'Colors',{mycolors},'Colors2',{mycolors2},'NumTrials2Plot',g.Num2Plot);
+
+if isfield(g,'Legend')
     mylabels = g.Legend;
 end
 
@@ -208,7 +212,7 @@ if g.PSTHPlot == 1
                 g.PlotDashedTime = nanmedian(SP.event_windows{trigger_pos}(2,valid_trials));
         end
     end
-    plot_timecourse(time,spsth,spsth_se,g,'FigureNum',fhandle0(end),'Colors',{mycolors},'LineStyle',{mylinestyle},'Legend',{mylabels},'XLabel',XLabel,'YLabel',YLabel);
+    plot_timecourse(time,spsth,spsth_se,g,'FigureNum',fhandle0(end),'Colors',mycolors,'LineStyle',mylinestyle,'Legend',mylabels,'XLabel',XLabel,'YLabel',YLabel);
     axis tight
 end
 if strcmpi(g.PrintCellID,'on')

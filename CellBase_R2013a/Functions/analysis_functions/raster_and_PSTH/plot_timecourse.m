@@ -102,7 +102,7 @@ end
 
 % Legend
 if ~isempty(par.Legend)
-    l_leg = legend(par.Legend(NumPlots),1);
+    l_leg = legend(par.Legend(NumPlots));
 %     set(l_leg,'box','off','FontSize',8,'Color','none','XColor','w','YColor','w');
 end
 set(gca,'XTickLabelMode','auto','XColor','k','YTickLabelMode','auto','YColor','k','YTickMode','auto');

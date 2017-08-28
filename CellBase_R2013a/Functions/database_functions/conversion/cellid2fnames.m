@@ -66,7 +66,7 @@ else
     elseif strncmpi(filename,'Position',3),
         fname_unit='POSITION';
     elseif strncmpi(filename,'Spikes',5)
-        fname_unit = sprintf('%s%d_%d.mat',cellbase_cell_pattern,tetrode,unit);
+        fname_unit = sprintf('%s%d_%02d.mat',cellbase_cell_pattern,tetrode,unit);
     elseif strncmpi(filename,'tfile',5)
         fname_unit = sprintf('%s%d_%d.t',cellbase_cell_pattern,tetrode,unit);
     elseif strncmpi(filename,'Ntt',3)

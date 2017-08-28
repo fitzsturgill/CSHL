@@ -27,14 +27,18 @@ end
 
 % If there are args, convert them into arg list
 if ~isempty(varargin)
-    try
-%         g = struct(varargin{:}); 
-        % avoid bug where user supplies a cell array (inadvertant expansion
-        % of scalar structure)
-        g = convertToStructure(varargin); % subfunction
-    catch ME
-        disp(ME.message)
-        error('Argument error in the {''param'', value} sequence');
+    if length(varargin) == 1 && isstruct(varargin{1})
+        g = varargin{1}; % special weird case where you've already supplied the structure, see viewcell2b
+    else
+        try
+    %         g = struct(varargin{:}); 
+            % avoid bug where user supplies a cell array (inadvertant expansion
+            % of scalar structure)
+            g = convertToStructure(varargin); % subfunction
+        catch ME
+            disp(ME.message)
+            error('Argument error in the {''param'', value} sequence');
+        end
     end
 else
     g.default_args = 1;

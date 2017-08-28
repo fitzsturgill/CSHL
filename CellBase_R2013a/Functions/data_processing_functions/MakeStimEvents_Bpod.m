@@ -79,6 +79,7 @@ end
 % if ~isempty(g.PulsePort)
     PortID = eventPortFromEventStrings(Events_EventStrings);
     Pulses = PortID == g.PulsePort & Events_Nttls == g.PulseNttl;
+    TrialStart = PortID == g.PulsePort & Events_Nttls == g.PulseNttl;
 %     Epon = intersect(find(PortID == g.PulsePort), Epon);
 %     Epoff = intersect(find(PortID == g.PulsePort), Epoff);   
 % end
@@ -109,6 +110,7 @@ end
 % Preallocate stimulus events
 nvalid_pulses = sum(Pulses);
 SE = struct(...
+    'TrialStart', zeros(1, nvalid_pulses),...
     'Pulse', nan(1,nvalid_pulses)...
     );
 
