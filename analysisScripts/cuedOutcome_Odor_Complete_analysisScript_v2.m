@@ -6,6 +6,9 @@ sessions = bpLoadSessions;
 TE = makeTE_CuedOutcome_Odor_Complete(sessions);
 TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'expFit', 'blMode', 'byTrial');
 
+%% For Dopamine GCaMP recordings, don't use expfit dFFMode option
+TE = makeTE_CuedOutcome_Odor_Complete(sessions);
+TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'simple', 'blMode', 'byTrial');
 
 %% extract peak trial dFF responses to cues and reinforcement and lick counts
 TE.phPeak_cs = bpCalcPeak_dFF(TE.Photometry, 1, [0 2], TE.Cue, 'method', 'mean', 'phField', 'ZS');
@@ -124,6 +127,10 @@ end
     hl = [hla hl];
     legend(hl, {'loval', 'hival', 'rew', 'pun', 'omit'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
     title('Balazs'); ylabel('Z Score'); xlabel('time from reinforcement (s)'); 
+    
+    subplot(pm(1), pm(2), 6, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([3 6 9]), 1, 'FluorDataField', 'ZS'); % reward, varying degrees of expectation
+    legend(hl, {'hival, neutral', 'loval, neutral', 'neutral'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    title('neutral all'); ylabel('Z Score'); xlabel('time from reinforcement (s)');    
     
 if saveOn    
     saveas(gcf, fullfile(savepath, 'phAverages.fig'));
