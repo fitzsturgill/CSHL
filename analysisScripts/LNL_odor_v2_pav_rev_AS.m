@@ -16,7 +16,7 @@ if sessions(1).SessionData.Settings.GUI.LED1_amp > 0
     channels(end+1) = 1;
 %     dFFMode{end+1} = 'expFit';
     dFFMode{end+1} = 'simple';    
-    BL{end + 1} = [1 4];
+    BL{end + 1} = [1 4];y
 end
 
 if sessions(1).SessionData.Settings.GUI.LED2_amp > 0

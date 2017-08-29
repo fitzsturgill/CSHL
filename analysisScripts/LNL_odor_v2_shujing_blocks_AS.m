@@ -251,3 +251,36 @@ end
     end        
 
     
+    %%
+        %% summary statistics
+    cComplete_summary = struct(...
+        'cuedReward_avg_ch1', 0,...
+        'cuedReward_n_ch1', 0,...
+        'cuedReward_std_ch1', 0,...
+        'cuedReward_sem_ch1', 0,...
+        'cuedReward_avg_ch1', 0,...
+        'cuedReward_n_ch1', 0,...
+        'cuedReward_std_ch1', 0,...
+        'cuedReward_sem_ch1', 0 ...
+    );
+    
+
+
+        peaks = TE.phPeakMean_cs(1).data(cuedReward);
+        cComplete_summary.cuedReward_avg_ch1 = mean(peaks); % avg
+        cComplete_summary.cuedReward_n_ch1 = sum(cuedReward); % n
+        cComplete_summary.cuedReward_std_ch1 = std(peaks); % avg
+        cComplete_summary.cuedReward_sem_ch1 = std(peaks) / sqrt(sum(cuedReward)); % SEM
+% change for punish
+        peaks = TE.phPeakMean_cs(1).data(cuedReward);
+        cComplete_summary.cuedReward_avg_ch1 = mean(peaks); % avg
+        cComplete_summary.cuedReward_n_ch1 = sum(cuedReward); % n
+        cComplete_summary.cuedReward_std_ch1 = std(peaks); % avg
+        cComplete_summary.cuedReward_sem_ch1 = std(peaks) / sqrt(sum(cuedReward)); % SEM        
+        
+        
+if saveOn
+    save(fullfile(savepath, ['summary_' subjectName '.mat']), 'cComplete_summary');
+    disp(['*** saving: ' fullfile(savepath, ['summary_' subjectName '.mat']) ' ***']);
+end
+    

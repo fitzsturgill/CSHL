@@ -8,8 +8,11 @@ TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'expFit', 
 
 
 %% extract peak trial dFF responses to cues and reinforcement and lick counts
-TE.phPeak_cs = bpCalcPeak_dFF(TE.Photometry, 1, [0 2], TE.Cue, 'method', 'mean');
-TE.phPeak_us = bpCalcPeak_dFF(TE.Photometry, 1, [0 0.5], TE.Us, 'method', 'mean');
+TE.phPeak_cs = bpCalcPeak_dFF(TE.Photometry, 1, [0 2], TE.Cue, 'method', 'mean', 'phField', 'ZS');
+TE.phPeak_us = bpCalcPeak_dFF(TE.Photometry, 1, [0 0.5], TE.Us, 'method', 'mean', 'phField', 'ZS');
+
+TE.phPeak_cs_phasic = bpCalcPeak_dFF(TE.Photometry, 1, [0 1], TE.Cue, 'method', 'mean', 'phField', 'ZS');
+TE.phPeak_cs_sustained = bpCalcPeak_dFF(TE.Photometry, 1, [1 3], TE.Cue, 'method', 'mean', 'phField', 'ZS');
 
 TE.csLicks = countEventFromTE(TE, 'Port1In', [-2 0], TE.Us);
 TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], TE.Us);
@@ -18,14 +21,17 @@ TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], TE.Us);
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
-basepath = uigetdir;
+% basepath = uigetdir;
+basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
 sep = strfind(TE.filename{1}, '_');
 subjectName = TE.filename{1}(1:sep(2)-1);
 disp(subjectName);
 savepath = fullfile(basepath, subjectName);
 ensureDirectory(savepath);
+disp(['*** ensuring directory: ' savepath ' ***']);
 %%
-truncateSessionsFromTE(TE, 'init');
+rewardTrialsTrunc = filterTE(TE, 'trialOutcome', 1);
+truncateSessionsFromTE(TE, 'init', 'usLicks', rewardTrialsTrunc);
 %%
 if saveOn
     save(fullfile(savepath, 'TE.mat'), 'TE');
@@ -94,30 +100,30 @@ end
     pm = [3 2];
     
     % - 6 0 4
-    subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 3 7]), 1); %high value, reward
+    subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 3 7]), 1, 'FluorDataField', 'ZS'); %high value, reward
     legend(hl, {'hival, rew', 'hival, omit', 'rew'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-    title('high value'); ylabel('dF/F'); xlabel('time from reinforcement (s)'); textBox(TE.filename{1}(1:7));
+    title('high value'); ylabel('Z Score'); xlabel('time from reinforcement (s)'); textBox(TE.filename{1}(1:7));
 
-    subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([5 6 8]), 1); % low value, punish
+    subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([5 6 8]), 1, 'FluorDataField', 'ZS'); % low value, punish
     legend(hl, {'loval, pun', 'loval, omit', 'pun'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-    title('low value'); ylabel('dF/F'); xlabel('time from reinforcement (s)'); 
+    title('low value'); ylabel('Z Score'); xlabel('time from reinforcement (s)'); 
 
-    subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 4 7]), 1); % reward, varying degrees of expectation
+    subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 4 7]), 1, 'FluorDataField', 'ZS'); % reward, varying degrees of expectation
     legend(hl, {'hival, rew', 'loval, rew', 'rew'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-    title('reward all'); ylabel('dF/F'); xlabel('time from reinforcement (s)');     
+    title('reward all'); ylabel('Z Score'); xlabel('time from reinforcement (s)');     
 
-    subplot(pm(1), pm(2), 4, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([5 2 8]), 1); % punishment, varying degrees of expectation
+    subplot(pm(1), pm(2), 4, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([5 2 8]), 1, 'FluorDataField', 'ZS'); % punishment, varying degrees of expectation
     legend(hl, {'loval, pun', 'hival, pun', 'pun'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-    title('punish all'); ylabel('dF/F'); xlabel('time from reinforcement (s)'); 
+    title('punish all'); ylabel('Z Score'); xlabel('time from reinforcement (s)'); 
 
     subplot(pm(1), pm(2), 5, 'FontSize', 12, 'LineWidth', 1); [ha, hla] = phPlotAverageFromTE(TE, {lowValueTrials, highValueTrials}, 1,...
-        'window', [-6 0], 'linespec', {'m', 'g'}); hold on;
+        'window', [-6 0], 'linespec', {'m', 'g'}, 'FluorDataField', 'ZS'); hold on;
     
     subplot(pm(1), pm(2), 5); [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, omitTrials}, 1,...
-        'window', [0 4], 'linespec', {'b', 'r', 'k'});
+        'window', [0 4], 'linespec', {'b', 'r', 'k'}, 'FluorDataField', 'ZS');
     hl = [hla hl];
     legend(hl, {'loval', 'hival', 'rew', 'pun', 'omit'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-    title('Balazs'); ylabel('dF/F'); xlabel('time from reinforcement (s)'); 
+    title('Balazs'); ylabel('Z Score'); xlabel('time from reinforcement (s)'); 
     
 if saveOn    
     saveas(gcf, fullfile(savepath, 'phAverages.fig'));
@@ -128,7 +134,7 @@ end
 ensureFigure('windowPick', 1);
 axes;
 phPlotAverageFromTE(TE, {lowValueTrials, highValueTrials}, 1,...
-        'window', [-4 0], 'linespec', {'m', 'g'}); 
+        'window', [-4 0], 'linespec', {'m', 'g'}, 'FluorDataField', 'ZS'); 
     
 
 %% plot lick averages
@@ -172,7 +178,7 @@ end
   
 
     %% plot photometry rasters
-    CLimFactor = 4;
+    CLimFactor = 2;
     h=ensureFigure('phRastersFromTE_reward', 1);
     mcPortraitFigSetup(h);
     subplot(1,4,1); phRasterFromTE(TE, trialsByType{1}, 1, 'CLimFactor', CLimFactor);
@@ -284,6 +290,7 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'licks_ph_comp_raster_punish.jpg'));    
 end
     %% summary statistics
+%     TE.phPeak_cs_phasic
     cComplete_summary = struct(...
         'phCue_CV', zeros(1,9),...
         'phCue_avg', zeros(1,9),...
@@ -309,6 +316,47 @@ if saveOn
     disp(['*** saving: ' fullfile(savepath, ['summary_' subjectName '.mat']) ' ***']);
 end
 
+%% summary stastics re-do- for CCN talk
+%     TE.phPeak_cs_phasic
+    values = struct(...
+        'avg', [],...
+        'n', [],...
+        'std', [],...
+        'sem', []...
+        );
+            
+    cComplete_summary2 = struct(...
+        'phCue_phasic_low', values,...
+        'phCue_phasic_high', values,...
+        'phCue_sustained_low', values,...
+        'phCue_sustained_high', values,...        
+        'cueLicks_low', values,...
+        'cueLicks_high', values...
+    );
+    
+    summary2_data = {...
+        'phCue_phasic_low', TE.phPeak_cs_phasic.data(lowValueTrials);...
+        'phCue_phasic_high', TE.phPeak_cs_phasic.data(highValueTrials);...
+        'phCue_sustained_low', TE.phPeak_cs_sustained.data(lowValueTrials);...
+        'phCue_sustained_high', TE.phPeak_cs_sustained.data(highValueTrials);...        
+        'cueLicks_low', TE.csLicks.rate(lowValueTrials);...
+        'cueLicks_high', TE.csLicks.rate(highValueTrials)...
+    };
+
+% 'avg', 'n', 'std', 'sem'
+    for counter = 1:size(summary2_data, 1)
+        peaks = summary2_data{counter, 2};
+        field = summary2_data{counter, 1};
+        cComplete_summary2.(field).avg = nanmean(peaks);        
+        cComplete_summary2.(field).n = sum(~isnan(peaks));
+        cComplete_summary2.(field).std = std(peaks, 'omitnan');         
+        cComplete_summary2.(field).sem = std(peaks, 'omitnan') / sqrt(sum(~isnan(peaks)));
+    end
+
+if saveOn
+    save(fullfile(savepath, ['summary2_' subjectName '.mat']), 'cComplete_summary2');
+    disp(['*** saving: ' fullfile(savepath, ['summary2_' subjectName '.mat']) ' ***']);
+end
     
     
 
@@ -317,7 +365,7 @@ end
     ensureFigure('phVSLicks_Scatter', 1);
     scatter(TE.csLicks.count(trialsByType{1}) + (rand(length(find(trialsByType{1})), 1) - 0.5) * .1, TE.phPeak_us.data(trialsByType{1}), 'b'); hold on;
     scatter(TE.csLicks.count(trialsByType{4}) + (rand(length(find(trialsByType{4})), 1) - 0.5) * .1, TE.phPeak_us.data(trialsByType{4}), 'r');
-        set(gca, 'FontSize', 12); xlabel('cue licks (jittered)'); ylabel('phReward (dFF-avg)');
+        set(gca, 'FontSize', 12); xlabel('cue licks (jittered)'); ylabel('phReward (ZS-avg)');
     set(gca, 'XLim', [0 30]);
 if saveOn
     saveas(gcf, fullfile(savepath, 'dFF_vs_licks.fig'));
@@ -338,7 +386,7 @@ end
 %     fo = fitoptions('StartPoint', [-5e-4, .005]);
 %     fob = fit(TE.csLicks.count(hrtrials), TE.phPeak_us.data(hrtrials), 'poly1', 'options', fo);
 %     plot(fob);
-    set(gca, 'FontSize', 12); xlabel('cue licks (jittered)'); ylabel('phReward (dFF-avg)');
+    set(gca, 'FontSize', 12); xlabel('cue licks (jittered)'); ylabel('phReward (ZS-avg)');
     set(gca, 'XLim', [0 10]);
 % if saveOn
 %     saveas(gcf, fullfile(savepath, 'dFF_vs_cueLicks.fig'));
