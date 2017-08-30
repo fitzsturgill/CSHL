@@ -1,7 +1,11 @@
 % CCN Talk Script
 
-
+%% desktop
 savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk\';
+saveOn = 1;
+
+%% laptop
+savepath = 'C:\Users\Fitz\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk';
 saveOn = 1;
 %% Snippet to make lick histogram for graded value task from DC_26:
 
@@ -32,3 +36,24 @@ saveOn = 1;
         saveas(gcf, fullfile(savepath, 'Ph_Hist_Dopamine_CCN.jpg'));    
         saveas(gcf, fullfile(savepath, 'Ph_Hist_Dopamine_CCN.epsc'));           
     end
+    
+    
+%% Snippet to make graded value averages
+
+    ensureFigure('GradedValue_Cue', 1); 
+    axes('FontSize', 12, 'LineWidth', 1); [ha, hla] = phPlotAverageFromTE(TE, {highValueTrials, lowValueTrials, uncuedTrials}, 1,...
+        'window', [-4 0], 'linespec', {'b', 'r', 'k'}, 'FluorDataField', 'ZS');
+    set(gca, 'XLim', [-4 0]);
+    formatFigureGRC;
+    
+    if saveOn    
+        saveas(gcf, fullfile(savepath, 'GradedValue_Cue.fig'));
+        saveas(gcf, fullfile(savepath, 'GradedValue_Cue.jpg'));    
+        saveas(gcf, fullfile(savepath, 'GradedValue_Cue.epsc'));           
+    end
+    
+    
+    
+    
+    
+    

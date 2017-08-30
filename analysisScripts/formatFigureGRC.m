@@ -6,7 +6,7 @@ function formatFigureGRC(wh)
     end
     aspect = wh(2) / wh(1);  % normalize by width (make width = 1)
     units = 'inches';
-    screenPosition = [5 5 wh(1) wh(2)];
+    screenPosition = [1 1 wh(1) wh(2)];
     paperPosition = [0 0 wh(1) wh(2)];
     % in points 8.5 x 11 is 595 x 770
     
