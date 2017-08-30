@@ -38,7 +38,7 @@ saveOn = 1;
     end
     
     
-%% Snippet to make graded value averages
+%% Snippet to make graded value averages from ChAT_42
 
     ensureFigure('GradedValue_Cue', 1); 
     axes('FontSize', 12, 'LineWidth', 1); [ha, hla] = phPlotAverageFromTE(TE, {highValueTrials, lowValueTrials, uncuedTrials}, 1,...
@@ -51,6 +51,25 @@ saveOn = 1;
         saveas(gcf, fullfile(savepath, 'GradedValue_Cue.jpg'));    
         saveas(gcf, fullfile(savepath, 'GradedValue_Cue.epsc'));           
     end
+    
+%% Snippet to make graded value lick averages from ChAT_42
+
+ % cue types
+    varargin = {'trialNumbering', 'consecutive',...
+        'window', [-4 0], 'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording',...
+        'linespec', {'b', 'r', 'k'}};
+    axh = [];
+    ensureFigure('GradedValue_Cue_Lick', 1); axes('FontSize', 12, 'LineWidth', 1);
+    plotEventAverageFromTE(TE, {highValueTrials, lowValueTrials, uncuedTrials}, 'Port1In', varargin{:});
+    set(gca, 'XLim', [-4 0]);
+    formatFigureGRC;    
+    ylabel('licks (s)'); xlabel('time from reinforcement (s)');
+    
+    if saveOn    
+        saveas(gcf, fullfile(savepath, 'GradedValue_Cue_Lick.fig'));
+        saveas(gcf, fullfile(savepath, 'GradedValue_Cue_Lick.jpg'));    
+        saveas(gcf, fullfile(savepath, 'GradedValue_Cue_Lick.epsc'));           
+    end    
     
     
     
