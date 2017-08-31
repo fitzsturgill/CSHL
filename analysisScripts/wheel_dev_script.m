@@ -96,7 +96,7 @@ subplot(1,2,1); hold on; %plot(f,C, 'r'); hold on;
 boundedline(f, C, Cerr(1,:)' - C, 'b', 'alpha')
 % plot(f, Cerr(1,:), 'm');
 % plot(f, Cerr(2,:), 'm');
-
+plot(S12, f, 'm');
 %
 subplot(1,2,2); plot(f, phi, 'r'); hold on;
 boundedline(f, phi, phistd * 2, 'alpha', 'b');
@@ -107,21 +107,21 @@ set(gca, 'YLim', [-2 2], 'XScale', 'log', 'XLim', [0.01 10]);
 % scramble trial labels
 si = randperm(size(data_dat, 2));
 
-[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat(:,si), data_dat, params);
-f(1) = eps;
-subplot(1,2,1); %plot(f,C, 'k'); hold on;
-boundedline(f, C, Cerr(1,:)' - C, 'alpha', 'k');
-set(gca, 'XScale', 'log', 'XLim', [0.01 10]);
-xlabel('Frequency');
-ylabel('Coherence');
-subplot(1,2,2); 
-% boundedline(f, phi, phistd * 2, 'alpha', 'k');
-formatFigureGRC;
-if saveOn
-    saveas(gcf, fullfile(savepath, 'coherence.fig'));
-    saveas(gcf, fullfile(savepath, 'coherence.jpg'));
-    saveas(gcf, fullfile(savepath, 'coherence.epsc'));
-end
+% [C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat(:,si), data_dat, params);
+% f(1) = eps;
+% subplot(1,2,1); %plot(f,C, 'k'); hold on;
+% boundedline(f, C, Cerr(1,:)' - C, 'alpha', 'k');
+% set(gca, 'XScale', 'log', 'XLim', [0.01 10]);
+% xlabel('Frequency');
+% ylabel('Coherence');
+% subplot(1,2,2); 
+% % boundedline(f, phi, phistd * 2, 'alpha', 'k');
+% formatFigureGRC;
+% if saveOn
+%     saveas(gcf, fullfile(savepath, 'coherence.fig'));
+%     saveas(gcf, fullfile(savepath, 'coherence.jpg'));
+%     saveas(gcf, fullfile(savepath, 'coherence.epsc'));
+% end
 %% spectrogram-  spectra calculated across moving window
 
 % assume that photometry channels are consistent across sessions, bleach
@@ -142,61 +142,83 @@ end
 
 TE.PhotometryHF = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit',...
     'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 29], 'startField', 'Baseline', 'downsample', 10);
-%% cross correlogram
+%
+if saveOn
+    save(fullfile(savepath, 'TE.mat'), 'TE');
+    disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
+end
+
+%% which Photometry to use? 
+Photometry = 'Photometry';
+Fs = TE.(Photometry).sampleRate;
+%% ~or~
+Photometry = 'PhotometryHF';
+Fs = TE.(Photometry).sampleRate;
+%% cross coherence or spectrum
+% crossField = 'C';
+crossField = 'S12';
 lag = 0;
 lagp = lag * 610;
 movingwin = [3 0.5]; % 1 .1
 tapers = [5 9];     %3 5
-dc_sg = bpCalcCrossCorrelogram(TE.PhotometryHF.data(1).raw', circshift(TE.PhotometryHF.data(2).raw', lagp, 1), 610, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
+dc_cc = bpCalcCrossCoherence(TE.(Photometry).data(1).raw', circshift(TE.(Photometry).data(2).raw', lagp, 1), Fs, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
 
-% permute(dc_sg.C, [3 1 2])
+% permute(dc_cc.C, [3 1 2])
 % extract cross-spectra aligned by reward
-[rewards_dc_sg, ts, tn, xdata] = extractDataByTimeStamps(permute(dc_sg.C, [3 1 2]), TE.Photometry.startTime + dc_sg.t(1), 1/(dc_sg.t(2) - dc_sg.t(1)), TE.Reward, [-4 4]);
-rewards_mean_sg = squeeze(nanmean(rewards_dc_sg, 1));
+[rewards_dc_cc, ts, tn, xdata] = extractDataByTimeStamps(permute(dc_cc.(crossField), [3 1 2]), TE.Photometry.startTime + dc_cc.t(1), 1/(dc_cc.t(2) - dc_cc.t(1)), TE.Reward, [-4 4]);
+rewards_mean_sg = squeeze(nanmean(rewards_dc_cc, 1));
+
+%% make synthetic data
+
+TE.Synth = TE.(Photometry);
+freq = 2;
+stimTime = 10;
+y = sin(2 * pi * freq * t)*10;
+
 %%
-trial = 4;
+trial = 1;
 ensureFigure('HFexamples', 1); subplot(3,1,1);
-plot(TE.PhotometryHF.xData, TE.PhotometryHF.data(1).ZS(trial, :));
+plot(TE.(Photometry).xData, TE.(Photometry).data(1).ZS(trial, :));
 subplot(3,1,2);
-plot(TE.PhotometryHF.xData, TE.PhotometryHF.data(2).ZS(trial, :));
+plot(TE.(Photometry).xData, TE.(Photometry).data(2).ZS(trial, :));
 
 
 
 
- subplot(3,1,3); image(dc_sg.t, dc_sg.f, squeeze(dc_sg.C(:,:,trial)), 'CDataMapping', 'Scaled');
+ subplot(3,1,3); image(dc_cc.t, dc_cc.f, squeeze(dc_cc.(crossField)(:,:,trial)), 'CDataMapping', 'Scaled');
  colormap('jet');
- set(gca, 'Clim', [min(dc_sg.C(:)), max(dc_sg.C(:))]);
+ set(gca, 'Clim', [min(real(dc_cc.(crossField)(:))), max(real(dc_cc.(crossField)(:)))]);
 % set(gca, 'Clim', [0 1]);
 
 
 ensureFigure('test', 1);
-image(dc_sg.t, dc_sg.f, squeeze(dc_sg.C(:,:,trial)), 'CDataMapping', 'Scaled');
+image(dc_cc.t, dc_cc.f, squeeze(dc_cc.(crossField)(:,:,trial)), 'CDataMapping', 'Scaled');
  colormap('jet');
- set(gca, 'Clim', [min(dc_sg.C(:)), max(dc_sg.C(:))]);
+ set(gca, 'Clim', [min(dc_cc.(crossField)(:)), max(dc_cc.(crossField)(:))]);
 % set(gca, 'Clim', [0 1]);
 
 
 %%
-% calculate average, aligned spectrogram with trial labels shuffled
+% calculate average, aligned coherence with trial labels shuffled
 nShuffles = 10;
-allShuffled = repmat(NaN(size(dc_sg.C)), 1, 1, 1, nShuffles);
+allShuffled = repmat(NaN(size(dc_cc.(crossField))), 1, 1, 1, nShuffles);
 nTrials = length(TE.filename);
 for counter = 1:nShuffles
     counter
     idx = randperm(nTrials);
-    data2 = circshift(TE.PhotometryHF.data(2).raw(idx, :)', lagp, 1);
-    dc_sg_shuff = bpCalcCrossCorrelogram(TE.PhotometryHF.data(1).raw', data2, 610, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
-    allShuffled(:,:,:,counter) = dc_sg_shuff.C;
+    data2 = circshift(TE.(Photometry).data(2).raw(idx, :)', lagp, 1);
+    dc_cc_shuff = bpCalcCrossCoherence(TE.(Photometry).data(1).raw', data2, Fs, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
+    allShuffled(:,:,:,counter) = real(dc_cc_shuff.(crossField));
 end
 allShuffled = nanmean(allShuffled, 4);
-[rewards_dc_sg_shuffled, ts, tn, xdata] = extractDataByTimeStamps(permute(allShuffled, [3 1 2]), TE.Photometry.startTime + dc_sg.t(1), 1/(dc_sg.t(2) - dc_sg.t(1)), TE.Reward, [-4 4]);
-rewards_mean_sg_shuffled = squeeze(nanmean(rewards_dc_sg_shuffled, 1));
+[rewards_dc_cc_shuffled, ts, tn, xdata] = extractDataByTimeStamps(permute(allShuffled, [3 1 2]), TE.Photometry.startTime + dc_cc.t(1), 1/(dc_cc.t(2) - dc_cc.t(1)), TE.Reward, [-4 4]);
+rewards_mean_sg_shuffled = squeeze(nanmean(rewards_dc_cc_shuffled, 1));
 
 rewards_mean_sg_corrected = rewards_mean_sg - rewards_mean_sg_shuffled;
 
 %%
 ensureFigure('rewards_mean_sg_corrected', 1);
-image(xdata, dc_sg.f, rewards_mean_sg_corrected, 'CDataMapping', 'Scaled');
+image(xdata, dc_cc.f, rewards_mean_sg_corrected, 'CDataMapping', 'Scaled');
 colormap('jet');
 set(gca, 'Clim', [min(rewards_mean_sg_corrected(:)), max(rewards_mean_sg_corrected(:))]);
 if saveOn
@@ -207,15 +229,15 @@ end
 %% spectrogram
 movingwin = [5 1]; % 1 .1
 tapers = [5 9];     %3 5
-c_sg = bpCalcSpectrogram(TE.PhotometryHF.data(1).raw', 610, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
-d_sg = bpCalcSpectrogram(TE.PhotometryHF.data(2).raw', 610, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
+c_sg = bpCalcSpectrogram(TE.(Photometry).data(1).raw', Fs, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
+d_sg = bpCalcSpectrogram(TE.(Photometry).data(2).raw', Fs, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
 
 
 
 
 %%
-% permute(dc_sg.C, [3 1 2])
-% extract cross-spectra aligned by reward
+% permute(dc_cc.C, [3 1 2])
+% extract spectra aligned by reward
 [rewards_c_sg, ts, tn, xdata] = extractDataByTimeStamps(permute(c_sg.S, [3 1 2]), TE.Photometry.startTime + c_sg.t(1), 1/(c_sg.t(2) - c_sg.t(1)), TE.Reward, [-4 4]);
 [rewards_d_sg, ts, tn, xdata] = extractDataByTimeStamps(permute(d_sg.S, [3 1 2]), TE.Photometry.startTime + d_sg.t(1), 1/(d_sg.t(2) - d_sg.t(1)), TE.Reward, [-4 4]);
 rewards_mean_sg_c = squeeze(nanmean(rewards_c_sg, 1));
@@ -266,14 +288,13 @@ end
 %% cross correlation
 trial = 1;
 maxLagInSeconds = 10;
-Fs = 20;
 maxLag = round(maxLagInSeconds * Fs);
 % [r, lags] = xcorr(data_chat(:,trial), data_dat(:,trial), maxLag);
 [r, shiftR, rawR, lags] = correctedXCorr(data_chat, data_dat, maxLag);
 ensureFigure('xcorr', 1);
-plot(lags * (1/20), r, 'k'); hold on;
-plot(lags * (1/20), rawR, 'r');
-plot(lags * (1/20), shiftR, 'b');
+plot(lags * 1/Fs, r, 'k'); hold on;
+plot(lags * 1/Fs, rawR, 'r');
+plot(lags * 1/Fs, shiftR, 'b');
 xlabel('Time (s)'); ylabel('ChAT x DAT XCorr'); 
 legend({'corrected', 'raw', 'shift predictor'});
 
@@ -291,7 +312,6 @@ TE = addPupilometryToTE(TE, 'duration', 30, 'zeroField', 'Baseline', 'startField
 %%
 
 maxLagInSeconds = 10;
-Fs = 20;
 maxLag = round(maxLagInSeconds * Fs);
 % [r, lags] = xcorr(data_chat(:,trial), data_dat(:,trial), maxLag);
 
@@ -300,25 +320,25 @@ mcPortraitFigSetup(h);
 
 subplot(3,2,1);
 [r, shiftR, rawR, lags] = correctedXCorr(data_chat, data_dat, maxLag);
-plot(lags * (1/20), r, 'k'); hold on;
-plot(lags * (1/20), rawR, 'r');
-plot(lags * (1/20), shiftR, 'b');
+plot(lags * 1/Fs, r, 'k'); hold on;
+plot(lags * 1/Fs, rawR, 'r');
+plot(lags * 1/Fs, shiftR, 'b');
 xlabel('Time (s)'); ylabel('ChAT x DAT XCorr'); 
 % legend({'corrected', 'raw', 'shift predictor'}, 'Location', 'northwest');
 
 subplot(3,2,2);
 [r, shiftR, rawR, lags] = correctedXCorr(data_chat, data_chat, maxLag);
-plot(lags * (1/20), r, 'k'); hold on;
-plot(lags * (1/20), rawR, 'r');
-plot(lags * (1/20), shiftR, 'b');
+plot(lags * 1/Fs, r, 'k'); hold on;
+plot(lags * 1/Fs, rawR, 'r');
+plot(lags * 1/Fs, shiftR, 'b');
 xlabel('Time (s)'); ylabel('ChAT AutoCorr'); 
 legend({'corrected', 'raw', 'shift predictor', 'Location', 'northwest'});
 
 subplot(3,2,3);
 [r, shiftR, rawR, lags] = correctedXCorr(data_chat, data_chat, maxLag);
-plot(lags * (1/20), r, 'k'); hold on;
-plot(lags * (1/20), rawR, 'r');
-plot(lags * (1/20), shiftR, 'b');
+plot(lags * 1/Fs, r, 'k'); hold on;
+plot(lags * 1/Fs, rawR, 'r');
+plot(lags * 1/Fs, shiftR, 'b');
 xlabel('Time (s)'); ylabel('DAT AutoCorr'); 
 % legend({'corrected', 'raw', 'shift predictor'});
 
@@ -327,30 +347,29 @@ data_pupil = TE.pupil.pupDiameter';
 % data_pupil = nanzscore2(data_pupil);
 data_pupil = nanzscore(data_pupil);
 maxLagInSeconds = 10;
-Fs = 20;
 maxLag = round(maxLagInSeconds * Fs);
 % [r, lags] = xcorr(data_chat(:,trial), data_dat(:,trial), maxLag);
 [r, shiftR, rawR, lags] = correctedXCorr(data_chat, data_pupil, maxLag);
 subplot(3,2,4);
-plot(lags * (1/20), r, 'k'); hold on;
-plot(lags * (1/20), rawR, 'r');
-plot(lags * (1/20), shiftR, 'b');
+plot(lags * 1/Fs, r, 'k'); hold on;
+plot(lags * 1/Fs, rawR, 'r');
+plot(lags * 1/Fs, shiftR, 'b');
 xlabel('Time (s)'); ylabel('ChAT x pupil XCorr'); 
 % legend({'corrected', 'raw', 'shift predictor'});
 
 [r, shiftR, rawR, lags] = correctedXCorr(data_dat, data_pupil, maxLag);
 subplot(3,2,5);
-plot(lags * (1/20), r, 'k'); hold on;
-plot(lags * (1/20), rawR, 'r');
-plot(lags * (1/20), shiftR, 'b');
+plot(lags * 1/Fs, r, 'k'); hold on;
+plot(lags * 1/Fs, rawR, 'r');
+plot(lags * 1/Fs, shiftR, 'b');
 xlabel('Time (s)'); ylabel('DAT x pupil XCorr'); 
 % legend({'corrected', 'raw', 'shift predictor'});
 
 [r, shiftR, rawR, lags] = correctedXCorr(data_pupil, data_pupil, maxLag);
 subplot(3,2,6);
-plot(lags * (1/20), r, 'k'); hold on;
-plot(lags * (1/20), rawR, 'r');
-plot(lags * (1/20), shiftR, 'b');
+plot(lags * 1/Fs, r, 'k'); hold on;
+plot(lags * 1/Fs, rawR, 'r');
+plot(lags * 1/Fs, shiftR, 'b');
 xlabel('Time (s)'); ylabel('Pupil AutoCorr'); 
 % legend({'corrected', 'raw', 'shift predictor'});
 
@@ -365,7 +384,7 @@ end
 
 validTrials = find(sum(isnan(data_pupil)) == 0);
 
-params.Fs = 20;
+params.Fs = Fs;
 params.trialave = 1;
 params.err = [2 0.1];
 params.tapers = [3 5];
@@ -440,7 +459,7 @@ data_dat = TE.Photometry.data(2).raw';
 data_dat = nanzscore(data_dat); % standardize
 
 
-params.Fs = 20;
+params.Fs = Fs;
 params.trialave = 1;
 params.err = [2 0.05];
 params.tapers = [3 5];

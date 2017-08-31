@@ -1,4 +1,4 @@
-function cxcg = bpCalcCrossCorrelogram(data1, data2, Fs, varargin)
+function cxcg = bpCalcCrossCoherence(data1, data2, Fs, varargin)
     %% compute cross spectrogram between 2 signals 
     % data 1 and 2-   (in form samples x trials)
     %% optional parameters, first set defaults
