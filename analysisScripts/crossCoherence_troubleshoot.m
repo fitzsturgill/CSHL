@@ -58,13 +58,13 @@
     [cxcg.C, cxcg.phi, cxcg.S12, cxcg.S1, cxcg.S2, cxcg.t, cxcg.f] = cohgramc(data1, data2, movingwin, params);
     
     %% plot the data
-    ensureFigure('cc_troubleshoot', 1);
-    subplot(2,2,1); plot(t, y); title('before noise'); set(gca, 'XLim', [0 120]);
+    ensureFigure(['cc_troubleshoot_' num2str(stimTime)], 1);
+    subplot(2,2,1); plot(t, y); title('before noise'); set(gca, 'XLim', [0 120]); xlabel('time');
     subplot(2,2,2); plot(t, data1(:,1), 'g'); hold on; plot(t, data2(:, 1), 'r');
-    title('after noise'); set(gca, 'XLim', [0 120]);
+    title('after noise'); set(gca, 'XLim', [0 120]); xlabel('time'); legend({'synthChAT', 'synthDAT'});
     subplot(2,2,3); 
     
     image(cxcg.t, cxcg.f, cxcg.C, 'CDataMapping', 'Scaled');
     colormap('jet');
     set(gca, 'Clim', [min(min(cxcg.C)), max(max(cxcg.C))]);
-    title('cross coherence');
+    title('cross coherence');ylabel('frequency'); xlabel('time');
