@@ -40,8 +40,8 @@ ensureFigure('CuedOutcome_SummaryData_scatterPlots', 1);
 
 subplot(2, 2, 1, 'FontSize', 12, 'LineWidth', 1);
 scatter(sumData.phCue_phasic_low.avg,sumData.phCue_phasic_high.avg);
-addUnityLine;
 xlabel('Low Value (Z Score)'); ylabel('High Value (Z Score)'); title('Phasic');
+addUnityLine;
 
 subplot(2, 2, 2, 'FontSize', 12, 'LineWidth', 1);
 scatter(sumData.cueLicks_low.avg,sumData.cueLicks_high.avg);
@@ -57,4 +57,49 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'CuedOutcome_SummaryData_scatterPlots.fig'));
     saveas(gcf, fullfile(savepath, 'CuedOutcome_SummaryData_scatterPlots.jpg'));
     saveas(gcf, fullfile(savepath, 'CuedOutcome_SummaryData_scatterPlots.epsc'));    
+end
+
+%%  us scatter plots, use mean, baselined combination for figure
+ensureFigure('CuedOutcome_Us_scatterPlots', 1); 
+
+subplot(2, 2, 1, 'FontSize', 12, 'LineWidth', 1);
+scatter(sumData.phReward_mean.avg,sumData.phPunish_mean.avg);
+xlabel('Reward (Z Score)'); ylabel('Punish (Z Score)'); title('mean');
+setXYsymmetric; addOrginLines;
+
+subplot(2, 2, 2, 'FontSize', 12, 'LineWidth', 1);
+scatter(sumData.phReward_med.avg,sumData.phPunish_med.avg);
+xlabel('Reward (Z Score)'); ylabel('Punish (Z Score)'); title('median');
+setXYsymmetric; addOrginLines;
+
+subplot(2, 2, 3, 'FontSize', 12, 'LineWidth', 1);
+scatter(sumData.phReward_mean_bl.avg,sumData.phPunish_mean_bl.avg);
+xlabel('Reward (Z Score)'); ylabel('Punish (Z Score)'); title('mean (bl)');
+setXYsymmetric; addOrginLines;
+
+subplot(2, 2, 4, 'FontSize', 12, 'LineWidth', 1);
+scatter(sumData.phReward_med_bl.avg,sumData.phPunish_med_bl.avg);
+xlabel('Reward (Z Score)'); ylabel('Punish (Z Score)'); title('median (bl)');
+setXYsymmetric; addOrginLines;
+
+if saveOn
+    saveas(gcf, fullfile(savepath, 'CuedOutcome_Us_scatterPlots.fig'));
+    saveas(gcf, fullfile(savepath, 'CuedOutcome_Us_scatterPlots.jpg'));
+    saveas(gcf, fullfile(savepath, 'CuedOutcome_Us_scatterPlots.epsc'));    
+end
+
+%% Us scatter plot for figure/slides
+savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk';
+ensureFigure('CuedOutcome_Us_scatterPlot_Final', 1); 
+
+
+scatter(sumData.phReward_mean_bl.avg,sumData.phPunish_mean_bl.avg, 42, 'g', 'filled');
+xlabel('Reward (Z Score)'); ylabel('Punish (Z Score)'); 
+setXYsymmetric; addOrginLines(gca, [0 0 0]);
+set(gca, 'FontSize', 12, 'LineWidth', 2);
+formatFigureTalk([3 3]);
+if saveOn
+    saveas(gcf, fullfile(savepath, 'CuedOutcome_Us_scatterPlot_Final.fig'));
+    saveas(gcf, fullfile(savepath, 'CuedOutcome_Us_scatterPlot_Final.jpg'));
+    saveas(gcf, fullfile(savepath, 'CuedOutcome_Us_scatterPlot_Final.epsc'));    
 end

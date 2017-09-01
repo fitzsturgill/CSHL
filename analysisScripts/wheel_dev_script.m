@@ -70,58 +70,7 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'random_rewards.jpg'));
 end
 
-%% coherence
 
-data_chat = TE.Photometry.data(1).raw';
-% data_chat = data_chat(:,2:end) - data_chat(:,1:end-1); % whiten
-% data_chat = nanzscore2(data_chat); % standardize
-data_chat = nanzscore(data_chat); % standardize
-data_dat = TE.Photometry.data(2).raw';
-% data_dat = data_dat(:,2:end) - data_dat(:,1:end-1); % whiten
-% data_dat = nanzscore2(data_dat); % standardize
-data_dat = nanzscore(data_dat); % standardize
-
-
-params.Fs = 20;
-params.trialave = 1;
-params.err = [2 0.05];
-params.tapers = [3 5];
-params.pad = 1;
-
-[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat, data_dat, params);
-f(1) = eps;
-ensureFigure('coherence', 1);
-% boundedline(f, C, Cerr
-subplot(1,2,1); hold on; %plot(f,C, 'r'); hold on;
-boundedline(f, C, Cerr(1,:)' - C, 'b', 'alpha')
-% plot(f, Cerr(1,:), 'm');
-% plot(f, Cerr(2,:), 'm');
-% plot(S12, f, 'm');
-%
-subplot(1,2,2); plot(f, phi, 'r'); hold on;
-boundedline(f, phi, phistd * 2, 'alpha', 'b');
-% plot(f, phi + 2 * phistd, 'm');
-% plot(f, phi - 2 * phistd, 'm');
-set(gca, 'YLim', [-2 2], 'XScale', 'log', 'XLim', [0.01 10]);
-%
-% scramble trial labels
-si = randperm(size(data_dat, 2));
-
-% [C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat(:,si), data_dat, params);
-% f(1) = eps;
-% subplot(1,2,1); %plot(f,C, 'k'); hold on;
-% boundedline(f, C, Cerr(1,:)' - C, 'alpha', 'k');
-% set(gca, 'XScale', 'log', 'XLim', [0.01 10]);
-% xlabel('Frequency');
-% ylabel('Coherence');
-% subplot(1,2,2); 
-% % boundedline(f, phi, phistd * 2, 'alpha', 'k');
-% formatFigureGRC;
-% if saveOn
-%     saveas(gcf, fullfile(savepath, 'coherence.fig'));
-%     saveas(gcf, fullfile(savepath, 'coherence.jpg'));
-%     saveas(gcf, fullfile(savepath, 'coherence.epsc'));
-% end
 %% spectrogram-  spectra calculated across moving window
 
 % assume that photometry channels are consistent across sessions, bleach
@@ -154,18 +103,72 @@ Fs = TE.(Photometry).sampleRate;
 %% ~or~
 Photometry = 'PhotometryHF';
 Fs = TE.(Photometry).sampleRate;
+
+%% coherence
+
+data_chat = TE.(Photometry).data(1).ZS';
+% data_chat = data_chat(:,2:end) - data_chat(:,1:end-1); % whiten
+% data_chat = nanzscore2(data_chat); % standardize
+% data_chat = nanzscore(data_chat); % standardize
+data_dat = TE.(Photometry).data(2).ZS';
+% data_dat = data_dat(:,2:end) - data_dat(:,1:end-1); % whiten
+% data_dat = nanzscore2(data_dat); % standardize
+% data_dat = nanzscore(data_dat); % standardize
+
+
+params.Fs = Fs;
+params.trialave = 1;
+params.err = [2 0.05];
+params.tapers = [3 5];
+params.pad = 1;
+params.fpass = [0 20];
+
+[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat, data_dat, params);
+f(1) = eps;
+ensureFigure('coherence', 1);
+% boundedline(f, C, Cerr
+subplot(1,2,1); hold on; %plot(f,C, 'r'); hold on;
+boundedline(f, C, Cerr(1,:)' - C, 'b', 'alpha')
+% plot(f, Cerr(1,:), 'm');
+% plot(f, Cerr(2,:), 'm');
+% plot(S12, f, 'm');
+%
+subplot(1,2,2); plot(f, phi, 'r'); hold on;
+boundedline(f, phi, phistd * 2, 'alpha', 'b');
+% plot(f, phi + 2 * phistd, 'm');
+% plot(f, phi - 2 * phistd, 'm');
+set(gca, 'YLim', [-2 2], 'XScale', 'log', 'XLim', [0.01 10]);
+%
+% scramble trial labels
+si = randperm(size(data_dat, 2));
+
+[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat(:,si), data_dat, params);
+f(1) = eps;
+subplot(1,2,1); %plot(f,C, 'k'); hold on;
+boundedline(f, C, Cerr(1,:)' - C, 'alpha', 'k');
+set(gca, 'XScale', 'log', 'XLim', [0.01 10]);
+xlabel('Frequency');
+ylabel('Coherence');
+subplot(1,2,2); 
+% boundedline(f, phi, phistd * 2, 'alpha', 'k');
+formatFigureGRC;
+if saveOn
+    saveas(gcf, fullfile(savepath, 'coherence.fig'));
+    saveas(gcf, fullfile(savepath, 'coherence.jpg'));
+%     saveas(gcf, fullfile(savepath, 'coherence.epsc'));
+end
 %% cross coherence or spectrum
-% crossField = 'C';
-crossField = 'S12';
+crossField = 'C';
+% crossField = 'S12';
 lag = 0;
 lagp = lag * 610;
-movingwin = [3 0.5]; % 1 .1
-tapers = [5 9];     %3 5
-dc_cc = bpCalcCrossCoherence(TE.(Photometry).data(1).raw', circshift(TE.(Photometry).data(2).raw', lagp, 1), Fs, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
+movingwin = [1 0.1]; % 1 .1
+tapers = [3 5];     %3 5
+dc_cc = bpCalcCrossCoherence(TE.(Photometry).data(1).ZS', circshift(TE.(Photometry).data(2).ZS', lagp, 1), Fs, 'movingwin', movingwin, 'whiten', 0, 'tapers', tapers);
 
 % permute(dc_cc.C, [3 1 2])
 % extract cross-spectra aligned by reward
-[rewards_dc_cc, ts, tn, xdata] = extractDataByTimeStamps(permute(dc_cc.(crossField), [3 2 1]), TE.Photometry.startTime + dc_cc.t(1), 1/(dc_cc.t(2) - dc_cc.t(1)), TE.Reward, [-4 4]);
+[rewards_dc_cc, ts, tn, xdata] = extractDataByTimeStamps(permute(dc_cc.(crossField), [3 1 2]), TE.Photometry.startTime + dc_cc.t(1), 1/(dc_cc.t(2) - dc_cc.t(1)), TE.Reward, [-4 4]);
 rewards_mean_sg = squeeze(nanmean(rewards_dc_cc, 1));
 
 %% make synthetic data
@@ -187,50 +190,62 @@ plot(TE.(Photometry).xData, TE.(Photometry).data(2).ZS(trial, :));
 
  subplot(3,1,3); image(dc_cc.t, dc_cc.f, squeeze(dc_cc.(crossField)(:,:,trial))', 'CDataMapping', 'Scaled');
  colormap('jet');
- set(gca, 'Clim', [min(real(dc_cc.(crossField)(:))), max(real(dc_cc.(crossField)(:)))]);
+ set(gca, 'Clim', [min(real(dc_cc.(crossField)(:))), max(real(dc_cc.(crossField)(:)))], 'YDir', 'normal');
 % set(gca, 'Clim', [0 1]);
 
 
 ensureFigure('test', 1);
 image(dc_cc.t, dc_cc.f, squeeze(dc_cc.(crossField)(:,:,trial))', 'CDataMapping', 'Scaled');
  colormap('jet');
- set(gca, 'Clim', [min(dc_cc.(crossField)(:)), max(dc_cc.(crossField)(:))]);
+ set(gca, 'Clim', [min(dc_cc.(crossField)(:)), max(dc_cc.(crossField)(:))], 'YDir', 'normal');
 % set(gca, 'Clim', [0 1]);
 
 
 %%
 % calculate average, aligned coherence with trial labels shuffled
-nShuffles = 10;
+nShuffles = 20;
 allShuffled = repmat(NaN(size(dc_cc.(crossField))), 1, 1, 1, nShuffles);
 nTrials = length(TE.filename);
 for counter = 1:nShuffles
     counter
     idx = randperm(nTrials);
-    data2 = circshift(TE.(Photometry).data(2).raw(idx, :)', lagp, 1);
-    dc_cc_shuff = bpCalcCrossCoherence(TE.(Photometry).data(1).raw', data2, Fs, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
+    data2 = circshift(TE.(Photometry).data(2).ZS(idx, :)', lagp, 1);
+    dc_cc_shuff = bpCalcCrossCoherence(TE.(Photometry).data(1).ZS', data2, Fs, 'movingwin', movingwin, 'whiten', 0, 'tapers', tapers);
     allShuffled(:,:,:,counter) = real(dc_cc_shuff.(crossField));
 end
 allShuffled = nanmean(allShuffled, 4);
-[rewards_dc_cc_shuffled, ts, tn, xdata] = extractDataByTimeStamps(permute(allShuffled, [3 2 1]), TE.Photometry.startTime + dc_cc.t(1), 1/(dc_cc.t(2) - dc_cc.t(1)), TE.Reward, [-4 4]);
+[rewards_dc_cc_shuffled, ts, tn, xdata] = extractDataByTimeStamps(permute(allShuffled, [3 1 2]), TE.Photometry.startTime + dc_cc.t(1), 1/(dc_cc.t(2) - dc_cc.t(1)), TE.Reward, [-4 4]);
 rewards_mean_sg_shuffled = squeeze(nanmean(rewards_dc_cc_shuffled, 1));
 
 rewards_mean_sg_corrected = rewards_mean_sg - rewards_mean_sg_shuffled;
 
 %%
 ensureFigure('rewards_mean_sg_corrected', 1);
-image(xdata, dc_cc.f, rewards_mean_sg_corrected, 'CDataMapping', 'Scaled');
-colormap('jet');
+% axes('YDir', 'reverse');
+image(xdata, dc_cc.f, rewards_mean_sg_corrected', 'CDataMapping', 'Scaled');
+colormap('jet'); set(gca, 'YDir', 'normal', 'YLim', [0 6]);
+xlabel('time from reward (s)'); ylabel('Frequency (Hz)'); title('Coherence');
 set(gca, 'Clim', [min(rewards_mean_sg_corrected(:)), max(rewards_mean_sg_corrected(:))]);
 if saveOn
     saveas(gcf, fullfile(savepath, 'rewards_mean_sg_corrected.fig'));
     saveas(gcf, fullfile(savepath, 'rewards_mean_sg_corrected.jpg'));
 end
 
+%%
+ensureFigure('rewards_mean_sg_uncorrected', 1);
+% axes('YDir', 'reverse');
+image(xdata, dc_cc.f, rewards_mean_sg', 'CDataMapping', 'Scaled');
+colormap('jet'); set(gca, 'YDir', 'normal', 'YLim', [0 6]);
+set(gca, 'Clim', [min(rewards_mean_sg(:)), max(rewards_mean_sg(:))]);
+if saveOn
+    saveas(gcf, fullfile(savepath, 'rewards_mean_sg_uncorrected.fig'));
+    saveas(gcf, fullfile(savepath, 'rewards_mean_sg_uncorrected.jpg'));
+end
 %% spectrogram
-movingwin = [5 1]; % 1 .1
-tapers = [5 9];     %3 5
-c_sg = bpCalcSpectrogram(TE.(Photometry).data(1).raw', Fs, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
-d_sg = bpCalcSpectrogram(TE.(Photometry).data(2).raw', Fs, 'movingwin', movingwin, 'whiten', 1, 'tapers', tapers);
+movingwin = [1 0.1]; % 1 .1
+tapers = [3 5];     %3 5
+c_sg = bpCalcSpectrogram(TE.(Photometry).data(1).ZS', Fs, 'movingwin', movingwin, 'whiten', 0, 'tapers', tapers);
+d_sg = bpCalcSpectrogram(TE.(Photometry).data(2).ZS', Fs, 'movingwin', movingwin, 'whiten', 0, 'tapers', tapers);
 
 
 
@@ -240,19 +255,19 @@ d_sg = bpCalcSpectrogram(TE.(Photometry).data(2).raw', Fs, 'movingwin', movingwi
 % extract spectra aligned by reward
 [rewards_c_sg, ts, tn, xdata] = extractDataByTimeStamps(permute(c_sg.S, [3 1 2]), TE.Photometry.startTime + c_sg.t(1), 1/(c_sg.t(2) - c_sg.t(1)), TE.Reward, [-4 4]);
 [rewards_d_sg, ts, tn, xdata] = extractDataByTimeStamps(permute(d_sg.S, [3 1 2]), TE.Photometry.startTime + d_sg.t(1), 1/(d_sg.t(2) - d_sg.t(1)), TE.Reward, [-4 4]);
-rewards_mean_sg_c = squeeze(nanmean(rewards_c_sg, 1));
-rewards_mean_sg_d = squeeze(nanmean(rewards_d_sg, 1));
+rewards_mean_sg_c = squeeze(nanmean(rewards_c_sg, 1))';
+rewards_mean_sg_d = squeeze(nanmean(rewards_d_sg, 1))';
 
 
 ensureFigure('rewards_mean_sg_c_and_d', 1);
 subplot(1,2,1);
 image(xdata, c_sg.f, rewards_mean_sg_c, 'CDataMapping', 'Scaled');
 colormap('jet');
-set(gca, 'Clim', [min(rewards_mean_sg_c(:)), max(rewards_mean_sg_c(:))]);
+set(gca, 'Clim', [min(rewards_mean_sg_c(:)), max(rewards_mean_sg_c(:))], 'YDir', 'normal', 'YLim', [0 6]);
 subplot(1,2,2);
 image(xdata, d_sg.f, rewards_mean_sg_d, 'CDataMapping', 'Scaled');
 colormap('jet');
-set(gca, 'Clim', [min(rewards_mean_sg_d(:)), max(rewards_mean_sg_d(:))]);
+set(gca, 'Clim', [min(rewards_mean_sg_d(:)), max(rewards_mean_sg_d(:))], 'YDir', 'normal', 'YLim', [0 6]);
 if saveOn
     saveas(gcf, fullfile(savepath, 'rewards_mean_sg_c_and_d.fig'));
     saveas(gcf, fullfile(savepath, 'rewards_mean_sg_c_and_d.jpg'));
