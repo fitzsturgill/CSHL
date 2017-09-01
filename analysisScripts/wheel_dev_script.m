@@ -96,7 +96,7 @@ subplot(1,2,1); hold on; %plot(f,C, 'r'); hold on;
 boundedline(f, C, Cerr(1,:)' - C, 'b', 'alpha')
 % plot(f, Cerr(1,:), 'm');
 % plot(f, Cerr(2,:), 'm');
-plot(S12, f, 'm');
+% plot(S12, f, 'm');
 %
 subplot(1,2,2); plot(f, phi, 'r'); hold on;
 boundedline(f, phi, phistd * 2, 'alpha', 'b');
@@ -165,7 +165,7 @@ dc_cc = bpCalcCrossCoherence(TE.(Photometry).data(1).raw', circshift(TE.(Photome
 
 % permute(dc_cc.C, [3 1 2])
 % extract cross-spectra aligned by reward
-[rewards_dc_cc, ts, tn, xdata] = extractDataByTimeStamps(permute(dc_cc.(crossField), [3 1 2]), TE.Photometry.startTime + dc_cc.t(1), 1/(dc_cc.t(2) - dc_cc.t(1)), TE.Reward, [-4 4]);
+[rewards_dc_cc, ts, tn, xdata] = extractDataByTimeStamps(permute(dc_cc.(crossField), [3 2 1]), TE.Photometry.startTime + dc_cc.t(1), 1/(dc_cc.t(2) - dc_cc.t(1)), TE.Reward, [-4 4]);
 rewards_mean_sg = squeeze(nanmean(rewards_dc_cc, 1));
 
 %% make synthetic data
@@ -185,14 +185,14 @@ plot(TE.(Photometry).xData, TE.(Photometry).data(2).ZS(trial, :));
 
 
 
- subplot(3,1,3); image(dc_cc.t, dc_cc.f, squeeze(dc_cc.(crossField)(:,:,trial)), 'CDataMapping', 'Scaled');
+ subplot(3,1,3); image(dc_cc.t, dc_cc.f, squeeze(dc_cc.(crossField)(:,:,trial))', 'CDataMapping', 'Scaled');
  colormap('jet');
  set(gca, 'Clim', [min(real(dc_cc.(crossField)(:))), max(real(dc_cc.(crossField)(:)))]);
 % set(gca, 'Clim', [0 1]);
 
 
 ensureFigure('test', 1);
-image(dc_cc.t, dc_cc.f, squeeze(dc_cc.(crossField)(:,:,trial)), 'CDataMapping', 'Scaled');
+image(dc_cc.t, dc_cc.f, squeeze(dc_cc.(crossField)(:,:,trial))', 'CDataMapping', 'Scaled');
  colormap('jet');
  set(gca, 'Clim', [min(dc_cc.(crossField)(:)), max(dc_cc.(crossField)(:))]);
 % set(gca, 'Clim', [0 1]);
@@ -211,7 +211,7 @@ for counter = 1:nShuffles
     allShuffled(:,:,:,counter) = real(dc_cc_shuff.(crossField));
 end
 allShuffled = nanmean(allShuffled, 4);
-[rewards_dc_cc_shuffled, ts, tn, xdata] = extractDataByTimeStamps(permute(allShuffled, [3 1 2]), TE.Photometry.startTime + dc_cc.t(1), 1/(dc_cc.t(2) - dc_cc.t(1)), TE.Reward, [-4 4]);
+[rewards_dc_cc_shuffled, ts, tn, xdata] = extractDataByTimeStamps(permute(allShuffled, [3 2 1]), TE.Photometry.startTime + dc_cc.t(1), 1/(dc_cc.t(2) - dc_cc.t(1)), TE.Reward, [-4 4]);
 rewards_mean_sg_shuffled = squeeze(nanmean(rewards_dc_cc_shuffled, 1));
 
 rewards_mean_sg_corrected = rewards_mean_sg - rewards_mean_sg_shuffled;

@@ -64,7 +64,7 @@
     title('after noise'); set(gca, 'XLim', [0 120]); xlabel('time'); legend({'synthChAT', 'synthDAT'});
     subplot(2,2,3); 
     
-    image(cxcg.t, cxcg.f, cxcg.C, 'CDataMapping', 'Scaled');
+    image(cxcg.t, cxcg.f, cxcg.C', 'CDataMapping', 'Scaled');
     colormap('jet');
     set(gca, 'Clim', [min(min(cxcg.C)), max(max(cxcg.C))]);
     title('cross coherence');ylabel('frequency'); xlabel('time');
