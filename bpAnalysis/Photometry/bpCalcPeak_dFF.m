@@ -27,7 +27,8 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
         'percentile', 0.9;... % only used with percentile calculation, default = 0.9, for 90th%
         'phField', 'dFF';...
 %         'zeroTimes', [];... % why didn't this work as optional? isssue
-%         with parseargs...
+%         with parseargs...   % note 9/2017-  I think I must have been
+%         mistaken, it could work supplied as optional parameter
         'window', window;... % not optional
         'referenceFromEnd', 0;...
         };

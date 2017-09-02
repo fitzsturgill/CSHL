@@ -3,7 +3,7 @@ function varargout = addStimulusPatch(hAxes,position,str,color)
 % 
 % INPUTS
 %   hAxes(i): handles to axis 
-%   position: [left right ylevel] in axes coordinates
+%   position: [left right]
 %   str: String to be displayed above bar
 %   color: 3-element RGB vector
 %   linewidth: Thickness of line

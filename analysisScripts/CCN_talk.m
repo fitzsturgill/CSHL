@@ -13,7 +13,7 @@ saveOn = 1;
     varargin = {'trialNumbering', 'consecutive',...
         'window', [-6 4], 'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording',...
         'linespec', {'b', 'r', 'g'}};
-    axh = [];
+
     ensureFigure('Lick_Hist_CCN', 1); axes;
 
     [ha, hl] = plotEventAverageFromTE(TE, trialsByType([1 4 7]), 'Port1In', varargin{:});
@@ -41,43 +41,84 @@ CuedOutcome_pooledAnalysis_script2;
     if saveOn    
         saveas(gcf, fullfile(savepath, 'Ph_Hist_Dopamine_CCN.fig'));
         saveas(gcf, fullfile(savepath, 'Ph_Hist_Dopamine_CCN.jpg'));    
-        saveas(gcf, fullfile(savepath, 'Ph_Hist_Dopamine_CCN.epsc'));           
+        saveas(gcf, fullfile(savepath, 'Ph_Hist_Dopamine_CCN.meta'));           
     end
     
     
-%% Snippet to make graded value averages from ChAT_42
+%% Snippet to make cuedOutcome cue response photometry histogram from ChAT_42
 
-    ensureFigure('GradedValue_Cue', 1); 
-    axes(); [ha, hla] = phPlotAverageFromTE(TE, {highValueTrials, lowValueTrials, uncuedTrials}, 1,...
-        'window', [-4 0], 'linespec', {'b', 'r', 'k'}, 'FluorDataField', 'ZS');
-    set(gca, 'XLim', [-4 0]);
-    formatFigureGRC;
+    ensureFigure('CuedOutcome_Cue', 1); 
+    [ha, hl] = phPlotAverageFromTE(TE, {highValueTrials, lowValueTrials, uncuedTrials}, 1,...
+        'window', [-4 3], 'linespec', {'b', 'r', 'g'}, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue);
+    legend(hl, {'\color{blue} high value', '\color{red} low value', '\color{green} uncued'}, 'Location', 'northwest', 'FontSize', 16, 'Interpreter', 'tex'); legend('boxoff');
+    set(gca, 'XLim', [-4 3]);
+    addStimulusPatch(gca, [0 1], '', [0.7 0.7 0.7]) 
+    ylabel('Fluorescence (Z Score)'); xlabel('Time from cue (s)');
+    formatFigureTalk([4 3]);    
+
     
     if saveOn    
-        saveas(gcf, fullfile(savepath, 'GradedValue_Cue.fig'));
-        saveas(gcf, fullfile(savepath, 'GradedValue_Cue.jpg'));    
-        saveas(gcf, fullfile(savepath, 'GradedValue_Cue.epsc'));           
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue.fig'));
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue.jpg'));    
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue.meta'));           
     end
     
-%% Snippet to make graded value lick averages from ChAT_42
-
+%% Snippet to make cuedOutcome cue response Lick histogram from ChAT_42
  % cue types
     varargin = {'trialNumbering', 'consecutive',...
-        'window', [-6 0], 'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording',...
+        'window', [-4 3], 'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording',...
         'linespec', {'b', 'r', 'g'}};
-    axh = [];
-    ensureFigure('GradedValue_Cue_Lick', 1); axes('FontSize', 12, 'LineWidth', 1);
-    plotEventAverageFromTE(TE, {highValueTrials, lowValueTrials, uncuedTrials}, 'Port1In', varargin{:});
-    set(gca, 'XLim', [-6 0]);
-    formatFigureGRC;    
+    ensureFigure('CuedOutcome_Cue_Lick', 1);
+    [ha, hl] = plotEventAverageFromTE(TE, {highValueTrials, lowValueTrials, uncuedTrials}, 'Port1In', varargin{:});
+    legend(hl, {'\color{blue} high value', '\color{red} low value', '\color{green} uncued'}, 'Location', 'northwest', 'FontSize', 16, 'Interpreter', 'tex'); legend('boxoff');
+    set(gca, 'XLim', [-4 3]);
+    addStimulusPatch(gca, [0 1], 'odor', [0.7 0.7 0.7]) 
     ylabel('Licks (Hz)'); xlabel('Time from cue (s)');
+    formatFigureTalk([4 2]);        
     
     if saveOn    
-        saveas(gcf, fullfile(savepath, 'GradedValue_Cue_Lick.fig'));
-        saveas(gcf, fullfile(savepath, 'GradedValue_Cue_Lick.jpg'));    
-        saveas(gcf, fullfile(savepath, 'GradedValue_Cue_Lick.epsc'));           
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue_Lick.fig'));
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue_Lick.jpg'));    
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue_Lick.meta'));           
     end    
     
+%% Snippet to make complete photometry histogram (reward condition from ChAT_42    
+    
+    ensureFigure('CuedOutcome_Reward', 1); 
+    [ha, hl] = phPlotAverageFromTE(TE, {trialsByType{1}, trialsByType{4}, trialsByType{7}}, 1,...
+        'window', [-2 2], 'linespec', {'b', 'r', 'g'}, 'FluorDataField', 'ZS');
+    legend(hl, {'\color{blue} high value', '\color{red} low value', '\color{green} uncued'}, 'Location', 'northwest', 'FontSize', 16, 'Interpreter', 'tex'); legend('boxoff');
+    set(gca, 'XLim', [-2 2], 'YLim', [-1.2 2.5]);
+%     addStimulusPatch(gca, [-3 -2 10], '', [0.7 0.7 0.7]) 
+    addStimulusPatch(gca, [-0.1 0.1], '');
+    ylabel('Fluorescence (Z Score)'); xlabel('Time from cue (s)');
+    formatFigureTalk([4 3]);    
+
+    
+    if saveOn    
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Reward.fig'));
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Reward.jpg'));    
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Reward.meta'));           
+    end
+    
+    %% Snippet to make cuedOutcome Reward response Lick histogram from ChAT_42
+ % cue types
+    varargin = {'trialNumbering', 'consecutive',...
+        'window', [-2 2], 'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording',...
+        'linespec', {'b', 'r', 'g'}};
+    ensureFigure('CuedOutcome_Reward_Lick', 1);
+    [ha, hl] = plotEventAverageFromTE(TE, {trialsByType{1}, trialsByType{4}, trialsByType{7}}, 'Port1In', varargin{:});
+    legend(hl, {'\color{blue} high value', '\color{red} low value', '\color{green} uncued'}, 'Location', 'northwest', 'FontSize', 16, 'Interpreter', 'tex'); legend('boxoff');
+    set(gca, 'XLim', [-2 2]);
+    addStimulusPatch(gca, [-0.1 0.1], '');
+    ylabel('Licks (Hz)'); xlabel('Time from reinforcement (s)');
+    formatFigureTalk([4 2]);        
+    
+    if saveOn    
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Reward_Lick.fig'));
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Reward_Lick.jpg'));    
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Reward_Lick.meta'));           
+    end    
     
     
     
