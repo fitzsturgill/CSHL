@@ -122,5 +122,49 @@ CuedOutcome_pooledAnalysis_script2;
     
     
     
+%%
+%% Lick and Ph rasters from DC_20
+CLimFactor = 2;
+CLimFactor2 = 2.5;
+trialRange = [170 350]; % global trial range
+reversals = find(diff(TE.BlockNumber(csPlusTrials)));
+
+    saveName = ['researchStatement_reversals_phRasters_dualChannel'];
+    h=ensureFigure(saveName, 1);
+%     mcPortraitFigSetup(h);
+    
+
+%     prcd = TE.Photometry.data(1).dFF(prt, :);
+    subplot(1,3,1); 
+    eventRasterFromTE(TE, csPlusTrials, 'Port1In', 'trialNumbering', 'consecutive',...
+        'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
+%     title('CS+'); ylabel('trial number');
+    set(gca, 'XLim', [-4 7]); 
+    set(gca, 'YLim', trialRange, 'TickDir', 'Out');
+    set(gca, 'FontSize', 10)
+    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines    
+    set(gca, 'XLim', [-2 6]);
+    
+    subplot(1,3,2); phRasterFromTE(TE, csPlusTrials, 1, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive');
+        set(gca, 'FontSize', 10, 'TickDir', 'Out')
+    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines        
+            set(gca, 'YLim', trialRange);set(gca, 'XLim', [-2 6]);
+     
+    subplot(1,3,3); phRasterFromTE(TE, csPlusTrials, 2, 'CLimFactor', CLimFactor2, 'trialNumbering', 'consecutive');
+        set(gca, 'FontSize', 10, 'TickDir', 'Out')
+    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines       
+        set(gca, 'YLim', trialRange);set(gca, 'XLim', [-2 6]);
+  
+
+
+    if saveOn
+        saveas(gcf, fullfile(savepath, [saveName '.fig']));
+        saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+        saveas(gcf, fullfile(savepath, [saveName '.epsc']));   
+    end
+
+    
+    
+    
     
     
