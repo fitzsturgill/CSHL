@@ -9,6 +9,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         'baseline', [1 4];... % 1 - 3 second into recording
         'blMode', 'byTrial';... % 'byTrial', 'bySession', 'expFit'  expFit- interpolates baseline from biexponential fit to raw fl baselines across trials
         'dFFMode', 'simple';... % 'simple', 'expFit'    expFit- subtracts within-trial exponential bleaching trend using a biexponential fit to the trial average baseline period
+        'dFFexpFitBegin', 100;...
         'zeroField', 'Us';...
         'startField', 'PreCsRecording';... % TO DO: PROVIDE AUTOMATICALLY BY BPOD NIDAQ CODE 
         'downsample', 305;...
@@ -16,6 +17,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         };
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
     
+    %% if not specified per channel (as a cell array), use identical valies across channels
     if ~iscell(s.blMode)
         s.blMode = repmat({s.blMode}, 1, max(s.channels));
     end
@@ -24,6 +26,10 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     end
     if ~iscell(s.baseline)
         s.baseline = repmat({s.baseline}, 1, max(s.channels));
+    end
+    
+    if ~iscell(s.dFFexpFitBegin)
+        s.dFFexpFitBegin = repmat({s.dFFexpFitBegin}, 1, max(s.channels));
     end
     
     if isempty(s.refChannels)
@@ -133,6 +139,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             % convert to deltaF/F
             blStartP = bpX2pnt(s.baseline{fCh}(1), sampleRate);
             blEndP = bpX2pnt(s.baseline{fCh}(2), sampleRate); 
+            dFFexpFitStartP = bpX2pnt(s.dFFexpFitBegin{fCh}(1), sampleRate);
             switch blMode
                 case 'byTrial'
                     blF = nanmean(allData(:, blStartP:blEndP), 2); % take mean across time, not trials

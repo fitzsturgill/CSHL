@@ -91,7 +91,7 @@ CuedOutcome_pooledAnalysis_script2;
     set(gca, 'XLim', [-2 2], 'YLim', [-1.2 2.5]);
 %     addStimulusPatch(gca, [-3 -2 10], '', [0.7 0.7 0.7]) 
     addStimulusPatch(gca, [-0.1 0.1], '');
-    ylabel('Fluorescence (Z Score)'); xlabel('Time from cue (s)');
+    ylabel('Fluorescence (Z Score)'); xlabel('Time from reinforcement (s)');
     formatFigureTalk([4 3]);    
 
     
@@ -128,6 +128,10 @@ CLimFactor = 2;
 CLimFactor2 = 2.5;
 trialRange = [170 350]; % global trial range
 reversals = find(diff(TE.BlockNumber(csPlusTrials)));
+includedTrials = zeros(size(csPlusTrials));
+includedTrials(trialRange(1):trialRange(2)) = 1;
+includedTrials = logical(includedTrials);
+
 
     saveName = ['researchStatement_reversals_phRasters_dualChannel'];
     h=ensureFigure(saveName, 1);
@@ -136,24 +140,23 @@ reversals = find(diff(TE.BlockNumber(csPlusTrials)));
 
 %     prcd = TE.Photometry.data(1).dFF(prt, :);
     subplot(1,3,1); 
-    eventRasterFromTE(TE, csPlusTrials, 'Port1In', 'trialNumbering', 'consecutive',...
+    eventRasterFromTE(TE, csPlusTrials & includedTrials, 'Port1In', 'trialNumbering', 'consecutive',...
         'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
 %     title('CS+'); ylabel('trial number');
-    set(gca, 'XLim', [-4 7]); 
-    set(gca, 'YLim', trialRange, 'TickDir', 'Out');
+    set(gca, 'XLim', [-4 7], 'TickDir', 'Out'); 
     set(gca, 'FontSize', 10)
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines    
     set(gca, 'XLim', [-2 6]);
     
-    subplot(1,3,2); phRasterFromTE(TE, csPlusTrials, 1, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive');
+    subplot(1,3,2); phRasterFromTE(TE, csPlusTrials & includedTrials, 1, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive');
         set(gca, 'FontSize', 10, 'TickDir', 'Out')
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines        
-            set(gca, 'YLim', trialRange);set(gca, 'XLim', [-2 6]);
+            set(gca, 'XLim', [-2 6]);
      
-    subplot(1,3,3); phRasterFromTE(TE, csPlusTrials, 2, 'CLimFactor', CLimFactor2, 'trialNumbering', 'consecutive');
+    subplot(1,3,3); phRasterFromTE(TE, csPlusTrials & includedTrials, 2, 'CLimFactor', CLimFactor2, 'trialNumbering', 'consecutive');
         set(gca, 'FontSize', 10, 'TickDir', 'Out')
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines       
-        set(gca, 'YLim', trialRange);set(gca, 'XLim', [-2 6]);
+        set(gca, 'XLim', [-2 6]);
   
 
 

@@ -3,7 +3,7 @@
 
 
 
-saveOn = 0;
+saveOn = 1;
 %% 
 sessions = bpLoadSessions;
 %%
@@ -14,9 +14,9 @@ TE = makeTE_LNL_odor_V2(sessions);
 channels=[]; dFFMode = {}; BL = {};
 if sessions(1).SessionData.Settings.GUI.LED1_amp > 0
     channels(end+1) = 1;
-%     dFFMode{end+1} = 'expFit';
-    dFFMode{end+1} = 'simple';    
-    BL{end + 1} = [1 4];y
+    dFFMode{end+1} = 'expFit';
+%     dFFMode{end+1} = 'simple';    
+    BL{end + 1} = [1 4];
 end
 
 if sessions(1).SessionData.Settings.GUI.LED2_amp > 0
@@ -57,11 +57,11 @@ for channel = channels
     TE.phPeakMean_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 0.75], usZeros, 'method', 'mean', 'phField', 'ZS');
     if channel == 1
         TE.phPeakMean_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, ch1CsWindow, TE.Cue, 'method', 'mean', 'phField', 'ZS');
-        TE.phPeakPercentile_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, ch1CsWindow, TE.Cue, 'method', 'percentile', 'percentile', 0.9, 'phField', 'ZS');
-        TE.phPeakPercentile_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 0.75], usZeros, 'method', 'percentile', 'percentile', 0.9, 'phField', 'ZS');
+        TE.phPeakPercentile_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, ch1CsWindow, TE.Cue, 'method', 'percentile', 'percentile', 0.8, 'phField', 'ZS');
+        TE.phPeakPercentile_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 0.75], usZeros, 'method', 'percentile', 'percentile', 0.8, 'phField', 'ZS');
     elseif channel == 2
         TE.phPeakMean_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, ch2CsWindow, TE.Cue, 'method', 'mean', 'phField', 'ZS');
-        TE.phPeakPercentile_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, ch2CsWindow, TE.Cue, 'method', 'percentile', 'percentile', 0.9, 'phField', 'ZS');        
+        TE.phPeakPercentile_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, ch2CsWindow, TE.Cue, 'method', 'percentile', 'percentile', 0.5, 'phField', 'ZS');        
         TE.phPeakPercentile_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 0.75], usZeros, 'method', 'percentile', 'percentile', 0.5, 'phField', 'ZS');  
     end
 end
@@ -77,7 +77,8 @@ TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', 11, 'Fs', 20, 'start
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
-basepath = uigetdir;
+% basepath = uigetdir;
+basepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_simpleDFF\';
 sep = strfind(TE.filename{1}, '_');
 subjectName = TE.filename{1}(1:sep(2)-1);
 disp(subjectName);
@@ -86,7 +87,7 @@ ensureDirectory(savepath);
 
 
 %%
-truncateSessionsFromTE(TE, 'init');
+truncateSessionsFromTE(TE, 'init', 'usLicks', filterTE(TE, 'trialType', 1));
 %%
 if saveOn
     save(fullfile(savepath, 'TE.mat'), 'TE');
@@ -162,7 +163,7 @@ if ismember(1, channels)
     maxP = max(TE.phPeakPercentile_cs(1).data(csPlusTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-    ylabel('BF: CS DF/F (90%)');
+    ylabel('BF: CS DF/F (80%)');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
@@ -171,7 +172,7 @@ if ismember(2, channels)
     maxP = max(TE.phPeakPercentile_cs(2).data(csPlusTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-ylabel('VTA:CS DF/F (90%)');
+ylabel('VTA:CS DF/F (50%)');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
@@ -180,7 +181,7 @@ if ismember(1, channels)
     maxP = max(TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-    ylabel('BF: US DF/F (90%)');
+    ylabel('BF: US DF/F (80%)');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
@@ -220,7 +221,7 @@ if ismember(1, channels)
     maxP = max(TE.phPeakPercentile_cs(1).data(csMinusTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-    ylabel('BF: CS DF/F (90%)');
+    ylabel('BF: CS DF/F (80%)');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
@@ -229,7 +230,7 @@ if ismember(2, channels)
     maxP = max(TE.phPeakPercentile_cs(2).data(csMinusTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-ylabel('VTA:CS DF/F (90%)');
+ylabel('VTA:CS DF/F (50%)');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
@@ -238,7 +239,7 @@ if ismember(1, channels)
     maxP = max(TE.phPeakPercentile_us(1).data(csMinusTrials & punishTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-    ylabel('BF: US DF/F (90%)');
+    ylabel('BF: US DF/F (80%)');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
@@ -257,7 +258,7 @@ if saveOn
     disp('figure saved');
 end
 %% PH Rasters, CS+, CS-
-CLimFactor = 4;
+CLimFactor = 2;
 CLim = {[-0.005 0.005], [-0.1 0.1]};
 CLim = {[-0.005 0.005], [-0.1 0.1]};
 trialStart = TE.Photometry.xData(1);
@@ -295,7 +296,7 @@ for channel = channels
     set(gca, 'YLim', [0 max(trialCount)]);
     set(gca, 'FontSize', 14)
     
-    subplot(1,4,4); phRasterFromTE(TE, csMinusTrials, channel, 'CLimFactor', CLimFactor, 'CLim', CLim{channel}, 'trialNumbering', 'global');
+    subplot(1,4,4); phRasterFromTE(TE, csMinusTrials, channel, 'CLimFactor', CLimFactor, 'trialNumbering', 'global');
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines    
     set(gca, 'FontSize', 14)
     xlabel('time from cue (s)');         
@@ -337,14 +338,14 @@ end
     if ismember(1, channels)    
         subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1); 
         [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 1,...
-        'FluorDataField', 'ZS', 'window', [-4, 7], 'linespec', {'c', 'm'}); %high value, reward
+        'FluorDataField', 'ZS', 'window', [-3, 7], 'linespec', {'c', 'm'}); %high value, reward
         legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
         title('CS+, outcomes'); set(gca, 'XLim', [-4, 7]);%set(gca, 'YLim', ylim);
     end
     if ismember(2, channels)    
         subplot(pm(1), pm(2), 4, 'FontSize', 12, 'LineWidth', 1); 
         [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 2,...
-            'FluorDataField', 'ZS', 'window', [-4, 7], 'linespec', {'c', 'm'}); %high value, reward
+            'FluorDataField', 'ZS', 'window', [-3, 7], 'linespec', {'c', 'm'}); %high value, reward
         legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
         xlabel('time from cue (s)');     set(gca, 'XLim', [-4, 7]);%set(gca, 'YLim', ylim);
     end
