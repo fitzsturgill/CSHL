@@ -29,7 +29,8 @@ end
     
 
 % TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL);
-TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL, 'downsample', 10);
+TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'expFitBegin', 0.1,...
+    'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL, 'downsample', 10);
 %%
 % if you are reloading TE do this:
 channels = [1 2];
@@ -112,13 +113,21 @@ for channel = channels
         subA = ceil(sqrt(nSessions));
         for counter = 1:nSessions
             subplot(subA, subA, counter);
-            plot(TE.Photometry.bleachFit(counter, channel).trialTemplate, 'k'); hold on;
-            plot(TE.Photometry.bleachFit(counter, channel).trialFit, 'r');
+            plot(TE.Photometry.bleachFit(counter, channel).trialTemplateFullX, TE.Photometry.bleachFit(counter, channel).trialTemplateFull, 'g'); hold on;            
+            plot(TE.Photometry.bleachFit(counter, channel).trialTemplateX, TE.Photometry.bleachFit(counter, channel).trialTemplate, 'b'); 
+            plot(TE.Photometry.bleachFit(counter, channel).fitX, TE.Photometry.bleachFit(counter, channel).trialFit, 'r');
         %     title(num2str(counter));    
         end
+        % average of all trials for this channel to eyeball correction
+        figname2 = ['corrected_allTrials_ch1']; 
+        ensureFigure(figname2, 1);
+        [ha, hl] = phPlotAverageFromTE(TE, 1:length(TE.filename), 1,...
+    'FluorDataField', 'ZS', 'window', [0.1, max(TE.Photometry.xData) - min(TE.Photometry.xData)], 'zeroTimes', TE.Photometry.startTime); %high value, reward
         if saveOn
             saveas(gcf, fullfile(savepath, 'trialBleach_Correction.fig'));
             saveas(gcf, fullfile(savepath, 'trialBleach_Correction.jpg'));
+            saveas(gcf, fullfile(savepath, [figname2 '.fig']));
+            saveas(gcf, fullfile(savepath, [figname2 '.jpg']));            
         end
     end
 end
@@ -340,14 +349,14 @@ end
         [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 1,...
         'FluorDataField', 'ZS', 'window', [-3, 7], 'linespec', {'c', 'm'}); %high value, reward
         legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-        title('CS+, outcomes'); set(gca, 'XLim', [-4, 7]);%set(gca, 'YLim', ylim);
+        title('CS+, outcomes'); set(gca, 'XLim', [-3, 7]);%set(gca, 'YLim', ylim);
     end
     if ismember(2, channels)    
         subplot(pm(1), pm(2), 4, 'FontSize', 12, 'LineWidth', 1); 
         [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 2,...
             'FluorDataField', 'ZS', 'window', [-3, 7], 'linespec', {'c', 'm'}); %high value, reward
         legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-        xlabel('time from cue (s)');     set(gca, 'XLim', [-4, 7]);%set(gca, 'YLim', ylim);
+        xlabel('time from cue (s)');     set(gca, 'XLim', [-3, 7]);%set(gca, 'YLim', ylim);
     end
     
     if saveOn

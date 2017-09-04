@@ -9,7 +9,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         'baseline', [1 4];... % 1 - 3 second into recording
         'blMode', 'byTrial';... % 'byTrial', 'bySession', 'expFit'  expFit- interpolates baseline from biexponential fit to raw fl baselines across trials
         'dFFMode', 'simple';... % 'simple', 'expFit'    expFit- subtracts within-trial exponential bleaching trend using a biexponential fit to the trial average baseline period
-        'dFFexpFitBegin', 100;...
+        'expFitBegin', 0.1;...
         'zeroField', 'Us';...
         'startField', 'PreCsRecording';... % TO DO: PROVIDE AUTOMATICALLY BY BPOD NIDAQ CODE 
         'downsample', 305;...
@@ -28,8 +28,8 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         s.baseline = repmat({s.baseline}, 1, max(s.channels));
     end
     
-    if ~iscell(s.dFFexpFitBegin)
-        s.dFFexpFitBegin = repmat({s.dFFexpFitBegin}, 1, max(s.channels));
+    if ~iscell(s.expFitBegin)
+        s.expFitBegin = repmat({s.expFitBegin}, 1, max(s.channels));
     end
     
     if isempty(s.refChannels)
@@ -104,8 +104,12 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         'fitobject_trial', [],...
         'gof_trial', [],...
         'output_trial', [],...
-        'trialFit', [],...
-        'trialTemplate', []...
+        'trialFit', [],... % doesn't exclude expFitBegin points
+        'trialTemplate', [],... 
+        'trialTemplateFull', [],... % doesn't exclude expFitBegin points 
+        'trialTemplateX', [],... 
+        'trialTemplateFullX', [],... % doesn't exclude expFitBegin points        
+        'fitX', []...        % doesn't exclude expFitBegin points
         );
 
     Photometry.data = repmat(data, length(s.channels), 1); % length = # channels  
@@ -139,7 +143,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             % convert to deltaF/F
             blStartP = bpX2pnt(s.baseline{fCh}(1), sampleRate);
             blEndP = bpX2pnt(s.baseline{fCh}(2), sampleRate); 
-            dFFexpFitStartP = bpX2pnt(s.dFFexpFitBegin{fCh}(1), sampleRate);
+            expFitStartP = bpX2pnt(s.expFitBegin{fCh}, sampleRate);
             switch blMode
                 case 'byTrial'
                     blF = nanmean(allData(:, blStartP:blEndP), 2); % take mean across time, not trials
@@ -150,7 +154,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                     blF = zeros(size(allData)) + blF;
                     blF_raw = mean(blF, 2);
                 case 'expFit'
-                    blF_raw = nanmean(allData(:, blStartP:blEndP), 2); % take mean across time, not trials
+                    blF_raw = nanmean(allData(:, expFitStartP:blEndP), 2); % take mean across time, not trials
                     [fitobject, gof, output] = ...
                         fit((1:size(allData, 1))', blF_raw, 'exp2');
                     Photometry.bleachFit(si, fCh).fitobject_session = fitobject;
@@ -161,44 +165,69 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                     blF = repmat(blF, 1, size(allData, 2));
                 otherwise
             end
-            
+%%        commented code below is snippet to show what different coefficients do to an exponential
+% x = 1:1000;
+% 
+% a = 100;
+% b = 1;
+% c = -0.01;
+% 
+% ensureFigure('test', 1);
+% plot(x, a + b*exp(c * x), 'k'); hold on;
+% plot(x, a + b * 2 *exp(c * x), 'b');
+% plot(x, a + b * exp(c * 2 * x), 'r');
+% plot(x, a * 1.01 + b * exp(c * x), 'y');
+%%
             switch dFFMode
                 case 'simple'
                     dF = allData - blF;
                 case 'expFit'
-                    trialMeanY = (nanmean(allData(:, 1:blEndP), 1))';
-                    trialMeanX = (1:length(trialMeanY))';    
-                    % fit from beginning of photometry trace (not beginning of baseline). Since
-                    % it is a biexponential fit, you want to include the initial bleaching
-                    % component
-%                     fo = fitoptions('exp2');
-%                     fo.Lower = [0 -Inf 0 -Inf];
-%                     fo.Upper = [Inf 0 Inf 0];
-%                     [fitobject, gof, output] = ...
-%                         fit(trialMeanX, trialMeanY, 'exp2', fo);                    
-                    fo = fitoptions('Method', 'NonlinearLeastSquares',...
-                        'Lower', [min(trialMeanY) * 0.98, 0, -1,],...
-                        'Upper', [min(trialMeanY) Inf 0],...
-                        'StartPoint', [min(trialMeanY) * 0.99, 0.01, -0.1,]);
+                    trialMeanY = (nanmean(allData(:, expFitStartP:blEndP), 1))';
+                    trialMeanX = ((0:length(trialMeanY) - 1)/sampleRate + expFitStartP/sampleRate)';   
+                    trialMeanYFull = (nanmean(allData(:, 1:blEndP), 1))';        
+                    x = (0:size(allData, 2) - 1)/sampleRate;
+%% biexponential
 %                     fo = fitoptions('Method', 'NonlinearLeastSquares',...
-%                         'Lower', [0 -Inf 0],...
-%                         'Upper', [Inf 0 Inf],...
-%                         'StartPoint', [1 -1 1]);
-                    ft = fittype('a + b*exp(c*x)', 'options', fo);
-%                     ft = fittype('a*exp(b*x) + c', 'options', fo);
+%                         'Lower', [0, 0, -Inf, 0 -Inf],...
+%                         'Upper', [min(trialMeanY) Inf 0 Inf 0],...
+%                         'StartPoint', [min(trialMeanY) * 0.99, 0.01, -0.1, 0.01, -0.1]);                    
+%                     ft = fittype('a + b*exp(c*x) + d*exp(e*x)', 'options', fo);
+%                     [fitobject, gof, output] = ...
+%                         fit(trialMeanX, trialMeanY, ft, fo);
+%                     trialFit = fitobject.a + fitobject.b * exp(fitobject.c * x) + fitobject.d * exp(fitobject.e * x);
+%% single exponential with fixed time constant
+                    timeConstant = 3; % make this an option later
+                    tau = 1/timeConstant;
+                    fo = fitoptions('Method', 'NonlinearLeastSquares',...
+                        'Lower', [0, max(trialMeanY) - min(trialMeanY)],...%, -Inf],...
+                        'Upper', [min(trialMeanY) Inf],... 0],...
+                        'StartPoint', [min(trialMeanY) * 0.99, 0.01]);%, -0.3,]);
+%                     fo = fitoptions('Method', 'NonlinearLeastSquares',...
+%                         'Lower', [0, 0, -1],...
+%                         'Upper', [min(trialMeanY) Inf 0],...
+%                         'StartPoint', [min(trialMeanY) * 0.99, 0.01, -0.1,]); 
+                    model = sprintf('a + b*exp(-1 * %010e * x)', tau);
+                   ft = fittype(model, 'options', fo);
+%                     ft = fittype('a + b*exp(c*x)', 'options', fo);
                     [fitobject, gof, output] = ...
                         fit(trialMeanX, trialMeanY, ft, fo);
+%                     trialFit = fitobject.a + fitobject.b * exp(fitobject.c * x);      
+                    trialFit = fitobject.a + fitobject.b * exp(-1 * tau * x);      
+%%
+
+                    
                     Photometry.bleachFit(si, fCh).fitobject_trial = fitobject;
                     Photometry.bleachFit(si, fCh).gof_trial = gof;
                     Photometry.bleachFit(si, fCh).output_trial = output;
-                    Photometry.bleachFit(si, fCh).trialTemplate = trialMeanY;  
-                    x = (1:size(allData, 2));    
-%                     trialFit = fitobject.a * exp(fitobject.b * x) + fitobject.c * exp(fitobject.d * x);                    
-                    trialFit = fitobject.a + fitobject.b * exp(fitobject.c * x);% + fitobject.d * exp(fitobject.e * x);
-%                     trialFit = fitobject.a * exp(fitobject.b * x) + fitobject.c;                   
+                    Photometry.bleachFit(si, fCh).trialTemplate = trialMeanY;                
+                    Photometry.bleachFit(si, fCh).trialTemplateFull = trialMeanYFull;                    
+                    Photometry.bleachFit(si, fCh).trialTemplateX = trialMeanX; % xData for session dFF fit
+                    Photometry.bleachFit(si, fCh).trialTemplateFullX = (0:length(trialMeanYFull) - 1)' / sampleRate;
+                    
+                    Photometry.bleachFit(si, fCh).fitX =  x;
                     Photometry.bleachFit(si, fCh).trialFit = trialFit;                    
                     % set mean of true baseline period to zero
-                    trialFit = trialFit - nanmean(trialFit(1, blStartP:blEndP));
+                    trialFit = trialFit - nanmean(trialFit(1, expFitStartP:blEndP));
                     blF = bsxfun(@plus, blF, trialFit);
                     dF = allData - blF;
                 otherwise
