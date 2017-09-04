@@ -10,6 +10,6 @@ function formatFigureTalk(wh)
     paperPosition = [0 0 wh(1) wh(2)];
     % in points 8.5 x 11 is 595 x 770
     
-    set(gca, 'TickDir', 'out', 'LineWidth', 2, 'FontSize', 16, 'FontName', 'Calibri');
+    set(gca, 'TickDir', 'out', 'LineWidth', 2, 'FontSize', 16, 'FontName', 'Calibri', 'Box', 'off');
     set(gcf, 'Units', units, 'PaperUnits', units);
     set(gcf, 'Position', screenPosition, 'PaperPosition', paperPosition);

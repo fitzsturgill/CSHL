@@ -109,7 +109,7 @@ CuedOutcome_pooledAnalysis_script2;
     ensureFigure('CuedOutcome_Reward_Lick', 1);
     [ha, hl] = plotEventAverageFromTE(TE, {trialsByType{1}, trialsByType{4}, trialsByType{7}}, 'Port1In', varargin{:});
     legend(hl, {'\color{blue} high value', '\color{red} low value', '\color{green} uncued'}, 'Location', 'northwest', 'FontSize', 16, 'Interpreter', 'tex'); legend('boxoff');
-    set(gca, 'XLim', [-2 2]);
+    set(gca, 'XLim', [-2 2], 'Box', 'off');
     addStimulusPatch(gca, [-0.1 0.1], '');
     ylabel('Licks (Hz)'); xlabel('Time from reinforcement (s)');
     formatFigureTalk([4 2]);        

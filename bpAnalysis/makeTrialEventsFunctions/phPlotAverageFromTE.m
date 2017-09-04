@@ -63,6 +63,7 @@ function varargout = phPlotAverageFromTE(TE, trials, ch, varargin)
     else
         startP = 1;
         endP = length(xData);
+        s.window = [xData(1) xData(end)];
     end
 %     xData = xData(startP:endP);
 %% rewrite xData, Kludge, because it doesn't fully implement zeroTimes as above

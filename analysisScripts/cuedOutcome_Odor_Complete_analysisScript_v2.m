@@ -383,6 +383,43 @@ if saveOn
     disp(['*** saving: ' fullfile(savepath, ['summary2_' subjectName '.mat']) ' ***']);
 end
     
+
+%% summary stastics, outcome responses, all conditions, baselined
+%     TE.phPeak_cs_phasic
+    data = struct(...
+        'avg', [],...
+        'n', [],...
+        'std', [],...
+        'sem', [],...
+        'avg_med', [],...
+        'n_med', [],...
+        'std_med', [],...
+        'sem_med', []...        
+        );
+            
+    outcome_bl_all = TE.phPeak_us.data - TE.phPeak_preUs.data; 
+    outcome_med_bl_all = TE.phPeak_us_med.data - TE.phPeak_preUs_med.data;
+
+    ccomplete_outcomeSummary = repmat(data, 1, 9);
+
+    for type = 1:9
+            trials = trialsByType{type};
+            peaks = outcome_bl_all(trials);
+            peaks_med = outcome_med_bl_all(trials);
+            ccomplete_outcomeSummary(type).avg = nanmean(peaks);        
+            ccomplete_outcomeSummary(type).n = sum(~isnan(peaks));
+            ccomplete_outcomeSummary(type).std = std(peaks, 'omitnan');         
+            ccomplete_outcomeSummary(type).sem = std(peaks, 'omitnan') / sqrt(sum(~isnan(peaks)));           
+            ccomplete_outcomeSummary(type).avg_med = nanmean(peaks_med);        
+            ccomplete_outcomeSummary(type).n_med = sum(~isnan(peaks_med));
+            ccomplete_outcomeSummary(type).std_med = std(peaks_med, 'omitnan');         
+            ccomplete_outcomeSummary(type).sem_med = std(peaks_med, 'omitnan') / sqrt(sum(~isnan(peaks_med)));                       
+    end
+
+if saveOn
+    save(fullfile(savepath, ['ccomplete_outcomeSummary_' subjectName '.mat']), 'ccomplete_outcomeSummary');
+    disp(['*** saving: ' fullfile(savepath, ['ccomplete_outcomeSummary_' subjectName '.mat']) ' ***']);
+end
     
 
     
