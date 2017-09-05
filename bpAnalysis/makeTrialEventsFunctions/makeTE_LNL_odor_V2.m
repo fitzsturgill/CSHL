@@ -27,7 +27,8 @@ function TE = makeTE_LNL_odor_V2(sessions)
         'CSValence', zeros(nTrials, 1),...                   
         'BlockNumber', zeros(nTrials, 1),...                
         'BlockFcn', zeros(nTrials, 1),...                        
-        'LickAction', []...                        
+        'LickAction', [],...
+        'Us', []...
         );
 
     for i = 1:length(statesToAdd)
@@ -51,7 +52,9 @@ function TE = makeTE_LNL_odor_V2(sessions)
             TE.CSValence(tcounter,1) = session.SessionData.CSValence(counter);
             TE.BlockNumber(tcounter,1) = session.SessionData.BlockNumber(counter);
             TE.LickAction{tcounter,1} = session.SessionData.LickAction{counter};
-            TE.ReinforcementOutcome{tcounter, 1} = session.SessionData.ReinforcementOutcome{counter};
+            TE.ReinforcementOutcome{tcounter, 1} = session.SessionData.ReinforcementOutcome{counter};   
+            usTimes = [TE.Reward{tcounter}; TE.Punish{tcounter}; TE.WNoise{tcounter}; TE.Neutral{tcounter}];
+            TE.Us{tcounter, 1} = [max(usTimes(:,1)) max(usTimes(:,2))];
             tcounter = tcounter + 1; % don't forget :)            
         end
     end
@@ -64,5 +67,5 @@ function TE = makeTE_LNL_odor_V2(sessions)
     TE.sessionChange = [0; diff(TE.sessionIndex)];
     TE.BlockChange = [0; abs(diff(TE.BlockNumber))];
     
-    
+
     

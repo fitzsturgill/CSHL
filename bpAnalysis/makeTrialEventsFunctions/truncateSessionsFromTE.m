@@ -51,7 +51,7 @@ function TE = truncateSessionsFromTE(TE, action, lickField, rewardTrials)
                 'licksHandle', [],... % handle for reward licks vs trial number line plot
                 'truncTrialHandle', [],... 
                 'currentSession', 1, ... % index of session being interactively adjusted
-                'reject', zeros(1, nTrials)...
+                'reject', false(1, nTrials))...
                 );
                 
 
@@ -114,7 +114,7 @@ function TE = truncateSessionsFromTE(TE, action, lickField, rewardTrials)
             end
 
         case 'update'
-            TE.reject = TRUNC.reject;
+            TE.reject = logical(TRUNC.reject);
     end
 end
 

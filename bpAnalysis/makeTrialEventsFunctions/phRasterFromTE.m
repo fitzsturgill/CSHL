@@ -16,7 +16,6 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
         figure(s.fig);
     end
     
-    warning('*** I think session division lines are messed up when not using global trial numbering ***');
     
     if isempty(s.ax)
         figure(s.fig);
@@ -62,7 +61,7 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
         %     sessionBreaks = find(diff(TE.epoch(trials)))';     % kludge for sfn poster, show epoch change (reversal)
             ih = image('Xdata', s.window, 'YData', [1 size(cData, 1)],...
                 'CData', cData, 'CDataMapping', 'Scaled', 'Parent', gca);
-%             line(repmat(s.window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
+            line(repmat(s.window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
 
         case 'global'
             cData = NaN(length(TE.filename), endP-startP+1);

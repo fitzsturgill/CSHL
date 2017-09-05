@@ -22,7 +22,7 @@ end
 if sessions(1).SessionData.Settings.GUI.LED2_amp > 0
     channels(end+1) = 2;
     dFFMode{end+1} = 'simple';
-    BL{end + 1} = [2 4];    
+    BL{end + 1} = [0 4];    
 end
 
 
@@ -79,7 +79,7 @@ TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', 11, 'Fs', 20, 'start
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
 % basepath = uigetdir;
-basepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_simpleDFF\';
+basepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\';
 sep = strfind(TE.filename{1}, '_');
 subjectName = TE.filename{1}(1:sep(2)-1);
 disp(subjectName);
@@ -464,10 +464,10 @@ end
     nReversals = size(RE.csPlus.phPeakPercentile_cs_ch1.after, 1);
     %% reversal averages
 
-%     peakFieldCh1 = 'phPeakMean_cs_ch1';
-%     peakFieldCh2 = 'phPeakMean_cs_ch2';    
-    peakFieldCh1 = 'phPeakPercentile_cs_ch1';
-    peakFieldCh2 = 'phPeakPercentile_cs_ch2';        
+    peakFieldCh1 = 'phPeakMean_cs_ch1';
+    peakFieldCh2 = 'phPeakMean_cs_ch2';    
+%     peakFieldCh1 = 'phPeakPercentile_cs_ch1';
+%     peakFieldCh2 = 'phPeakPercentile_cs_ch2';        
     saveName = [subjectName '_' strtok(strtok(peakFieldCh1, '_'), '_') '_phCue_revAvg'];  
     h=ensureFigure(saveName, 1);
     mcLandscapeFigSetup(h);
@@ -488,9 +488,9 @@ end
 %     revNormAvg_ch2 = revNormAvg_ch2 - nanmean(revNormAvg_ch2(bl(1):bl(2)));
 %     revNormAvg_ch2 = revNormAvg_ch2 / percentile(revNormAvg_ch2(bl(2):bl(3)), 0.90);
 
-    plot(xData, revNormAvg_ch1, 'g'); hold on;
-    plot(xData, revNormAvg_ch2, 'r');
-    set(gca, 'XLim', [-40 80]);xlabel('Trials of new CS+ odor from reversal'); 
+    plot(xData, smooth(revNormAvg_ch1), 'g'); hold on;
+    plot(xData, smooth(revNormAvg_ch2), 'r');
+    set(gca, 'XLim', [-10 20], 'YLim', [-2 2]);xlabel('Trials of new CS+ odor from reversal'); 
     ylabel('Cue dFF ZScored'); title([strtok(peakFieldCh1, '_') ', avg ' num2str(nReversals) ' reversals'], 'Interpreter', 'none');
 
     % reinforcment response

@@ -33,7 +33,7 @@ for i = 1:length(hAxes)
 l = position(1);
 r = position(2);
 y = position(3)-position(3)*0.03;
-hLine = line([l r],[y y],'Parent',hAxes(i),'LineWidth',linewidth,'color',color);
+hLine = line([l r],[y y],'Parent',hAxes(i),'LineWidth',linewidth,'color',color, 'Clipping', 'off');
 hAxes(i);
 hText = text(mean([l r]),y+0.1*y,str,'FontSize',14,'Color',color,...
     'HorizontalAlignment','left','Parent',hAxes(i));

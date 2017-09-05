@@ -123,50 +123,172 @@ CuedOutcome_pooledAnalysis_script2;
     
     
 %%
-%% Lick and Ph rasters from DC_20
+%% Lick and Ph rasters from DC_20- by CS valence
 CLimFactor = 2;
-CLimFactor2 = 2.5;
-trialRange = [170 350]; % global trial range
-reversals = find(diff(TE.BlockNumber(csPlusTrials)));
+CLimFactor2 = 3;
+trialRange = [170 340]; % global trial range
+% trialRange = [560 680]; % global trial range
 includedTrials = zeros(size(csPlusTrials));
 includedTrials(trialRange(1):trialRange(2)) = 1;
 includedTrials = logical(includedTrials);
+reversals = find(diff(TE.BlockNumber(csPlusTrials & includedTrials & rewardTrials)));
 
-
-    saveName = ['researchStatement_reversals_phRasters_dualChannel'];
+    saveName = ['reversals_phRasters_byValence' num2str(trialRange(1)) '_to_' num2str(trialRange(2))];
     h=ensureFigure(saveName, 1);
 %     mcPortraitFigSetup(h);
     
 
 %     prcd = TE.Photometry.data(1).dFF(prt, :);
     subplot(1,3,1); 
-    eventRasterFromTE(TE, csPlusTrials & includedTrials, 'Port1In', 'trialNumbering', 'consecutive',...
+    eventRasterFromTE(TE, csPlusTrials & includedTrials & rewardTrials, 'Port1In', 'trialNumbering', 'consecutive',...
         'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
 %     title('CS+'); ylabel('trial number');
     set(gca, 'XLim', [-4 7], 'TickDir', 'Out'); 
     set(gca, 'FontSize', 10)
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines    
-    set(gca, 'XLim', [-2 6]);
+    set(gca, 'XLim', [-2 6]); ylabel('Trial #');
+    addStimulusBar(gca, [0 1 0], '', [0.3 0.3 0.3], 5); addStimulusBar(gca, [2.9 3.1 0], '', [0.3 0.3 0.3], 5);
     
-    subplot(1,3,2); phRasterFromTE(TE, csPlusTrials & includedTrials, 1, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive');
+    subplot(1,3,2); phRasterFromTE(TE, csPlusTrials & includedTrials & rewardTrials, 1, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive');
         set(gca, 'FontSize', 10, 'TickDir', 'Out')
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines        
-            set(gca, 'XLim', [-2 6]);
+        set(gca, 'XLim', [-2 6], 'YTick', []); xlabel('Time from cue (s)');
+    addStimulusBar(gca, [0 1 0], '', [0.3 0.3 0.3], 5); addStimulusBar(gca, [2.9 3.1 0], '', [0.3 0.3 0.3], 5); 
      
-    subplot(1,3,3); phRasterFromTE(TE, csPlusTrials & includedTrials, 2, 'CLimFactor', CLimFactor2, 'trialNumbering', 'consecutive');
+    subplot(1,3,3); phRasterFromTE(TE, csPlusTrials & includedTrials & rewardTrials, 2, 'CLimFactor', CLimFactor2, 'trialNumbering', 'consecutive');
         set(gca, 'FontSize', 10, 'TickDir', 'Out')
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines       
         set(gca, 'XLim', [-2 6]);
+    set(gca, 'XLim', [-2 6], 'YTick', []);
+    addStimulusBar(gca, [0 1 0], '', [0.3 0.3 0.3], 5); addStimulusBar(gca, [2.9 3.1 0], '', [0.3 0.3 0.3], 5);    
+    formatFigureTalk([4.5 3]);        
   
 
 
     if saveOn
         saveas(gcf, fullfile(savepath, [saveName '.fig']));
         saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
-        saveas(gcf, fullfile(savepath, [saveName '.epsc']));   
+        saveas(gcf, fullfile(savepath, [saveName '.meta']));   
     end
 
+    %% Lick and Ph rasters from DC_20- by Odor
+CLimFactor = 2;
+CLimFactor2 = 3;
+trialRange = [170 340]; odorTrials = Odor2Trials; % global trial range
+% trialRange = [568 680]; odorTrials = Odor2Trials; % global trial range
+
+includedTrials = zeros(size(csPlusTrials));
+includedTrials(trialRange(1):trialRange(2)) = 1;
+includedTrials = logical(includedTrials);
+reversals = find(diff(TE.BlockNumber(odorTrials & includedTrials)));
+
+    saveName = ['reversals_phRasters_byOdor' num2str(trialRange(1)) '_to_' num2str(trialRange(2))];
+    h=ensureFigure(saveName, 1);
+%     mcPortraitFigSetup(h);
     
+
+%     prcd = TE.Photometry.data(1).dFF(prt, :);
+    subplot(1,3,1); 
+    eventRasterFromTE(TE, odorTrials & includedTrials, 'Port1In', 'trialNumbering', 'consecutive',...
+        'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
+%     title('CS+'); ylabel('trial number');
+    set(gca, 'FontSize', 10)
+    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines    
+    set(gca, 'XLim', [-2 6]); ylabel('Trial #');
+    addStimulusBar(gca, [0 1 0], '', [0.3 0.3 0.3], 5); addStimulusBar(gca, [2.9 3.1 0], '', [0.3 0.3 0.3], 5);
+    
+    subplot(1,3,2); phRasterFromTE(TE, odorTrials & includedTrials, 1, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive');
+    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines        
+        set(gca, 'XLim', [-2 6], 'YTick', []); xlabel('Time from cue (s)');
+    addStimulusBar(gca, [0 1 0], '', [0.3 0.3 0.3], 5); addStimulusBar(gca, [2.9 3.1 0], '', [0.3 0.3 0.3], 5);        
+     
+    subplot(1,3,3); phRasterFromTE(TE, odorTrials & includedTrials, 2, 'CLimFactor', CLimFactor2, 'trialNumbering', 'consecutive');
+    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines       
+    set(gca, 'XLim', [-2 6], 'YTick', []);
+    addStimulusBar(gca, [0 1 0], '', [0.3 0.3 0.3], 5); addStimulusBar(gca, [2.9 3.1 0], '', [0.3 0.3 0.3], 5);    
+    formatFigureTalk([4.5 3]);
+
+
+    if saveOn
+        saveas(gcf, fullfile(savepath, [saveName '.fig']));
+        saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+        saveas(gcf, fullfile(savepath, [saveName '.meta']));   
+    end
+    
+%% sorting by behavior (doesn't really work well)
+
+
+excludeFirstNTrials = 20;
+excludeFirstTrials = TE.trialNumber > excludeFirstNTrials;
+threshPercentile = 0.3;
+
+TE.csLicksAll = countEventFromTE(TE, 'Port1In', [0 3], TE.Cue);
+ensureFigure('cueLick_Hist', 1);
+[sorted index] = cum(TE.csLicksAll.rate(csPlusTrials & excludeFirstTrials));
+plot(sorted, index); xlabel('lick rate');
+threshRate = percentile(TE.csLicksAll.rate(csPlusTrials & excludeFirstTrials), threshPercentile);
+hitTrialsRewarded = csPlusTrials & excludeFirstTrials & TE.csLicksAll.rate > threshRate & rewardTrials;
+missTrialsRewarded = csPlusTrials & excludeFirstTrials & TE.csLicksAll.rate <= threshRate & rewardTrials;
+
+ensureFigure('rev_phAveragesByBehavior', 1);
+subplot(1, 2, 1);
+[ha, hl] = phPlotAverageFromTE(TE, {hitTrialsRewarded, missTrialsRewarded}, 1,...
+'FluorDataField', 'ZS', 'window', [-1, 5], 'linespec', {'g', 'r'}); %high value, reward
+legend(hl, {'hit', 'miss'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
+ylabel('CS+, outcomes'); set(gca, 'XLim', [-1, 5]); title('ACh.');%set(gca, 'YLim', ylim);
+
+subplot(1,2,2);
+[ha, hl] = phPlotAverageFromTE(TE, {hitTrialsRewarded, missTrialsRewarded}, 2,...
+'FluorDataField', 'ZS', 'window', [-1, 5], 'linespec', {'g', 'r'}); %high value, reward
+legend(hl, {'hit', 'miss'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
+set(gca, 'XLim', [-1, 5]); title('Dop.')%set(gca, 'YLim', ylim);
+formatFigureTalk([6,3]);
+
+%% sorting by number of cue reward pairings post reversal
+
+excludeFirstNTrials = 20;
+excludeFirstTrials = TE.trialNumber > excludeFirstNTrials;
+rewardPairingsThresh = 10; % 
+nSessions = max(TE.sessionIndex);
+trialMatrix = zeros(length(TE.filename), nSessions);
+for counter = 2
+    trialsThisSession = TE.sessionIndex == counter;
+    thisReverse = find(TE.BlockChange & trialsThisSession);
+    postReversalTrials = trialsThisSession;
+    postReversalTrials(1:thisReverse - 1) = 0;
+    pairingsThisReverse = postReversalTrials & csPlusTrials & rewardTrials;    
+    trialSearch = find(pairingsThisReverse);
+    threshTrial = trialSearch(rewardPairingsThresh);
+    firstTrials = postReversalTrials;
+    firstTrials(threshTrial:end) = 0;
+    trialMatrix(:,counter) = firstTrials;
+end
+periReversalTrials = any(trialMatrix, 2);
+extraReversalTrials = ~periReversalTrials;
+
+
+ensureFigure('rev_phAveragesByPairings', 1);
+subplot(1, 2, 1);
+[ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & periReversalTrials, csPlusTrials & rewardTrials & extraReversalTrials}, 1,...
+'FluorDataField', 'ZS', 'window', [-1, 5], 'linespec', {'g', 'r'}); %high value, reward
+legend(hl, {'hit', 'miss'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
+ylabel('CS+, outcomes'); set(gca, 'XLim', [-1, 5]); title('ACh.');%set(gca, 'YLim', ylim);
+
+subplot(1,2,2);
+[ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & periReversalTrials, csPlusTrials & rewardTrials & extraReversalTrials}, 2,...
+'FluorDataField', 'ZS', 'window', [-1, 5], 'linespec', {'g', 'r'}); %high value, reward
+legend(hl, {'hit', 'miss'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
+set(gca, 'XLim', [-1, 5]); title('Dop.')%set(gca, 'YLim', ylim);
+formatFigureTalk([6,3]);
+
+    
+
+
+
+
+
+
+
     
     
     
