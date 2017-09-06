@@ -44,8 +44,8 @@ csWindow(:,2) = cellfun(@(x,y,z) max(x(end), y(end)) - z(1), TE.AnswerLick, TE.A
 % 2) to select AnswerLick time stamp for lick trials (AnswerLick follows
 % AnswerNoLick state)
 
-ch1CsWindow = [0.5 1.5];
-ch2CsWindow = [0.5 1.5];
+ch1CsWindow = [0.25 1];
+ch2CsWindow = [0.25 1];
 
 TE.csLicks = countEventFromTE(TE, 'Port1In', csWindow, TE.Cue);
 
@@ -58,8 +58,8 @@ for channel = channels
     TE.phPeakMean_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 0.75], usZeros, 'method', 'mean', 'phField', 'ZS');
     if channel == 1
         TE.phPeakMean_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, ch1CsWindow, TE.Cue, 'method', 'mean', 'phField', 'ZS');
-        TE.phPeakPercentile_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, ch1CsWindow, TE.Cue, 'method', 'percentile', 'percentile', 0.8, 'phField', 'ZS');
-        TE.phPeakPercentile_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 0.75], usZeros, 'method', 'percentile', 'percentile', 0.8, 'phField', 'ZS');
+        TE.phPeakPercentile_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, ch1CsWindow, TE.Cue, 'method', 'percentile', 'percentile', 0.5, 'phField', 'ZS');
+        TE.phPeakPercentile_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 0.75], usZeros, 'method', 'percentile', 'percentile', 0.5, 'phField', 'ZS');
     elseif channel == 2
         TE.phPeakMean_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, ch2CsWindow, TE.Cue, 'method', 'mean', 'phField', 'ZS');
         TE.phPeakPercentile_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, ch2CsWindow, TE.Cue, 'method', 'percentile', 'percentile', 0.5, 'phField', 'ZS');        
@@ -172,7 +172,7 @@ if ismember(1, channels)
     maxP = max(TE.phPeakPercentile_cs(1).data(csPlusTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-    ylabel('BF: CS DF/F (80%)');
+    ylabel('BF: CS DF/F (50%)');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
@@ -190,7 +190,7 @@ if ismember(1, channels)
     maxP = max(TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-    ylabel('BF: US DF/F (80%)');
+    ylabel('BF: US DF/F (50%)');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
@@ -230,7 +230,7 @@ if ismember(1, channels)
     maxP = max(TE.phPeakPercentile_cs(1).data(csMinusTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-    ylabel('BF: CS DF/F (80%)');
+    ylabel('BF: CS DF/F (50%)');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
@@ -248,7 +248,7 @@ if ismember(1, channels)
     maxP = max(TE.phPeakPercentile_us(1).data(csMinusTrials & punishTrials));
     hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
     hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-    ylabel('BF: US DF/F (80%)');
+    ylabel('BF: US DF/F (50%)');
     set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
 end
 
@@ -294,7 +294,7 @@ for channel = channels
 %         set(gca, 'FontSize', 14)
     subplot(1,4,2); phRasterFromTE(TE, csPlusTrials, channel, 'CLimFactor', CLimFactor, 'trialNumbering', 'global');
         set(gca, 'FontSize', 14)
-    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines        
+    line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines        
         
     subplot(1,4,3); 
     eventRasterFromTE(TE, csMinusTrials, 'Port1In', 'trialNumbering', 'global',...
@@ -306,7 +306,7 @@ for channel = channels
     set(gca, 'FontSize', 14)
     
     subplot(1,4,4); phRasterFromTE(TE, csMinusTrials, channel, 'CLimFactor', CLimFactor, 'trialNumbering', 'global');
-    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines    
+    line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines    
     set(gca, 'FontSize', 14)
     xlabel('time from cue (s)');         
 
@@ -440,12 +440,16 @@ end
     
     dataToPull = {...
         'csLicks', TE.csLicks.rate,...
+        'usLicks', TE.usLicks.rate,...
         'phPeakMean_cs_ch1', TE.phPeakMean_cs(1).data,...
         'phBaseline_ch1', TE.phPeakMean_baseline(1).data,...
         'phPeakPercentile_cs_ch1', TE.phPeakPercentile_cs(1).data,...
         'phPeakMean_us_ch1', TE.phPeakMean_us(1).data,...
         'phPeakPercentile_us_ch1', TE.phPeakPercentile_us(1).data,...
-        'trialOutcome', TE.trialOutcome};
+        'trialOutcome', TE.trialOutcome,...
+        'trialType', TE.trialType,...
+        'trialNumber', TE.trialNumber...
+        };
     
     if ismember(2, channels)
         dataToPull = [dataToPull...
@@ -462,6 +466,12 @@ end
     RE.csMinus = extractReversalsFromTE(TE, csMinusTrials, dataToPull, 'maxReversals', 3);
     RE.csPlusReward = extractReversalsFromTE(TE, csPlusTrials & rewardTrials, dataToPull, 'maxReversals', 3);    
     nReversals = size(RE.csPlus.phPeakPercentile_cs_ch1.after, 1);
+    
+if saveOn
+    save(fullfile(savepath, ['RE_' subjectName '.mat']), 'RE');
+    disp(['*** saving: ' fullfile(savepath, ['RE_' subjectName '.mat']) ' ***']);
+end
+    
     %% reversal averages
 
     peakFieldCh1 = 'phPeakMean_cs_ch1';

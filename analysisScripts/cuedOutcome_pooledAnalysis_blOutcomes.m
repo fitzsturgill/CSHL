@@ -1,4 +1,4 @@
-% cuedOutcome_Odor_complete summary analysis script 8/28/17
+% cuedOutcome_Odor_complete summary analysis script 9/17
 % includes separate analysis for phasic and sustained components to odor
 % cue response
 

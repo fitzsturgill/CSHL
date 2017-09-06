@@ -166,6 +166,8 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                 otherwise
             end
 %%        commented code below is snippet to show what different coefficients do to an exponential
+% note! c in the example below is the inverse of the time constant, a is
+% the asymptote at x = Inf, b + c is the y intercept
 % x = 1:1000;
 % 
 % a = 100;
@@ -196,8 +198,8 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
 %                         fit(trialMeanX, trialMeanY, ft, fo);
 %                     trialFit = fitobject.a + fitobject.b * exp(fitobject.c * x) + fitobject.d * exp(fitobject.e * x);
 %% single exponential with fixed time constant
-                    timeConstant = 3; % make this an option later
-                    tau = 1/timeConstant;
+                    tau = 3; % make this an option later, tau = time constant
+                    c = 1/tau;
                     fo = fitoptions('Method', 'NonlinearLeastSquares',...
                         'Lower', [0, max(trialMeanY) - min(trialMeanY)],...%, -Inf],...
                         'Upper', [min(trialMeanY) Inf],... 0],...
@@ -206,13 +208,13 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
 %                         'Lower', [0, 0, -1],...
 %                         'Upper', [min(trialMeanY) Inf 0],...
 %                         'StartPoint', [min(trialMeanY) * 0.99, 0.01, -0.1,]); 
-                    model = sprintf('a + b*exp(-1 * %010e * x)', tau);
+                    model = sprintf('a + b*exp(-1 * %010e * x)', c); % c specified up to 10 significant digits
                    ft = fittype(model, 'options', fo);
 %                     ft = fittype('a + b*exp(c*x)', 'options', fo);
                     [fitobject, gof, output] = ...
                         fit(trialMeanX, trialMeanY, ft, fo);
 %                     trialFit = fitobject.a + fitobject.b * exp(fitobject.c * x);      
-                    trialFit = fitobject.a + fitobject.b * exp(-1 * tau * x);      
+                    trialFit = fitobject.a + fitobject.b * exp(-1 * c * x);      
 %%
 
                     

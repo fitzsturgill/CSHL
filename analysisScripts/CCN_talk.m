@@ -145,19 +145,19 @@ reversals = find(diff(TE.BlockNumber(csPlusTrials & includedTrials & rewardTrial
 %     title('CS+'); ylabel('trial number');
     set(gca, 'XLim', [-4 7], 'TickDir', 'Out'); 
     set(gca, 'FontSize', 10)
-    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines    
+    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'k', 'LineWidth', 2); % reversal lines    
     set(gca, 'XLim', [-2 6]); ylabel('Trial #');
     addStimulusBar(gca, [0 1 0], '', [0.3 0.3 0.3], 5); addStimulusBar(gca, [2.9 3.1 0], '', [0.3 0.3 0.3], 5);
     
     subplot(1,3,2); phRasterFromTE(TE, csPlusTrials & includedTrials & rewardTrials, 1, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive');
         set(gca, 'FontSize', 10, 'TickDir', 'Out')
-    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines        
+    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % reversal lines        
         set(gca, 'XLim', [-2 6], 'YTick', []); xlabel('Time from cue (s)');
     addStimulusBar(gca, [0 1 0], '', [0.3 0.3 0.3], 5); addStimulusBar(gca, [2.9 3.1 0], '', [0.3 0.3 0.3], 5); 
      
     subplot(1,3,3); phRasterFromTE(TE, csPlusTrials & includedTrials & rewardTrials, 2, 'CLimFactor', CLimFactor2, 'trialNumbering', 'consecutive');
         set(gca, 'FontSize', 10, 'TickDir', 'Out')
-    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines       
+    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % reversal lines       
         set(gca, 'XLim', [-2 6]);
     set(gca, 'XLim', [-2 6], 'YTick', []);
     addStimulusBar(gca, [0 1 0], '', [0.3 0.3 0.3], 5); addStimulusBar(gca, [2.9 3.1 0], '', [0.3 0.3 0.3], 5);    
@@ -220,7 +220,7 @@ reversals = find(diff(TE.BlockNumber(odorTrials & includedTrials)));
 
 excludeFirstNTrials = 20;
 excludeFirstTrials = TE.trialNumber > excludeFirstNTrials;
-threshPercentile = 0.3;
+threshPercentile = 0.25;
 
 TE.csLicksAll = countEventFromTE(TE, 'Port1In', [0 3], TE.Cue);
 ensureFigure('cueLick_Hist', 1);
@@ -251,35 +251,137 @@ excludeFirstTrials = TE.trialNumber > excludeFirstNTrials;
 rewardPairingsThresh = 10; % 
 nSessions = max(TE.sessionIndex);
 trialMatrix = zeros(length(TE.filename), nSessions);
-for counter = 2
+for counter = 1:nSessions
     trialsThisSession = TE.sessionIndex == counter;
     thisReverse = find(TE.BlockChange & trialsThisSession);
-    postReversalTrials = trialsThisSession;
-    postReversalTrials(1:thisReverse - 1) = 0;
+    postReversalTrials = trialsThisSession; postReversalTrials(1:thisReverse - 1) = 0;
     pairingsThisReverse = postReversalTrials & csPlusTrials & rewardTrials;    
     trialSearch = find(pairingsThisReverse);
     threshTrial = trialSearch(rewardPairingsThresh);
-    firstTrials = postReversalTrials;
-    firstTrials(threshTrial:end) = 0;
+    firstTrials = postReversalTrials; firstTrials(threshTrial:end) = 0;
     trialMatrix(:,counter) = firstTrials;
 end
 periReversalTrials = any(trialMatrix, 2);
 extraReversalTrials = ~periReversalTrials;
 
-
-ensureFigure('rev_phAveragesByPairings', 1);
-subplot(1, 2, 1);
+patchHue = [0.6 0.6 0.6];
+saveName = 'rev_phAveragesByPairings_ChAT';
+ensureFigure(saveName, 1);
 [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & periReversalTrials, csPlusTrials & rewardTrials & extraReversalTrials}, 1,...
-'FluorDataField', 'ZS', 'window', [-1, 5], 'linespec', {'g', 'r'}); %high value, reward
-legend(hl, {'hit', 'miss'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
-ylabel('CS+, outcomes'); set(gca, 'XLim', [-1, 5]); title('ACh.');%set(gca, 'YLim', ylim);
+'FluorDataField', 'ZS', 'window', [-1, 5], 'linespec', {'g', 'b'}); %high value, reward
+legend(hl, {['\bf\color{green} Initial trials'], '\bf\color{blue} Others'}, 'Location', 'northwest', 'FontSize', 16, 'Box', 'on'); 
+ylabel('Fluor. (Zscore)'); set(gca, 'XLim', [-1, 5], 'YLim', [-.5 3]);
+xlabel('Time from odor (s)');
+addStimulusPatch(gca, [0 1], '', patchHue);
+addStimulusPatch(gca, [2.9 3.1], '', patchHue);
+formatFigureTalk;
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    saveas(gcf, fullfile(savepath, [saveName '.meta']));   
+end
+    
 
-subplot(1,2,2);
+saveName = 'rev_phAveragesByPairings_DAT';
+ensureFigure(saveName, 1);
 [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & periReversalTrials, csPlusTrials & rewardTrials & extraReversalTrials}, 2,...
-'FluorDataField', 'ZS', 'window', [-1, 5], 'linespec', {'g', 'r'}); %high value, reward
-legend(hl, {'hit', 'miss'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
-set(gca, 'XLim', [-1, 5]); title('Dop.')%set(gca, 'YLim', ylim);
-formatFigureTalk([6,3]);
+'FluorDataField', 'ZS', 'window', [-1, 5], 'linespec', {'g', 'b'}); %high value, reward
+% legend(hl, {['\bf\color{green} Initial'], '\bf\color{blue} Others'}, 'Location', 'northwest', 'FontSize', 16, 'Box', 'off'); 
+set(gca, 'XLim', [-1, 5], 'YLim', [-.5 3]);
+ylabel('Fluor. (Zscore)');
+xlabel('Time from odor (s)');
+addStimulusPatch(gca, [0 1], '', patchHue);
+addStimulusPatch(gca, [2.9 3.1], '', patchHue);
+formatFigureTalk;
+
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    saveas(gcf, fullfile(savepath, [saveName '.meta']));   
+end
+
+%% as above, outcome only
+
+patchHue = [0.6 0.6 0.6];
+saveName = 'rev_phAveragesByPairings_ChAT_outcomeOnly';
+ensureFigure(saveName, 1);
+window = [2 5];
+figsize = [2.4 2.3];
+[ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & periReversalTrials, csPlusTrials & rewardTrials & extraReversalTrials}, 1,...
+'FluorDataField', 'ZS', 'window', window, 'linespec', {'b', 'k'}); %high value, reward
+% legend(hl, {['\bf\color{cyan}'], '\bf\color{magenta}'}, 'Location', 'northoutside', 'FontSize', 16, 'Box', 'off'); 
+ylabel('\bf\fontsize{20}\color{green} Cholinergic'); set(gca, 'XLim', window, 'YLim', [-.5 3]);
+xlabel('Time from reward (s)');
+addStimulusPatch(gca, [2.9 3.1], '', patchHue);
+set(gca, 'XTickLabel', {'-1', '0', '1', '2'});
+formatFigureTalk(figsize);
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    saveas(gcf, fullfile(savepath, [saveName '.meta']));   
+end
+    
+% just crop legend in DAT version in powerpoint
+saveName = 'rev_phAveragesByPairings_DAT_outcomeOnly';
+ensureFigure(saveName, 1);
+[ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & periReversalTrials, csPlusTrials & rewardTrials & extraReversalTrials}, 2,...
+'FluorDataField', 'ZS', 'window', window, 'linespec', {'b', 'k'}); %high value, reward
+% legend(hl, {['\bf\color{cyan} Initial trials'], '\bf\color{magenta} Others'}, 'Location', 'northoutside', 'FontSize', 16, 'Box', 'off'); 
+set(gca, 'XLim', window, 'YLim', [-.5 3]);
+ylabel('\bf\fontsize{20}\color{red} Dopaminergic');
+xlabel('Time from reward (s)');
+addStimulusPatch(gca, [2.9 3.1], '', patchHue);
+set(gca, 'XTickLabel', {'-1', '0', '1', '2'});
+formatFigureTalk(figsize);
+
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    saveas(gcf, fullfile(savepath, [saveName '.meta']));   
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%% lets find optimal windows for CS for ACh and Dopamine
+
+csPlus_special = csPlusTrials & excludeFirstTrials & TE.csLicksAll.rate > threshRate;
+csMinus_special = csMinusTrials & excludeFirstTrials & TE.csLicksAll.rate <= threshRate;
+
+ensureFigure('find_cue_windows', 1);
+subplot(2,1,1);
+[ha, hl] = phPlotAverageFromTE(TE, {csPlus_special, csMinus_special}, 1,...
+'FluorDataField', 'ZS', 'window', [-.5, 1.5], 'linespec', {'g', 'r'}); %high value, reward
+set(gca, 'XMinorTick', 'on', 'XGrid', 'on', 'XMinorGrid', 'on', 'GridColor', [0.3 0.3 0.3], 'MinorGridColor', [0.3 0.3 0.3], 'TickDir', 'both');
+title('ACh');
+
+subplot(2,1,2);
+[ha, hl] = phPlotAverageFromTE(TE, {csPlus_special, csMinus_special}, 2,...
+'FluorDataField', 'ZS', 'window', [-.5, 1.5], 'linespec', {'g', 'r'}); %high value, reward
+set(gca, 'XMinorTick', 'on', 'XGrid', 'on', 'XMinorGrid', 'on', 'GridColor', [0.3 0.3 0.3], 'MinorGridColor', [0.3 0.3 0.3], 'TickDir', 'both');
+title('Dopamine');
+
+% set window to be 0.25 - 1 second after cue in LNL_odor_v2_pav_rev_AS
+    
+
 
     
 
