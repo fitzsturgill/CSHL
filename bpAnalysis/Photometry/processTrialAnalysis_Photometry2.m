@@ -8,7 +8,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         'refChannels', [];...
         'baseline', [1 4];... % 1 - 3 second into recording
         'blMode', 'byTrial';... % 'byTrial', 'bySession', 'expFit'  expFit- interpolates baseline from biexponential fit to raw fl baselines across trials
-        'dFFMode', 'simple';... % 'simple', 'expFit'    expFit- subtracts within-trial exponential bleaching trend using a biexponential fit to the trial average baseline period
+        'dFFMode', 'simple';... % 'simple', 'expFit'   !(now with hard-coded time constant for exponential) expFit- subtracts within-trial exponential bleaching trend using an exponential fit to the trial average baseline period
         'expFitBegin', 0.1;...
         'zeroField', 'Us';...
         'startField', 'PreCsRecording';... % TO DO: PROVIDE AUTOMATICALLY BY BPOD NIDAQ CODE 
@@ -117,9 +117,9 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     h = waitbar(0, 'Processing Photometry');    
     
     tcounter = 1;    
-    for si = 1:length(sessions);
+    for si = 1:length(sessions)
         SessionData = sessions(si).SessionData;
-        if ~isfield(SessionData, 'demod');
+        if ~isfield(SessionData, 'demod')
             SessionData = demodulateSession(SessionData, 'channels', s.channels, 'refChannels', s.refChannels); % don't necessarily want to save these back to sessions because that'd eat up memory
         end
         startTimes = cellfun(@(x) x.States.(s.startField)(1), sessions(si).SessionData.RawEvents.Trial); % take the beginning time stamp for the startField-specified Bpod state
@@ -140,7 +140,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                 allData(trial, :) = downData;                                 
             end
 
-            % convert to deltaF/F
+            % baseline fluor.
             blStartP = bpX2pnt(s.baseline{fCh}(1), sampleRate);
             blEndP = bpX2pnt(s.baseline{fCh}(2), sampleRate); 
             expFitStartP = bpX2pnt(s.expFitBegin{fCh}, sampleRate);
