@@ -38,7 +38,11 @@ else
     if nargout == 1     % if we are loading into a variable
         if strncmpi(filetype,'Spikes',5)
             x = load(fname);
-            varargout{1} = x.tSpikes*TIMEFACTOR;  % if we are loading spikes, then multiply with conversion factor
+            try
+                varargout{1} = x.tSpikes*TIMEFACTOR;  % if we are loading spikes, then multiply with conversion factor
+            catch
+                varargout{1} = x.TS*TIMEFACTOR;  % old version of MClust 
+            end
         elseif strncmpi(filetype,'Waveforms',4)
             SpikeTimes = loadcb(cellid,'Spikes');  % load stimulus spikes (prealigned)
             
