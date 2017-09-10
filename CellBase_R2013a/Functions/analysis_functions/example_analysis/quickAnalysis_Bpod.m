@@ -173,7 +173,7 @@ end
 
 % Light effects
 if isrec && isstim
-    
+
     % Create stimulus events
     MakeStimEvents_Bpod(fullpth,'PulseNttl',128, 'PulsePort', 0); % FS
     
@@ -192,7 +192,7 @@ if isrec && isstim
     % View light-triggered raster and PSTH
     TrigEvent = 'Pulse';
     SEvent = 'Pulse';
-    win = [-0.2 0.5];
+    win = [-0.05 0.05];
     parts = 'all';
 %     parts = '#BurstNPulse';
     dt = 0.001;
