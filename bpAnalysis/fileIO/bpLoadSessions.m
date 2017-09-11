@@ -19,6 +19,7 @@ function sessions = bpLoadSessions(sessions, filenames, filepaths)
     
     if nargin == 0 || isempty(sessions)% create a new sessions struct for output
         sessions = struct();
+        alreadyLoaded = 0;
     end
         
     if nargin < 2 % interactive loading
@@ -45,9 +46,9 @@ function sessions = bpLoadSessions(sessions, filenames, filepaths)
     
     for counter = 1:length(filenames)
         session = load(fullfile(filepaths{counter}, filenames{counter}));
-        sessions(counter).SessionData = session.SessionData;
-        sessions(counter).filename = filenames{counter};
-        sessions(counter).filepath = filepaths{counter};
+        sessions(counter + alreadyLoaded).SessionData = session.SessionData;
+        sessions(counter + alreadyLoaded).filename = filenames{counter};
+        sessions(counter + alreadyLoaded).filepath = filepaths{counter};
         disp(['***Loaded ' filenames{counter} ' from ' filepaths{counter} '***']);
     end
     

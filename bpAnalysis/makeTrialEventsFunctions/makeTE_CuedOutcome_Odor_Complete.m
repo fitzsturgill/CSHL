@@ -1,6 +1,10 @@
-function TE = makeTE_CuedOutcome_Odor_Complete(sessions)
+function TE = makeTE_CuedOutcome_Odor_Complete(sessions, cellBaseMode)
     if nargin < 1
         sessions = bpLoadSessions;
+    end
+    
+    if nargin < 2
+        cellBaseMode = 0;
     end
     
     % find total number of trials acrosss selected sesssions
@@ -24,7 +28,12 @@ function TE = makeTE_CuedOutcome_Odor_Complete(sessions)
         );
 
     for i = 1:length(statesToAdd)
-        TE(1).(statesToAdd{i}) = bpAddStateAsTrialEvent(sessions, statesToAdd{i});
+        if ~cellBaseMode
+            TE(1).(statesToAdd{i}) = bpAddStateAsTrialEvent(sessions, statesToAdd{i});
+        else
+            TE(1).([statesToAdd{i} '_start']) = bpAddStateAsTrialEvent(sessions, statesToAdd{i}, [], 0, 'first');
+            TE(1).([statesToAdd{i} '_stop']) = bpAddStateAsTrialEvent(sessions, statesToAdd{i}, [], 0, 'last');
+        end
     end
     TE(1).Port1In = bpAddEventAsTrialEvent(sessions, 'Port1In');
     TE.filename = cell(nTrials, 1);
