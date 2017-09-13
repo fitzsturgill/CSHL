@@ -56,7 +56,15 @@ else
             end
             varargout{1} = all_waves(evoked_inx,:,:);   % selected waveforms
         else
-            varargout{1} = load(fname);
+            temp = load(fname);
+            fnames = fieldnames(temp);
+            % emulate 'struct' option in load given that 'struct' option is
+            % removed in 8.6.0.267246 (R2015b), FS MOD 9/2017
+            if length(fnames) > 1
+                varargout{1} = load(fname);
+            else
+                varargout{1} = temp.(fnames{1});
+            end
         end
     else     % otherwise load into the workspace
         if strncmpi(filetype,'Spikes',5) || strncmpi(filetype,'Waveforms',4)

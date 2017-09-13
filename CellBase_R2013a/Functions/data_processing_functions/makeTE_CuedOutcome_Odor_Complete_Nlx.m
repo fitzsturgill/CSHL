@@ -49,7 +49,7 @@ if ~ismatch(TrialStart_Bpod,TrialStart_nlx)
         warning('MakeTrialEvents:TTLmatch','Broken TTLs cleared.')
     end
 end
-     TE.TrialStart = TrialStart_nlx;
+ TE.TrialStart = TrialStart_nlx(:);
      
 %     if sessions.SessionData.nTrials ~= length(TE.TrialStart)
 %         error('*** mismatched numbers of trials: in makeTE_CuedOutcome_Odor_Complete_Nlx ***');

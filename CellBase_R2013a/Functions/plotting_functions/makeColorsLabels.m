@@ -46,7 +46,8 @@ for iT = 1:lentag
         mylinestyle{iT}  = myLabelsColors{pos,5};
     else   % defaults
         mylabels{iT}  = TAGS{iT};     % label is just the tag
-        mycolors{iT}  = cmap(cnum,:); % graded color map
+%         mycolors{iT}  = cmap(cnum,:); % graded color map
+        mycolors{iT}  = cmap(min(size(cmap, 1), cnum),:); % FS Mod - Kludge
         mycolors2{iT} = [1 0 0];            % nothing
         mylinestyle{iT}  = '-';          % line
         cnum = cnum + 1;

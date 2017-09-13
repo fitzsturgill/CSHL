@@ -96,7 +96,7 @@ if isbeh && isrec
     for iC = 1:length(cellids),
         cellid = cellids(iC);
         try
-            prealignSpikes(cellid,'FUNdefineEventsEpochs',@defineEventsEpochs_CuedOutcome,'filetype','event','ifsave',1,'ifappend',0)
+            prealignSpikes(cellid,'FUNdefineEventsEpochs',@defineEventsEpochs_CuedOutcome,'filetype','event','ifsave',1,'ifappend',0, 'writing_behavior', 'overwrite')
         catch
             disp('Error in prealignSpikes.');
             problem_behav_cellid = [problem_behav_cellid cellid];
@@ -120,18 +120,49 @@ if isbeh && isrec
     
     % Outcome responses (not grouped by trialType)
     for k = 1:length(cellids)
-        H = figure;
+        H = ensureFigure([cellids{k} '_outcomes'], 1);
         pause(0.01)
-        viewcell2b(cellids(k),'TriggerName','Outcome','SortEvent','trialNumber','eventtype','behav','ShowEvents',{'Outcome'},...
-            'Partitions','#Us','window',[-4 7])
-        maximize_figure(H)
+        viewcell2b(cellids(k),'TriggerName','Us_start','SortEvent','trialNumber','eventtype','behav','ShowEvents',{'Us_start'},...
+            'Partitions','#trialOutcome','window',[-1 4], 'dt', 0.1, 'sigma', 0.2)
+%         maximize_figure(H)
         
         cellidt = cellids{k};
         cellidt(cellidt=='.') = '_';
-        fnm = [resdir cellidt '_HF.jpg'];   % save
-        saveas(H,fnm)
-        close(H)
+%         fnm = [resdir cellidt '_HF.jpg'];   % save
+%         saveas(H,fnm)
+%         close(H)
     end
+    
+        % Cue responses
+    for k = 1:length(cellids)
+        H = ensureFigure([cellids{k} '_cue'], 1);
+        pause(0.01)
+        viewcell2b(cellids(k),'TriggerName','Cue_start','SortEvent','trialNumber','eventtype','behav','ShowEvents',{'Cue_start'},...
+            'Partitions','#odorValve','window',[-4 3], 'dt', 0.1, 'sigma', 0.2)
+%         maximize_figure(H)
+        
+        cellidt = cellids{k};
+        cellidt(cellidt=='.') = '_';
+%         fnm = [resdir cellidt '_HF.jpg'];   % save
+%         saveas(H,fnm)
+%         close(H)
+    end
+    
+        % Reward responses
+    for k = 1:length(cellids)
+        H = ensureFigure([cellids{k} '_reward'], 1);
+        pause(0.01)
+        viewcell2b(cellids(k),'TriggerName','Us_start','SortEvent','trialNumber','eventtype','behav','ShowEvents',{'Us_start'},...
+            'Partitions','#trialType: {1 4 7}','window',[-7 4], 'dt', 0.1, 'sigma', 0.2)
+%         maximize_figure(H)
+        
+        cellidt = cellids{k};
+        cellidt(cellidt=='.') = '_';
+%         fnm = [resdir cellidt '_HF.jpg'];   % save
+%         saveas(H,fnm)
+%         close(H)
+    end    
+    
     
 %     % Hit & FA #2
 %     for k = 1:length(cellids)
@@ -204,11 +235,11 @@ if isrec && isstim
     ShEvColors = mat2cell(ShEvColors,ones(size(ShEvColors,1),1),3);
     for iCell = 1:length(cellids)
         cellid = cellids(iCell);
-        H = figure;
+        H = ensureFigure([cellids{iCell} '_laserStim'], 1);
         viewcell2b(cellid,'TriggerName',TrigEvent,'SortEvent',SEvent,'ShowEvents',ShEvent,'ShowEventsColors',ShEvColors,...
             'FigureNum',H,'eventtype','stim','window',win,'dt',dt,'sigma',sigma,'PSTHstd',PSTHstd,'Partitions',parts,...
             'EventMarkerWidth',0,'PlotZeroLine','off')
-        maximize_figure(H)
+%         maximize_figure(H)
         
         cellidt = cellid{1};
         cellidt(cellidt=='.') = '_';

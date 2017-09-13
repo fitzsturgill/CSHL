@@ -26,8 +26,8 @@ function [events,epochs] = defineEventsEpochs_CuedOutcome
 % Define events and epochs
 %              EventLabel       EventTrigger1      EventTrigger2      Window
 i = 1;
-events(i,:) = {'Cue',    'Cue_start',      'Cue_start',      [-4 7]};    i = i + 1; % aligned to cue onset
-events(i,:) = {'Outcome',    'Us_start',      'Us_start',      [-7 4]};    i = i + 1;
+events(i,:) = {'Cue_start',    'Cue_start',      'Cue_start',      [-4 7]};    i = i + 1; % aligned to cue onset
+events(i,:) = {'Us_start',    'Us_start',      'Us_start',      [-7 4]};    i = i + 1;
 
 
 % Variable events
@@ -36,7 +36,7 @@ events(i,:) = {'Outcome',    'Us_start',      'Us_start',      [-7 4]};    i = i
 % Define epochs for rate calculations
 %               EpochLabel      ReferenceEvent      FixedWindow       RealWindow
 i = 1;
-epochs(i,:) = {'Baseline',    'Cue',       [-4 0],        ''};    i = i + 1;
-epochs(i,:) = {'Phasic',    'Cue',       [0.25 1.25],        ''};    i = i + 1;
-epochs(i,:) = {'Sustained',    'Cue',       [1.25 3],        ''};    i = i + 1;
-epochs(i,:) = {'Outcome',    'Outcome',       [0 1.5],        ''};    i = i + 1;
+epochs(i,:) = {'Baseline',    'Cue_start',       [-4 0],        ''};    i = i + 1;
+epochs(i,:) = {'Phasic',    'Cue_start',       [0.25 1.25],        ''};    i = i + 1;
+epochs(i,:) = {'Sustained',    'Cue_start',       [1.25 3],        ''};    i = i + 1;
+epochs(i,:) = {'Outcome',    'Us_start',       [0 1.5],        ''};    i = i + 1;
