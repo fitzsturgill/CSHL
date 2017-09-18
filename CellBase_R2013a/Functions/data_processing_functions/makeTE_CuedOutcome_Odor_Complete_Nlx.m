@@ -49,6 +49,14 @@ if ~ismatch(TrialStart_Bpod,TrialStart_nlx)
         warning('MakeTrialEvents:TTLmatch','Broken TTLs cleared.')
     end
 end
+
+% Eliminate last TTLs recorded in only one system (Bpod or Nlx)
+if length(TrialStart_nlx) > length(TrialStart_Bpod)
+    TrialStart_nlx = TrialStart_nlx(1:length(TrialStart_Bpod));
+elseif length(TrialStart_nlx) < length(TrialStart_Bpod)
+    TE = shortenTE(TE, length(TrialStart_nlx));
+end
+
  TE.TrialStart = TrialStart_nlx(:);
      
 %     if sessions.SessionData.nTrials ~= length(TE.TrialStart)
@@ -122,10 +130,10 @@ end
 TrialStart_nlx(inx) = [];
 
 % -------------------------------------------------------------------------
-function TE2 = shortenTE(TE2,shinx)
+function TE2 = shortenTE(TE2,n)
 
 % Eliminate behavioral trials
 fnm = fieldnames(TE2);
 for k = 1:length(fieldnames(TE2))
-    TE2.(fnm{k}) = TE2.(fnm{k})(shinx);
+    TE2.(fnm{k}) = TE2.(fnm{k})(1:n);
 end

@@ -13,7 +13,8 @@ myLabelsColors = feval(fun_definitions);
 
 % Colormap
 cmap0  = [0 0 0];
-dc  = 0.5;
+% dc  = 0.5;
+dc  = 1; % FS MOD, too many colors...
 N = floor(1/dc)+1;
 ijk = 1;
 for i = 1:N
@@ -27,6 +28,7 @@ for i = 1:N
     cmap0 =  [i*dc 0 0];
 end
 cnum = 2;
+
 
 % Colors, labels, line style
 lentag = length(TAGS);
@@ -46,8 +48,8 @@ for iT = 1:lentag
         mylinestyle{iT}  = myLabelsColors{pos,5};
     else   % defaults
         mylabels{iT}  = TAGS{iT};     % label is just the tag
-%         mycolors{iT}  = cmap(cnum,:); % graded color map
-        mycolors{iT}  = cmap(min(size(cmap, 1), cnum),:); % FS Mod - Kludge
+        mycolors{iT}  = cmap(cnum,:); % graded color map
+%         mycolors{iT}  = cmap(min(size(cmap, 1), cnum),:); % FS Mod - Kludge
         mycolors2{iT} = [1 0 0];            % nothing
         mylinestyle{iT}  = '-';          % line
         cnum = cnum + 1;

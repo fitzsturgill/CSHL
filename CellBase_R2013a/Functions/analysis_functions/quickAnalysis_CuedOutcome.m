@@ -95,12 +95,12 @@ if isbeh && isrec
     problem_behav_cellid = [];
     for iC = 1:length(cellids),
         cellid = cellids(iC);
-        try
+%         try
             prealignSpikes(cellid,'FUNdefineEventsEpochs',@defineEventsEpochs_CuedOutcome,'filetype','event','ifsave',1,'ifappend',0, 'writing_behavior', 'overwrite')
-        catch
-            disp('Error in prealignSpikes.');
-            problem_behav_cellid = [problem_behav_cellid cellid];
-        end
+%         catch
+%             disp('Error in prealignSpikes.');
+%             problem_behav_cellid = [problem_behav_cellid cellid];
+%         end
     end
     
 %     % Is predictive?
@@ -124,10 +124,13 @@ if isbeh && isrec
         pause(0.01)
         viewcell2b(cellids(k),'TriggerName','Us_start','SortEvent','trialNumber','eventtype','behav','ShowEvents',{'Us_start'},...
             'Partitions','#trialOutcome','window',[-1 4], 'dt', 0.1, 'sigma', 0.2)
+        formatFigureCellbase;        
 %         maximize_figure(H)
         
         cellidt = cellids{k};
         cellidt(cellidt=='.') = '_';
+        saveas(H,fullfile(fullpth, [cellidt '_Outcome.jpg']));        
+%         saveas(H,fullfile(fullpth, [cellidt '_Outcome.fig']));          
 %         fnm = [resdir cellidt '_HF.jpg'];   % save
 %         saveas(H,fnm)
 %         close(H)
@@ -138,11 +141,14 @@ if isbeh && isrec
         H = ensureFigure([cellids{k} '_cue'], 1);
         pause(0.01)
         viewcell2b(cellids(k),'TriggerName','Cue_start','SortEvent','trialNumber','eventtype','behav','ShowEvents',{'Cue_start'},...
-            'Partitions','#odorValve','window',[-4 3], 'dt', 0.1, 'sigma', 0.2)
+            'Partitions','#cueCondition','window',[-4 3], 'dt', 0.1, 'sigma', 0.2)
+        formatFigureCellbase;
 %         maximize_figure(H)
         
         cellidt = cellids{k};
         cellidt(cellidt=='.') = '_';
+        saveas(H,fullfile(fullpth, [cellidt '_Cue.jpg']));        
+%         saveas(H,fullfile(fullpth, [cellidt '_Cue.fig']));                        
 %         fnm = [resdir cellidt '_HF.jpg'];   % save
 %         saveas(H,fnm)
 %         close(H)
@@ -154,10 +160,13 @@ if isbeh && isrec
         pause(0.01)
         viewcell2b(cellids(k),'TriggerName','Us_start','SortEvent','trialNumber','eventtype','behav','ShowEvents',{'Us_start'},...
             'Partitions','#trialType: {1 4 7}','window',[-7 4], 'dt', 0.1, 'sigma', 0.2)
+        formatFigureCellbase;        
 %         maximize_figure(H)
         
         cellidt = cellids{k};
         cellidt(cellidt=='.') = '_';
+        saveas(H,fullfile(fullpth, [cellidt '_Reward.jpg']));        
+%         saveas(H,fullfile(fullpth, [cellidt '_Reward.fig']));                
 %         fnm = [resdir cellidt '_HF.jpg'];   % save
 %         saveas(H,fnm)
 %         close(H)
@@ -240,11 +249,12 @@ if isrec && isstim
             'FigureNum',H,'eventtype','stim','window',win,'dt',dt,'sigma',sigma,'PSTHstd',PSTHstd,'Partitions',parts,...
             'EventMarkerWidth',0,'PlotZeroLine','off')
 %         maximize_figure(H)
+        formatFigureCellbase;
         
         cellidt = cellid{1};
         cellidt(cellidt=='.') = '_';
-        fnm = [fullpth cellidt '_LS.jpg'];   % save
-        saveas(H,fnm)
+        saveas(H, fullfile(fullpth, [cellidt '_LS.jpg']));
+%         saveas(H, fullfile(fullpth, [cellidt '_LS.fig']));        
 %         close(H)
     end
 end
