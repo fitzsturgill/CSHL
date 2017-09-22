@@ -467,7 +467,7 @@ subplot(2,2,3); plot(squeeze(data.cue.photometry.xData(1,:,:)), squeeze(data.cue
 subplot(2,2,2); plot(squeeze(data.full.licks.xData(1,:,:)), squeeze(data.full.licks.avg(1,:,:))); set(gca, 'XLim', fullWindow);
 subplot(2,2,4); plot(squeeze(data.full.photometry.xData(1,:,:)), squeeze(data.full.photometry.avg(1,:,:))); set(gca, 'XLim', fullWindow);
 if saveOn
-    save(fullfile(savepath, ['averages_' subjectName '.mat']), 'avgData');
+    save(fullfile(savepath, ['averages_' subjectName '.mat']), 'data');
     disp(['*** saving: ' fullfile(savepath, ['averages_' subjectName '.mat']) ' ***']);
 end
 
