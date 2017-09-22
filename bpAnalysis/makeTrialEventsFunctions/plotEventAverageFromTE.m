@@ -45,11 +45,12 @@ function varargout = plotEventAverageFromTE(TE, trials, event, varargin)
         thisLinespec = s.linespec{rem(counter - 1, length(s.linespec)) + 1}; % cycle through linespec if it isn't long enough        
         currentTrials = trials{counter};        
         nTrials = length(find(currentTrials));        
-        [eventTimes, ~] = extractEventTimesFromTE(TE, currentTrials, event, varargin{:}); 
-        [counts, ~] = histcounts(eventTimes, binEdges);
-        eventRates = counts /nTrials /s.binWidth;
+        [eventTimes, eventTrials] = extractEventTimesFromTE(TE, currentTrials, event, varargin{:}); 
+        counts = histCountsByTrial(eventTimes, eventTrials, binEdges);
+        eventRates = counts /s.binWidth;
+        eventRatesMean = mean(eventRates);
         eventRatesSEM = std(eventRates) ./ sqrt(nTrials);
-        thisHl = boundedline(binCenters, eventRates, eventRatesSEM, thisLinespec, ax, 'alpha');       
+        thisHl = boundedline(binCenters, eventRatesMean, eventRatesSEM, thisLinespec, ax, 'alpha');       
         lh(counter) = thisHl; % return handles of the solid lines in the bounded plots
     end
     if nargout >=1

@@ -103,20 +103,7 @@ if isbeh && isrec
 %         end
     end
     
-%     % Is predictive?
-%     for k = 1:length(cellids)
-%         H = figure;
-%         %     viewcell2b(cellids(k),'TriggerName','StimulusOn','SortEvent','Stimulu
-%         %     sOff','eventtype','behav','ShowEvents',{{'StimulusOff'}},'Partitions','#ResponseType','window',[-5 5])
-%         viewcell2b(cellids(k),'TriggerName','StimulusOn','SortEvent','TrialStart','eventtype','behav','ShowEvents',{{'StimulusOff'}},'Partitions','#ResponseType','window',[-5 5])
-%         maximize_figure(H)
-%         
-%         cellidt = cellids{k};
-%         cellidt(cellidt=='.') = '_';
-%         fnm = [resdir cellidt '_IPD.jpg'];   % save
-%         saveas(H,fnm)
-%         close(H)
-%     end
+
     
     % Outcome responses (not grouped by trialType)
     for k = 1:length(cellids)
@@ -126,14 +113,13 @@ if isbeh && isrec
             'Partitions','#trialOutcome','window',[-1 4], 'dt', 0.1, 'sigma', 0.2)
         formatFigureCellbase;        
 %         maximize_figure(H)
+        hleg = findobj(H, 'Type', 'legend');
+        hleg.String = {'Reward', 'Punish', 'Neutral'};
         
         cellidt = cellids{k};
         cellidt(cellidt=='.') = '_';
         saveas(H,fullfile(fullpth, [cellidt '_Outcome.jpg']));        
-%         saveas(H,fullfile(fullpth, [cellidt '_Outcome.fig']));          
-%         fnm = [resdir cellidt '_HF.jpg'];   % save
-%         saveas(H,fnm)
-%         close(H)
+
     end
     
         % Cue responses
@@ -144,6 +130,8 @@ if isbeh && isrec
             'Partitions','#cueCondition','window',[-4 3], 'dt', 0.1, 'sigma', 0.2)
         formatFigureCellbase;
 %         maximize_figure(H)
+        hleg = findobj(H, 'Type', 'legend');
+        hleg.String = {'Uncued', 'Low Value', 'High Value'};
         
         cellidt = cellids{k};
         cellidt(cellidt=='.') = '_';
@@ -162,14 +150,13 @@ if isbeh && isrec
             'Partitions','#trialType: {1 4 7}','window',[-7 4], 'dt', 0.1, 'sigma', 0.2)
         formatFigureCellbase;        
 %         maximize_figure(H)
+        hleg = findobj(H, 'Type', 'legend');
+        hleg.String = {'High Value', 'Low Value', 'Uncued'};
         
         cellidt = cellids{k};
         cellidt(cellidt=='.') = '_';
         saveas(H,fullfile(fullpth, [cellidt '_Reward.jpg']));        
-%         saveas(H,fullfile(fullpth, [cellidt '_Reward.fig']));                
-%         fnm = [resdir cellidt '_HF.jpg'];   % save
-%         saveas(H,fnm)
-%         close(H)
+
     end    
     
     

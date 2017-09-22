@@ -422,6 +422,55 @@ if saveOn
 end
     
 
+%% generate averages and export to construct grand averages across mice
+cueWindow = [-3 3];
+fullWindow = [-6 4];
+
+subSubData = struct(...
+    'avg', [],...
+    'xData', []...
+    );
+
+subData = struct(...
+    'licks', subSubData,...
+    'photometry', subSubData...
+    );
+
+data = struct(...
+    'cue', subData,... % cue window
+    'full', subData... % full window
+    );
+
+% cue
+varargin = {'window', cueWindow, 'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording'};
+avgData = eventAverageFromTE(TE, {highValueTrials, lowValueTrials, uncuedTrials}, 'Port1In', varargin{:});
+data.cue.licks.avg(1, :, :) = avgData.Avg'; % put trial condition last in matrix
+data.cue.licks.xData(1, :, :) = avgData.xData'; 
+
+avgData = phAverageFromTE(TE, {highValueTrials, lowValueTrials, uncuedTrials}, 1, 'FluorDataField', 'ZS', 'window', cueWindow, 'zeroTimes', TE.Cue);
+data.cue.photometry.avg(1, :, :) = avgData.Avg';
+data.cue.photometry.xData(1, :, :) = avgData.xData'; 
+
+% full
+varargin = {'window', fullWindow, 'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording'};
+avgData = eventAverageFromTE(TE, trialsByType, 'Port1In', varargin{:});
+data.full.licks.avg(1, :, :) = avgData.Avg'; % put trial condition last in matrix
+data.full.licks.xData(1, :, :) = avgData.xData'; 
+
+avgData = phAverageFromTE(TE, trialsByType, 1, 'FluorDataField', 'ZS', 'window', fullWindow, 'zeroTimes', TE.Us);
+data.full.photometry.avg(1, :, :) = avgData.Avg';
+data.full.photometry.xData(1, :, :) = avgData.xData'; 
+
+ensureFigure('forGrandAverages', 1); 
+subplot(2,2,1); plot(squeeze(data.cue.licks.xData(1,:,:)), squeeze(data.cue.licks.avg(1,:,:))); set(gca, 'XLim', cueWindow);
+subplot(2,2,3); plot(squeeze(data.cue.photometry.xData(1,:,:)), squeeze(data.cue.photometry.avg(1,:,:))); set(gca, 'XLim', cueWindow);
+subplot(2,2,2); plot(squeeze(data.full.licks.xData(1,:,:)), squeeze(data.full.licks.avg(1,:,:))); set(gca, 'XLim', fullWindow);
+subplot(2,2,4); plot(squeeze(data.full.photometry.xData(1,:,:)), squeeze(data.full.photometry.avg(1,:,:))); set(gca, 'XLim', fullWindow);
+if saveOn
+    save(fullfile(savepath, ['averages_' subjectName '.mat']), 'avgData');
+    disp(['*** saving: ' fullfile(savepath, ['averages_' subjectName '.mat']) ' ***']);
+end
+
     
     %% dFF vs reward licks scatter plot
     ensureFigure('phVSLicks_Scatter', 1);
