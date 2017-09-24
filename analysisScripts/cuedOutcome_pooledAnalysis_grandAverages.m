@@ -30,7 +30,6 @@ end
 % 3rd dimension - first chunk = high value, second = low value, third =
 % uncued
 cueLicks_norm = avgData.cue.licks.avg;
-% baseline licks
 cuePh_norm = avgData.cue.licks.avg;
 nSessions = size(cueLicks_norm, 1);
 xData_licks = squeeze(avgData.cue.licks.xData(1,:,1)); zp_licks = find(xData_licks > 0, 1);
@@ -39,9 +38,13 @@ xData_ph = squeeze(avgData.cue.photometry.xData(1,:,1)); zp_ph = find(xData_ph >
 cueLicks_baselined = bsxfun(@minus, cueLicks_norm, mean(cueLicks_norm(:,1:zp_licks - 1, :), 2));
 lickD = zeros(nSessions, 1);
 phD = zeros(nSessions, 1);
+lickD_full = zeros(nSessions, 1);
+phD_full = zeros(nSessions, 1);
 for counter = 1:nSessions
-    lickD = trapz(xData_licks(zp_licks:end), squeeze(cueLicks_baselined(counter, zp_licks:end, 1))); % lick denominator for normalization
-    phD = trapz(xData_ph(zp_ph:end), squeeze(avgData.cue.photometry.avg(counter, zp_ph:end, 1))); % photometry denominator for normalization
+    lickD(counter) = trapz(xData_licks(zp_licks:end), squeeze(cueLicks_baselined(counter, zp_licks:end, 1))); % lick denominator for normalization
+    phD(counter) = trapz(xData_ph(zp_ph:end), squeeze(avgData.cue.photometry.avg(counter, zp_ph:end, 1))); % photometry denominator for normalization
+    lickD_full(counter) = percentile(squeeze(cueLicks_baselined(counter, zp_licks:end, 1)), 0.9); % 90% value for full traces
+    phD_full(counter) = percentile(squeeze(avgData.cue.photometry.avg(counter, zp_ph:end, 1)), 0.9); %
 end
 cueLicks_norm = bsxfun(@rdivide, cueLicks_baselined, lickD);
 cuePh_norm = bsxfun(@rdivide, avgData.cue.photometry.avg, phD);
@@ -71,7 +74,7 @@ formatFigureEvernote([10 5]);
 savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\grandAverages\';
 saveOn = 1;
 figName = 'Cue_grandAverage_SEM';
-ensureFigure(figName, 1); axes; set(gca, 'YLim', [-0.2 1.2]);
+ensureFigure(figName, 1); axes; set(gca, 'YLim', [-0.2 0.8]);
 addStimulusPatch(gca, [0 1], '', [0.7 0.7 0.7]);
 % mean
 cmap = [0 0 1; 1 0 0; 0 1 0];
@@ -96,25 +99,53 @@ if saveOn
     saveas(gcf, fullfile(savepath, [figName '.meta']));                 
 end
 
-%% plot grand average full lick and photometry responses, normalized by high value cue 90%
+%% plot grand average full lick and photometry responses, don't normalize (not clear how you would)
 % 3rd dimension - first chunk = high value, second = low value, third =
 % uncued
-fullLicks_norm = avgData.full.licks.avg;
-% baseline licks
-fullPh_norm = avgData.full.licks.avg;
-nSessions = size(fullLicks_norm, 1);
-xData_licks = squeeze(avgData.full.licks.xData(1,:,1)); zp_licks = find(xData_licks > 0, 1);
-xData_ph = squeeze(avgData.full.photometry.xData(1,:,1)); zp_ph = find(xData_ph > 0, 1);
-% baseline licks
-fullLicks_baselined = bsxfun(@minus, fullLicks_norm, mean(fullLicks_norm(:,1:zp_licks - 1, :), 2));
-lickD = zeros(nSessions, 1);
-phD = zeros(nSessions, 1);
-for counter = 1:nSessions
-    lickD = trapz(xData_licks(zp_licks:end), squeeze(fullLicks_baselined(counter, zp_licks:end, 1))); % lick denominator for normalization
-    phD = trapz(xData_ph(zp_ph:end), squeeze(avgData.full.photometry.avg(counter, zp_ph:end, 1))); % photometry denominator for normalization
+savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\grandAverages\';
+saveOn = 1;
+figName = 'Full_grandAverage_SEM';
+ensureFigure(figName, 1); %axes; set(gca, 'YLim', [-0.2 0.8]);
+% addStimulusPatch(gca, [0 1], '', [0.7 0.7 0.7]);
+
+cmap = [0 0 1; 1 0 0; 0 1 0];
+nSessions = size(avgData.full.licks.avg, 1);
+xData_licks_full = squeeze(avgData.full.licks.xData(1, :, 1));
+xData_ph_full = squeeze(avgData.full.photometry.xData(1, :, 1));
+fullLicks_avg = squeeze(mean(avgData.full.licks.avg));
+fullPh_avg = squeeze(mean(avgData.full.photometry.avg));
+fullLicks_sem = squeeze(std(avgData.full.licks.avg)) / sqrt(nSessions);
+fullPh_sem = squeeze(std(avgData.full.photometry.avg)) / sqrt(nSessions);
+
+% first axes column- reward, second axes column- punishment, 3rd, - neutral
+subplot(2,3,1); title('Reward'); set(gca, 'YLim', [-0.25 2.25]); addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7]); addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7]);
+[hl, hp] = boundedline(xData_ph_full', fullPh_avg(:,[1 4 7]), permute(fullPh_sem(:,[1 4 7]), [1 3 2]), 'cmap', cmap); ylabel('ChAT Z Score');
+subplot(2,3,4); set(gca, 'YLim', [0 15]); addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7]);addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7]);
+[hl, hp] = boundedline(xData_licks_full', fullLicks_avg(:,[1 4 7]), permute(fullLicks_sem(:,[1 4 7]), [1 3 2]), 'cmap', cmap); 
+ylabel('Licks (1/s)');
+
+
+subplot(2,3,2); title('Punish'); set(gca, 'YLim', [-0.25 2.25]); addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7]);addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7]);
+[hl, hp] = boundedline(xData_ph_full', fullPh_avg(:,[2 5 8]), permute(fullPh_sem(:,[2 5 8]), [1 3 2]), 'cmap', cmap); 
+subplot(2,3,5);set(gca, 'YLim', [0 15]); addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7]);addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7]);
+[hl, hp] = boundedline(xData_licks_full', fullLicks_avg(:,[2 5 8]), permute(fullLicks_sem(:,[2 5 8]), [1 3 2]), 'cmap', cmap); 
+legend(hp, {'High value', 'Low value', 'Uncued'}, 'Location', 'northwest', 'Box', 'off');
+xlabel('Time from Reinforcement (s)');
+
+subplot(2,3,3); title('Neutral'); set(gca, 'YLim', [-0.25 2.25]); addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7]);addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7]);
+[hl, hp] = boundedline(xData_ph_full', fullPh_avg(:,[3 6 9]), permute(fullPh_sem(:,[3 6 9]), [1 3 2]), 'cmap', cmap); 
+subplot(2,3,6);set(gca, 'YLim', [0 15]); addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7]);addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7]);
+[hl, hp] = boundedline(xData_licks_full', fullLicks_avg(:,[3 6 9]), permute(fullLicks_sem(:,[3 6 9]), [1 3 2]), 'cmap', cmap); 
+textBox('n = 7 mice');
+allax = findobj(gcf, 'Type', 'axes');
+set(allax, 'XLim', [-5 3]);
+
+formatFigureEvernote([10 5]);
+if saveOn    
+    saveas(gcf, fullfile(savepath, [figName '.fig']));
+    saveas(gcf, fullfile(savepath, [figName '.jpg']));
+    saveas(gcf, fullfile(savepath, [figName '.meta']));                 
 end
-fullLicks_norm = bsxfun(@rdivide, fullLicks_baselined, lickD);
-fullPh_norm = bsxfun(@rdivide, avgData.full.photometry.avg, phD);
 
 
 

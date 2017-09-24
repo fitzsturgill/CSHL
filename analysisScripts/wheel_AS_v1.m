@@ -202,7 +202,7 @@ Fs = 20;
 bp = [0.1 2];
 
 
-TE.timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.trialStartTimeStamp, 'duration', 120);
+TE.timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.trialStartTimeStamp, 'duration', 30);
 
 % de-trend the signal with a band-pass filter
 % you may need the signal processing toolbox ....

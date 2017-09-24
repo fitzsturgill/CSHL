@@ -58,5 +58,13 @@ errorbar([1 2 3], [mean(sumOutcomeData(2).avg) mean(sumOutcomeData(5).avg) mean(
     [mean(sumOutcomeData(2).avg)/sqrt(length(sumOutcomeData(2).avg)),...
     mean(sumOutcomeData(5).avg)/sqrt(length(sumOutcomeData(5).avg)),...
     mean(sumOutcomeData(8).avg)/sqrt(length(sumOutcomeData(8).avg))], 'r.', 'linewidth', 2);
-set(gca, 'XTickLabel', {'Uncued', 'Low V.', 'High V.'});
-
+% set(gca, 'XTickLabel', {'Uncued', 'Low V.', 'High V.'});
+set(gca, 'XTick', [1 2 3]);
+set(gca, 'XTickLabel', {'High V.', 'Low V.', 'Uncued'}, 'YLim', [0 1.6], 'XLim', [0.5 3.5]);
+ylabel('\Delta ZScore');
+formatFigureTalk([4 2]);   
+if saveOn    
+    saveas(gcf, fullfile(savepath, 'cuedOutcome_punish_barGraph.fig'));
+    saveas(gcf, fullfile(savepath, 'cuedOutcome_punish_barGraph.jpg'));    
+    saveas(gcf, fullfile(savepath, 'cuedOutcome_punish_barGraph.meta'));                   
+end

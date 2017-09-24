@@ -160,8 +160,8 @@ end
 %% cross coherence or spectrum
 crossField = 'C';
 % crossField = 'S12';
-lag = 0;
-lagp = lag * 610;
+lag = -.05;
+lagp = round(lag * Fs);
 movingwin = [1 0.1]; % 1 .1
 tapers = [3 5];     %3 5
 dc_cc = bpCalcCrossCoherence(TE.(Photometry).data(1).ZS', circshift(TE.(Photometry).data(2).ZS', lagp, 1), Fs, 'movingwin', movingwin, 'whiten', 0, 'tapers', tapers);
@@ -201,7 +201,7 @@ image(dc_cc.t, dc_cc.f, squeeze(dc_cc.(crossField)(:,:,trial))', 'CDataMapping',
 % set(gca, 'Clim', [0 1]);
 
 
-%%
+%% correct cross coherence by subtracting shuffled-trial control
 % calculate average, aligned coherence with trial labels shuffled
 nShuffles = 20;
 allShuffled = repmat(NaN(size(dc_cc.(crossField))), 1, 1, 1, nShuffles);
@@ -211,7 +211,7 @@ for counter = 1:nShuffles
     idx = randperm(nTrials);
     data2 = circshift(TE.(Photometry).data(2).ZS(idx, :)', lagp, 1);
     dc_cc_shuff = bpCalcCrossCoherence(TE.(Photometry).data(1).ZS', data2, Fs, 'movingwin', movingwin, 'whiten', 0, 'tapers', tapers);
-    allShuffled(:,:,:,counter) = real(dc_cc_shuff.(crossField));
+    allShuffled(:,:,:,counter) = dc_cc_shuff.(crossField); % = real(dc_cc_shuff.(crossField));
 end
 allShuffled = nanmean(allShuffled, 4);
 [rewards_dc_cc_shuffled, ts, tn, xdata] = extractDataByTimeStamps(permute(allShuffled, [3 1 2]), TE.Photometry.startTime + dc_cc.t(1), 1/(dc_cc.t(2) - dc_cc.t(1)), TE.Reward, [-4 4]);
@@ -219,13 +219,23 @@ rewards_mean_sg_shuffled = squeeze(nanmean(rewards_dc_cc_shuffled, 1));
 
 rewards_mean_sg_corrected = rewards_mean_sg - rewards_mean_sg_shuffled;
 
+
+%% coherence as a function of time from reward
+TE.timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.trialStartTimeStamp, 'duration', 30);
+% dc_cc - coherence output,    
+
+dc_C_corrected = dc_cc.(crossField) - allShuffled;
+
+
+
 %%
-ensureFigure('rewards_mean_sg_corrected', 1);
+ensureFigure(['rewards_mean_sg_corrected_' num2str(lag)], 1);
 % axes('YDir', 'reverse');
 image(xdata, dc_cc.f, rewards_mean_sg_corrected', 'CDataMapping', 'Scaled');
 colormap('jet'); set(gca, 'YDir', 'normal', 'YLim', [0 6]);
 xlabel('time from reward (s)'); ylabel('Frequency (Hz)'); title('Coherence');
 set(gca, 'Clim', [min(rewards_mean_sg_corrected(:)), max(rewards_mean_sg_corrected(:))]);
+%  set(gca, 'CLim', [-0.1156    0.2122]);
 if saveOn
     saveas(gcf, fullfile(savepath, 'rewards_mean_sg_corrected.fig'));
     saveas(gcf, fullfile(savepath, 'rewards_mean_sg_corrected.jpg'));
@@ -241,6 +251,8 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'rewards_mean_sg_uncorrected.fig'));
     saveas(gcf, fullfile(savepath, 'rewards_mean_sg_uncorrected.jpg'));
 end
+
+
 %% spectrogram
 movingwin = [1 0.1]; % 1 .1
 tapers = [3 5];     %3 5
