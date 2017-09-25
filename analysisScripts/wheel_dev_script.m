@@ -160,7 +160,7 @@ end
 %% cross coherence or spectrum
 crossField = 'C';
 % crossField = 'S12';
-lag = -.05;
+lag = -0.05;
 lagp = round(lag * Fs);
 movingwin = [1 0.1]; % 1 .1
 tapers = [3 5];     %3 5

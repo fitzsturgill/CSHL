@@ -38,13 +38,13 @@ xData_ph = squeeze(avgData.cue.photometry.xData(1,:,1)); zp_ph = find(xData_ph >
 cueLicks_baselined = bsxfun(@minus, cueLicks_norm, mean(cueLicks_norm(:,1:zp_licks - 1, :), 2));
 lickD = zeros(nSessions, 1);
 phD = zeros(nSessions, 1);
-lickD_full = zeros(nSessions, 1);
-phD_full = zeros(nSessions, 1);
+% lickD_full = zeros(nSessions, 1);
+% phD_full = zeros(nSessions, 1);
 for counter = 1:nSessions
     lickD(counter) = trapz(xData_licks(zp_licks:end), squeeze(cueLicks_baselined(counter, zp_licks:end, 1))); % lick denominator for normalization
     phD(counter) = trapz(xData_ph(zp_ph:end), squeeze(avgData.cue.photometry.avg(counter, zp_ph:end, 1))); % photometry denominator for normalization
-    lickD_full(counter) = percentile(squeeze(cueLicks_baselined(counter, zp_licks:end, 1)), 0.9); % 90% value for full traces
-    phD_full(counter) = percentile(squeeze(avgData.cue.photometry.avg(counter, zp_ph:end, 1)), 0.9); %
+%     lickD_full(counter) = percentile(squeeze(cueLicks_baselined(counter, zp_licks:end, 1)), 0.9); % 90% value for full traces
+%     phD_full(counter) = percentile(squeeze(avgData.cue.photometry.avg(counter, zp_ph:end, 1)), 0.9); %
 end
 cueLicks_norm = bsxfun(@rdivide, cueLicks_baselined, lickD);
 cuePh_norm = bsxfun(@rdivide, avgData.cue.photometry.avg, phD);
