@@ -8,13 +8,19 @@ function timeMatrix = bpCalcTimeFromEvent(TE, event, varargin)
         'trialStart', [];...                         % option B: suppply trial start times directly
         'dataStartField', 'Start';...                % option A: supply TE field containing data start times
         'dataStart', [];...                          % option B: supply data start times directly
-        'Fs', 20;...
+                            
+        'Fs', 20;...                                 % option A: supply Fs and duration to generate unreferenced time series                         
         'duration', 30;...
+        'dataTimes', [];...                          % option B: supply unreferenced time series directly
         };
 
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
     nTrials = length(TE.filename);
-    nSamples = s.duration * s.Fs;
+    if isempty(s.dataTimes)
+        nSamples = s.duration * s.Fs;
+    else
+        nSamples = length(s.dataTimes);
+    end
     
     if isempty(s.trialStart)
         trialStartTimes = TE.(s.trialStartField);
@@ -29,7 +35,12 @@ function timeMatrix = bpCalcTimeFromEvent(TE, event, varargin)
     end
     
     %% generate absolute time vectors for each trial
-    timeMatrix = repmat(linspace(0, s.duration - 1/s.Fs, nSamples), nTrials, 1);
+    if isempty(s.dataTimes)
+        dataTimes = linspace(0, s.duration - 1/s.Fs, nSamples);
+    else
+        dataTimes = s.dataTimes(:)'; % ensure row vector
+    end
+    timeMatrix = repmat(dataTimes, nTrials, 1);
     timeMatrix = bsxfun(@plus, timeMatrix, trialStartTimes);
     timeMatrix = bsxfun(@plus, timeMatrix, dataStartTimes);
     %% calculate absolute event times

@@ -1,3 +1,6 @@
+
+saveOn = 1;
+%%
 sessions = bpLoadSessions;
 %%
 TE = makeTE_LNL_odor_V2(sessions);

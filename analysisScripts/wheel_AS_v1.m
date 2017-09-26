@@ -23,8 +23,8 @@ if sessions(1).SessionData.Settings.GUI.LED2_amp > 0
 %     BL{end + 1} = [2 4];    
 end
 
-% baselineEnd = 119;
-baselineEnd = 29;
+baselineEnd = 119;
+% baselineEnd = 29;
 TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit',...
     'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 baselineEnd], 'startField', 'Baseline', 'downsample', 305);
 
@@ -40,9 +40,9 @@ TE = addPupilometryToTE(TE, 'duration', baselineEnd + 1, 'zeroField', 'Baseline'
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
-basepath = uigetdir;
+% basepath = uigetdir;
 
-
+basepath = 'Z:\SummaryAnalyses\wheel_v1\';
 if length(unique(TE.filename)) > 1
     sep = strfind(TE.filename{1}, '_');
     subjectName = TE.filename{1}(1:sep(2)-1);
@@ -142,7 +142,7 @@ end
 % and ChAT correlations with reward and without but doesn't have nice pupil
 % diameter
 % good trials with pupil traces that needed gap filling: 12
-trial = 7;
+trial = 1; % 7;
 ensureFigure('examples', 1);
 subplot(4,1,1);
 ydata = TE.Photometry.data(1).raw(trial, :);    
@@ -202,7 +202,7 @@ Fs = 20;
 bp = [0.1 2];
 
 
-TE.timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.trialStartTimeStamp, 'duration', 30);
+TE.timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.trialStartTimeStamp, 'duration', baselineEnd + 1);
 
 % de-trend the signal with a band-pass filter
 % you may need the signal processing toolbox ....

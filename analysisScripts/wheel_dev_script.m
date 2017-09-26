@@ -157,10 +157,10 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'coherence.jpg'));
 %     saveas(gcf, fullfile(savepath, 'coherence.epsc'));
 end
-%% cross coherence or spectrum
+%% cross coherence and phase
 crossField = 'C';
 % crossField = 'S12';
-lag = -0.05;
+lag = 0;
 lagp = round(lag * Fs);
 movingwin = [1 0.1]; % 1 .1
 tapers = [3 5];     %3 5
@@ -171,62 +171,93 @@ dc_cc = bpCalcCrossCoherence(TE.(Photometry).data(1).ZS', circshift(TE.(Photomet
 [rewards_dc_cc, ts, tn, xdata] = extractDataByTimeStamps(permute(dc_cc.(crossField), [3 1 2]), TE.Photometry.startTime + dc_cc.t(1), 1/(dc_cc.t(2) - dc_cc.t(1)), TE.Reward, [-4 4]);
 rewards_mean_sg = squeeze(nanmean(rewards_dc_cc, 1));
 
-%% make synthetic data
+[rewards_dc_phi, ~, ~, ~] = extractDataByTimeStamps(permute(dc_cc.phi, [3 1 2]), TE.Photometry.startTime + dc_cc.t(1), 1/(dc_cc.t(2) - dc_cc.t(1)), TE.Reward, [-4 4]);
+rewards_mean_phi = squeeze(nanmean(rewards_dc_phi, 1));
 
-TE.Synth = TE.(Photometry);
-freq = 2;
-stimTime = 10;
-y = sin(2 * pi * freq * t)*10;
-
-%%
-trial = 1;
-ensureFigure('HFexamples', 1); subplot(3,1,1);
-plot(TE.(Photometry).xData, TE.(Photometry).data(1).ZS(trial, :));
-subplot(3,1,2);
-plot(TE.(Photometry).xData, TE.(Photometry).data(2).ZS(trial, :));
-
-
-
-
- subplot(3,1,3); image(dc_cc.t, dc_cc.f, squeeze(dc_cc.(crossField)(:,:,trial))', 'CDataMapping', 'Scaled');
- colormap('jet');
- set(gca, 'Clim', [min(real(dc_cc.(crossField)(:))), max(real(dc_cc.(crossField)(:)))], 'YDir', 'normal');
-% set(gca, 'Clim', [0 1]);
-
-
-ensureFigure('test', 1);
-image(dc_cc.t, dc_cc.f, squeeze(dc_cc.(crossField)(:,:,trial))', 'CDataMapping', 'Scaled');
- colormap('jet');
- set(gca, 'Clim', [min(dc_cc.(crossField)(:)), max(dc_cc.(crossField)(:))], 'YDir', 'normal');
-% set(gca, 'Clim', [0 1]);
+% %%
+% trial = 1;
+% ensureFigure('HFexamples', 1); subplot(3,1,1);
+% plot(TE.(Photometry).xData, TE.(Photometry).data(1).ZS(trial, :));
+% subplot(3,1,2);
+% plot(TE.(Photometry).xData, TE.(Photometry).data(2).ZS(trial, :));
+% 
+% 
+% 
+% 
+%  subplot(3,1,3); image(dc_cc.t, dc_cc.f, squeeze(dc_cc.(crossField)(:,:,trial))', 'CDataMapping', 'Scaled');
+%  colormap('jet');
+%  set(gca, 'Clim', [min(real(dc_cc.(crossField)(:))), max(real(dc_cc.(crossField)(:)))], 'YDir', 'normal');
+% % set(gca, 'Clim', [0 1]);
+% 
+% 
+% ensureFigure('test', 1);
+% image(dc_cc.t, dc_cc.f, squeeze(dc_cc.(crossField)(:,:,trial))', 'CDataMapping', 'Scaled');
+%  colormap('jet');
+%  set(gca, 'Clim', [min(dc_cc.(crossField)(:)), max(dc_cc.(crossField)(:))], 'YDir', 'normal');
+% % set(gca, 'Clim', [0 1]);
 
 
-%% correct cross coherence by subtracting shuffled-trial control
+% correct cross coherence by subtracting shuffled-trial control
 % calculate average, aligned coherence with trial labels shuffled
 nShuffles = 20;
 allShuffled = repmat(NaN(size(dc_cc.(crossField))), 1, 1, 1, nShuffles);
+allShuffled_phi = allShuffled;
 nTrials = length(TE.filename);
+h = waitbar(0, 'Processing Shuffled Coherence');   
 for counter = 1:nShuffles
-    counter
     idx = randperm(nTrials);
     data2 = circshift(TE.(Photometry).data(2).ZS(idx, :)', lagp, 1);
     dc_cc_shuff = bpCalcCrossCoherence(TE.(Photometry).data(1).ZS', data2, Fs, 'movingwin', movingwin, 'whiten', 0, 'tapers', tapers);
     allShuffled(:,:,:,counter) = dc_cc_shuff.(crossField); % = real(dc_cc_shuff.(crossField));
+    allShuffled_phi(:,:,:,counter) = dc_cc_shuff.phi; % = real(dc_cc_shuff.(crossField));
+    waitbar(counter/nShuffles);
 end
+close(h);
 allShuffled = nanmean(allShuffled, 4);
+allShuffled_phi = nanmean(allShuffled, 4);
 [rewards_dc_cc_shuffled, ts, tn, xdata] = extractDataByTimeStamps(permute(allShuffled, [3 1 2]), TE.Photometry.startTime + dc_cc.t(1), 1/(dc_cc.t(2) - dc_cc.t(1)), TE.Reward, [-4 4]);
 rewards_mean_sg_shuffled = squeeze(nanmean(rewards_dc_cc_shuffled, 1));
-
 rewards_mean_sg_corrected = rewards_mean_sg - rewards_mean_sg_shuffled;
 
+[rewards_dc_phi_shuffled, ts, tn, xdata] = extractDataByTimeStamps(permute(allShuffled_phi, [3 1 2]), TE.Photometry.startTime + dc_cc.t(1), 1/(dc_cc.t(2) - dc_cc.t(1)), TE.Reward, [-4 4]);
+rewards_mean_phi_shuffled = squeeze(nanmean(rewards_dc_phi_shuffled, 1));
+rewards_mean_phi_corrected = rewards_mean_phi - rewards_mean_phi_shuffled;
 
-%% coherence as a function of time from reward
-TE.timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.trialStartTimeStamp, 'duration', 30);
+
+% coherence as a function of time from reward
+TE.timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.trialStartTimeStamp, 'duration', baselineEnd + 1);
 % dc_cc - coherence output,    
-
+coherenceBand = [1 5]; % frequency range across which to pool coherence measurments
+coherenceBandIx = [find(dc_cc.f >= coherenceBand(1), 1) find(dc_cc.f <= coherenceBand(2), 1, 'last')];
 dc_C_corrected = dc_cc.(crossField) - allShuffled;
+dc_phi_corrected = dc_cc.phi - allShuffled_phi;
+C_timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.trialStartTimeStamp, 'dataTimes', dc_cc.t);
+C_timeFromReward = repmat(permute(C_timeFromReward, [2 3 1]), 1, size(dc_cc.(crossField), 2));
 
+bins = [0:0.1:1 2:10];
+[xC_Means, xC_Errors, xC_timeFromReward] = binnedMeansXY(C_timeFromReward(:,coherenceBandIx(1):coherenceBandIx(2), :),...
+    dc_C_corrected(:,coherenceBandIx(1):coherenceBandIx(2), :), bins);
+% [xC_Means, xC_Errors, xC_timeFromReward] = binnedMeansXY(C_timeFromReward(:,coherenceBandIx(1):coherenceBandIx(2), :),...
+%     dc_cc.(crossField)(:,coherenceBandIx(1):coherenceBandIx(2), :), bins);
+% [xC_Means_shuff, xC_Errors_shuff, xC_timeFromReward_shuff] = binnedMeansXY(C_timeFromReward(:,coherenceBandIx(1):coherenceBandIx(2), :),...
+%     allShuffled(:,coherenceBandIx(1):coherenceBandIx(2), :), bins);
+[xPhi_Means, xPhi_Errors, xPhi_timeFromReward] = binnedMeansXY(C_timeFromReward(:,coherenceBandIx(1):coherenceBandIx(2), :),...
+    dc_phi_corrected(:,coherenceBandIx(1):coherenceBandIx(2), :), bins);
+ensureFigure('crossCoherence_vs_timeFromReward', 1);
+subplot(1,2,1);
+errorbar(xC_timeFromReward, xC_Means, xC_Errors, 'b'); hold on; 
+% errorbar(xC_timeFromReward_shuff, xC_Means_shuff, xC_Errors_shuff, 'k');
+xlabel('time from reward'); ylabel('Cross coherence'); set(gca, 'XLim', [0 10]);% set(gca, 'YLim', [0 max(xC_Means + xC_Errors)]);
+subplot(1,2,2); title(['Frequency band = ' num2str(coherenceBand(1)) ' to ' num2str(coherenceBand(2))]);
+errorbar(xPhi_timeFromReward, xPhi_Means, xPhi_Errors, 'b'); hold on; set(gca, 'XLim', [0 10]); 
+% errorbar(xC_timeFromReward_shuff, xC_Means_shuff, xC_Errors_shuff, 'k');
+xlabel('time from reward'); ylabel('Coherence Phase');% set(gca, 'YLim', [0 max(xC_Means + xC_Errors)]);
+title(['Frequency band = ' num2str(coherenceBand(1)) ' to ' num2str(coherenceBand(2))]);
 
+if saveOn
+    saveas(gcf, fullfile(savepath, 'crossCoherence_vs_timeFromReward.fig'));
+    saveas(gcf, fullfile(savepath, 'crossCoherence_vs_timeFromReward.jpg'));
+end
 
 %%
 ensureFigure(['rewards_mean_sg_corrected_' num2str(lag)], 1);
@@ -299,12 +330,12 @@ end
 
 %% plot individual trials with reward times annotated
 
-channel = 2;
+channel = 1;
 ensureFigure(['annotated_' num2str(channel)], 1);
 for trial = 1:18
 
     subplot(6,3,trial);
-    trial = trial + 18 * 1;
+    trial = trial + 18 * 0;
     ydata = TE.Photometry.data(channel).raw(trial, :);    
     plot(TE.Photometry.xData, ydata, 'k'); hold on;
     tsx = repmat(TE.Reward{trial}(:,1), 1, 2)';
