@@ -137,6 +137,7 @@ end
 
 % Partition trials
 [COMPTRIALS, TAGS] = partition_trials(TE,g.Partitions);
+TAGS
 vinx = cellfun(@(s)(~isempty(s)),COMPTRIALS);
 COMPTRIALS = COMPTRIALS(vinx);
 TAGS = TAGS(vinx);

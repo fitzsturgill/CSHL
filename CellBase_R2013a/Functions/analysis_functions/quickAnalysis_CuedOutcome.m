@@ -67,12 +67,67 @@ dbstop if error
 % Convert events file
 if isrec
     nlxcsc2mat2(fullpth,'Channels','Events')
+    TE = makeTE_CuedOutcome_Odor_Complete_Nlx;
 end
 
 % Create trial events structure
 if isbeh
 %     if isempty(protocoltag)
-        TE = makeTE_CuedOutcome_Odor_Complete_Nlx;
+
+        sessions = bpLoadSessions;
+        TE2 = makeTE_CuedOutcome_Odor_Complete(sessions);
+%     validTrials = filterTE2(TE2, 'reject', 0);
+    highValueTrials = filterTE(TE2, 'trialType', 1:3);%, 'reject', 0);
+    lowValueTrials = filterTE(TE2, 'trialType', 4:6);%, 'reject', 0);
+    uncuedTrials = filterTE(TE2, 'trialType', 7:9);%, 'reject', 0);    
+    rewardTrials = filterTE(TE2, 'trialOutcome', 1);%, 'reject', 0);
+    punishTrials = filterTE(TE2, 'trialOutcome', 2);%, 'reject', 0);    
+    omitTrials = filterTE(TE2, 'trialOutcome', 3);%, 'reject', 0);
+    trialTypes = 1:9;
+    trialsByType = cell(size(trialTypes));
+    for counter = 1:length(trialTypes)
+        trialsByType{counter} = filterTE(TE2, 'trialType', trialTypes(counter));%, 'reject', 0);
+    end
+    
+%% plot lick averages
+    h = ensureFigure('Lick_Averages', 1);
+%     mcPortraitFigSetup(h);
+    mcLandscapeFigSetup(h);
+    pm = [2 2];
+    
+    % cue types
+    varargin = {'trialNumbering', 'consecutive',...
+        'window', [-4 0], 'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording'};
+    axh = [];
+    subplot(pm(1), pm(2), 1); [ha, hl] = plotEventAverageFromTE(TE2, {highValueTrials, lowValueTrials, uncuedTrials}, 'Port1In', varargin{:}...
+        , 'linespec', {'b', 'r', 'g'});
+    legend(hl, {'hival', 'loval', 'uncued'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    title('Cue Licks'); ylabel('licks (s)'); xlabel('time from reinforcement (s)'); textBox(TE2.filename{1}(1:7));  
+
+    % window changed to US
+    varargin = {'trialNumbering', 'consecutive',...
+        'window', [-1 4], 'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording'};
+    
+    % reward
+    axh(end + 1) = subplot(pm(1), pm(2), 2); [ha, hl] = plotEventAverageFromTE(TE2, trialsByType([1 4 7]), 'Port1In', varargin{:},...
+        'linespec', {'b', 'r', 'g'});
+    legend(hl, {'hival', 'loval', 'uncued'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    title('Reward'); ylabel('licks (s)'); xlabel('time r (s)');
+    
+    % punish
+    axh(end + 1) = subplot(pm(1), pm(2), 3); [ha, hl] = plotEventAverageFromTE(TE2, trialsByType([2 5 8]), 'Port1In', varargin{:},...
+        'linespec', {'b', 'r', 'g'});
+    legend(hl, {'hival', 'loval', 'uncued'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    title('Punish'); ylabel('licks (s)'); xlabel('time r (s)');
+    
+    % neutral
+    axh(end + 1) = subplot(pm(1), pm(2), 4); [ha, hl] = plotEventAverageFromTE(TE2, trialsByType([3 6 9]), 'Port1In', varargin{:},...
+        'linespec', {'b', 'r', 'g'});
+    legend(hl, {'hival', 'loval', 'uncued'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    title('Neutral'); ylabel('licks (s)'); xlabel('time r (s)');
+    
+    sameYScale(axh) % match y scaling
+    saveas(h,fullfile(fullpth, ['Lick_Averages.jpg']));  
 %     else
 %         evalstr = ['TE = solo2trialevents4_auditory_gonogo_' protocoltag '([fullpth ''data_@auditory_gonogo_' protocoltag '_balazs_'' animalID2 ''_'' sessionID ''.mat'']);'];
 %         eval(evalstr)
@@ -80,6 +135,8 @@ if isbeh
 %     if isrec
 %         MakeTrialEvents2_gonogo(fullpth)  % synchronize
 %     end
+
+
 end
 
 % Update CellBase
@@ -110,7 +167,7 @@ if isbeh && isrec
         H = ensureFigure([cellids{k} '_outcomes'], 1);
         pause(0.01)
         viewcell2b(cellids(k),'TriggerName','Us_start','SortEvent','trialNumber','eventtype','behav','ShowEvents',{'Us_start'},...
-            'Partitions','#trialOutcome','window',[-1 4], 'dt', 0.1, 'sigma', 0.2)
+            'Partitions','#trialOutcome','window',[-1 4], 'dt', 0.05, 'sigma', 0.05, 'PSTHstd', 'on', 'isadaptive', true);
         formatFigureCellbase;        
 %         maximize_figure(H)
         hleg = findobj(H, 'Type', 'legend');
@@ -127,11 +184,10 @@ if isbeh && isrec
         H = ensureFigure([cellids{k} '_cue'], 1);
         pause(0.01)
         viewcell2b(cellids(k),'TriggerName','Cue_start','SortEvent','trialNumber','eventtype','behav','ShowEvents',{'Cue_start'},...
-            'Partitions','#cueCondition','window',[-4 3], 'dt', 0.1, 'sigma', 0.2)
+            'Partitions','#cueCondition','window',[-4 3], 'dt', 0.05, 'sigma', 0.05, 'PSTHstd', 'on', 'isadaptive', true);
         formatFigureCellbase;
 %         maximize_figure(H)
-        hleg = findobj(H, 'Type', 'legend');
-        hleg.String = {'Uncued', 'Low Value', 'High Value'};
+
         
         cellidt = cellids{k};
         cellidt(cellidt=='.') = '_';
@@ -147,7 +203,7 @@ if isbeh && isrec
         H = ensureFigure([cellids{k} '_reward'], 1);
         pause(0.01)
         viewcell2b(cellids(k),'TriggerName','Us_start','SortEvent','trialNumber','eventtype','behav','ShowEvents',{'Us_start'},...
-            'Partitions','#trialType: {1 4 7}','window',[-7 4], 'dt', 0.1, 'sigma', 0.2)
+            'Partitions','#trialType: {1 4 7}','window',[-7 4], 'dt', 0.05, 'sigma', 0.05, 'PSTHstd', 'on', 'isadaptive', true);
         formatFigureCellbase;        
 %         maximize_figure(H)
         hleg = findobj(H, 'Type', 'legend');

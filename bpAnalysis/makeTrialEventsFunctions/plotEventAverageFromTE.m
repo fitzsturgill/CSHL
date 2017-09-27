@@ -48,8 +48,8 @@ function varargout = plotEventAverageFromTE(TE, trials, event, varargin)
         [eventTimes, eventTrials] = extractEventTimesFromTE(TE, currentTrials, event, varargin{:}); 
         counts = histCountsByTrial(eventTimes, eventTrials, binEdges);
         eventRates = counts /s.binWidth;
-        eventRatesMean = mean(eventRates);
-        eventRatesSEM = std(eventRates) ./ sqrt(nTrials);
+        eventRatesMean = mean(eventRates, 1);
+        eventRatesSEM = std(eventRates, 1) ./ sqrt(nTrials);
         thisHl = boundedline(binCenters, eventRatesMean, eventRatesSEM, thisLinespec, ax, 'alpha');       
         lh(counter) = thisHl; % return handles of the solid lines in the bounded plots
     end
