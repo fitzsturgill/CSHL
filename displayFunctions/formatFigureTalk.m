@@ -15,6 +15,6 @@ function formatFigureTalk(wh, h)
     % in points 8.5 x 11 is 595 x 770
     
     ax = findobj(h, 'Type', 'Axes');
-    set(ax, 'TickDir', 'out', 'LineWidth', 2, 'FontSize', 16, 'FontName', 'Calibri', 'Box', 'off');
-    set(gcf, 'Units', units, 'PaperUnits', units);
+    set(ax, 'TickDir', 'out', 'LineWidth', 1, 'FontSize', 16, 'FontName', 'Calibri', 'Box', 'off');
+    set(gcf, 'Units', units, 'PaperUnits', units, 'PaperSize', [wh(1) wh(2)]);
     set(gcf, 'Position', screenPosition, 'PaperPosition', paperPosition);

@@ -89,31 +89,36 @@ if saveOn
 end
 
 %% Us scatter plot for figure/slides
-savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk';
+savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk\Adam\';
 ensureFigure('CuedOutcome_Us_scatterPlot_Final', 1); 
 
 
-scatter(sumData.phReward_mean_bl.avg,sumData.phPunish_mean_bl.avg, 42, 'g', 'filled');
-xlabel('Reward (Z Score)'); ylabel('Punish (Z Score)'); 
+scatter(sumData.phReward_mean_bl.avg,sumData.phPunish_mean_bl.avg, 42, [0.4 0.4 0.4], 'filled');
+xlabel('Reward (\sigma_{baseline})'); ylabel('Punish (\sigma_{baseline})'); 
 setXYsymmetric; addOrginLines(gca, [0 0 0]);
+set(gca, 'XTick', [-1 0 1], 'YTick', [-1 0 1]);
 formatFigureTalk([3 3]);
 if saveOn
     saveas(gcf, fullfile(savepath, 'CuedOutcome_Us_scatterPlot_Final.fig'));
     saveas(gcf, fullfile(savepath, 'CuedOutcome_Us_scatterPlot_Final.jpg'));
     saveas(gcf, fullfile(savepath, 'CuedOutcome_Us_scatterPlot_Final.meta'));    
+    saveas(gcf, fullfile(savepath, 'CuedOutcome_Us_scatterPlot_Final.svg'));      
 end
 
 %% 
-savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk';
+savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk\Adam\';
 ensureFigure('CuedOutcome_Cs_scatterPlot_Final', 1); 
 
-scatter(sumData.phCue_phasic_low.avg,sumData.phCue_phasic_high.avg, 42, 'g', 'filled');
-xlabel('Low Value (Z Score)'); ylabel('High Value (Z Score.)');
-addUnityLine(gca, [0 0 0]); formatFigureTalk([3.5 3]);
-set(gca, 'YLim', [0 1.2]); set(gca, 'XLim', [0 0.5]);
+scatter(sumData.phCue_phasic_low.avg,sumData.phCue_phasic_high.avg, 42, [0.4 0.4 0.4], 'filled');
+xlabel('Low Value (\sigma_{baseline})'); ylabel('High Value (\sigma_{baseline})');
 
+set(gca, 'YLim', [0 1.2]); set(gca, 'XLim', [0 1.2]);
+set(gca, 'XTick', [0 0.5 1], 'YTick', [0 0.5 1]);
+formatFigureTalk([3.5 3]);
+addUnityLine(gca, [0 0 0]);
 if saveOn
     saveas(gcf, fullfile(savepath, 'CuedOutcome_Cs_scatterPlot_Final.fig'));
     saveas(gcf, fullfile(savepath, 'CuedOutcome_Cs_scatterPlot_Final.jpg'));
     saveas(gcf, fullfile(savepath, 'CuedOutcome_Cs_scatterPlot_Final.meta'));    
+    saveas(gcf, fullfile(savepath, 'CuedOutcome_Cs_scatterPlot_Final.svg'));        
 end

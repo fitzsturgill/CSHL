@@ -84,6 +84,7 @@ cueLicks_norm_avg = squeeze(mean(cueLicks_norm));
 cueLicks_norm_sem = squeeze(std(cueLicks_norm)) / sqrt(size(cueLicks_norm, 1));
 
 [lines, patches] = boundedline(xData_licks', cueLicks_norm_avg, permute(cueLicks_norm_sem, [1 3 2]), 'cmap', cmap_licks); hold on;
+                   plot(xData_licks', cueLicks_norm_avg, 
 
 cuePh_norm_avg = squeeze(mean(cuePh_norm));
 cuePh_norm_sem = squeeze(std(cuePh_norm)) / sqrt(size(cuePh_norm, 1));

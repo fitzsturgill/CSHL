@@ -1,7 +1,7 @@
 % CCN Talk Script
 
 %% desktop
-savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk\';
+savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk\Adam\';
 saveOn = 1;
 
 %% laptop
@@ -17,6 +17,7 @@ saveOn = 1;
     ensureFigure('Lick_Hist_CCN', 1); axes;
 
     [ha, hl] = plotEventAverageFromTE(TE, trialsByType([1 4 7]), 'Port1In', varargin{:});
+    set(hl, 'LineWidth', 2);
     legend(hl, {'\color{blue} high value', '\color{red} low value', '\color{green} uncued'}, 'Location', 'northwest', 'FontSize', 16, 'Interpreter', 'tex'); legend('boxoff');
     set(gca, 'XLim', [-6 4], 'YLim', [-2 15]);
     addStimulusPatch(gca, [-3 -2 10], '', [0.7 0.7 0.7]) 
@@ -26,22 +27,28 @@ saveOn = 1;
     if saveOn    
         saveas(gcf, fullfile(savepath, 'Lick_Hist_CCN.fig'));
         saveas(gcf, fullfile(savepath, 'Lick_Hist_CCN.jpg'));    
-        saveas(gcf, fullfile(savepath, 'Lick_Hist_CCN.meta'));                   
+        saveas(gcf, fullfile(savepath, 'Lick_Hist_CCN.emf'));                         
     end
     
 %% Us and Cs scatter plots
-CuedOutcome_pooledAnalysis_script2;
+cuedOutcome_pooledAnalysis_script2;
   
 %% Snippet to make dopamine photometry averages from DC_26:
 
     ensureFigure('Ph_Hist_Dopamine_CCN', 1); axes('FontSize', 12, 'LineWidth', 1); 
     [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 4 7]), 1, 'FluorDataField', 'ZS', 'linespec', {'b', 'r', 'g'}); % reward, varying degrees of expectation
-    set(gca, 'XLim', [-4 4]); ylabel('Z Score'); xlabel('time from reinforcement (s)');     
-
+    set(hl, 'LineWidth', 2);
+    legend(hl, {'\color{blue} high value', '\color{red} low value', '\color{green} uncued'}, 'Location', 'northwest', 'FontSize', 16, 'Interpreter', 'tex'); legend('boxoff');    
+    set(gca, 'XLim', [-5 4], 'YLim', [-2 16]); ylabel('Z Score'); xlabel('time from reinforcement (s)');
+    addStimulusPatch(gca, [-3 -2 10], '', [0.7 0.7 0.7]) 
+    addStimulusPatch(gca, [-0.1 0.1], '');
+    ylabel('Dopamine (\fontsize{20}\sigma\fontsize{16}-baseline)'); xlabel('Time from reinforcement (s)');
+    formatFigureTalk([4 3]);
     if saveOn    
         saveas(gcf, fullfile(savepath, 'Ph_Hist_Dopamine_CCN.fig'));
         saveas(gcf, fullfile(savepath, 'Ph_Hist_Dopamine_CCN.jpg'));    
-        saveas(gcf, fullfile(savepath, 'Ph_Hist_Dopamine_CCN.meta'));           
+        saveas(gcf, fullfile(savepath, 'Ph_Hist_Dopamine_CCN.emf'));           
+        saveas(gcf, fullfile(savepath, 'Ph_Hist_Dopamine_CCN.pdf'));
     end
     
     
@@ -50,28 +57,30 @@ CuedOutcome_pooledAnalysis_script2;
     ensureFigure('CuedOutcome_Cue', 1); 
     [ha, hl] = phPlotAverageFromTE(TE, {highValueTrials, lowValueTrials, uncuedTrials}, 1,...
         'window', [-4 3], 'linespec', {'b', 'r', 'g'}, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue);
+    set(hl, 'LineWidth', 2);
     legend(hl, {'\color{blue} high value', '\color{red} low value', '\color{green} uncued'}, 'Location', 'northwest', 'FontSize', 16, 'Interpreter', 'tex'); legend('boxoff');
     set(gca, 'XLim', [-4 3]);
     addStimulusPatch(gca, [0 1], '', [0.7 0.7 0.7]) 
-    ylabel('Fluorescence (Z Score)'); xlabel('Time from cue (s)');
+    ylabel('Cholinergic (\fontsize{20}\sigma\fontsize{16}-baseline)'); xlabel('Time from cue (s)');
     formatFigureTalk([4 3]);    
 
     
     if saveOn    
         saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue.fig'));
         saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue.jpg'));    
-        saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue.meta'));           
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue.emf'));           
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue.svg'));            
     end
     
 %% Snippet to make cuedOutcome cue response Lick histogram from ChAT_42
  % cue types
-    varargin = {'trialNumbering', 'consecutive',...
-        'window', [-4 3], 'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording',...
+    varargin = {'window', [-4 3], 'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording',...
         'linespec', {'b', 'r', 'g'}};
     ensureFigure('CuedOutcome_Cue_Lick', 1);
     [ha, hl] = plotEventAverageFromTE(TE, {highValueTrials, lowValueTrials, uncuedTrials}, 'Port1In', varargin{:});
+    set(hl, 'LineWidth', 2);
     legend(hl, {'\color{blue} high value', '\color{red} low value', '\color{green} uncued'}, 'Location', 'northwest', 'FontSize', 16, 'Interpreter', 'tex'); legend('boxoff');
-    set(gca, 'XLim', [-4 3]);
+    set(gca, 'XLim', [-4 3], 'YLim', [0 5]);
     addStimulusPatch(gca, [0 1], 'odor', [0.7 0.7 0.7]) 
     ylabel('Licks (Hz)'); xlabel('Time from cue (s)');
     formatFigureTalk([4 2]);        
@@ -79,26 +88,56 @@ CuedOutcome_pooledAnalysis_script2;
     if saveOn    
         saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue_Lick.fig'));
         saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue_Lick.jpg'));    
-        saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue_Lick.meta'));           
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue_Lick.emf'));           
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue_Lick.svg'));           
+    end
+    
+%% Snippet to make combined cue PSTH from ChAT_42 (licking and photometry)
+
+    ensureFigure('CuedOutcome_Cue_combined', 1); 
+        varargin = {'window', [-4 3], 'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording',...
+        'linespec', {'b', 'r', 'g'}};
+    lickAvg = eventAverageFromTE(TE, {highValueTrials, lowValueTrials, uncuedTrials}, 'Port1In', varargin{:});
+    axes; hold on; yyaxis right
+    plot(lickAvg.xData, lickAvg.Avg(1,:), '--b', lickAvg.xData, lickAvg.Avg(2,:), '--r', lickAvg.xData, lickAvg.Avg(3,:), '--g', 'LineWidth', 2);
+    yyaxis left
+    [ha, hl] = phPlotAverageFromTE(TE, {highValueTrials, lowValueTrials, uncuedTrials}, 1,...
+        'window', [-4 3], 'linespec', {'b', 'r', 'g'}, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue);
+    set(hl, 'LineWidth', 2);
+    legend(hl, {'\color{blue} high value', '\color{red} low value', '\color{green} uncued'}, 'Location', 'northwest', 'FontSize', 16, 'Interpreter', 'tex'); legend('boxoff');
+    set(gca, 'XLim', [-4 3]);
+    addStimulusPatch(gca, [0 1], '', [0.7 0.7 0.7]) 
+    ylabel('Cholinergic (\fontsize{20}\sigma\fontsize{16}-baseline)'); xlabel('Time from cue (s)');
+    formatFigureTalk([4 3]);    
+
+    
+    if saveOn    
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue_combined.fig'));
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue_combined.jpg'));    
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue_combined.emf'));           
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue_combined.svg'));            
     end    
     
-%% Snippet to make complete photometry histogram (reward condition from ChAT_42    
+    
+    %% Snippet to make outcome PSTH (reward condition from ChAT_42
     
     ensureFigure('CuedOutcome_Reward', 1); 
     [ha, hl] = phPlotAverageFromTE(TE, {trialsByType{1}, trialsByType{4}, trialsByType{7}}, 1,...
         'window', [-2 2], 'linespec', {'b', 'r', 'g'}, 'FluorDataField', 'ZS');
     legend(hl, {'\color{blue} high value', '\color{red} low value', '\color{green} uncued'}, 'Location', 'northwest', 'FontSize', 16, 'Interpreter', 'tex'); legend('boxoff');
+    set(hl, 'LineWidth', 2);
     set(gca, 'XLim', [-2 2], 'YLim', [-1.2 2.5]);
 %     addStimulusPatch(gca, [-3 -2 10], '', [0.7 0.7 0.7]) 
     addStimulusPatch(gca, [-0.1 0.1], '');
-    ylabel('Fluorescence (Z Score)'); xlabel('Time from reinforcement (s)');
+    ylabel('Cholinergic (\fontsize{20}\sigma\fontsize{16}-baseline)'); xlabel('Time from reinforcement (s)');
     formatFigureTalk([4 3]);    
 
     
     if saveOn    
         saveas(gcf, fullfile(savepath, 'CuedOutcome_Reward.fig'));
         saveas(gcf, fullfile(savepath, 'CuedOutcome_Reward.jpg'));    
-        saveas(gcf, fullfile(savepath, 'CuedOutcome_Reward.meta'));           
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Reward.emf'));           
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Reward.svg'));           
     end
     
     %% Snippet to make cuedOutcome Reward response Lick histogram from ChAT_42
@@ -117,7 +156,7 @@ CuedOutcome_pooledAnalysis_script2;
     if saveOn    
         saveas(gcf, fullfile(savepath, 'CuedOutcome_Reward_Lick.fig'));
         saveas(gcf, fullfile(savepath, 'CuedOutcome_Reward_Lick.jpg'));    
-        saveas(gcf, fullfile(savepath, 'CuedOutcome_Reward_Lick.meta'));           
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Reward_Lick.emf'));           
     end    
     
     
@@ -146,20 +185,20 @@ reversals = find(diff(TE.BlockNumber(csPlusTrials & includedTrials & rewardTrial
     set(gca, 'XLim', [-4 7], 'TickDir', 'Out'); 
     set(gca, 'FontSize', 10)
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'k', 'LineWidth', 2); % reversal lines    
-    set(gca, 'XLim', [-2 6]); ylabel('Trial #');
+    set(gca, 'XLim', [-2 6], 'XTick', [0 3 6]); ylabel('Trial #');
     addStimulusBar(gca, [0 1 0], '', [0.3 0.3 0.3], 5); addStimulusBar(gca, [2.9 3.1 0], '', [0.3 0.3 0.3], 5);
     
-    subplot(1,3,2); phRasterFromTE(TE, csPlusTrials & includedTrials & rewardTrials, 1, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive');
+    subplot(1,3,2); phRasterFromTE(TE, csPlusTrials & includedTrials & rewardTrials, 1, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive', 'window', [-2 6]);
         set(gca, 'FontSize', 10, 'TickDir', 'Out')
-    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % reversal lines        
-        set(gca, 'XLim', [-2 6], 'YTick', []); xlabel('Time from cue (s)');
+    line(repmat([-2; 6], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % reversal lines        
+        set(gca, 'XLim', [-2 6], 'YTick', [], 'XTick', [0 3 6], 'Clipping', 'off'); xlabel('Time from cue (s)');
     addStimulusBar(gca, [0 1 0], '', [0.3 0.3 0.3], 5); addStimulusBar(gca, [2.9 3.1 0], '', [0.3 0.3 0.3], 5); 
      
-    subplot(1,3,3); phRasterFromTE(TE, csPlusTrials & includedTrials & rewardTrials, 2, 'CLimFactor', CLimFactor2, 'trialNumbering', 'consecutive');
+    subplot(1,3,3); phRasterFromTE(TE, csPlusTrials & includedTrials & rewardTrials, 2, 'CLimFactor', CLimFactor2, 'trialNumbering', 'consecutive', 'window', [-2 6]);
         set(gca, 'FontSize', 10, 'TickDir', 'Out')
-    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % reversal lines       
-        set(gca, 'XLim', [-2 6]);
-    set(gca, 'XLim', [-2 6], 'YTick', []);
+    line(repmat([-2; 6], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % reversal lines       
+        set(gca, 'XLim', [-2 6], 'Clipping', 'off');
+    set(gca, 'XLim', [-2 6], 'YTick', [], 'XTick', [0 3 6]);
     addStimulusBar(gca, [0 1 0], '', [0.3 0.3 0.3], 5); addStimulusBar(gca, [2.9 3.1 0], '', [0.3 0.3 0.3], 5);    
     formatFigureTalk([4.5 3]);        
   
@@ -168,7 +207,7 @@ reversals = find(diff(TE.BlockNumber(csPlusTrials & includedTrials & rewardTrial
     if saveOn
         saveas(gcf, fullfile(savepath, [saveName '.fig']));
         saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
-        saveas(gcf, fullfile(savepath, [saveName '.meta']));   
+        saveas(gcf, fullfile(savepath, [saveName '.emf']));   
     end
 
     %% Lick and Ph rasters from DC_20- by Odor
@@ -212,7 +251,7 @@ reversals = find(diff(TE.BlockNumber(odorTrials & includedTrials)));
     if saveOn
         saveas(gcf, fullfile(savepath, [saveName '.fig']));
         saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
-        saveas(gcf, fullfile(savepath, [saveName '.meta']));   
+        saveas(gcf, fullfile(savepath, [saveName '.emf']));   
     end
     
 %% sorting by behavior (doesn't really work well)
@@ -251,6 +290,7 @@ excludeFirstTrials = TE.trialNumber > excludeFirstNTrials;
 rewardPairingsThresh = 10; % 
 nSessions = max(TE.sessionIndex);
 trialMatrix = zeros(length(TE.filename), nSessions);
+trialMatrix2 = trialMatrix;
 for counter = 1:nSessions
     trialsThisSession = TE.sessionIndex == counter;
     thisReverse = find(TE.BlockChange & trialsThisSession);
@@ -260,9 +300,16 @@ for counter = 1:nSessions
     threshTrial = trialSearch(rewardPairingsThresh);
     firstTrials = postReversalTrials; firstTrials(threshTrial:end) = 0;
     trialMatrix(:,counter) = firstTrials;
+    threshTrial2 = trialSearch(rewardPairingsThresh * 2 + 1);
+    nextTrials = postReversalTrials; nextTrials([1:threshTrial - 1 threshTrial2:end]) = 0;
+    trialMatrix2(:,counter) = nextTrials;
 end
 periReversalTrials = any(trialMatrix, 2);
 extraReversalTrials = ~periReversalTrials;
+% extraReversalTrials = any(trialMatrix2, 2);
+% find the next 20
+
+% extraReversalTrials = extraReversalTrials(
 
 patchHue = [0.6 0.6 0.6];
 saveName = 'rev_phAveragesByPairings_ChAT';
@@ -276,9 +323,11 @@ addStimulusPatch(gca, [0 1], '', patchHue);
 addStimulusPatch(gca, [2.9 3.1], '', patchHue);
 formatFigureTalk;
 if saveOn
-    saveas(gcf, fullfile(savepath, [saveName '.fig']));
-    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
-    saveas(gcf, fullfile(savepath, [saveName '.meta']));   
+    saveas(gcf, fullfile(savepath, saveName), 'epsc');
+    saveas(gcf, fullfile(savepath, saveName), 'fig');   
+    saveas(gcf, fullfile(savepath, saveName), 'meta');   
+    saveas(gcf, fullfile(savepath, saveName), 'svg');      
+    saveas(gcf, fullfile(savepath, saveName), 'pdf');          
 end
     
 
@@ -297,7 +346,7 @@ formatFigureTalk;
 if saveOn
     saveas(gcf, fullfile(savepath, [saveName '.fig']));
     saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
-    saveas(gcf, fullfile(savepath, [saveName '.meta']));   
+    saveas(gcf, fullfile(savepath, [saveName '.emf']));   
 end
 
 %% as above, outcome only
@@ -318,7 +367,7 @@ formatFigureTalk(figsize);
 if saveOn
     saveas(gcf, fullfile(savepath, [saveName '.fig']));
     saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
-    saveas(gcf, fullfile(savepath, [saveName '.meta']));   
+    saveas(gcf, fullfile(savepath, [saveName '.emf']));   
 end
     
 % just crop legend in DAT version in powerpoint
@@ -337,7 +386,7 @@ formatFigureTalk(figsize);
 if saveOn
     saveas(gcf, fullfile(savepath, [saveName '.fig']));
     saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
-    saveas(gcf, fullfile(savepath, [saveName '.meta']));   
+    saveas(gcf, fullfile(savepath, [saveName '.emf']));   
 end
 
 
