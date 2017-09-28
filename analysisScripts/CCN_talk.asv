@@ -5,7 +5,7 @@ savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk\Adam\';
 saveOn = 1;
 
 %% laptop
-savepath = 'C:\Users\Fitz\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk\Adam\';
+savepath = 'C:\Users\Fitz\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk';
 saveOn = 1;
 %% Snippet to make lick histogram for graded value task from DC_35: (or DC_26?)
 
@@ -99,17 +99,15 @@ cuedOutcome_pooledAnalysis_script2;
         'linespec', {'b', 'r', 'g'}};
     lickAvg = eventAverageFromTE(TE, {highValueTrials, lowValueTrials, uncuedTrials}, 'Port1In', varargin{:});
     ax = axes; hold on; yyaxis right
-    ll = plot(lickAvg.xData, lickAvg.Avg(1,:), '--k', 'LineWidth', 2);
-    plot(lickAvg.xData, lickAvg.Avg(1,:), '--b', lickAvg.xData, lickAvg.Avg(2,:), '--r', lickAvg.xData, lickAvg.Avg(3,:), '--g', 'LineWidth', 2);
-    ax.YColor = [0 0 0]; ylabel('Lick rate (Hz)');
-    yyaxis left; ax.YColor = [0 0 0];
+        plot(lickAvg.xData, lickAvg.Avg(1,:), '--b', lickAvg.xData, lickAvg.Avg(2,:), '--r', lickAvg.xData, lickAvg.Avg(3,:), '--g', 'LineWidth', 2);
+    ax.L
+    yyaxis left
     [ha, hl] = phPlotAverageFromTE(TE, {highValueTrials, lowValueTrials, uncuedTrials}, 1,...
         'window', [-4 3], 'linespec', {'b', 'r', 'g'}, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue);
-    set(hl, 'LineWidth', 2);    
-    set(gca, 'XLim', [-4 3], 'YLim', [-0.2 1.5]);
+    set(hl, 'LineWidth', 2);
+    legend(hl, {'\color{blue} high value', '\color{red} low value', '\color{green} uncued'}, 'Location', 'northwest', 'FontSize', 16, 'Interpreter', 'tex'); legend('boxoff');
+    set(gca, 'XLim', [-4 3]);
     addStimulusPatch(gca, [0 1], '', [0.7 0.7 0.7]) 
-    legend([hl ll(1)], {'\color{blue} high value', '\color{red} low value', '\color{green} uncued', ...
-        'licking'}, 'Location', 'northwest', 'FontSize', 16, 'Interpreter', 'tex'); legend('boxoff');
     ylabel('Cholinergic (\fontsize{20}\sigma\fontsize{16}-baseline)'); xlabel('Time from cue (s)');
     formatFigureTalk([4 3]);    
 
@@ -117,7 +115,8 @@ cuedOutcome_pooledAnalysis_script2;
     if saveOn    
         saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue_combined.fig'));
         saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue_combined.jpg'));    
-        saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue_combined.emf'));                
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue_combined.emf'));           
+        saveas(gcf, fullfile(savepath, 'CuedOutcome_Cue_combined.svg'));            
     end    
     
     
