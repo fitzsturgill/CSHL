@@ -128,7 +128,7 @@ formatFigureTalk([5 3]);
 if saveOn    
     saveas(gcf, fullfile(savepath, [figName '.fig']));
     saveas(gcf, fullfile(savepath, [figName '.jpg']));
-    saveas(gcf, fullfile(savepath, [figName '.meta']));                 
+    saveas(gcf, fullfile(savepath, [figName '.emf']));                 
 end
 
 %% plot grand average full lick and photometry responses, don't normalize (not clear how you would)
