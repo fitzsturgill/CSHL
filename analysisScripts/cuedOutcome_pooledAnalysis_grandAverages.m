@@ -101,9 +101,9 @@ end
 
 
 %% combo version- separate y axes
-savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\grandAverages\';
+savepath = 'C:\Users\Fitz\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk\Adam\';
 saveOn = 1;
-figName = 'Cue_grandAverage_SEM';
+figName = 'Cue_grandAverage_SEM_combo';
 ensureFigure(figName, 1); ax = axes; hold on; set(gca, 'YLim', [-0.2 0.8]);
 addStimulusPatch(gca, [0 1], '', [0.7 0.7 0.7]);
 % mean
@@ -114,12 +114,13 @@ cueLicks_norm_avg = squeeze(mean(cueLicks_norm));
 cueLicks_norm_sem = squeeze(std(cueLicks_norm)) / sqrt(size(cueLicks_norm, 1));
 yyaxis right; ax.YColor = [0 0 0]; ax.YTick = [0 0.5]; ylabel('Lick rate (norm.)');
 ll = plot(xData_licks, cueLicks_norm_avg(:, 1), '--k', 'LineWidth', 2);
-[lines, patches] = boundedline(xData_licks', cueLicks_norm_avg, permute(cueLicks_norm_sem, [1 3 2]), 'cmap', cmap, 'alpha'); 
+[lines, patches] = boundedline(xData_licks', cueLicks_norm_avg, permute(cueLicks_norm_sem, [1 3 2]), 'cmap', cmap, 'alpha', 'transparency', 0.1); 
 set(lines, 'LineWidth', 2, 'LineStyle', '--');
 cuePh_norm_avg = squeeze(mean(cuePh_norm));
 cuePh_norm_sem = squeeze(std(cuePh_norm)) / sqrt(size(cuePh_norm, 1));
 yyaxis left; ax.YColor = [0 0 0]; ax.YTick = [0 0.5];
 [hl, hp] = boundedline(xData_ph', cuePh_norm_avg, permute(cuePh_norm_sem, [1 3 2]), 'cmap', cmap_ph); 
+set(hl, 'LineWidth', 2);
 set(gca, 'XLim', [-2 3]); xlabel('time from cue (s)'); ylabel('Cholinergic (norm.)');
 legend([hl; ll], {'\color{blue} high value', '\color{red} low value', '\color{green} uncued', 'licking'}, 'Location', 'northwest', 'Box', 'off');
 
