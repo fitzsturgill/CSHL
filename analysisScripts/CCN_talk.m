@@ -261,7 +261,7 @@ reversals = find(diff(TE.BlockNumber(odorTrials & includedTrials)));
 
 excludeFirstNTrials = 20;
 excludeFirstTrials = TE.trialNumber > excludeFirstNTrials;
-threshPercentile = 0.25;
+threshPercentile = 0.15;
 
 TE.csLicksAll = countEventFromTE(TE, 'Port1In', [0 3], TE.Cue);
 ensureFigure('cueLick_Hist', 1);

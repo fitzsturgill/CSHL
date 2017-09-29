@@ -19,6 +19,8 @@ function varargout = phPlotAverageFromTE(TE, trials, ch, varargin)
 %     end
     if isempty(s.linespec)
         s.linespec = {'k', 'r', 'b', 'g'};
+    elseif ischar(s.linespec) && strcmp(s.linespec, 'default')
+        s.linespec = {''}; % use figure/axes colormap
     end
     if isempty(s.fig)
         s.fig = figure;

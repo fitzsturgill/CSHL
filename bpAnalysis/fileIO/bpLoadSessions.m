@@ -20,6 +20,8 @@ function sessions = bpLoadSessions(sessions, filenames, filepaths)
     if nargin == 0 || isempty(sessions)% create a new sessions struct for output
         sessions = struct();
         alreadyLoaded = 0;
+    else
+        alreadyLoaded = length(sessions);
     end
         
     if nargin < 2 % interactive loading

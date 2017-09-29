@@ -92,9 +92,10 @@ end
 savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk\Adam\';
 ensureFigure('CuedOutcome_Us_scatterPlot_Final', 1); 
 
-
-scatter(sumData.phReward_mean_bl.avg,sumData.phPunish_mean_bl.avg, 42, [0.4 0.4 0.4], 'filled');
-xlabel('Reward (\sigma_{baseline})'); ylabel('Punish (\sigma_{baseline})'); 
+% {0.9258, 0.4883, 0.1914} % orange
+% {0.6680, 0.2148, 0.8359} % purple
+scatter(sumData.phReward_mean_bl.avg,sumData.phPunish_mean_bl.avg, 42, [0.6680, 0.2148, 0.8359], 'filled');
+xlabel('Reward (\fontsize{20}\sigma\fontsize{16}-baseline)'); ylabel('Punish (\fontsize{20}\sigma\fontsize{16}-baseline)'); 
 setXYsymmetric; addOrginLines(gca, [0 0 0]);
 set(gca, 'XTick', [-1 0 1], 'YTick', [-1 0 1]);
 formatFigureTalk([3 3]);
@@ -109,8 +110,8 @@ end
 savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk\Adam\';
 ensureFigure('CuedOutcome_Cs_scatterPlot_Final', 1); 
 
-scatter(sumData.phCue_phasic_low.avg,sumData.phCue_phasic_high.avg, 42, [0.4 0.4 0.4], 'filled');
-xlabel('Low Value (\sigma_{baseline})'); ylabel('High Value (\sigma_{baseline})');
+scatter(sumData.phCue_phasic_low.avg,sumData.phCue_phasic_high.avg, 42, [0.6680, 0.2148, 0.8359], 'filled');
+xlabel('Low Value (\fontsize{20}\sigma\fontsize{16}-baseline)'); ylabel('High Value (\fontsize{20}\sigma\fontsize{16}-baseline)');
 
 set(gca, 'YLim', [0 1.2]); set(gca, 'XLim', [0 1.2]);
 set(gca, 'XTick', [0 0.5 1], 'YTick', [0 0.5 1]);
