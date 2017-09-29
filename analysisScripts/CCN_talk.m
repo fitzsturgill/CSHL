@@ -431,18 +431,70 @@ set(gca, 'XMinorTick', 'on', 'XGrid', 'on', 'XMinorGrid', 'on', 'GridColor', [0.
 title('Dopamine');
 
 % set window to be 0.25 - 1 second after cue in LNL_odor_v2_pav_rev_AS
+
+
+
+
+%% Snippet to make uncued reward and punishment responses from ChAT_26
+    saveName = ['Reward_ChAT'];
+    ensureFigure(saveName, 1); 
+    [ha, hl] = phPlotAverageFromTE(TE, rewardTrials & uncuedTrials, 1,...
+        'window', [-1 3], 'FluorDataField', 'ZS', 'zeroTimes', TE.Us, 'cmap', [171 55 214]/256);
+    set(hl, 'LineWidth', 2);
+    set(gca, 'XLim', [-1 3], 'YLim', [-1 2], 'YTick', [-1 0 1], 'XTick', []);
+    addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7]) 
+    ylabel('Fluor. (\fontsize{20}\sigma\fontsize{16}-baseline)'); %xlabel('Time from reinforcement (s)');
+    formatFigureTalk([3.5 2.5]);    
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    saveas(gcf, fullfile(savepath, [saveName '.emf']));   
+end    
+%% Snippet to make uncued reward and punishment responses from ChAT_26
+    saveName = ['Punish_ChAT'];
+    ensureFigure(saveName, 1); 
+    [ha, hl] = phPlotAverageFromTE(TE, punishTrials & uncuedTrials, 1,...
+        'window', [-1 3], 'FluorDataField', 'ZS', 'zeroTimes', TE.Us, 'cmap', [171 55 214]/256);
+    set(hl, 'LineWidth', 2);
+    set(gca, 'XLim', [-1 3], 'YLim', [-1 2], 'YTick', [-1 0 1]);
+    addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7]) 
+    ylabel('Fluor. (\fontsize{20}\sigma\fontsize{16}-baseline)'); xlabel('Time from reinforcement (s)');
+    formatFigureTalk([3.5 2.2]);    
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    saveas(gcf, fullfile(savepath, [saveName '.emf']));   
+end    
     
-
-
-    
-
-
-
-
-
-
-
-    
-    
+%% Snippet to make uncued reward and punishment responses from DC_26
+    saveName = ['Reward_DAT'];
+    ensureFigure(saveName, 1); 
+    [ha, hl] = phPlotAverageFromTE(TE, rewardTrials & uncuedTrials, 1,...
+        'window', [-1 3], 'FluorDataField', 'ZS', 'zeroTimes', TE.Us, 'cmap', [237 125 49]/256);
+    set(hl, 'LineWidth', 2);
+    set(gca, 'XLim', [-1 3], 'YLim', [-5 16], 'XTick', []);
+    addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7]) 
+    ylabel('Fluor. (\fontsize{20}\sigma\fontsize{16}-baseline)');% xlabel('Time from reinforcement (s)');
+    formatFigureTalk([3.5 2.2]);    
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    saveas(gcf, fullfile(savepath, [saveName '.emf']));   
+end    
+%% Snippet to make uncued reward and punishment responses from DC_26
+    saveName = ['Punish_DAT'];
+    ensureFigure(saveName, 1); 
+    [ha, hl] = phPlotAverageFromTE(TE, punishTrials & uncuedTrials, 1,...
+        'window', [-1 3], 'FluorDataField', 'ZS', 'zeroTimes', TE.Us, 'cmap', [237 125 49]/256);
+    set(hl, 'LineWidth', 2);
+    set(gca, 'XLim', [-1 3], 'YLim', [-3 3]);%, 'YTick', [-1 0 1]);
+    addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7]) 
+    ylabel('Fluor. (\fontsize{20}\sigma\fontsize{16}-baseline)'); xlabel('Time from reinforcement (s)');
+    formatFigureTalk([3.5 2.2]);    
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    saveas(gcf, fullfile(savepath, [saveName '.emf']));   
+end    
     
     

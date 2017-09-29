@@ -10,6 +10,7 @@ function varargout = phPlotAverageFromTE(TE, trials, ch, varargin)
         'linespec', [];... % {'k', 'r'}
         'window', [];... % window to plot with respect to zero time that is already calculated by processTrialAnalysis_Photometry2 (I think !!!!)
         'zeroTimes', [];... % not fully implemented, see usage below
+        'cmap', [];...
         };    
     [s, ~] = parse_args(defaults, varargin{:});
 
@@ -78,7 +79,11 @@ function varargout = phPlotAverageFromTE(TE, trials, ch, varargin)
         currentData = TE.(Photometry).data(ch).(s.FluorDataField)(currentTrials, startP:endP);
         avg = nanmean(currentData);
         avgSEM = std(currentData, 'omitnan') ./ sqrt(sum(~isnan(currentData), 1));
-        thisHl = boundedline(xData, avg, avgSEM, thisLinespec, ax, 'alpha');       
+        if isempty(s.cmap)
+            thisHl = boundedline(xData, avg, avgSEM, thisLinespec, ax, 'alpha');       
+        else
+            thisHl = boundedline(xData, avg, avgSEM, ax, 'alpha', 'cmap', s.cmap(counter,:));    
+        end
         lh(counter) = thisHl; % return handles of the solid lines in the bounded plots
     end
     

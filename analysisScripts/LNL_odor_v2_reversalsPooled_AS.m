@@ -25,7 +25,7 @@ end
 
 %% 
 
-savepath = 'C:\Users\Fitz\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk';
+savepath = 'C:\Users\Fitz\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk\Adam\';
 saveOn = 1;
 
 
@@ -136,26 +136,30 @@ revNormComplete_ch2 = smoothdata(revNormComplete_ch2, 2, 'movmean', 5, 'omitnan'
 % plot(xData, nanmean(revNormComplete_ch1([1:5 7:10], :))), 'g'); hold on
 % plot(xData, smooth(nanmean(revNormComplete_ch2([1:5 7:10], :))), 'r');
 % set(gca, 'XLim', [-30 40]);
-
+% {0.9258, 0.4883, 0.1914} % orange
+% {0.6680, 0.2148, 0.8359} % purple
 ensureFigure('Reversals_full_means_norm', 1);
 hla = zeros(1,2);
-[hl, hp] = boundedline(xData(18:127), nanmean(revNormComplete_ch2([1:5 7:10], 18:127)), nanSEM(revNormComplete_ch2([1:5 7:10], 18:127))', 'r'); hold on
+[hl, hp] = boundedline(xData(18:127), nanmean(revNormComplete_ch2([1:5 7:10], 18:127)), nanSEM(revNormComplete_ch2([1:5 7:10], 18:127))',...
+    'cmap', [237 125 49]/256, 'alpha'); hold on
 hla(1) = hl;
-[hl, hp] = boundedline(xData(18:127), nanmean(revNormComplete_ch1([1:5 7:10], 18:127)), nanSEM(revNormComplete_ch1([1:5 7:10], 18:127))', 'g');
+[hl, hp] = boundedline(xData(18:127), nanmean(revNormComplete_ch1([1:5 7:10], 18:127)), nanSEM(revNormComplete_ch1([1:5 7:10], 18:127))',...
+    'cmap', [171 55 214]/256, 'alpha');
 hla(2) = hl;
+set(hla, 'LineWidth', 2);
 set(gca, 'XLim', [-20 40], 'YLim', [-1 1.2]);
     h  = addOrginLines;
     set(h, 'LineWidth', 2);
-    legend(hla, {'\bf\color{red}Dop.', '\bf\color{green}Ach.'}, 'Location', 'southeast', 'FontSize', 18, 'Interpreter', 'tex', 'Box', 'off');
+    legend(hla, {'\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.'}, 'Location', 'southeast', 'FontSize', 18, 'Interpreter', 'tex', 'Box', 'off');
 
-    xlabel('Odor Presentations from Reversal');
-    ylabel('Cue Response (norm.)');
+    xlabel('Odor presentations from reversal');
+    ylabel('Cue response (norm.)');
     
     formatFigureTalk([4 3]);
     if saveOn    
         saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm.fig'));
         saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm.jpg'));    
-        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm.meta'));                   
+        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm.emf'));                   
     end
 
 
@@ -207,15 +211,19 @@ revNormComplete_ch2 = smoothdata(revNormComplete_ch2, 2, 'movmean', 5);
 revNormComplte_delta = smoothdata(revNormComplete_delta, 2, 'movmean', 5);
 
 %%
+% {0.9258, 0.4883, 0.1914} % orange
+% {0.6680, 0.2148, 0.8359} % purple
 ensureFigure('Reversals_full_means_norm_ch1_only_byOdor', 1);
-[hl, hp] = boundedline(xData(1:136), nanmean(revNormComplete_ch1([1:5 7:10], 1:136)), nanSEM(revNormComplete_ch1([1:5 7:10], 1:136))', 'g'); hold on
+[hl, hp] = boundedline(xData(1:136), nanmean(revNormComplete_ch1([1:5 7:10], 1:136)), nanSEM(revNormComplete_ch1([1:5 7:10], 1:136))',...
+    'alpha', 'cmap', [0.6680, 0.2148, 0.8359]); hold on
+set(hl, 'LineWidth', 2);
 % legend(hl, {'\color{green}ACh.'}, 'Location', 'southeast', 'FontSize', 18, 'Interpreter', 'tex', 'Box', 'off');
     set(gca, 'XLim', [-20 40], 'YLim', [0 1]);
     h  = addOrginLines;
-    legend(hl, {'\bf\color{green}ACh.'}, 'Location', 'southeast', 'FontSize', 16, 'Interpreter', 'tex', 'Box', 'off');
-    set(h, 'LineWidth', 3);
-    xlabel('Odor Presentations from Reversal');
-    ylabel('Cue Response (norm.)');
+    legend(hl, {'\bf\color[rgb]{0.6680, 0.2148, 0.8359}ACh.'}, 'Location', 'southeast', 'FontSize', 16, 'Interpreter', 'tex', 'Box', 'off');
+    set(h, 'LineWidth', 2);
+    xlabel('Odor presentations from reversal');
+    ylabel('Cue response (norm.)');
     
     formatFigureTalk([4 3]);
     if saveOn    
@@ -225,18 +233,26 @@ ensureFigure('Reversals_full_means_norm_ch1_only_byOdor', 1);
     end
 
 ensureFigure('Reversals_full_means_norm_byOdor', 1);
-[hl, hp] = boundedline(xData(1:136), nanmean(revNormComplete_ch1([1:5 7:10], 1:136)), nanSEM(revNormComplete_ch1([1:5 7:10], 1:136))', 'g'); hold on
-boundedline(xData(1:136), nanmean(revNormComplete_ch2([1:5 7:10], 1:136)), nanSEM(revNormComplete_ch2([1:5 7:10], 1:136))', 'r');
-    set(gca, 'XLim', [-20 40], 'YLim', [-1 1]);
-    xlabel('Odor Presentations from Reversal');
-    ylabel('\DeltaF/F (normalized)');
-    
-    formatFigureTalk([4 3]);
-    if saveOn    
-        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_byOdor.fig'));
-        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_byOdor.jpg'));    
-        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_byOdor.meta'));                   
-    end
+
+[lines, patches] = boundedline(xData(1:136), nanmean(revNormComplete_ch1([1:5 7:10], 1:136)), nanSEM(revNormComplete_ch1([1:5 7:10], 1:136))',...
+    'alpha', 'cmap', [0.6680, 0.2148, 0.8359]); hold on
+[hl, hp] = boundedline(xData(1:136), nanmean(revNormComplete_ch2([1:5 7:10], 1:136)), nanSEM(revNormComplete_ch2([1:5 7:10], 1:136))',...
+    'cmap', [0.9258, 0.4883, 0.1914], 'alpha');
+lines = [lines; hl];
+set(lines, 'LineWidth', 2);
+set(gca, 'XLim', [-20 40], 'YLim', [-1 1]);
+h  = addOrginLines;
+set(h, 'LineWidth', 2);
+legend(lines, {'\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.', '\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.'}, 'Location', 'southeast', 'FontSize', 18, 'Interpreter', 'tex', 'Box', 'off');
+xlabel('Odor presentations from reversal');
+ylabel('Cue response (norm.)');
+
+formatFigureTalk([4 3]);
+if saveOn    
+    saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_byOdor.fig'));
+    saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_byOdor.jpg'));    
+    saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_byOdor.meta'));                   
+end
     
     
 ensureFigure('full_means_normDelta', 1);
