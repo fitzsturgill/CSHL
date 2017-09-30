@@ -162,6 +162,26 @@ set(gca, 'XLim', [-20 40], 'YLim', [-1 1.2]);
         saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm.emf'));                   
     end
 
+ensureFigure('Reversals_full_means_norm_ChAT_only', 1);
+
+[hl, hp] = boundedline(xData(18:127), nanmean(revNormComplete_ch1([1:5 7:10], 18:127)), nanSEM(revNormComplete_ch1([1:5 7:10], 18:127))',...
+    'cmap', [171 55 214]/256, 'alpha');
+set(hl, 'LineWidth', 2);
+set(gca, 'XLim', [-20 40], 'YLim', [-1 1.2]);
+    h  = addOrginLines;
+    set(h, 'LineWidth', 2);
+    legend(hl, {'\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.'}, 'Location', 'southeast', 'FontSize', 18, 'Interpreter', 'tex', 'Box', 'off');
+
+    xlabel('Odor presentations from reversal');
+    ylabel('Cue response (norm.)');
+    
+    formatFigureTalk([4 3]);
+    if saveOn    
+        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_ChAT_only.fig'));
+        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_ChAT_only.jpg'));    
+        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_ChAT_only.emf'));                   
+    end
+
 
 %% now track the new CS+ odor across the reversal
 
@@ -230,6 +250,24 @@ set(hl, 'LineWidth', 2);
         saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_ch1_only_byOdor.fig'));
         saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_ch1_only_byOdor.jpg'));    
         saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_ch1_only_byOdor.meta'));                   
+    end
+ensureFigure('Reversals_full_means_norm_ch1_only_byOdor_matchedYaxis', 1);
+[hl, hp] = boundedline(xData(1:136), nanmean(revNormComplete_ch1([1:5 7:10], 1:136)), nanSEM(revNormComplete_ch1([1:5 7:10], 1:136))',...
+    'alpha', 'cmap', [0.6680, 0.2148, 0.8359]); hold on
+set(hl, 'LineWidth', 2);
+% legend(hl, {'\color{green}ACh.'}, 'Location', 'southeast', 'FontSize', 18, 'Interpreter', 'tex', 'Box', 'off');
+    set(gca, 'XLim', [-20 40], 'YLim', [-1 1]);
+    h  = addOrginLines;
+    legend(hl, {'\bf\color[rgb]{0.6680, 0.2148, 0.8359}ACh.'}, 'Location', 'southeast', 'FontSize', 16, 'Interpreter', 'tex', 'Box', 'off');
+    set(h, 'LineWidth', 2);
+    xlabel('Odor presentations from reversal');
+    ylabel('Cue response (norm.)');
+    
+    formatFigureTalk([4 3]);
+    if saveOn    
+        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_ch1_only_byOdor_matchedYaxis.fig'));
+        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_ch1_only_byOdor_matchedYaxis.jpg'));    
+        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_ch1_only_byOdor_matchedYaxis.meta'));                   
     end
 
 ensureFigure('Reversals_full_means_norm_byOdor', 1);
