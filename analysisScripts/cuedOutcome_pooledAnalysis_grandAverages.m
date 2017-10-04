@@ -176,8 +176,14 @@ formatFigureEvernote([10 5]);
 if saveOn    
     saveas(gcf, fullfile(savepath, [figName '.fig']));
     saveas(gcf, fullfile(savepath, [figName '.jpg']));
-    saveas(gcf, fullfile(savepath, [figName '.meta']));                 
+    saveas(gcf, fullfile(savepath, [figName '.emf']));                 
+    saveas(gcf, fullfile(savepath, [figName]), 'epsc');    
 end
+
+
+
+
+
 
 
 

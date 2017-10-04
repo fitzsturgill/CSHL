@@ -496,5 +496,41 @@ if saveOn
     saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
     saveas(gcf, fullfile(savepath, [saveName '.emf']));   
 end    
+
+
+%% snippet from cuedOutcome_pooledAnalysis_grandAverages
+% plot grand average photometry responses for reward condition, don't normalize (not clear how you would)
+% 3rd dimension - first chunk = high value, second = low value, third =
+% uncued
+
+saveOn = 1;
+saveName = 'Full_grandAverage_SEM_rewardedOutcomes';
+ensureFigure(saveName, 1); %axes; set(gca, 'YLim', [-0.2 0.8]);
+% addStimulusPatch(gca, [0 1], '', [0.7 0.7 0.7]);
+
+cmap = [0 0 1; 1 0 0; 0 1 0];
+nSessions = size(avgData.full.licks.avg, 1);
+xData_licks_full = squeeze(avgData.full.licks.xData(1, :, 1));
+xData_ph_full = squeeze(avgData.full.photometry.xData(1, :, 1));
+fullLicks_avg = squeeze(mean(avgData.full.licks.avg));
+fullPh_avg = squeeze(mean(avgData.full.photometry.avg));
+fullLicks_sem = squeeze(std(avgData.full.licks.avg)) / sqrt(nSessions);
+fullPh_sem = squeeze(std(avgData.full.photometry.avg)) / sqrt(nSessions);
+
+% first axes column- reward, second axes column- punishment, 3rd, - neutral
+axes; set(gca, 'YLim', [-0.25 2.25]); addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7]); addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7]);
+[hl, hp] = boundedline(xData_ph_full', fullPh_avg(:,[1 4 7]), permute(fullPh_sem(:,[1 4 7]), [1 3 2]), 'cmap', cmap);
+set(hl, 'LineWidth', 2);
+legend(hl, {'\color{blue} high value', '\color{red} low value', '\color{green} uncued'}, 'Location', 'northwest', 'FontSize', 16, 'Interpreter', 'tex'); legend('boxoff');
+set(gca, 'XLim', [-5 3]);
+ylabel('Cholinergic (\fontsize{20}\sigma\fontsize{16}-baseline)'); xlabel('Time from reinforcement (s)');
+
+formatFigureTalk([4 3]);
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    saveas(gcf, fullfile(savepath, [saveName '.emf']));   
+    saveas(gcf, fullfile(savepath, [saveName]), 'epsc');       
+end    
     
     

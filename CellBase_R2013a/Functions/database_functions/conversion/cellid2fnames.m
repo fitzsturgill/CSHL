@@ -5,6 +5,7 @@ function [fname_spikes,fname_events] = cellid2fnames(cellid,filename,CSC_chan)
 %
 %   [FNAME_SPIKES, FNAME_EVENTS] = CELLID2FNAMES(CELLID,FILENAME) uses
 %   FILENAME input argument to genearte FNAME_SPIKES. Specials cases for
+% NOTE! FILENAME REALLY SPECIFIES FILETYPE (FS NOTE)
 %   FILENAME are handled differentially:
 %       'TrialEvent', behavioral session name ('TrialEvents2.mat') is returned
 %       'StimEvent', stimulation filename is returned

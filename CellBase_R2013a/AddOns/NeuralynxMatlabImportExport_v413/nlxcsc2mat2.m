@@ -45,7 +45,7 @@ if ischar(g.Channels),
             g.Channels=2000;
     end
 end
-
+h = waitbar(0, 'Processing CSCs');
 for iC=1:length(g.Channels),
     tic;
     action = sprintf('CSC%s.Ncs',num2str(g.Channels(iC)));
@@ -189,7 +189,9 @@ for iC=1:length(g.Channels),
     end
     laptime=toc;
     disp(sprintf('%s converted in %d seconds; %d of %d remaining',fname,laptime,iC,length(g.Channels)))
+    waitbar(iC/length(g.Channels));
 end
+close(h);
 
 function [Samples,dt,ts]=convertcsc(pname,fname,new_fname,g)
 [ts,Samples]=Nlx2MatCSC([pname filesep fname],g.FieldSelectionArray,g.ExtractHeader,g.ExtractMode,g.ExtractModeArray); %#ok<NASGU>
