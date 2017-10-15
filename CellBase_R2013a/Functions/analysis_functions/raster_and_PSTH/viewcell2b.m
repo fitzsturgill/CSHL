@@ -137,7 +137,6 @@ end
 
 % Partition trials
 [COMPTRIALS, TAGS] = partition_trials(TE,g.Partitions);
-TAGS
 vinx = cellfun(@(s)(~isempty(s)),COMPTRIALS);
 COMPTRIALS = COMPTRIALS(vinx);
 TAGS = TAGS(vinx);
@@ -165,7 +164,7 @@ if iscellstr(g.SortEvent)
     end
     sort_var = min(sort_var);
 elseif ~isempty(g.SortEvent)
-    if ~iscell(TE.(g.TriggerEvent))
+     if ~iscell(TE.(g.TriggerEvent))
         sort_var = TE.(g.SortEvent) - TE.(g.TriggerEvent);
     else
         gte = nan(1,NUMtrials);

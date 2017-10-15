@@ -299,6 +299,8 @@ if isrec && isstim
         saveas(H, fullfile(fullpth, [cellidt '_LS.jpg']));
 %         saveas(H, fullfile(fullpth, [cellidt '_LS.fig']));        
 %         close(H)
+
+        % research statement-  tagging figure
     end
 end
 
