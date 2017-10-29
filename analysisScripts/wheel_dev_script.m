@@ -362,10 +362,10 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'xcorr.jpg'));
 end
 
-%% pupil data
-%  [wheelY_new, wheelTimes_new] = resample(wheelY, wheelTimes, 20, 'linear');
-
-TE = addPupilometryToTE(TE, 'duration', 30, 'zeroField', 'Baseline', 'startField', 'Baseline', 'frameRate', 60, 'frameRateNew', 20);
+% %% pupil data
+% %  [wheelY_new, wheelTimes_new] = resample(wheelY, wheelTimes, 20, 'linear');
+% 
+% TE = addPupilometryToTE(TE, 'duration', 30, 'zeroField', 'Baseline', 'startField', 'Baseline', 'frameRate', 60, 'frameRateNew', 20);
 
 %%
 
@@ -450,7 +450,11 @@ params.tapers = [3 5];
 
 [C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat(:,validTrials), data_pupil(:,validTrials), params);
 ensureFigure('coherence_pupil', 1);
-subplot(1,2,1); plot(f,C, 'r'); hold on;
+subplot(1,2,1); 
+
+% boundedline(f(2:end)', C(2:end), Cerr(:,2:end)', 'g'); hold on;
+
+plot(f,C, 'r'); hold on;
 plot(f, Cerr(1,:), 'm');
 plot(f, Cerr(2,:), 'm');
 %
@@ -459,17 +463,22 @@ si = randperm(length(validTrials));
 si2 = validTrials(si);
 
 [C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat(:,si2), data_pupil(:,validTrials), params);
+% boundedline(f(2:end)', C(2:end), Cerr(:,2:end)', 'g'); 
 
 plot(f,C, 'b'); 
 plot(f, Cerr(1,:), 'c');
 plot(f, Cerr(2,:), 'c');
+
+set(gca, 'XLim', [f(2), f(end)]);
 set(gca, 'XScale', 'log');
 xlabel('Frequency');
 ylabel('Coherence, chat vs pupil');
 
 
 [C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_dat(:,validTrials), data_pupil(:,validTrials), params);
-subplot(1,2,2); plot(f,C, 'r'); hold on;
+subplot(1,2,2); 
+% boundedline(f', C, Cerr', 'r'); hold on;
+plot(f,C, 'r'); hold on;
 plot(f, Cerr(1,:), 'm');
 plot(f, Cerr(2,:), 'm');
 
@@ -477,11 +486,12 @@ plot(f, Cerr(2,:), 'm');
 si = randperm(size(data_dat, 2));
 
 [C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_dat(:,si2), data_pupil(:,validTrials), params);
-
+% boundedline(f', C, Cerr', 'k');
 plot(f,C, 'b'); 
 plot(f, Cerr(1,:), 'c');
 plot(f, Cerr(2,:), 'c');
 set(gca, 'XScale', 'log');
+set(gca, 'XLim', [min(f), max(f)]);
 xlabel('Frequency');
 ylabel('Coherence, dat vs pupil');
 

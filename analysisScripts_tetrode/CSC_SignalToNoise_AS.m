@@ -14,7 +14,7 @@ h = waitbar(0, 'RMS noise');
 for channel = 1:32
     cfilename = sprintf('CSC%d.ncs', channel);
     [Samples header] = Nlx2MatCSC(fullfile(fullpth, cfilename),[0 0 0 0 1],1,2,[1 1875]);
-    Samples = reshape(Samples, numel(Samples), 1);s
+    Samples = reshape(Samples, numel(Samples), 1);
     ADBitVolts = sscanf(header{16}, '-ADBitVolts %f');
     Samples = Samples * ADBitVolts * 1e6;
     %

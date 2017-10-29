@@ -210,6 +210,7 @@ reversals = find(diff(TE.BlockNumber(csPlusTrials & includedTrials & rewardTrial
         saveas(gcf, fullfile(savepath, [saveName '.fig']));
         saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
         saveas(gcf, fullfile(savepath, [saveName '.emf']));   
+        saveas(gcf, fullfile(savepath, [saveName '.epsc']));           
     end
 
     %% Lick and Ph rasters from DC_20- by Odor

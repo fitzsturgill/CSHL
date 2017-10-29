@@ -25,7 +25,7 @@ end
 
 baselineEnd = 119;
 % baselineEnd = 29;
-TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit',...
+TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial',...
     'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 baselineEnd], 'startField', 'Baseline', 'downsample', 305);
 
 %%
@@ -105,8 +105,8 @@ iri_pre_sorted = iri_pre(I);
 rewards_dat_sorted = rewards_dat(I, :);
 rewards_chat_sorted = rewards_chat(I, :);
 climFactor = 4;
-clim_chat = [-climFactor * sd_chat, climFactor * sd_chat] + 0.003;
-clim_dat = [-climFactor * sd_dat, climFactor * sd_dat] + 0.03;
+clim_chat = [-climFactor * sd_chat, climFactor * sd_chat];% + 0.003;
+clim_dat = [-climFactor * sd_dat, climFactor * sd_dat];% + 0.03;
 ensureFigure('random_rewards', 1); 
     % subplot(3,2,1); image(rewards_chat, 'XData', window, 'CDataMapping', 'Scaled'); set(gca, 'CLim', [min(min(rewards_chat_sorted)), max(max(rewards_chat_sorted))]); colormap('jet');  title('ChAT');
 % subplot(3,2,2); image(rewards_dat, 'XData', window,  'CDataMapping', 'Scaled'); set(gca, 'CLim', [min(min(rewards_dat_sorted)), max(max(rewards_dat_sorted))]); colormap('jet');    title('DAT');
@@ -142,7 +142,7 @@ end
 % and ChAT correlations with reward and without but doesn't have nice pupil
 % diameter
 % good trials with pupil traces that needed gap filling: 12
-trial = 1; % 7;
+trial = 5; % 7;
 ensureFigure('examples', 1);
 subplot(4,1,1);
 ydata = TE.Photometry.data(1).raw(trial, :);    
@@ -175,7 +175,7 @@ end
 % and ChAT correlations with reward and without but doesn't have nice pupil
 % diameter
 % good trials with pupil traces that needed gap filling: 12
-trial = 3;
+trial = 6;
 ensureFigure('examples', 1);
 subplot(2,1,1);
 ydata = TE.Photometry.data(1).ZS(trial, :);    
