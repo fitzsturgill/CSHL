@@ -1,14 +1,14 @@
-nlxcsc2mat2(fullpth,'Channels',1:32);
-
-%% CSC S/N determination...
-animalID = 'CD4';
-sessionID = '170912a';
-fullpth = [getpref('cellbase','datapath') '\' animalID '\' sessionID '\'];
+% nlxcsc2mat2(fullpth,'Channels',1:32);
+% 
+% %% CSC S/N determination...
+% animalID = 'CD4';
+% sessionID = '170912a';
+% fullpth = [getpref('cellbase','datapath') '\' animalID '\' sessionID '\'];
 
 
 
 %%
-fullpth = 'Z:\tetrodeData\CD_3\2017-08-18_17-00-59';
+fullpth = 'Z:\tetrodeData\CD_6\2017-11-04_19-27-52';
 rmsNoise = zeros(32, 1);
 h = waitbar(0, 'RMS noise');   
 for channel = 1:32
@@ -34,9 +34,11 @@ for channel = 1:32
     waitbar(channel/32);
 end
 close(h);
-%%
+%
 ensureFigure('RMSNoise', 1);
 plot(rmsNoise);
+saveas(gcf, fullfile(fullpth, 'RMSNoise.fig'));
+saveas(gcf, fullfile(fullpth, 'RMSNoise.jpg'));
 
 
 

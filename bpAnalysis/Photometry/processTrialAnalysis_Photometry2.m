@@ -44,11 +44,13 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     end
     totalTrials = sum(scounter);    
     if s.uniformOutput % not fully implemented
-        originalSamples = zeros(1,length(sessions));
-        for si = 1:length(sessions);
-            originalSamples(si) = max(cellfun(@(x) size(x,1), sessions(si).SessionData.NidaqData(:,1)));
-        end
-        originalSamples = max(originalSamples);
+%         originalSamples = zeros(1,length(sessions));
+%         for si = 1:length(sessions);
+%             originalSamples(si) = max(cellfun(@(x) size(x,1), sessions(si).SessionData.NidaqData(:,1)));
+%         end
+%         originalSamples = max(originalSamples);
+        % kludge added 11/05/17
+        originalSamples = sessions(1).SessionData.TrialSettings(1).nidaq.duration * sessions(1).SessionData.TrialSettings(1).nidaq.sample_rate;
         newSamples = ceil(originalSamples/s.downsample);
         try
             sampleRate = sessions(1).SessionData.TrialSettings(1).nidaq.sample_rate;
@@ -136,6 +138,8 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                 downData = decimate(trialData, s.downsample);
                 if length(downData) < newSamples
                     downData = [downData NaN(1, newSamples - length(downData))];
+                elseif length(downData) > newSamples
+                    downData = downData(1:newSamples);
                 end
                 allData(trial, :) = downData;                                 
             end

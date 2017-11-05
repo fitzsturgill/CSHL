@@ -102,6 +102,7 @@ for channel = channels
     end
     % cross trial bleaching fits for each session plotted as axis array
     if channel == 1
+        try
         figname = ['trialBleach_Correction_ch' num2str(channel)];
         ensureFigure(figname, 1);
         nSessions = length(TE.Photometry.bleachFit);
@@ -115,6 +116,7 @@ for channel = channels
         if saveOn
             saveas(gcf, fullfile(savepath, 'trialBleach_Correction.fig'));
             saveas(gcf, fullfile(savepath, 'trialBleach_Correction.jpg'));
+        end
         end
     end
 end
@@ -142,14 +144,14 @@ end
     if ismember(1, channels)
         subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); 
         [ha, hl] = phPlotAverageFromTE(TE, {cuedReward, omit, uncuedReward}, 1,...
-            'FluorDataField', 'ZS', 'window', [-4, 6], 'linespec', {'b', 'k', 'c'}); %high value, reward
+            'FluorDataField', 'ZS', 'window', [-4, 5.5], 'linespec', {'b', 'k', 'c'}); %high value, reward
         legend(hl, {'cued', 'omit', 'uncued'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
         title('Reinforcement'); ylabel('BF dF/F Zscored'); textBox(subjectName);
     end
     if ismember(2, channels)    
         subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1); 
         [ha, hl] = phPlotAverageFromTE(TE, {cuedReward, omit, uncuedReward}, 2,...
-            'FluorDataField', 'ZS', 'window', [-4, 6], 'linespec', {'b', 'k', 'c'}); %high value, reward
+            'FluorDataField', 'ZS', 'window', [-4, 5.5], 'linespec', {'b', 'k', 'c'}); %high value, reward
         legend(hl, {'cued', 'omission', 'uncued'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
         ylabel('VTA dF/F Zscored'); xlabel('time from cue (s)'); 
     end
