@@ -28,9 +28,9 @@ end
 
     
 
-% TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL);
-TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'expFitBegin', 0.1,...
-    'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL, 'downsample', 305);
+TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL);
+% TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'expFitBegin', 0.1,...
+%     'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL, 'downsample', 305);
 %%
 % if you are reloading TE do this:
 channels = [1 2];
@@ -714,5 +714,23 @@ end
         saveas(gcf, fullfile(savepath, [saveName '.fig']));
         saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
     end
+    
+    %%
+    ensureFigure('test', 1);
+    subplot(1,3,1);
+    title('Velocity');
+    image(TE.Wheel.data.V(csPlusTrials, :), 'XData', [-4 7], 'CDataMapping', 'Scaled');
+    set(gca, 'CLim', [min(TE.Wheel.data.V(:)), max(TE.Wheel.data.V(:))]); 
+%     subplot(3,2,1); image(rewards_chat, 'XData', window, 'CDataMapping', 'Scaled'); 
+%     set(gca, 'CLim', [min(min(rewards_chat_sorted)), max(max(rewards_chat_sorted))]); 
+    colormap('jet');  
+    title('Velocity');    
+    subplot(1,3,2); phRasterFromTE(TE, csPlusTrials, 1, 'trialNumbering', 'consecutive'); % 'CLimFactor', CLimFactor,
+    title('ChAT'); xlabel('Time frome odor (s)');
+    subplot(1,3,3); phRasterFromTE(TE, csPlusTrials, 2, 'trialNumbering', 'consecutive'); % 'CLimFactor', CLimFactor,
+    title('DAT');    
+    
+    
+    
     
     
