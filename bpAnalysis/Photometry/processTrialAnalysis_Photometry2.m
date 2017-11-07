@@ -159,19 +159,28 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                     blF_raw = mean(blF, 2);
                 case 'expFit'
                     blF_raw = nanmean(allData(:, expFitStartP:blEndP), 2); % take mean across time, not trials
+%                     blF_fit = medfilt1(blF_raw, 3, 'truncate'); % median filter baseline fluorescence
+                    blF_fit = blF_raw;
+                    fo = fitoptions('Method', 'NonlinearLeastSquares',...
+                        'Upper', [Inf range(blF_raw) 0 range(blF_raw) 0],...
+                        'Lower', [0 0 -1 0 -1],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
+                        'StartPoint', [min(blF_raw) range(blF_raw)/2 -5 range(blF_raw)/2 -100]...
+                        );
+                    model = 'a + b*exp(c*x) + d*exp(e*x)';
+                    ft = fittype(model, 'options', fo);
                     [fitobject, gof, output] = ...
-                        fit((1:size(allData, 1))', blF_raw, 'exp2');
+                        fit((1:size(allData, 1))', blF_fit, ft, fo);
                     Photometry.bleachFit(si, fCh).fitobject_session = fitobject;
                     Photometry.bleachFit(si, fCh).gof_session = gof;
                     Photometry.bleachFit(si, fCh).output_session = output;
-                    x = (1:length(blF_raw))';
-                    blF = fitobject.a * exp(fitobject.b * x) + fitobject.c * exp(fitobject.d * x);
+                    x = (0:length(blF_fit)-1)';
+                    blF = fitobject.a + fitobject.b * exp(fitobject.c * x) + fitobject.d * exp(fitobject.e * x);
                     blF = repmat(blF, 1, size(allData, 2));
                 otherwise
             end
 %%        commented code below is snippet to show what different coefficients do to an exponential
 % note! c in the example below is the inverse of the time constant, a is
-% the asymptote at x = Inf, b + c is the y intercept
+% the asymptote at x = Inf, a + b is the y intercept
 % x = 1:1000;
 % 
 % a = 100;

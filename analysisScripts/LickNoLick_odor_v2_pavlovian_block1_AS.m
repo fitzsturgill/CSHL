@@ -90,7 +90,7 @@ if saveOn
     disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
 end
 
-%% cross sessions bleaching curve and dual exponential fits
+%% cross sessions bleaching curve and  exponential fits
 for channel = channels
     figname = ['sessionBleach_Correction_ch' num2str(channel)];
     ensureFigure(figname, 1);

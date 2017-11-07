@@ -53,17 +53,14 @@ function TE = makeTE_LNL_odor_V2(sessions)
             TE.BlockNumber(tcounter,1) = session.SessionData.BlockNumber(counter);
             TE.LickAction{tcounter,1} = session.SessionData.LickAction{counter};
             TE.ReinforcementOutcome{tcounter, 1} = session.SessionData.ReinforcementOutcome{counter};   
+            TE.sessionIndex(tcounter, 1) = sCounter;
             usTimes = [TE.Reward{tcounter}; TE.Punish{tcounter}; TE.WNoise{tcounter}; TE.Neutral{tcounter}];
             TE.Us{tcounter, 1} = [max(usTimes(:,1)) max(usTimes(:,2))];
             tcounter = tcounter + 1; % don't forget :)            
         end
     end
     
-    sessionNames = unique(TE.filename);
-    for counter = 1:length(sessionNames)
-        sname = sessionNames{counter};
-        TE.sessionIndex(cellfun(@(x) strcmp(x, sname), TE.filename)) = counter;
-    end
+
     TE.sessionChange = [0; diff(TE.sessionIndex)];
     TE.BlockChange = [0; abs(diff(TE.BlockNumber))];
     
