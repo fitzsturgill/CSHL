@@ -27,7 +27,8 @@ saveOn = 1;
     if saveOn    
         saveas(gcf, fullfile(savepath, 'Lick_Hist_CCN.fig'));
         saveas(gcf, fullfile(savepath, 'Lick_Hist_CCN.jpg'));    
-        saveas(gcf, fullfile(savepath, 'Lick_Hist_CCN.emf'));                         
+        saveas(gcf, fullfile(savepath, 'Lick_Hist_CCN.emf'));
+        saveas(gcf, fullfile(savepath, 'Lick_Hist_CCN'), 'epsc');        
     end
     
 %% Us and Cs scatter plots
