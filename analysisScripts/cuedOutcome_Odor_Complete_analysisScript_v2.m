@@ -27,7 +27,7 @@ TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], TE.Us);
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
 % basepath = uigetdir;
-basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
+basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\initial_sessions';
 sep = strfind(TE.filename{1}, '_');
 subjectName = TE.filename{1}(1:sep(2)-1);
 disp(subjectName);

@@ -48,8 +48,8 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
     % determine CLim, use all trials so CLim/image scaling is consistent
     % across conditions or sets of trials
     if isempty(s.CLim)
-        imavg = mean(mean(TE.(Photometry).data(ch).dFF(:, startP:endP), 'omitnan'));
-        imstd = mean(std(TE.(Photometry).data(ch).dFF(:, startP:endP), 'omitnan'));
+        imavg = mean(mean(TE.(Photometry).data(ch).dFF(:, startP:endP), 'omitnan'), 'omitnan');
+        imstd = mean(std(TE.(Photometry).data(ch).dFF(:, startP:endP), 'omitnan'), 'omitnan');
         s.CLim = [imavg - s.CLimFactor * imstd, imavg + s.CLimFactor * imstd];
     end
     switch s.trialNumbering

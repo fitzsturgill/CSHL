@@ -5,7 +5,7 @@
 savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SFN_2017\PE_Hypothesis';
 saveOn = 1;
 
-%% Snippet to make lick histogram for graded value task from or DC_26
+%% Snippet to make lick histogram for graded value task from  DC_26
 figSize = [4.5 3];
 % Snippet to make uncued reward and punishment responses from ChAT_26
     load('Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\DC_26\TE.mat');
@@ -148,6 +148,119 @@ if saveOn
     saveas(gcf, fullfile(savepath, [saveName '.epsc']));   
 end    
 
+% cs scatter plot
+saveName = 'CuedOutcome_Cs_scatterPlot_Final';
+ensureFigure(saveName, 1); 
+
+scatter(sumData.phCue_phasic_low.avg,sumData.phCue_phasic_high.avg, 36, [0.6680, 0.2148, 0.8359], 'filled');
+% xlabel('Low Value (\fontsize{20}\sigma\fontsize{16}-baseline)'); ylabel('High Value (\fontsize{20}\sigma\fontsize{16}-baseline)');
+
+set(gca, 'YLim', [0 1.2]); set(gca, 'XLim', [0 1.2]);
+set(gca, 'XTick', [0 0.5 1], 'YTick', [0 0.5 1]);
+formatFigurePoster([3 3], '');
+% set(gca, 'Position', [0.2 0.2 0.9 0.9]);
+addUnityLine(gca, [0 0 0]);
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    saveas(gcf, fullfile(savepath, [saveName '.epsc']));   
+end    
+
+%% reward bar graph
+files = {...
+    'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\ChAT_34', 'ccomplete_outcomeSummary_ChAT_34.mat';...
+    'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\ChAT_35', 'ccomplete_outcomeSummary_ChAT_35.mat';...
+    'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\ChAT_39', 'ccomplete_outcomeSummary_ChAT_39.mat';...
+    'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\ChAT_42', 'ccomplete_outcomeSummary_ChAT_42.mat';...
+    'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\ChAT_26', 'ccomplete_outcomeSummary_ChAT_26.mat';...
+    'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\ChAT_32', 'ccomplete_outcomeSummary_ChAT_32.mat';...
+    'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\ChAT_37', 'ccomplete_outcomeSummary_ChAT_37.mat'}; % this one last because of weird emergence and dissapearence of reward responses
+
+for counter = 1:size(files, 1)
+    fileName = files{counter, 2}(1:end-4);
+    temp = load(fullfile(files{counter, 1}, files{counter, 2}));
+    if counter == 1
+        sumOutcomeData = temp.ccomplete_outcomeSummary; % copy it first time, then add
+        sumOutcomeData(1).filename = {fileName};
+        fnames = fieldnames(temp.ccomplete_outcomeSummary)';     % field names must all be the same, (avg, n, std, etc.)       
+    else
+        thisData = temp.ccomplete_outcomeSummary;
+        sumOutcomeData(1).filename{end + 1} = fileName;
+        for type = 1:9
+            for f = fnames
+                sumOutcomeData(type).(f{:})(end + 1) = thisData(type).(f{:});
+            end
+        end          
+    end
+end
+saveName = 'cuedOutcome_reward_barGraph';
+ensureFigure(saveName, 1);
+offset = 0.1;
+bar(1, mean(sumOutcomeData(1).avg), 'b'); hold on; 
+bar(2, mean(sumOutcomeData(4).avg), 'r'); 
+bar(3, mean(sumOutcomeData(7).avg), 'g'); 
+errorbar(1, mean(sumOutcomeData(1).avg), mean(sumOutcomeData(1).avg)/sqrt(length(sumOutcomeData(1).avg)), 'b.', 'linewidth', 2);
+errorbar(2, mean(sumOutcomeData(4).avg), mean(sumOutcomeData(4).avg)/sqrt(length(sumOutcomeData(4).avg)), 'r.', 'linewidth', 2);
+errorbar(3, mean(sumOutcomeData(7).avg), mean(sumOutcomeData(7).avg)/sqrt(length(sumOutcomeData(7).avg)), 'g.', 'linewidth', 2);
+set(gca, 'XTick', [1 2 3]);
+set(gca, 'XTickLabel', {'High V.', 'Low V.', 'Uncued'}, 'YLim', [0 1.2], 'XLim', [0.5 3.5]);
+ylabel('Fluor. (\Delta \sigma-baseline)');
+formatFigurePoster([5 4]);   
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    saveas(gcf, fullfile(savepath, [saveName '.epsc']));   
+end    
+
+%% combined cue and licking for ChAT_42
+
+    load('Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\ChAT_42\TE.mat');
+    cuedOutcome_Conditions;
+    saveName = 'CuedOutcome_Cue_combined';
+    ensureFigure(saveName, 1); 
+        varargin = {'window', [-4 3], 'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording',...
+        'linespec', {'b', 'r', 'g'}};
+    lickAvg = eventAverageFromTE(TE, {highValueTrials, lowValueTrials, uncuedTrials}, 'Port1In', varargin{:});
+    ax = axes; hold on; yyaxis right
+    ll = plot(lickAvg.xData, lickAvg.Avg(1,:), '--k', 'LineWidth', 2);
+    plot(lickAvg.xData, lickAvg.Avg(1,:), '--b', lickAvg.xData, lickAvg.Avg(2,:), '--r', lickAvg.xData, lickAvg.Avg(3,:), '--g', 'LineWidth', 2);
+    ax.YColor = [0 0 0]; ylabel('Lick rate (Hz)');
+    yyaxis left; ax.YColor = [0 0 0]; 
+    [ha, hl] = phPlotAverageFromTE(TE, {highValueTrials, lowValueTrials, uncuedTrials}, 1,...
+        'window', [-4 3], 'linespec', {'b', 'r', 'g'}, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue, 'alpha', 0);
+    set(hl, 'LineWidth', 2);    
+    set(gca, 'XLim', [-4 3], 'YLim', [-0.2 1.5]);
+    addStimulusPatch(gca, [0 1], '', [0.8 0.8 0.8], 1) 
+    legend([hl ll(1)], {'\color{blue} high value', '\color{red} low value', '\color{green} uncued', ...
+        'licking'}, 'Location', 'northwest', 'FontSize', 20, 'Interpreter', 'tex'); legend('boxoff');
+    ylabel('Fluor. (\sigma-baseline)'); xlabel('Time from cue (s)');
+    formatFigurePoster([6 4], '', 24);    
+
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    saveas(gcf, fullfile(savepath, [saveName '.epsc']));   
+end    
+    
 %%
-open('C:\Users\Adam\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk\Adam\CuedOutcome_Cue_combined.fig');
-% formatFigurePoster([5 4]);
+saveName = 'CuedOutcome_Reward';
+ensureFigure(saveName, 1); 
+[ha, hl] = phPlotAverageFromTE(TE, {trialsByType{1}, trialsByType{4}, trialsByType{7}}, 1,...
+    'window', [-2 2], 'linespec', {'b', 'r', 'g'}, 'FluorDataField', 'ZS', 'alpha', 0);
+
+set(hl, 'LineWidth', 2);
+set(gca, 'XLim', [-2 2], 'YLim', [-1.2 2.5]);
+addStimulusPatch(gca, [-0.1 0.1], '', [0.8 0.8 0.8], 1);
+legend(hl, {'\color{blue} high value', '\color{red} low value', '\color{green} uncued'}, 'Location', 'northwest', 'FontSize', 20, 'Interpreter', 'tex'); legend('boxoff');    
+ylabel('Fluor. (\sigma-baseline)'); xlabel('Time from reward (s)');
+formatFigurePoster([5 4]);   
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    saveas(gcf, fullfile(savepath, [saveName '.epsc']));   
+end    
+
+%% acquisition- from McKnight Poster
+load('C:\Users\Adam\Dropbox\KepecsLab\_Fitz\McKnight\Poster\McKnight.mat');
+
+

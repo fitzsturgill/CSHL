@@ -11,6 +11,7 @@ function varargout = phPlotAverageFromTE(TE, trials, ch, varargin)
         'window', [];... % window to plot with respect to zero time that is already calculated by processTrialAnalysis_Photometry2 (I think !!!!)
         'zeroTimes', [];... % not fully implemented, see usage below
         'cmap', [];...
+        'alpha', 1;...
         };    
     [s, ~] = parse_args(defaults, varargin{:});
 
@@ -29,13 +30,19 @@ function varargout = phPlotAverageFromTE(TE, trials, ch, varargin)
         figure(s.fig);
         s.ax = axes;
     end
+    
+    if s.alpha
+        alpha = {'alpha'};
+    else
+        alpha = {};
+    end
     Photometry = s.PhotometryField;
     
     if ~iscell(trials)
         trials = {trials};
     end
     
-    if ~isfield(TE, Photometry);
+    if ~isfield(TE, Photometry)
         error([Photometry ' field does not exist']);
     end
     
@@ -81,10 +88,11 @@ function varargout = phPlotAverageFromTE(TE, trials, ch, varargin)
         currentData = TE.(Photometry).data(ch).(s.FluorDataField)(currentTrials, startP:endP);
         avg = nanmean(currentData);
         avgSEM = std(currentData, 'omitnan') ./ sqrt(sum(~isnan(currentData), 1));
+
         if isempty(s.cmap)
-            thisHl = boundedline(xData, avg, avgSEM, thisLinespec, ax, 'alpha');       
+            thisHl = boundedline(xData, avg, avgSEM, thisLinespec, ax, alpha{:});       
         else
-            thisHl = boundedline(xData, avg, avgSEM, ax, 'alpha', 'cmap', s.cmap(counter,:));    
+            thisHl = boundedline(xData, avg, avgSEM, ax, alpha{:}, 'cmap', s.cmap(counter,:));    
         end
         lh(counter) = thisHl; % return handles of the solid lines in the bounded plots
     end

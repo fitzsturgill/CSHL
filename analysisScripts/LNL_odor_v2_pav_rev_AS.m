@@ -11,7 +11,7 @@ TE = makeTE_LNL_odor_V2(sessions);
 %%
 % assume that photometry channels are consistent across sessions, bleach
 % fit dFF for GCaMP6f (ch1) and simple dFF for jRGECO1a (ch2)
-channels=[]; dFFMode = {}; BL = {};
+channels=[]; dFFMode = {}; BL = {}; 
 if sessions(1).SessionData.Settings.GUI.LED1_amp > 0
     channels(end+1) = 1;
     dFFMode{end+1} = 'expFit';
@@ -25,10 +25,12 @@ if sessions(1).SessionData.Settings.GUI.LED2_amp > 0
     BL{end + 1} = [0 4];    
 end
 
-
-    
-
-TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL);
+%% baseline by trial
+ TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL,...
+    'tau', 2);   
+%% baseline expfit
+TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', {'expFit', 'byTrial'}, 'zeroField', 'Cue', 'channels', channels, 'baseline', BL,...
+    'tau', 2);
 % TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'expFitBegin', 0.1,...
 %     'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL, 'downsample', 305);
 %%
@@ -40,7 +42,7 @@ channels = [1 2];
 nTrials = length(TE.filename);
 csWindow = zeros(nTrials, 2);
 csWindow(:,2) = cellfun(@(x,y,z) max(x(end), y(end)) - z(1), TE.AnswerLick, TE.AnswerNoLick, TE.Cue); 
-% max 1) to select AnswerNoLick time stamp for no lick trials (unused state contains NaN)
+% max 1) to select AnswerNoLick time stampfor no lick trials (unused state contains NaN)
 % 2) to select AnswerLick time stamp for lick trials (AnswerLick follows
 % AnswerNoLick state)
 
@@ -78,8 +80,8 @@ TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', 11, 'Fs', 20, 'start
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
-basepath = uigetdir;
-% basepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\';
+% basepath = uigetdir;
+basepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\';
 % basepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\DC_20and17_combined\';
 sep = strfind(TE.filename{1}, '_');
 subjectName = TE.filename{1}(1:sep(2)-1);
@@ -138,16 +140,18 @@ end
     Odor1Trials = filterTE(TE, 'OdorValveIndex', 1, 'reject', 0);
     Odor2Trials = filterTE(TE, 'OdorValveIndex', 2, 'reject', 0);    
     
-    rewardTrials = filterTE(TE, 'trialType', 1, 'reject', 0);
+    rewardTrials = filterTE(TE, 'trialType', [1 5], 'reject', 0);
     hitTrials = filterTE(TE, 'trialOutcome', 1, 'reject', 0);
     missTrials = filterTE(TE, 'trialOutcome', -1, 'reject', 0);
-    punishTrials = filterTE(TE, 'trialType', 3, 'reject', 0);    
+    punishTrials = filterTE(TE, 'trialType', [3 6], 'reject', 0);    
     neutralTrials = filterTE(TE, 'trialType', [2 4], 'reject', 0);
     block2Trials = filterTE(TE, 'BlockNumber', 2, 'reject', 0);
     block3Trials = filterTE(TE, 'BlockNumber', 3, 'reject', 0);
     csPlusTrials = filterTE(TE, 'trialType', [1 2], 'reject', 0);
-    csMinusTrials = filterTE(TE, 'trialType', [3 4], 'reject', 0);    
-    trialTypes = 1:4;
+    csMinusTrials = filterTE(TE, 'trialType', [3 4], 'reject', 0);
+    uncuedReward = filterTE(TE, 'trialType', 5, 'reject', 0);
+    uncuedPunish = filterTE(TE, 'trialType', 6, 'reject', 0);
+    trialTypes = 1:6;
     trialsByType = cell(size(trialTypes));
     for counter = 1:length(trialTypes)
         trialsByType{counter} = filterTE(TE, 'trialType', trialTypes(counter), 'reject', 0);
@@ -161,7 +165,7 @@ mcLandscapeFigSetup(h);
 subplot(5,1,1); scatter(trialCount(csPlusTrials), TE.csLicks.rate(csPlusTrials),'o'); % both blLicks and anticipatoryLicks2 are from 2s periods
 % subplot(4,1,1); scatter(1:length(allTE.epoch), cuedReward.anticipatoryLicks2);
 maxLR = max(TE.csLicks.rate(csPlusTrials));
-% subplot(4,1,1); plot(smooth(cuedReward.anticipatoryLicks2 / mean(cuedReward.blLicks)));
+% subplot(4,1,1); plot(smooth(cuedReward.anticipatoryLicks1 / mean(cuedReward.blLicks)));
 % maxLR = smooth(max(cuedReward.anticipatoryLicks2 / mean(cuedReward.blLicks)));
 hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxLR, 'g', 'Marker', 'none');
 hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxLR, 'r', 'Marker', 'none');
@@ -310,7 +314,7 @@ for channel = channels
     line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines    
     set(gca, 'FontSize', 14)
     xlabel('time from cue (s)');         
-
+    colormap('parula');  
 
     if saveOn
         saveas(gcf, fullfile(savepath, [saveName '.fig']));
@@ -330,16 +334,16 @@ end
     % - 6 0 4
     if ismember(1, channels)
         subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); 
-        [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials}, 1,...
-            'FluorDataField', 'ZS', 'window', [3, 7], 'linespec', {'b', 'r', 'k'}); %high value, reward
+        [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials, uncuedReward, uncuedPunish}, 1,...
+            'FluorDataField', 'ZS', 'window', [3, 7], 'linespec', {'b', 'r', 'k', 'c', 'm'}); %high value, reward
         legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
         title('Reinforcement'); ylabel('BF dF/F Zscored'); textBox(subjectName);%set(gca, 'YLim', ylim);
     end
     
     if ismember(2, channels)    
         subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1); 
-        [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials}, 2,...
-            'FluorDataField', 'ZS', 'window', [3, 7], 'linespec', {'b', 'r', 'k'}); %high value, reward
+        [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials, uncuedReward, uncuedPunish}, 2,...
+            'FluorDataField', 'ZS', 'window', [3, 7], 'linespec', {'b', 'r', 'k', 'c', 'm'}); %high value, reward
         legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
         ylabel('VTA dF/F Zscored'); xlabel('time from cue (s)'); %set(gca, 'YLim', ylim);
     end
@@ -463,9 +467,9 @@ end
         ];
     end
     RE = struct();
-    RE.csPlus = extractReversalsFromTE(TE, csPlusTrials, dataToPull, 'maxReversals', 3);
-    RE.csMinus = extractReversalsFromTE(TE, csMinusTrials, dataToPull, 'maxReversals', 3);
-    RE.csPlusReward = extractReversalsFromTE(TE, csPlusTrials & rewardTrials, dataToPull, 'maxReversals', 3);    
+    RE.csPlus = extractReversalsFromTE(TE, csPlusTrials, dataToPull, 'maxReversals', 1);
+    RE.csMinus = extractReversalsFromTE(TE, csMinusTrials, dataToPull, 'maxReversals', 1);
+    RE.csPlusReward = extractReversalsFromTE(TE, csPlusTrials & rewardTrials, dataToPull, 'maxReversals', 1);    
     nReversals = size(RE.csPlus.phPeakPercentile_cs_ch1.after, 1);
     
 if saveOn

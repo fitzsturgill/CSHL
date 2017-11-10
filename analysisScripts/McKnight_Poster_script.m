@@ -1,4 +1,4 @@
-
+%%
 plotFields = {'blLicks', 'anticipatoryLicks1', 'anticipatoryLicks2', 'usLicks', 'epoch', 'sessionIndex',...
     'phCuePeak', 'phCuePeakLong', 'phDelayPeak', 'phUsPeak', 'trialIndex', 'phRaster'};
  
@@ -98,7 +98,7 @@ set(gca, 'XLim', [1 length(allTE.epoch)]); set(gca, 'YLim', [-0.02 0.02]);
 
 %%
 
-cd('C:\Users\Adam\Dropbox\KepecsLab\_Fitz\McKnight_Poster');
+cd('C:\Users\Adam\Dropbox\KepecsLab\_Fitz\McKnight\Poster\');
 early_dFF_cued = byTypes(1).phRaster(byTypes(1).sessionIndex == 1, :);
 mid_dFF_cued = byTypes(1).phRaster(byTypes(1).sessionIndex == 2, :);
 fourth_dFF_cued = byTypes(1).phRaster(byTypes(1).sessionIndex == 4, :);
@@ -136,28 +136,87 @@ formatFigure;
 saveas(gcf, 'expectency.fig');
 saveas(gcf, 'expectency.epsc');
 %%
-ensureFigure('learning', 1);
-ah = zeros(1,3);
+firstPoint = 10;
+xDataNew = xdata(firstPoint:end);
+ylim = [-0.005 0.020]; xlim = [-3 6];
+figSize = [4 2];
+ah = zeros(3,1);
 % early 
-ah(1) = subplot(3,1,1);
+saveName = 'early_phHist';
+ensureFigure(saveName, 1); ah(1) = axes;
 mean_cued = mean(early_dFF_cued);
 sem_cued = std(early_dFF_cued) / sqrt(size(early_dFF_cued, 1));
-boundedline(xdata, mean_cued, sem_cued, 'k');
+[lines, patches] = boundedline(xDataNew, mean_cued(firstPoint:end), sem_cued(firstPoint:end), 'cmap', [171 55 214]/256);
+set(lines, 'LineWidth', 2);
+set(gca, 'YLim', ylim, 'XLim', xlim, 'YTickLabel', '');
+formatFigurePoster(figSize);
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    saveas(gcf, fullfile(savepath, [saveName '.epsc']));   
+end    
 % middle
-ah(2) = subplot(3,1,2);
+saveName = 'mid_phHist';
+ensureFigure(saveName, 1); ah(2) = axes;
 mean_cued = mean(mid_dFF_cued);
 sem_cued = std(mid_dFF_cued) / sqrt(size(mid_dFF_cued, 1));
-boundedline(xdata, mean_cued, sem_cued, 'k');
+[lines, patches] = boundedline(xDataNew, mean_cued(firstPoint:end), sem_cued(firstPoint:end), 'cmap', [171 55 214]/256);
+set(lines, 'LineWidth', 2);
+set(gca, 'YLim', ylim, 'XLim', xlim, 'YTickLabel', '');
+formatFigurePoster(figSize);
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    saveas(gcf, fullfile(savepath, [saveName '.epsc']));   
+end    
 % late
-ah(3) = subplot(3,1,3);
-mean_cued = mean(late_dFF_cued);
+saveName = 'late_phHist';
+ensureFigure(saveName, 1);
+mean_cued = mean(late_dFF_cued); ah(3) = axes;
 sem_cued = std(late_dFF_cued) / sqrt(size(late_dFF_cued, 1));
-boundedline(xdata, mean_cued, sem_cued, 'k');
-setSameYmax(ah,0,-.01);
-set(ah, 'TickDir', 'out');
-formatFigure([1 1]);
-saveas(gcf, 'learning.fig');
-saveas(gcf, 'learning.epsc');
+[lines, patches] = boundedline(xDataNew, mean_cued(firstPoint:end), sem_cued(firstPoint:end), 'cmap', [171 55 214]/256);
+set(lines, 'LineWidth', 2);
+set(gca, 'YLim', ylim, 'XLim', xlim, 'YTickLabel', '');
+formatFigurePoster(figSize);
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    saveas(gcf, fullfile(savepath, [saveName '.epsc']));   
+end    
+
+
+
+
+
+%% SFN 2017
+savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SFN_2017\PE_Hypothesis';
+clim = [-0.02 0.015];
+ensureFigure('early_cued_phRaster', 1);
+colormap('parula');
+imagesc(xdata, 1:size(early_dFF_cued, 1), early_dFF_cued, [clim]);
+set(gca, 'TickDir', 'out', 'Box', 'off', 'XTick', [], 'YTick', []);
+formatFigurePoster([4,3]);
+saveas(gcf, fullfile(savepath, 'early_phRaster'), 'fig');
+saveas(gcf, fullfile(savepath, 'early_phRaster'), 'jpeg');
+saveas(gcf, fullfile(savepath, 'early_phRaster'), 'epsc');
+
+
+ensureFigure('mid_cued_phRaster', 1);
+imagesc(xdata, 1:size(mid_dFF_cued, 1), mid_dFF_cued, [clim]);
+set(gca, 'TickDir', 'out', 'Box', 'off', 'XTick', [], 'YTick', []);
+set(gca, 'YLim', [10 80]);
+formatFigurePoster([4,3]);
+saveas(gcf, fullfile(savepath, 'mid_phRaster'), 'fig');
+saveas(gcf, fullfile(savepath, 'mid_phRaster'), 'jpeg');
+saveas(gcf, fullfile(savepath, 'mid_phRaster'), 'epsc');
+
+ensureFigure('late_cued_phRaster', 1);
+imagesc(xdata, 1:size(late_dFF_cued, 1), late_dFF_cued, [clim]);
+set(gca, 'TickDir', 'out', 'Box', 'off', 'XTick', [], 'YTick', []);
+formatFigurePoster([4,3]);
+saveas(gcf, fullfile(savepath, 'late_phRaster'), 'fig');
+saveas(gcf, fullfile(savepath, 'late_phRaster'), 'jpeg');
+saveas(gcf, fullfile(savepath, 'late_phRaster'), 'epsc');
 
 %%
 save('McKnight.mat', 'allTE', 'TE', 'byTypes');
