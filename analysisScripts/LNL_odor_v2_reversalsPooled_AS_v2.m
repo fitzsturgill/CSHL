@@ -32,7 +32,7 @@ saveOn = 1;
 
 
 %% find total number of reverals, max post reversal trials, etc.
-
+% first column- CS+, second column, CS-
 trialsBefore = zeros(length(RE), 2);
 trialsAfter = zeros(length(RE), 2);
 nReversals = zeros(length(RE), 1);
@@ -43,8 +43,6 @@ for counter = 1:length(RE)
     trialsAfter(counter, 2) = length(RE(counter).csMinus.trialsAfter);    
     nReversals(counter) = size(RE(1).csPlus.trialType.before, 1);
 end
-trialsBefore = trialsBefore; % first column- CS+, second column, CS-
-trialsAfter = trialsAfter;
 
 
 allReversals_phPeakMean_cs_ch1 = NaN(size();
