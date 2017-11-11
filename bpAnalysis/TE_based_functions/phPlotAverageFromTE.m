@@ -90,11 +90,12 @@ function varargout = phPlotAverageFromTE(TE, trials, ch, varargin)
         avgSEM = std(currentData, 'omitnan') ./ sqrt(sum(~isnan(currentData), 1));
 
         if isempty(s.cmap)
-            thisHl = boundedline(xData, avg, avgSEM, thisLinespec, ax, alpha{:});       
+            [thisHl, thisHp] = boundedline(xData, avg, avgSEM, thisLinespec, ax, alpha{:});       
         else
-            thisHl = boundedline(xData, avg, avgSEM, ax, alpha{:}, 'cmap', s.cmap(counter,:));    
+            [thisHl, thisHp] = boundedline(xData, avg, avgSEM, ax, alpha{:}, 'cmap', s.cmap(counter,:));    
         end
         lh(counter) = thisHl; % return handles of the solid lines in the bounded plots
+        ph(counter) = thisHp;
     end
     
     
@@ -102,8 +103,12 @@ function varargout = phPlotAverageFromTE(TE, trials, ch, varargin)
         varargout{1} = ax;
     end
     
-    if nargout == 2
+    if nargout >= 2
         varargout{2} = lh;
+    end
+    
+    if nargout == 3
+        varargout{3} = ph;
     end
     
     

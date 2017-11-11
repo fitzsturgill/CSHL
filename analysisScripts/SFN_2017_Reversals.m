@@ -1,6 +1,6 @@
 
 % SFN 2017 script 
-% testing of unsigned prediction error hypothesis
+% reversal data
 
 %% desktop
 savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SFN_2017\Reversals';
@@ -52,16 +52,17 @@ cmap = cmap(round(size(cmap,1) * 0.33):end, :);
 % cmap = flipud(cmap);
 [patches lines] = deal(zeros(nTranches,1));
 for counter = 1:nTranches
-    [hp, hl] = phPlotAverageFromTE(TE, trialMatrix(:,counter,:), 1,...
+    [ha, hl, hp] = phPlotAverageFromTE(TE, trialMatrix(:,counter,:), 1,...
     'FluorDataField', 'ZS', 'window', [-1, 5], 'cmap', cmap(round(size(cmap, 1) * counter / nTranches), :), 'alpha', 0); %high value, reward
     patches(counter) = hp; lines(counter) = hl;
 end
+delete(patches); % WTF somehow not saving as vector file even though I have alpha set to off and I've tracked it all the way into boundedline
 set(lines, 'LineWidth', 2);
 ylabel('Fluor. (\sigma-baseline)'); set(gca, 'XLim', [-1, 5], 'YLim', [-.5 3]);
 xlabel('Time from odor (s)');
 % set(gca, 'XTick', []);
-addStimulusPatch(gca, [0 1], '');%, patchHue, 1);
-addStimulusPatch(gca, [2.9 3.1]);%, '', patchHue, 1);
+addStimulusPatch(gca, [0 1], '', patchHue, 1);
+addStimulusPatch(gca, [2.9 3.1], '', patchHue, 1);
 legend(lines, {'early', 'middle', 'late'}, 'Location', 'northwest', 'FontSize', 14, 'Box', 'off'); 
 formatFigurePoster(figSize, '', fontSize);
 
@@ -80,18 +81,19 @@ ax = axes; hold on; colormap(ax, 'autumn');
 cmap = colormap(ax); % get the colormap
 cmap = flipud(cmap);
 cmap = cmap(1:round(size(cmap,1) * 0.66), :);
-[patches lines] = deal(zeros(nTranches,1));
+[ax lines patches] = deal(zeros(nTranches,1));
 for counter = 1:nTranches
-    [hp hl] = phPlotAverageFromTE(TE, trialMatrix(:,counter,:), 2,...
+    [ha, hl, hp] = phPlotAverageFromTE(TE, trialMatrix(:,counter,:), 2,...
     'FluorDataField', 'ZS', 'window', [-1, 5], 'cmap', cmap(round(size(cmap, 1) * counter / nTranches), :), 'alpha', 0); %high value, reward
     patches(counter) = hp; lines(counter) = hl;
 end
+delete(patches); % WTF somehow not saving as vector file even though I have alpha set to off and I've tracked it all the way into boundedline
 set(lines, 'LineWidth', 2);
 
 ylabel('Fluor. (\sigma-baseline)'); set(gca, 'XLim', [-1, 5], 'YLim', [-.5 3]);
 xlabel('Time from odor (s)');
-addStimulusPatch(gca, [0 1]);%, '', patchHue, 1);
-addStimulusPatch(gca, [2.9 3.1]);%, '', patchHue, 1);
+addStimulusPatch(gca, [0 1], '', patchHue, 1);
+addStimulusPatch(gca, [2.9 3.1], '', patchHue, 1);
 legend(lines, {'early', 'middle', 'late'}, 'Location', 'northwest', 'FontSize', 14, 'Box', 'off'); 
 formatFigurePoster(figSize, '', fontSize);
 

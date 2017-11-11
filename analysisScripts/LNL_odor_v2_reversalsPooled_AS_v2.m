@@ -31,295 +31,152 @@ savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SFN_2017\Reversals';
 saveOn = 1;
 
 
-%% find total number of reverals, max post reversal trials, etc.
-% first column- CS+, second column, CS-
-trialsBefore = zeros(length(RE), 2);
-trialsAfter = zeros(length(RE), 2);
-nReversals = zeros(length(RE), 1);
-for counter = 1:length(RE)
-    trialsBefore(counter, 1) = length(RE(counter).csPlus.trialsBefore);
-    trialsAfter(counter, 1) = length(RE(counter).csPlus.trialsAfter);
-    trialsBefore(counter, 2) = length(RE(counter).csMinus.trialsBefore);
-    trialsAfter(counter, 2) = length(RE(counter).csMinus.trialsAfter);    
-    nReversals(counter) = size(RE(1).csPlus.trialType.before, 1);
+
+
+
+
+%% create structure containing all reversals
+AR = struct('csPlus', [], 'csMinus', [], 'csPlusReward', []); % AR = all reversals
+for group = fieldnames(AR)'
+    sgroup = group{:};
+    for field = fieldnames(RE(1).(sgroup))'
+        sfield = field{:};
+        for si = 1:length(RE)
+            if sum(strcmp(sfield, {'trialsBefore', 'trialsAfter'})) % these are special fields that don't contain before and after data
+                continue
+            end
+            if si == 1
+                AR.(sgroup).(sfield).before = RE(si).(sgroup).(sfield).before;
+                AR.(sgroup).(sfield).after = RE(si).(sgroup).(sfield).after;
+            else
+                AR.(sgroup).(sfield).before = expandVertCat(AR.(sgroup).(sfield).before, RE(si).(sgroup).(sfield).before, 'right');
+                AR.(sgroup).(sfield).after = expandVertCat(AR.(sgroup).(sfield).after, RE(si).(sgroup).(sfield).after, 'left');
+            end
+        end
+    end
 end
-
-
-allReversals_phPeakMean_cs_ch1 = NaN(size();
-allReversals_phPeakMean_cs_ch2 = NaN(sum(dataSize(:,1)), 82);
-
-allReversals_phPeakMean_cs_ch1(1:6,1:82) = RE(1).csPlus.phPeakMean_cs_ch1.after(:,1:82);
-allReversals_phPeakMean_cs_ch1(7:end,1:82) = RE(2).csPlus.phPeakMean_cs_ch1.after(:,1:82);
-
-
-allReversals_phPeakMean_cs_ch2(1:6,1:82) = RE(1).csPlus.phPeakMean_cs_ch2.after(:,1:82);
-allReversals_phPeakMean_cs_ch2(7:end,1:82) = RE(2).csPlus.phPeakMean_cs_ch2.after(:,1:82);
-
-ensureFigure('Reversals_Raw', 1);
-subplot(2,1,1); plot(allReversals_phPeakMean_cs_ch1');
-subplot(2,1,2); plot(allReversals_phPeakMean_cs_ch2');
-
-% tiled plots for ch1 and ch2
-h1 = ensureFigure('raw_ch1_tiled', 1);
-ylim1 = [min(min(allReversals_phPeakMean_cs_ch1)) max(max(allReversals_phPeakMean_cs_ch1))];
-ylim2 = [min(min(allReversals_phPeakMean_cs_ch2)) max(max(allReversals_phPeakMean_cs_ch2))];
-for counter = 1:10
-    subplot(3,4,counter, 'Parent', h1); plot(allReversals_phPeakMean_cs_ch1(counter, :)); set(gca, 'YLim', ylim1);
-end
-h2 = ensureFigure('raw_ch2_tiled', 1);
-for counter = 1:10
-    subplot(3,4,counter, 'Parent', h2); plot(allReversals_phPeakMean_cs_ch2(counter, :)); set(gca, 'YLim', ylim2);
-end
-
-%% just plot the means
-ensureFigure('means_raw', 1);
-plot(nanmean(allReversals_phPeakMean_cs_ch1), 'g'); hold on
-plot(nanmean(allReversals_phPeakMean_cs_ch2), 'r');
-
-%% normalize by 90% of post reversal values
-
-normVal_ch1 = zeros(10,1);
-normVal_ch2 = zeros(10,1);
-for counter = 1:10
-    lastTrial = find(~isnan(allReversals_phPeakMean_cs_ch1(counter,:)), 1, 'last');
-    normVal_ch1(counter) = percentile(allReversals_phPeakMean_cs_ch1(counter, :), 0.9);
-    normVal_ch2(counter) = percentile(allReversals_phPeakMean_cs_ch2(counter, :), 0.9);
-end
-
-allReversals_phPeakMeanNorm_cs_ch1 = bsxfun(@rdivide, allReversals_phPeakMean_cs_ch1, normVal_ch1);
-allReversals_phPeakMeanNorm_cs_ch2 = bsxfun(@rdivide, allReversals_phPeakMean_cs_ch2, normVal_ch2);
-
-% reversal 6 is funky for both channels
-ensureFigure('trials_norm', 1);
-subplot(2,1,1); plot(allReversals_phPeakMeanNorm_cs_ch1'); set(gca, 'YLim', [-1 1.5]);
-subplot(2,1,2); plot(allReversals_phPeakMeanNorm_cs_ch2'); set(gca, 'YLim', [-1 1.5]);
-
-ensureFigure('means_norm', 1);
-plot(nanmean(allReversals_phPeakMeanNorm_cs_ch1([1:5 7:10], :)), 'g'); hold on
-plot(nanmean(allReversals_phPeakMeanNorm_cs_ch2([1:5 7:10], :)), 'g');
-    
-    
-    
-%% Same thing but add on before trials
-
+nReversals = size(AR.csPlus.globalTrialNumber.after, 1);
 %% 
-% find total number of reverals, max post reversal trials, etc.
-% hard coded for now
-dataSize = [6 106; 4 82];
-dataSizeBefore = [6 106; 4 80];
+newCsPlus_ch1 = [AR.csMinus.phPeakMean_cs_ch1.before AR.csPlus.phPeakMean_cs_ch1.after];
+newCsPlus_ch2 = [AR.csMinus.phPeakMean_cs_ch2.before AR.csPlus.phPeakMean_cs_ch2.after];
+newCsPlus_trialNumber = (1:size(newCsPlus_ch1, 2)) - size(AR.csMinus.phPeakMean_cs_ch1.before, 2);
+newCsPlus_firstRevTrial = size(AR.csMinus.phPeakMean_cs_ch1.before, 2) + 1;
 
-allReversals_phPeakMean_cs_ch1_before = NaN(sum(dataSizeBefore(:,1)), 80);
-allReversals_phPeakMean_cs_ch2_before = NaN(sum(dataSizeBefore(:,1)), 80);
+newCsMinus_ch1 = [AR.csPlus.phPeakMean_cs_ch1.before AR.csMinus.phPeakMean_cs_ch1.after];
+newCsMinus_ch2 = [AR.csPlus.phPeakMean_cs_ch2.before AR.csMinus.phPeakMean_cs_ch2.after];
+newCsMinus_trialNumber = (1:size(newCsMinus_ch1, 2)) - size(AR.csPlus.phPeakMean_cs_ch1.before, 2);
+newCsMinus_firstRevTrial = size(AR.csPlus.phPeakMean_cs_ch1.before, 2) + 1;
 
-allReversals_phPeakMean_cs_ch1_before(1:6,1:80) = RE(1).csPlus.phPeakMean_cs_ch1.before(:,end - 80 + 1:end);
-allReversals_phPeakMean_cs_ch1_before(7:end,1:80) = RE(2).csPlus.phPeakMean_cs_ch1.before(:,end - 80 + 1:end);
-
-
-allReversals_phPeakMean_cs_ch2_before(1:6,1:80) = RE(1).csPlus.phPeakMean_cs_ch2.before(:,end - 80 + 1:end);
-allReversals_phPeakMean_cs_ch2_before(7:end,1:80) = RE(2).csPlus.phPeakMean_cs_ch2.before(:,end - 80 + 1:end);
-
-revNorm_ch1_before = bsxfun(@rdivide, allReversals_phPeakMean_cs_ch1_before, normVal_ch1);
-revNorm_ch2_before = bsxfun(@rdivide, allReversals_phPeakMean_cs_ch2_before, normVal_ch2);
-
-revNormComplete_ch1 = [revNorm_ch1_before allReversals_phPeakMeanNorm_cs_ch1];
-revNormComplete_ch2 = [revNorm_ch2_before allReversals_phPeakMeanNorm_cs_ch2];
-
-
-% tiled plots for ch1 and ch2
-h1 = ensureFigure('normComplete_ch1_tiled', 1);
-ylim1 = [min(min(revNormComplete_ch1)) max(max(revNormComplete_ch1))];
-ylim2 = [min(min(revNormComplete_ch2)) max(max(revNormComplete_ch2))];
-
-xData = -80:81;
-for counter = 1:10
-    subplot(3,4,counter, 'Parent', h1); plot(xData, revNormComplete_ch1(counter, end - 161:end)); set(gca, 'YLim', ylim1);
+sb = [4, 5];
+savename1 = 'newCsPlus_ch1_tiled';
+h1 = ensureFigure(savename1, 1);
+savename2 = 'newCsPlus_ch2_tiled';
+h2 = ensureFigure(savename2, 1);
+for counter = 1:nReversals
+    a1 = subplot(sb(1),sb(2),counter, 'Parent', h1); 
+    plot(newCsPlus_trialNumber, smoothdata(newCsPlus_ch1(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a1);
+    a2 = subplot(sb(1),sb(2),counter, 'Parent', h2); 
+    plot(newCsPlus_trialNumber, smoothdata(newCsPlus_ch2(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a2);    
+end
+sb = [4, 5];
+savename1 = 'newCsMinus_ch1_tiled';
+h1 = ensureFigure(savename1, 1);
+savename2 = 'newCsMinus_ch2_tiled';
+h2 = ensureFigure(savename2, 1);
+for counter = 1:nReversals
+    a1 = subplot(sb(1),sb(2),counter, 'Parent', h1); 
+    plot(newCsMinus_trialNumber, smoothdata(newCsMinus_ch1(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a1);
+    a2 = subplot(sb(1),sb(2),counter, 'Parent', h2); 
+    plot(newCsMinus_trialNumber, smoothdata(newCsMinus_ch2(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a2);    
 end
 
-h2 = ensureFigure('normComplete_ch2_tiled', 1);
-for counter = 1:10
-    subplot(3,4,counter, 'Parent', h2); plot(xData, revNormComplete_ch2(counter, end - 161:end)); set(gca, 'YLim', ylim2);
-end
+newCsPlus_licks = [AR.csMinus.csLicks.before AR.csPlus.csLicks.after];
+newCsMinus_licks = [AR.csPlus.csLicks.before AR.csMinus.csLicks.after];
 
-%% by CS+
-revNormComplete_ch1 = smoothdata(revNormComplete_ch1, 2, 'movmean', 3, 'omitnan');
-revNormComplete_ch2 = smoothdata(revNormComplete_ch2, 2, 'movmean', 5, 'omitnan');
-%%
-% ensureFigure('full_means_norm', 1);
-% plot(xData, nanmean(revNormComplete_ch1([1:5 7:10], :))), 'g'); hold on
-% plot(xData, smooth(nanmean(revNormComplete_ch2([1:5 7:10], :))), 'r');
-% set(gca, 'XLim', [-30 40]);
-% {0.9258, 0.4883, 0.1914} % orange
-% {0.6680, 0.2148, 0.8359} % purple
-ensureFigure('Reversals_full_means_norm', 1);
-hla = zeros(1,2);
-[hl, hp] = boundedline(xData(18:127), nanmean(revNormComplete_ch2([1:5 7:10], 18:127)), nanSEM(revNormComplete_ch2([1:5 7:10], 18:127))',...
-    'cmap', [237 125 49]/256, 'alpha'); hold on
+
+%% normalize by 90% of post reversal values, smooth, find first and last common points across reversals
+f = 0.9;
+newCsPlus_ch1_norm = smoothdata(newCsPlus_ch1, 2, 'movmean', 3, 'omitnan');
+newCsPlus_ch2_norm = smoothdata(newCsPlus_ch2, 2, 'movmean', 3, 'omitnan');
+newCsPlus_licks_norm = smoothdata(newCsPlus_licks, 2, 'movmean', 3, 'omitnan');
+
+newCsPlus_ch1_norm = bsxfun(@rdivide, newCsPlus_ch1_norm, percentile(newCsPlus_ch1_norm(:,newCsPlus_firstRevTrial:end), f, 2));
+newCsPlus_ch2_norm = bsxfun(@rdivide, newCsPlus_ch2_norm, percentile(newCsPlus_ch2_norm(:,newCsPlus_firstRevTrial:end), f, 2));
+newCsPlus_licks_norm = bsxfun(@rdivide, newCsPlus_licks_norm, percentile(newCsPlus_licks_norm(:,newCsPlus_firstRevTrial:end), f, 2));
+
+
+% common = find(mean(newCsPlus_ch1_norm));% applying mean will reveal NaNs
+common = sum(~isnan(newCsPlus_ch1_norm)) > 3;% applying mean will reveal NaNs
+
+
+savename = 'reversals_newCsPlus';
+ensureFigure(savename, 1);
+hla = zeros(1,3);
+[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus_ch2_norm(:, common)), nanSEM(newCsPlus_ch2_norm(:, common))',...
+    'cmap', [237 125 49]/256); hold on
 hla(1) = hl;
-[hl, hp] = boundedline(xData(18:127), nanmean(revNormComplete_ch1([1:5 7:10], 18:127)), nanSEM(revNormComplete_ch1([1:5 7:10], 18:127))',...
-    'cmap', [171 55 214]/256, 'alpha');
+[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus_ch1_norm(:, common)), nanSEM(newCsPlus_ch1_norm(:, common))',...
+    'cmap', [171 55 214]/256);
 hla(2) = hl;
+[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus_licks_norm(:, common)), nanSEM(newCsPlus_licks_norm(:, common))',...
+    'cmap', [0.5 0.5 0.5]/256);
+hla(3) = hl;
 set(hla, 'LineWidth', 2);
-set(gca, 'XLim', [-20 40], 'YLim', [-1 1.2]);
+set(gca, 'XLim', [-40 40], 'YLim', [-1 1]);
     h  = addOrginLines;
     set(h, 'LineWidth', 2);
-    legend(hla, {'\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.'}, 'Location', 'southeast', 'FontSize', 18, 'Interpreter', 'tex', 'Box', 'off');
+    legend(hla, {'\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.', ...
+        '\bf\color[rgb]{0.5,0.5,0.5}Licks'}, 'Location', 'southeast', 'FontSize', 18, 'Interpreter', 'tex', 'Box', 'off');
 
     xlabel('Odor presentations from reversal');
     ylabel('Cue response (norm.)');
     
-    formatFigureTalk([4 3]);
-    if saveOn    
-        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm.fig'));
-        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm.jpg'));    
-        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm.emf'));                   
-    end
-
-ensureFigure('Reversals_full_means_norm_ChAT_only', 1);
-
-[hl, hp] = boundedline(xData(18:127), nanmean(revNormComplete_ch1([1:5 7:10], 18:127)), nanSEM(revNormComplete_ch1([1:5 7:10], 18:127))',...
-    'cmap', [171 55 214]/256, 'alpha');
-set(hl, 'LineWidth', 2);
-set(gca, 'XLim', [-20 40], 'YLim', [-1 1.2]);
-    h  = addOrginLines;
-    set(h, 'LineWidth', 2);
-    legend(hl, {'\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.'}, 'Location', 'southeast', 'FontSize', 18, 'Interpreter', 'tex', 'Box', 'off');
-
-    xlabel('Odor presentations from reversal');
-    ylabel('Cue response (norm.)');
-    
-    formatFigureTalk([4 3]);
-    if saveOn    
-        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_ChAT_only.fig'));
-        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_ChAT_only.jpg'));    
-        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_ChAT_only.emf'));                   
-    end
-
-
-%% now track the new CS+ odor across the reversal
-
-dataSizeBefore = [6 113; 4 73];
-
-allReversals_phPeakMean_cs_ch1_before_byOdor = NaN(sum(dataSizeBefore(:,1)), 73);
-allReversals_phPeakMean_cs_ch2_before_byOdor = NaN(sum(dataSizeBefore(:,1)), 73);
-
-allReversals_phPeakMean_cs_ch1_before_byOdor(1:6,1:73) = RE(1).csMinus.phPeakMean_cs_ch1.before(:,end - 73 + 1:end);
-allReversals_phPeakMean_cs_ch1_before_byOdor(7:end,1:73) = RE(2).csMinus.phPeakMean_cs_ch1.before(:,end - 73 + 1:end);
-
-
-allReversals_phPeakMean_cs_ch2_before_byOdor(1:6,1:73) = RE(1).csMinus.phPeakMean_cs_ch2.before(:,end - 73 + 1:end);
-allReversals_phPeakMean_cs_ch2_before_byOdor(7:end,1:73) = RE(2).csMinus.phPeakMean_cs_ch2.before(:,end - 73 + 1:end);
-
-revNorm_ch1_before = bsxfun(@rdivide, allReversals_phPeakMean_cs_ch1_before_byOdor, normVal_ch1);
-revNorm_ch2_before = bsxfun(@rdivide, allReversals_phPeakMean_cs_ch2_before_byOdor, normVal_ch2);
-
-revNormComplete_ch1 = [revNorm_ch1_before allReversals_phPeakMeanNorm_cs_ch1];
-revNormComplete_ch2 = [revNorm_ch2_before allReversals_phPeakMeanNorm_cs_ch2];
-
-
-% tiled plots for ch1 and ch2
-h1 = ensureFigure('normComplete_ch1_tiled', 1);
-ylim1 = [min(min(revNormComplete_ch1)) max(max(revNormComplete_ch1))];
-ylim2 = [min(min(revNormComplete_ch2)) max(max(revNormComplete_ch2))];
-
-xData = -73:81;
-for counter = 1:10
-    subplot(3,4,counter, 'Parent', h1); plot(xData, revNormComplete_ch1(counter, :)); set(gca, 'YLim', ylim1);
-end
-
-h2 = ensureFigure('normComplete_ch2_tiled', 1);
-for counter = 1:10
-    subplot(3,4,counter, 'Parent', h2); plot(xData, revNormComplete_ch2(counter, :)); set(gca, 'YLim', ylim2);
-end
-
-% just plot the means
-ensureFigure('full_means_norm_unrestricted', 1);
-plot(xData, nanmean(revNormComplete_ch1([1:5 7:10], :)), 'g'); hold on
-plot(xData, nanmean(revNormComplete_ch2([1:5 7:10], :)), 'r');
-
-
-revNormComplete_delta = revNormComplete_ch1 - revNormComplete_ch2;
-revNormComplete_ch1 = smoothdata(revNormComplete_ch1, 2, 'movmean', 3);
-revNormComplete_ch2 = smoothdata(revNormComplete_ch2, 2, 'movmean', 5);
-revNormComplte_delta = smoothdata(revNormComplete_delta, 2, 'movmean', 5);
-
+    formatFigurePoster([5.5 4], '', 20);
+if saveOn
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));   
+end    
 %%
-% {0.9258, 0.4883, 0.1914} % orange
-% {0.6680, 0.2148, 0.8359} % purple
-ensureFigure('Reversals_full_means_norm_ch1_only_byOdor', 1);
-[hl, hp] = boundedline(xData(1:136), nanmean(revNormComplete_ch1([1:5 7:10], 1:136)), nanSEM(revNormComplete_ch1([1:5 7:10], 1:136))',...
-    'alpha', 'cmap', [0.6680, 0.2148, 0.8359]); hold on
-set(hl, 'LineWidth', 2);
-% legend(hl, {'\color{green}ACh.'}, 'Location', 'southeast', 'FontSize', 18, 'Interpreter', 'tex', 'Box', 'off');
-    set(gca, 'XLim', [-20 40], 'YLim', [0 1]);
+%% normalize by 90% of post reversal values, smooth, find first and last common points across reversals
+f = 0.9;
+newCsMinus_ch1_norm = smoothdata(newCsMinus_ch1, 2, 'movmean', 3, 'omitnan');
+newCsMinus_ch2_norm = smoothdata(newCsMinus_ch2, 2, 'movmean', 3, 'omitnan');
+newCsMinus_licks_norm = smoothdata(newCsMinus_licks, 2, 'movmean', 3, 'omitnan');
+
+newCsMinus_ch1_norm = bsxfun(@rdivide, newCsMinus_ch1_norm, percentile(newCsMinus_ch1_norm(:,1:newCsMinus_firstRevTrial - 1), f, 2));
+newCsMinus_ch2_norm = bsxfun(@rdivide, newCsMinus_ch2_norm, percentile(newCsMinus_ch2_norm(:,1:newCsMinus_firstRevTrial - 1), f, 2));
+newCsMinus_licks_norm = bsxfun(@rdivide, newCsMinus_licks_norm, percentile(newCsMinus_licks_norm(:,1:newCsMinus_firstRevTrial - 1), f, 2));
+
+
+% common = find(mean(newCsMinus_ch1_norm));% applying mean will reveal NaNs
+newCsMinus_common = sum(~isnan(newCsMinus_ch1_norm)) > 3;% applying mean will reveal NaNs
+
+savename = 'reversals_newCsMinus';
+ensureFigure(savename, 1);
+hla = zeros(1,3);
+[hl, hp] = boundedline(newCsMinus_trialNumber(newCsMinus_common), nanmean(newCsMinus_ch2_norm(:, newCsMinus_common)), nanSEM(newCsMinus_ch2_norm(:, newCsMinus_common))',...
+    'cmap', [237 125 49]/256); hold on
+hla(1) = hl;
+[hl, hp] = boundedline(newCsMinus_trialNumber(newCsMinus_common), nanmean(newCsMinus_ch1_norm(:, newCsMinus_common)), nanSEM(newCsMinus_ch1_norm(:, newCsMinus_common))',...
+    'cmap', [171 55 214]/256);
+hla(2) = hl;
+[hl, hp] = boundedline(newCsMinus_trialNumber(newCsMinus_common), nanmean(newCsMinus_licks_norm(:, newCsMinus_common)), nanSEM(newCsMinus_licks_norm(:, newCsMinus_common))',...
+    'cmap', [0.5 0.5 0.5]/256);
+hla(3) = hl;
+set(hla, 'LineWidth', 2);
+set(gca, 'XLim', [-40 40], 'YLim', [-1 1]);
     h  = addOrginLines;
-    legend(hl, {'\bf\color[rgb]{0.6680, 0.2148, 0.8359}ACh.'}, 'Location', 'southeast', 'FontSize', 16, 'Interpreter', 'tex', 'Box', 'off');
     set(h, 'LineWidth', 2);
+    legend(hla, {'\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.', ...
+        '\bf\color[rgb]{0.5,0.5,0.5}Licks'}, 'Location', 'southeast', 'FontSize', 18, 'Interpreter', 'tex', 'Box', 'off');
+
     xlabel('Odor presentations from reversal');
     ylabel('Cue response (norm.)');
     
-    formatFigureTalk([4 3]);
-    if saveOn    
-        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_ch1_only_byOdor.fig'));
-        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_ch1_only_byOdor.jpg'));    
-        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_ch1_only_byOdor.meta'));                   
-    end
-ensureFigure('Reversals_full_means_norm_ch1_only_byOdor_matchedYaxis', 1);
-[hl, hp] = boundedline(xData(1:136), nanmean(revNormComplete_ch1([1:5 7:10], 1:136)), nanSEM(revNormComplete_ch1([1:5 7:10], 1:136))',...
-    'alpha', 'cmap', [0.6680, 0.2148, 0.8359]); hold on
-set(hl, 'LineWidth', 2);
-% legend(hl, {'\color{green}ACh.'}, 'Location', 'southeast', 'FontSize', 18, 'Interpreter', 'tex', 'Box', 'off');
-    set(gca, 'XLim', [-20 40], 'YLim', [-1 1]);
-    h  = addOrginLines;
-    legend(hl, {'\bf\color[rgb]{0.6680, 0.2148, 0.8359}ACh.'}, 'Location', 'southeast', 'FontSize', 16, 'Interpreter', 'tex', 'Box', 'off');
-    set(h, 'LineWidth', 2);
-    xlabel('Odor presentations from reversal');
-    ylabel('Cue response (norm.)');
-    
-    formatFigureTalk([4 3]);
-    if saveOn    
-        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_ch1_only_byOdor_matchedYaxis.fig'));
-        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_ch1_only_byOdor_matchedYaxis.jpg'));    
-        saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_ch1_only_byOdor_matchedYaxis.meta'));                   
-    end
-
-ensureFigure('Reversals_full_means_norm_byOdor', 1);
-
-[lines, patches] = boundedline(xData(1:136), nanmean(revNormComplete_ch1([1:5 7:10], 1:136)), nanSEM(revNormComplete_ch1([1:5 7:10], 1:136))',...
-    'alpha', 'cmap', [0.6680, 0.2148, 0.8359]); hold on
-[hl, hp] = boundedline(xData(1:136), nanmean(revNormComplete_ch2([1:5 7:10], 1:136)), nanSEM(revNormComplete_ch2([1:5 7:10], 1:136))',...
-    'cmap', [0.9258, 0.4883, 0.1914], 'alpha');
-lines = [lines; hl];
-set(lines, 'LineWidth', 2);
-set(gca, 'XLim', [-20 40], 'YLim', [-1 1]);
-h  = addOrginLines;
-set(h, 'LineWidth', 2);
-legend(lines, {'\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.', '\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.'}, 'Location', 'southeast', 'FontSize', 18, 'Interpreter', 'tex', 'Box', 'off');
-xlabel('Odor presentations from reversal');
-ylabel('Cue response (norm.)');
-
-formatFigureTalk([4 3]);
-if saveOn    
-    saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_byOdor.fig'));
-    saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_byOdor.jpg'));    
-    saveas(gcf, fullfile(savepath, 'Reversals_full_means_norm_byOdor.meta'));                   
-end
-    
-    
-ensureFigure('full_means_normDelta', 1);
-[hl, hp] = boundedline(xData(1:136), nanmean(revNormComplete_delta([1:5 7:10], 1:136)), nanSEM(revNormComplete_delta([1:5 7:10], 1:136))', 'k'); hold on
-    set(gca, 'XLim', [-10 40]);%, 'YLim', [0 2]);
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    formatFigurePoster([5.5 4], '', 20);
+if saveOn
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));   
+end    
