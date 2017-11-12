@@ -249,8 +249,7 @@ reversals = find(diff(TE.BlockNumber(odorTrials & includedTrials)));
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'g', 'LineWidth', 2); % reversal lines       
     set(gca, 'XLim', [-2 6], 'YTick', []);
     addStimulusBar(gca, [0 1 0], '', [0.3 0.3 0.3], 5); addStimulusBar(gca, [2.9 3.1 0], '', [0.3 0.3 0.3], 5);    
-    formatFigureTalk([4.5 3]);
-
+    formatFigurePoster([6 4], '', 20);
 
     if saveOn
         saveas(gcf, fullfile(savepath, [saveName '.fig']));

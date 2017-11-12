@@ -94,7 +94,8 @@ newCsPlus_licks = [AR.csMinus.csLicks.before AR.csPlus.csLicks.after];
 newCsMinus_licks = [AR.csPlus.csLicks.before AR.csMinus.csLicks.after];
 
 
-%% normalize by 90% of post reversal values, smooth, find first and last common points across reversals
+
+%% newCsPlus - normalize by 90% of post reversal values, smooth, find first and last common points across reversals
 f = 0.9;
 newCsPlus_ch1_norm = smoothdata(newCsPlus_ch1, 2, 'movmean', 3, 'omitnan');
 newCsPlus_ch2_norm = smoothdata(newCsPlus_ch2, 2, 'movmean', 3, 'omitnan');
@@ -138,7 +139,7 @@ if saveOn
     saveas(gcf, fullfile(savepath, [savename '.epsc']));   
 end    
 %%
-%% normalize by 90% of post reversal values, smooth, find first and last common points across reversals
+%% newCsMinus - normalize by 90% of pre reversal values, smooth, find first and last common points across reversals
 f = 0.9;
 newCsMinus_ch1_norm = smoothdata(newCsMinus_ch1, 2, 'movmean', 3, 'omitnan');
 newCsMinus_ch2_norm = smoothdata(newCsMinus_ch2, 2, 'movmean', 3, 'omitnan');
@@ -175,6 +176,68 @@ set(gca, 'XLim', [-40 40], 'YLim', [-1 1]);
     ylabel('Cue response (norm.)');
     
     formatFigurePoster([5.5 4], '', 20);
+if saveOn
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));   
+end    
+
+%% find good example reversals for Ach, Dop, and licking
+sb = [4, 5];
+savename1 = 'newCsPlus_all_tiled';
+h1 = ensureFigure(savename1, 1);
+savename2 = 'newCsMinus_all_tiled';
+h2 = ensureFigure(savename2, 1);
+for counter = 1:nReversals
+    a1 = subplot(sb(1),sb(2),counter, 'Parent', h1); hold(a1, 'on');
+    plot(newCsPlus_trialNumber, newCsPlus_ch1_norm(counter, :), 'g', 'Parent', a1); 
+    plot(newCsPlus_trialNumber, newCsPlus_ch2_norm(counter, :), 'r', 'Parent', a1);
+    plot(newCsPlus_trialNumber, newCsPlus_licks_norm(counter, :), 'k', 'Parent', a1);    
+    a2 = subplot(sb(1),sb(2),counter, 'Parent', h2); hold(a2, 'on');
+    plot(newCsMinus_trialNumber, newCsMinus_ch1_norm(counter, :), 'g', 'Parent', a2); 
+    plot(newCsMinus_trialNumber, newCsMinus_ch2_norm(counter, :), 'r', 'Parent', a2);
+    plot(newCsMinus_trialNumber, newCsMinus_licks_norm(counter, :), 'k', 'Parent', a2);        
+end
+if saveOn
+    saveas(h1, fullfile(savepath, [savename1 '.fig']));
+    saveas(h1, fullfile(savepath, [savename1 '.jpg']));   
+    saveas(h1, fullfile(savepath, [savename1 '.epsc']));   
+    saveas(h2, fullfile(savepath, [savename2 '.fig']));
+    saveas(h2, fullfile(savepath, [savename2 '.jpg']));   
+    saveas(h2, fullfile(savepath, [savename2 '.epsc']));   
+end    
+
+%% plot good example reversals for both conditions  (CS- -> CS+,  CS+ -> CS-) 
+ex1 = 11;
+ex2 = 2; %3;
+acolor = [0.6680,0.2148,0.8359];
+dcolor = [0.9258,0.4883,0.1914];
+lcolor = [0.3 0.3 0.3];
+lwidth = 2;
+savename = 'newCsPlus_example';
+smoothFactor = 5;
+smoothMethod = 'movmean';
+ensureFigure(savename, 1); axes; hold on;
+plot(newCsPlus_trialNumber, smoothdata(newCsPlus_ch1_norm(ex1, :), smoothMethod, smoothFactor), 'Color', acolor, 'LineWidth', lwidth);
+plot(newCsPlus_trialNumber, smoothdata(newCsPlus_ch2_norm(ex1, :), smoothMethod, smoothFactor), 'Color', dcolor, 'LineWidth', lwidth);
+plot(newCsPlus_trialNumber, smoothdata(newCsPlus_licks_norm(ex1, :), smoothMethod, smoothFactor), 'Color', lcolor, 'LineWidth', lwidth);
+set(gca, 'XLim', [-40 40], 'XTick', [], 'YLim', [-1 1.5]);
+addOrginLines;
+formatFigurePoster([5.5 2], '', 20);
+if saveOn
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));   
+end    
+
+savename = 'newCsMinus_example';
+ensureFigure(savename, 1); axes; hold on;
+plot(newCsMinus_trialNumber, smoothdata(newCsMinus_ch1_norm(ex2, :), smoothMethod, smoothFactor), 'Color', acolor, 'LineWidth', lwidth);
+plot(newCsMinus_trialNumber, smoothdata(newCsMinus_ch2_norm(ex2, :), smoothMethod, smoothFactor), 'Color', dcolor, 'LineWidth', lwidth);
+plot(newCsMinus_trialNumber, smoothdata(newCsMinus_licks_norm(ex2, :), smoothMethod, smoothFactor), 'Color', lcolor, 'LineWidth', lwidth);
+set(gca, 'XLim', [-40 40], 'XTick', [], 'YLim', [-1 1.5]);
+addOrginLines;
+formatFigurePoster([5.5 2], '', 20);
 if saveOn
     saveas(gcf, fullfile(savepath, [savename '.fig']));
     saveas(gcf, fullfile(savepath, [savename '.jpg']));   
