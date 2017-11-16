@@ -29,7 +29,7 @@ function varargout = plotPupilAverageFromTE(TE, trials, varargin)
         trials = {trials};
     end
     
-    if ~isfield(TE, pupil);
+    if ~isfield(TE, pupil)
         error([pupil ' field does not exist']);
     end
     
@@ -54,7 +54,7 @@ function varargout = plotPupilAverageFromTE(TE, trials, varargin)
         currentData = TE.(pupil).(s.measurementField)(currentTrials, startP:endP);
         avg = nanmean(currentData);
         avgSEM = std(currentData, 'omitnan') ./ sqrt(sum(~isnan(currentData), 1));
-        thisHl = boundedline(xData, avg, avgSEM, thisLinespec, ax, 'alpha');       
+        thisHl = boundedline(xData, avg, avgSEM, thisLinespec, ax);       
         lh(counter) = thisHl; % return handles of the solid lines in the bounded plots
     end
     
