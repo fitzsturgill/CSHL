@@ -66,3 +66,5 @@ function TE = makeTE_LNL_odor_V2(sessions)
     
 
     
+%% wtf
+nanOutcome = isnan(TE.trialOutcome);
