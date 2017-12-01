@@ -67,6 +67,11 @@ newCsMinus_ch2 = [AR.csPlus.phPeakMean_cs_ch2.before AR.csMinus.phPeakMean_cs_ch
 newCsMinus_trialNumber = (1:size(newCsMinus_ch1, 2)) - size(AR.csPlus.phPeakMean_cs_ch1.before, 2);
 newCsMinus_firstRevTrial = size(AR.csPlus.phPeakMean_cs_ch1.before, 2) + 1;
 
+alwaysCsPlus_ch1 = [AR.csPlus.phPeakMean_cs_ch1.before AR.csPlus.phPeakMean_cs_ch1.after];
+alwaysCsPlus_ch2 = [AR.csPlus.phPeakMean_cs_ch2.before AR.csPlus.phPeakMean_cs_ch2.after];
+alwaysCsPlus_trialNumber = (1:size(alwaysCsPlus_ch1, 2)) - size(AR.csPlus.phPeakMean_cs_ch1.before, 2);
+alwaysCsPlus_firstRevTrial = size(AR.csPlus.phPeakMean_cs_ch1.before, 2) + 1;
+
 sb = [4, 5];
 savename1 = 'newCsPlus_ch1_tiled';
 h1 = ensureFigure(savename1, 1);
@@ -92,6 +97,7 @@ end
 
 newCsPlus_licks = [AR.csMinus.csLicks.before AR.csPlus.csLicks.after];
 newCsMinus_licks = [AR.csPlus.csLicks.before AR.csMinus.csLicks.after];
+alwaysCsPlus_licks = [AR.csPlus.csLicks.before AR.csPlus.csLicks.after];
 
 
 
@@ -171,6 +177,93 @@ set(gca, 'XLim', [-40 40], 'YLim', [-1 1]);
     set(h, 'LineWidth', 2);
     legend(hla, {'\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.', ...
         '\bf\color[rgb]{0.5,0.5,0.5}Licks'}, 'Location', 'southeast', 'FontSize', 18, 'Interpreter', 'tex', 'Box', 'off');
+
+    xlabel('Odor presentations from reversal');
+    ylabel('Cue response (norm.)');
+    
+    formatFigurePoster([5.5 4], '', 20);
+if saveOn
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));   
+end    
+
+%% alwaysCsPlus - normalize by 90% of post reversal values, smooth, find first and last common points across reversals
+f = 0.9;
+alwaysCsPlus_ch1_norm = smoothdata(alwaysCsPlus_ch1, 2, 'movmean', 3, 'omitnan');
+alwaysCsPlus_ch2_norm = smoothdata(alwaysCsPlus_ch2, 2, 'movmean', 3, 'omitnan');
+alwaysCsPlus_licks_norm = smoothdata(alwaysCsPlus_licks, 2, 'movmean', 3, 'omitnan');
+
+alwaysCsPlus_ch1_norm = bsxfun(@rdivide, alwaysCsPlus_ch1_norm, percentile(alwaysCsPlus_ch1_norm(:,alwaysCsPlus_firstRevTrial:end), f, 2));
+alwaysCsPlus_ch2_norm = bsxfun(@rdivide, alwaysCsPlus_ch2_norm, percentile(alwaysCsPlus_ch2_norm(:,alwaysCsPlus_firstRevTrial:end), f, 2));
+alwaysCsPlus_licks_norm = bsxfun(@rdivide, alwaysCsPlus_licks_norm, percentile(alwaysCsPlus_licks_norm(:,alwaysCsPlus_firstRevTrial:end), f, 2));
+
+
+% common = find(mean(alwaysCsPlus_ch1_norm));% applying mean will reveal NaNs
+common = sum(~isnan(alwaysCsPlus_ch1_norm)) > 3;% applying mean will reveal NaNs
+
+
+savename = 'reversals_alwaysCsPlus';
+ensureFigure(savename, 1);
+hla = zeros(1,3);
+[hl, hp] = boundedline(alwaysCsPlus_trialNumber(common), nanmean(alwaysCsPlus_ch2_norm(:, common)), nanSEM(alwaysCsPlus_ch2_norm(:, common))',...
+    'cmap', [237 125 49]/256); hold on
+hla(1) = hl;
+[hl, hp] = boundedline(alwaysCsPlus_trialNumber(common), nanmean(alwaysCsPlus_ch1_norm(:, common)), nanSEM(alwaysCsPlus_ch1_norm(:, common))',...
+    'cmap', [171 55 214]/256);
+hla(2) = hl;
+[hl, hp] = boundedline(alwaysCsPlus_trialNumber(common), nanmean(alwaysCsPlus_licks_norm(:, common)), nanSEM(alwaysCsPlus_licks_norm(:, common))',...
+    'cmap', [0.5 0.5 0.5]/256);
+hla(3) = hl;
+set(hla, 'LineWidth', 2);
+set(gca, 'XLim', [-40 40], 'YLim', [-1 1.6]);
+    h  = addOrginLines;
+    set(h, 'LineWidth', 2);
+    legend(hla, {'\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.', ...
+        '\bf\color[rgb]{0.5,0.5,0.5}Licks'}, 'Location', 'southeast', 'FontSize', 18, 'Interpreter', 'tex', 'Box', 'off');
+
+    xlabel('Odor presentations from reversal');
+    ylabel('Cue response (norm.)');
+    
+    formatFigurePoster([5.5 4], '', 20);
+if saveOn
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));   
+end    
+%% newCsPlus research statement - normalize by 90% of post reversal values, smooth, find first and last common points across reversals
+f = 0.9;
+newCsPlus_ch1_norm = smoothdata(newCsPlus_ch1, 2, 'movmean', 3, 'omitnan');
+newCsPlus_ch2_norm = smoothdata(newCsPlus_ch2, 2, 'movmean', 3, 'omitnan');
+newCsPlus_licks_norm = smoothdata(newCsPlus_licks, 2, 'movmean', 3, 'omitnan');
+
+newCsPlus_ch1_norm = bsxfun(@rdivide, newCsPlus_ch1_norm, percentile(newCsPlus_ch1_norm(:,newCsPlus_firstRevTrial:end), f, 2));
+newCsPlus_ch2_norm = bsxfun(@rdivide, newCsPlus_ch2_norm, percentile(newCsPlus_ch2_norm(:,newCsPlus_firstRevTrial:end), f, 2));
+newCsPlus_licks_norm = bsxfun(@rdivide, newCsPlus_licks_norm, percentile(newCsPlus_licks_norm(:,newCsPlus_firstRevTrial:end), f, 2));
+
+
+% common = find(mean(newCsPlus_ch1_norm));% applying mean will reveal NaNs
+common = sum(~isnan(newCsPlus_ch1_norm)) > 3;% applying mean will reveal NaNs
+
+
+savename = 'reversals_newCsPlus_researchStatement';
+ensureFigure(savename, 1);
+hla = zeros(1,3);
+[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus_ch2_norm(:, common)), nanSEM(newCsPlus_ch2_norm(:, common))',...
+    'r'); hold on
+hla(1) = hl;
+[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus_ch1_norm(:, common)), nanSEM(newCsPlus_ch1_norm(:, common))',...
+    'g');
+hla(2) = hl;
+[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus_licks_norm(:, common)), nanSEM(newCsPlus_licks_norm(:, common))',...
+    'k');
+hla(3) = hl;
+set(hla, 'LineWidth', 2);
+set(gca, 'XLim', [-20 40], 'YLim', [-1 1]);
+    h  = addOrginLines;
+    set(h, 'LineWidth', 2);
+    legend(hla, {'\bf\color{red}Dop.', '\bf\color{green}Ach.', ...
+        '\bf\color{black}Licks'}, 'Location', 'southeast', 'FontSize', 18, 'Interpreter', 'tex', 'Box', 'off');
 
     xlabel('Odor presentations from reversal');
     ylabel('Cue response (norm.)');
