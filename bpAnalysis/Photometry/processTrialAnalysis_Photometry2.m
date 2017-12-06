@@ -83,6 +83,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     if s.uniformOutput
         data = struct(...
             'dFF', NaN(totalTrials, newSamples),... % deltaF/F
+            'dF', NaN(totalTrials, newSamples),... % deltaF            
             'ZS', NaN(totalTrials, newSamples),... % deltaF/F            
             'raw', NaN(totalTrials, newSamples),... %
             'blF', NaN(totalTrials, 1),...
@@ -92,6 +93,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     else
         data = struct(...        
             'dFF', {},... % deltaF/F
+            'dF', {},...
             'ZS', {},... % deltaF/F            
             'raw', {},... %
             'blF', NaN(totalTrials, 1),...
@@ -119,6 +121,11 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     Photometry.bleachFit = repmat(bleachFit, length(sessions), max(s.channels));
     h = waitbar(0, 'Processing Photometry');    
     
+    % KLUDGE 
+    warning('kludgy implementation of tau per channel, will break if you use only channel 2');
+    if length(s.channels) > 1 && length(s.tau) == 1
+        s.tau = repmat(s.tau, 1, length(s.channels));
+    end
     tcounter = 1;    
     for si = 1:length(sessions)
         SessionData = sessions(si).SessionData;
@@ -212,7 +219,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
 %                         fit(trialMeanX, trialMeanY, ft, fo);
 %                     trialFit = fitobject.a + fitobject.b * exp(fitobject.c * x) + fitobject.d * exp(fitobject.e * x);
 %% single exponential with fixed time constant
-                    tau = s.tau; % make this an option later, tau = time constant
+                    tau = s.tau(fCh); % make this an option later, tau = time constant
                     c = 1/tau;
                     fo = fitoptions('Method', 'NonlinearLeastSquares',...
                         'Lower', [0, range(trialMeanY) * 0.25],...%, -Inf],...
@@ -249,6 +256,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                 otherwise
             end            
             Photometry.data(fCh).dFF(tcounter:tcounter+nTrials - 1, :) = dF ./ blF; 
+            Photometry.data(fCh).dF(tcounter:tcounter+nTrials - 1, :) = dF;
             sd = nanmean(nanstd(dF(:,blStartP:blEndP), 0, 2));
             Photometry.data(fCh).ZS(tcounter:tcounter+nTrials - 1, :) = dF / sd; % z-scored
             Photometry.data(fCh).raw(tcounter:tcounter+nTrials - 1, :) = allData;                  

@@ -16,21 +16,22 @@ if sessions(1).SessionData.Settings.GUI.LED1_amp > 0
     channels(end+1) = 1;
     dFFMode{end+1} = 'expFit';
 %     dFFMode{end+1} = 'simple';    
-    BL{end + 1} = [1 4];
+    BL{end + 1} = [0 4];
 end
-
+tau(1) = 1.5;
 if sessions(1).SessionData.Settings.GUI.LED2_amp > 0
     channels(end+1) = 2;
-    dFFMode{end+1} = 'simple';
+    dFFMode{end+1} = 'expFit';
     BL{end + 1} = [0 4];    
 end
+tau(2) = 1;
 
 %% baseline by trial
  TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL,...
-    'tau', 2);   
+    'tau', tau);   
 %% baseline expfit
 TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', {'expFit', 'expFit'}, 'zeroField', 'Cue', 'channels', channels, 'baseline', BL,...
-    'tau', 2);
+    'tau', tau);
 % TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'expFitBegin', 0.1,...
 %     'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL, 'downsample', 305);
 %%
@@ -111,7 +112,7 @@ for channel = channels
         saveas(gcf, fullfile(savepath, [figname '.jpg']));
     end
     % cross trial bleaching fits for each session plotted as axis array
-    if channel == 1
+    if 1 %channel == 1
         figname = ['trialBleach_Correction_ch' num2str(channel)];
         ensureFigure(figname, 1);
         nSessions = size(TE.Photometry.bleachFit, 1);
