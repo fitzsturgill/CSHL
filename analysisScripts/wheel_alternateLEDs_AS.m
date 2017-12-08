@@ -10,9 +10,14 @@ TE = makeTE_wheel_alternateLEDs(sessions); % make TE structure
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
-basepath = uigetdir;
-sep = strfind(TE.filename{1}, '.');
-subjectName = TE.filename{1}(1:sep(1)-1);
+basepath = 'Z:\SummaryAnalyses\wheel_v1_alternateLEDs\';
+if length(unique(TE.filename)) > 1
+    sep = strfind(TE.filename{1}, '_');
+    subjectName = TE.filename{1}(1:sep(2)-1);
+else
+    sep = strfind(TE.filename{1}, '.');
+    subjectName = TE.filename{1}(1:sep(1)-1);
+end
 disp(subjectName);
 savepath = fullfile(basepath, subjectName);
 ensureDirectory(savepath);
@@ -20,17 +25,17 @@ ensureDirectory(savepath);
 %%
 channels = [1 2];
 dFFMode = {'simple', 'simple'};
-
+bl = [0 9.9];
 TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial',...
-    'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 29], 'startField', 'Baseline', 'downsample', 305);
+    'zeroField', 'Baseline', 'channels', channels, 'baseline', bl, 'startField', 'Baseline', 'downsample', 305);
 
 % channel 1 demodulated via channel 2 reference
 TE.Photometry_1alt = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial',...
-    'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 29], 'startField', 'Baseline', 'downsample', 305, 'refChannels', [1 1]);
+    'zeroField', 'Baseline', 'channels', channels, 'baseline', bl, 'startField', 'Baseline', 'downsample', 305, 'refChannels', [1 1]);
 
 % channel 2 demodulated via channel 1 reference
 TE.Photometry_2alt = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial',...
-    'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 29], 'startField', 'Baseline', 'downsample', 305, 'refChannels', [2 2]);
+    'zeroField', 'Baseline', 'channels', channels, 'baseline', bl, 'startField', 'Baseline', 'downsample', 305, 'refChannels', [2 2]);
 
 %%
 
@@ -53,16 +58,16 @@ bl_chat_12 = nanmean(rewards_chat_12(:,1:blSamples), 2);
 rewards_chat_12 = bsxfun(@minus, rewards_chat_12, bl_chat_12);
 
 % LED 1 only
-[rewards_dat_1, ts, tn] = extractDataByTimeStamps(TE.Photometry_1alt.data(2).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2], LED1trials);
-rewards_chat_1 = extractDataByTimeStamps(TE.Photometry_1alt.data(1).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2], LED1trials);
+[rewards_dat_1, ts, tn] = extractDataByTimeStamps(TE.Photometry.data(2).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2], LED1trials);
+rewards_chat_1 = extractDataByTimeStamps(TE.Photometry.data(1).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2], LED1trials);
 bl_dat_1 = nanmean(rewards_dat_1(:,1:blSamples), 2);
 rewards_dat_1 = bsxfun(@minus, rewards_dat_1, bl_dat_1);
 bl_chat_1 = nanmean(rewards_chat_1(:,1:blSamples), 2);
 rewards_chat_1 = bsxfun(@minus, rewards_chat_1, bl_chat_1);
 
 % LED 2 only
-[rewards_dat_2, ts, tn] = extractDataByTimeStamps(TE.Photometry_2alt.data(2).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2], LED2trials);
-rewards_chat_2 = extractDataByTimeStamps(TE.Photometry_2alt.data(1).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2], LED2trials);
+[rewards_dat_2, ts, tn] = extractDataByTimeStamps(TE.Photometry.data(2).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2], LED2trials);
+rewards_chat_2 = extractDataByTimeStamps(TE.Photometry.data(1).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2], LED2trials);
 bl_dat_2 = nanmean(rewards_dat_2(:,1:blSamples), 2);
 rewards_dat_2 = bsxfun(@minus, rewards_dat_2, bl_dat_2);
 bl_chat_2 = nanmean(rewards_chat_2(:,1:blSamples), 2);
@@ -105,4 +110,31 @@ subplot(3,2,6); image(rewards_dat_2, 'XData', window,  'CDataMapping', 'Scaled')
 if saveOn
     saveas(gcf, fullfile(savepath, 'random_rewards_alternateLEDs.fig'));
     saveas(gcf, fullfile(savepath, 'random_rewards_alternateLEDs.jpg'));
+end
+
+%% save plot of baseline fluorecense values across conditions
+fbl = zeros(1,6);
+fbl_sem = zeros(1,6);
+fbl(1) = nanmean(TE.Photometry.data(1).blF_raw(LED12trials));
+fbl(2) = nanmean(TE.Photometry.data(2).blF_raw(LED12trials));
+fbl(3) = nanmean(TE.Photometry.data(1).blF_raw(LED1trials));
+fbl(4) = nanmean(TE.Photometry.data(2).blF_raw(LED1trials));
+fbl(5) = nanmean(TE.Photometry.data(1).blF_raw(LED2trials));
+fbl(6) = nanmean(TE.Photometry.data(2).blF_raw(LED2trials));
+
+fbl_sem(1) = nanSEM(TE.Photometry.data(1).blF_raw(LED12trials));
+fbl_sem(2) = nanSEM(TE.Photometry.data(2).blF_raw(LED12trials));
+fbl_sem(3) = nanSEM(TE.Photometry.data(1).blF_raw(LED1trials));
+fbl_sem(4) = nanSEM(TE.Photometry.data(2).blF_raw(LED1trials));
+fbl_sem(5) = nanSEM(TE.Photometry.data(1).blF_raw(LED2trials));
+fbl_sem(6) = nanSEM(TE.Photometry.data(2).blF_raw(LED2trials));
+
+ensureFigure('baseline_fluor', 1);
+
+errorbar(1:6,fbl, fbl_sem, 'o-');
+set(gca, 'XTick', 1:6, 'XTickLabel',...
+    {'ch1 both', 'ch2 both', 'ch1 green', 'ch2 green', 'ch1 red', 'ch2 red'});
+if saveOn
+    saveas(gcf, fullfile(savepath, 'baseline_fluor.fig'));
+    saveas(gcf, fullfile(savepath, 'baseline_fluor.jpg'));
 end
