@@ -22,21 +22,35 @@ disp(subjectName);
 savepath = fullfile(basepath, subjectName);
 ensureDirectory(savepath);
 
+if saveOn
+    save(fullfile(savepath, 'TE.mat'), 'TE');
+    disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
+end
+
 %%
 channels = [1 2];
 dFFMode = {'simple', 'simple'};
 bl = [0 9.9];
-TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial',...
-    'zeroField', 'Baseline', 'channels', channels, 'baseline', bl, 'startField', 'Baseline', 'downsample', 305);
+try
+    TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial',...
+        'zeroField', 'Baseline', 'channels', channels, 'baseline', bl, 'startField', 'Baseline', 'downsample', 305);
+end
 
 % channel 1 demodulated via channel 2 reference
-TE.Photometry_1alt = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial',...
-    'zeroField', 'Baseline', 'channels', channels, 'baseline', bl, 'startField', 'Baseline', 'downsample', 305, 'refChannels', [1 1]);
-
+try
+    TE.Photometry_1alt = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial',...
+        'zeroField', 'Baseline', 'channels', channels, 'baseline', bl, 'startField', 'Baseline', 'downsample', 305, 'refChannels', [1 1]);
+end
 % channel 2 demodulated via channel 1 reference
-TE.Photometry_2alt = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial',...
-    'zeroField', 'Baseline', 'channels', channels, 'baseline', bl, 'startField', 'Baseline', 'downsample', 305, 'refChannels', [2 2]);
+try
+    TE.Photometry_2alt = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial',...
+        'zeroField', 'Baseline', 'channels', channels, 'baseline', bl, 'startField', 'Baseline', 'downsample', 305, 'refChannels', [2 2]);
+end
 
+if saveOn
+    save(fullfile(savepath, 'TE.mat'), 'TE');
+    disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
+end
 %%
 
 LED1trials = TE.LED1_amp > 0 & TE.LED2_amp == 0;
@@ -98,13 +112,24 @@ clim_chat = [-climFactor * sd_chat, climFactor * sd_chat];
 clim_dat = [-climFactor * sd_dat, climFactor * sd_dat];
 
 ensureFigure('random_rewards_alternateLEDs', 1); 
-subplot(3,2,1); image(rewards_chat_12, 'XData', window, 'CDataMapping', 'Scaled'); set(gca, 'CLim', clim_chat); colormap('jet');  title('ChAT');
-subplot(3,2,3); image(rewards_chat_1, 'XData', window, 'CDataMapping', 'Scaled'); set(gca, 'CLim', clim_chat); colormap('jet');  ylabel('LED1 only');
-subplot(3,2,5); image(rewards_chat_2, 'XData', window, 'CDataMapping', 'Scaled'); set(gca, 'CLim', clim_chat); colormap('jet');  ylabel('LED2 only');
-
-subplot(3,2,2); image(rewards_dat_12, 'XData', window,  'CDataMapping', 'Scaled'); set(gca, 'CLim', clim_dat); colormap('jet');    title('DAT');
-subplot(3,2,4); image(rewards_dat_1, 'XData', window,  'CDataMapping', 'Scaled'); set(gca, 'CLim', clim_dat); colormap('jet');    
-subplot(3,2,6); image(rewards_dat_2, 'XData', window,  'CDataMapping', 'Scaled'); set(gca, 'CLim', clim_dat); colormap('jet');    
+try
+    subplot(3,2,1); image(rewards_chat_12, 'XData', window, 'CDataMapping', 'Scaled'); set(gca, 'CLim', clim_chat); colormap('jet');  title('ChAT');
+end
+try
+    subplot(3,2,3); image(rewards_chat_1, 'XData', window, 'CDataMapping', 'Scaled'); set(gca, 'CLim', clim_chat); colormap('jet');  ylabel('LED1 only');
+end
+try
+    subplot(3,2,5); image(rewards_chat_2, 'XData', window, 'CDataMapping', 'Scaled'); set(gca, 'CLim', clim_chat); colormap('jet');  ylabel('LED2 only');
+end
+try
+    subplot(3,2,2); image(rewards_dat_12, 'XData', window,  'CDataMapping', 'Scaled'); set(gca, 'CLim', clim_dat); colormap('jet');    title('DAT');
+end
+try
+    subplot(3,2,4); image(rewards_dat_1, 'XData', window,  'CDataMapping', 'Scaled'); set(gca, 'CLim', clim_dat); colormap('jet');    
+end
+try
+    subplot(3,2,6); image(rewards_dat_2, 'XData', window,  'CDataMapping', 'Scaled'); set(gca, 'CLim', clim_dat); colormap('jet');    
+end
 
 
 if saveOn
