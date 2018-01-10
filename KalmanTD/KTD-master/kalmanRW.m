@@ -16,7 +16,6 @@ function model = kalmanRW(X,r,param)
     if length(s)==1; s = zeros(N,1)+s; end
     if length(q)==1; q = zeros(N,1)+q; end
     if length(param.lr)==1; param.lr = zeros(N,1)+param.lr; end
-    
     % run Kalman filter
     for n = 1:N
         
