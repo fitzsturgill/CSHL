@@ -15,6 +15,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         'downsample', 305;...
         'uniformOutput', 1;...            % not currently implemented, idea is to set to 0 if acqs are going to be variable in length (store data in cell array)
         'tau', 3;...
+        'forceAmp', 0;... % % force demodulation even if the refChannel LED is off (i.e. it's amplitude = 0)
         };
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
     
@@ -130,7 +131,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     for si = 1:length(sessions)
         SessionData = sessions(si).SessionData;
         if ~isfield(SessionData, 'demod')
-            SessionData = demodulateSession(SessionData, 'channels', s.channels, 'refChannels', s.refChannels); % don't necessarily want to save these back to sessions because that'd eat up memory
+            SessionData = demodulateSession(SessionData, 'channels', s.channels, 'refChannels', s.refChannels, 'forceAmp', s.forceAmp); % don't necessarily want to save these back to sessions because that'd eat up memory
         end
         startTimes = cellfun(@(x) x.States.(s.startField)(1), sessions(si).SessionData.RawEvents.Trial); % take the beginning time stamp for the startField-specified Bpod state
         nTrials = SessionData.nTrials;

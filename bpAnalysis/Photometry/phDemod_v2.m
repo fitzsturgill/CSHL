@@ -5,6 +5,7 @@ function demod = phDemod_v2(rawData, refData, refChannel, sampleRate, varargin)
 %% optional parameters, first set defaults      
     defaults = {...
         'lowCutoff', 15;...
+        'forceAmp', 0;... % force demodulation
         };
 
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
@@ -16,9 +17,15 @@ function demod = phDemod_v2(rawData, refData, refChannel, sampleRate, varargin)
     nSamples = length(rawData);
     dt = 1/sampleRate;    
     t = (0:dt:(nSamples - 1) * dt);
-    t = t(:);    
-    refData_0 = sin(2*pi*refData.freq(chix)*t + refData.phaseShift(chix))  * refData.amp(chix);
-    refData_90 = sin(2*pi*refData.freq(chix)*t + refData.phaseShift(chix) + pi/2)  * refData.amp(chix);
+    t = t(:);
+    
+    if s.forceAmp && refData.amp(chix) == 0
+        amp = s.forceAmp; % demodulate using nominal LED amplitude even if reference LED is off
+    else
+        amp = refData.amp(chix);
+    end
+    refData_0 = sin(2*pi*refData.freq(chix)*t + refData.phaseShift(chix))  * amp;
+    refData_90 = sin(2*pi*refData.freq(chix)*t + refData.phaseShift(chix) + pi/2)  * amp;
     processedData_0 = rawData .* refData_0;
     processedData_90 = rawData .* refData_90;
     %% try filtering first
@@ -44,4 +51,4 @@ function demod = phDemod_v2(rawData, refData, refChannel, sampleRate, varargin)
     % Vsig = Vsig*Vref/2 + Vsig*Vref/2 * Cos(2*Fmod * time)
     % you filter out the second term
     % multiply by two and divide by Vref to get Vsig
-    demod = demod * 2 / refData.amp(chix);
+    demod = demod * 2 / amp;

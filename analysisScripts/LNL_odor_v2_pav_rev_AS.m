@@ -21,7 +21,7 @@ end
 tau(1) = 1.5;
 if sessions(1).SessionData.Settings.GUI.LED2_amp > 0
     channels(end+1) = 2;
-    dFFMode{end+1} = 'expFit';
+    dFFMode{end+1} = 'simple';
     BL{end + 1} = [0 4];    
 end
 tau(2) = 1;
@@ -49,7 +49,8 @@ csWindow(:,2) = cellfun(@(x,y,z) max(x(end), y(end)) - z(1), TE.AnswerLick, TE.A
 
 ch1CsWindow = [0.25 1];
 ch2CsWindow = [0.25 1];
-
+% ch1CsWindow = [0.25 2];
+% ch2CsWindow = [0.25 2];
 TE.csLicks = countEventFromTE(TE, 'Port1In', csWindow, TE.Cue);
 
 usWindow = [0 0.5];
@@ -125,9 +126,9 @@ for channel = channels
         %     title(num2str(counter));    
         end
         % average of all trials for this channel to eyeball correction
-        figname2 = ['corrected_allTrials_ch1']; 
+        figname2 = ['corrected_allTrials_ch' num2str(channel)]; 
         ensureFigure(figname2, 1);
-        [ha, hl] = phPlotAverageFromTE(TE, 1:length(TE.filename), 1,...
+        [ha, hl] = phPlotAverageFromTE(TE, 1:length(TE.filename), channel,...
     'FluorDataField', 'ZS', 'window', [0.1, max(TE.Photometry.xData) - min(TE.Photometry.xData)], 'zeroTimes', TE.Photometry.startTime); %high value, reward
         if saveOn
             saveas(gcf, fullfile(savepath, 'trialBleach_Correction.fig'));
@@ -508,7 +509,7 @@ end
 
     plot(xData, smooth(revNormAvg_ch1), 'g'); hold on;
     plot(xData, smooth(revNormAvg_ch2), 'r');
-    set(gca, 'XLim', [-10 20], 'YLim', [-2 2]);xlabel('Trials of new CS+ odor from reversal'); 
+    set(gca, 'XLim', [-10 20], 'YLim', [-2 3]);xlabel('Trials of new CS+ odor from reversal'); 
     ylabel('Cue dFF ZScored'); title([strtok(peakFieldCh1, '_') ', avg ' num2str(nReversals) ' reversals'], 'Interpreter', 'none');
 
     % reinforcment response

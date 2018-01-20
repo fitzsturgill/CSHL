@@ -4,7 +4,7 @@ function model = kalmanRW(X,r,param)
     
     % initialization
     [N,D] = size(X);
-    w = zeros(D,1);
+    w = zeros(D,1);                                                                                                                                                                                                                                              
     
     % parameters
     if nargin < 3 || isempty(param); param = KTD_defparam; end

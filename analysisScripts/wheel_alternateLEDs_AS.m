@@ -30,21 +30,31 @@ end
 %%
 channels = [1 2];
 dFFMode = {'simple', 'simple'};
-bl = [0 9.9];
+try 
+    bl = [0 sessions(1).SessionData.NidaqData{1,2}.duration(1) - 0.2];
+catch
+    bl = [0 9.9];
+end
 try
     TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial',...
-        'zeroField', 'Baseline', 'channels', channels, 'baseline', bl, 'startField', 'Baseline', 'downsample', 305);
+        'zeroField', 'Baseline', 'channels', channels, 'baseline', bl, 'startField', 'Baseline', 'downsample', 305, 'forceAmp', 1);
+catch
+    disp('wtf1');
 end
 
-% channel 1 demodulated via channel 2 reference
+% channel 2 demodulated via channel 1 reference
 try
     TE.Photometry_1alt = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial',...
         'zeroField', 'Baseline', 'channels', channels, 'baseline', bl, 'startField', 'Baseline', 'downsample', 305, 'refChannels', [1 1]);
+catch
+    disp('wtf2');    
 end
-% channel 2 demodulated via channel 1 reference
+% channel 1 demodulated via channel 2 reference
 try
     TE.Photometry_2alt = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial',...
         'zeroField', 'Baseline', 'channels', channels, 'baseline', bl, 'startField', 'Baseline', 'downsample', 305, 'refChannels', [2 2]);
+catch
+    disp('wtf3');    
 end
 
 if saveOn
@@ -63,7 +73,7 @@ window = [-2 2];
 fs = 20; % sample rate
 blSamples = (0 - window(1)) * fs;
 
-% LED 1 and 2
+% LED 1 and 1
 [rewards_dat_12, ts, tn] = extractDataByTimeStamps(TE.Photometry.data(2).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2], LED12trials);
 rewards_chat_12 = extractDataByTimeStamps(TE.Photometry.data(1).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2], LED12trials);
 bl_dat_12 = nanmean(rewards_dat_12(:,1:blSamples), 2);
@@ -154,6 +164,19 @@ fbl_sem(4) = nanSEM(TE.Photometry.data(2).blF_raw(LED1trials));
 fbl_sem(5) = nanSEM(TE.Photometry.data(1).blF_raw(LED2trials));
 fbl_sem(6) = nanSEM(TE.Photometry.data(2).blF_raw(LED2trials));
 
+% fbl(1) = nanmean(TE.Photometry.data(1).blF_raw(LED12trials));
+% fbl(2) = nanmean(TE.Photometry.data(2).blF_raw(LED12trials));
+% fbl(3) = nanmean(TE.Photometry.data(1).blF_raw(LED1trials));
+% fbl(4) = nanmean(TE.Photometry_1alt.data(2).blF_raw(LED1trials));
+% fbl(5) = nanmean(TE.Photometry_2alt.data(1).blF_raw(LED2trials));
+% fbl(6) = nanmean(TE.Photometry.data(2).blF_raw(LED2trials));
+% 
+% fbl_sem(1) = nanSEM(TE.Photometry.data(1).blF_raw(LED12trials));
+% fbl_sem(2) = nanSEM(TE.Photometry.data(2).blF_raw(LED12trials));
+% fbl_sem(3) = nanSEM(TE.Photometry.data(1).blF_raw(LED1trials));
+% fbl_sem(4) = nanSEM(TE.Photometry_1alt.data(2).blF_raw(LED1trials));
+% fbl_sem(5) = nanSEM(TE.Photometry_2alt.data(1).blF_raw(LED2trials));
+% fbl_sem(6) = nanSEM(TE.Photometry.data(2).blF_raw(LED2trials));
 ensureFigure('baseline_fluor', 1);
 
 errorbar(1:6,fbl, fbl_sem, 'o-');

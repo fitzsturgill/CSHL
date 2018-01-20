@@ -24,7 +24,12 @@ if sessions(1).SessionData.Settings.GUI.LED2_amp > 0
 end
 
 % baselineEnd = 119;
-baselineEnd = 29;
+try 
+    baselineEnd = sessions(1).SessionData.NidaqData{1,2}.duration(1) - 0.2;
+catch
+    baselineEnd = 119;
+end
+        
 TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial',...
     'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 baselineEnd], 'startField', 'Baseline', 'downsample', 305);
 

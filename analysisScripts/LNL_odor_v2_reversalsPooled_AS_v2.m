@@ -5,6 +5,7 @@ files = {...
     'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\DC_20\', 'RE_DC_20.mat';...
     'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\DC_35\', 'RE_DC_35.mat';...
     'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\DC_36\', 'RE_DC_36.mat';...    
+    'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\DC_40\', 'RE_DC_40.mat';... % first reversal currently excluded on DC_40
     };
 
 %% laptop
@@ -27,7 +28,8 @@ end
 
 %% 
 %% desktop
-savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SFN_2017\Reversals';
+% savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SFN_2017\Reversals';
+savepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\Reversals_Pooled';
 saveOn = 1;
 
 
@@ -72,7 +74,7 @@ alwaysCsPlus_ch2 = [AR.csPlus.phPeakMean_cs_ch2.before AR.csPlus.phPeakMean_cs_c
 alwaysCsPlus_trialNumber = (1:size(alwaysCsPlus_ch1, 2)) - size(AR.csPlus.phPeakMean_cs_ch1.before, 2);
 alwaysCsPlus_firstRevTrial = size(AR.csPlus.phPeakMean_cs_ch1.before, 2) + 1;
 
-sb = [4, 5];
+sb = [5, 5];
 savename1 = 'newCsPlus_ch1_tiled';
 h1 = ensureFigure(savename1, 1);
 savename2 = 'newCsPlus_ch2_tiled';
@@ -83,7 +85,7 @@ for counter = 1:nReversals
     a2 = subplot(sb(1),sb(2),counter, 'Parent', h2); 
     plot(newCsPlus_trialNumber, smoothdata(newCsPlus_ch2(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a2);    
 end
-sb = [4, 5];
+sb = [5, 5];
 savename1 = 'newCsMinus_ch1_tiled';
 h1 = ensureFigure(savename1, 1);
 savename2 = 'newCsMinus_ch2_tiled';
@@ -112,8 +114,8 @@ newCsPlus_ch2_norm = bsxfun(@rdivide, newCsPlus_ch2_norm, percentile(newCsPlus_c
 newCsPlus_licks_norm = bsxfun(@rdivide, newCsPlus_licks_norm, percentile(newCsPlus_licks_norm(:,newCsPlus_firstRevTrial:end), f, 2));
 
 
-% common = find(mean(newCsPlus_ch1_norm));% applying mean will reveal NaNs
-common = sum(~isnan(newCsPlus_ch1_norm)) > 3;% applying mean will reveal NaNs
+
+common = sum(~isnan(newCsPlus_ch1_norm)) > 3;
 
 
 savename = 'reversals_newCsPlus';
