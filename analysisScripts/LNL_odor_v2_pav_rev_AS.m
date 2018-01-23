@@ -82,8 +82,9 @@ TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', 11, 'Fs', 20, 'start
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
-basepath = uigetdir;
+% basepath = uigetdir;
 % basepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\';
+basepath = 'Z:\SummaryAnalyses\LNL_odor_v2_BaselineTrialByTrial_firstReversal\';
 % basepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\DC_20and17_combined\';
 sep = strfind(TE.filename{1}, '_');
 subjectName = TE.filename{1}(1:sep(2)-1);
@@ -457,7 +458,10 @@ end
         'phPeakPercentile_us_ch1', TE.phPeakPercentile_us(1).data,...
         'trialOutcome', TE.trialOutcome,...
         'trialType', TE.trialType,...
-        'trialNumber', TE.trialNumber...
+        'trialNumber', TE.trialNumber,...
+        'filename', TE.filename,...
+        'ReinforcementOutcome', TE.ReinforcementOutcome,...
+        'OdorValveIndex', TE.OdorValveIndex,...
         };
     
     if ismember(2, channels)
@@ -471,9 +475,10 @@ end
         ];
     end
     RE = struct();
-    RE.csPlus = extractReversalsFromTE(TE, csPlusTrials, dataToPull, 'maxReversals', 1);
-    RE.csMinus = extractReversalsFromTE(TE, csMinusTrials, dataToPull, 'maxReversals', 1);
-    RE.csPlusReward = extractReversalsFromTE(TE, csPlusTrials & rewardTrials, dataToPull, 'maxReversals', 1);    
+    RE.csPlus = extractReversalsFromTE(TE, csPlusTrials, dataToPull);%, 'maxReversals', 1);
+    RE.csMinus = extractReversalsFromTE(TE, csMinusTrials, dataToPull);%, 'maxReversals', 1);
+    RE.csPlusReward = extractReversalsFromTE(TE, csPlusTrials & rewardTrials, dataToPull);%, 'maxReversals', 1);
+    RE.allTrials = extractReversalsFromTE(TE, validTrials, dataToPull);%, 'maxReversals', 1);
     nReversals = size(RE.csPlus.phPeakPercentile_cs_ch1.after, 1);
     
 if saveOn
