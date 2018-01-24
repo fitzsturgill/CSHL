@@ -14,7 +14,6 @@ function data = expandVertCat(data, add, align)
                     data = [data; NaN(newRows, size(data, 2))];
                     data(end - newRows + 1:end, 1:size(add, 2)) = add;
             case 'right'
-                    fitz = [NaN(size(data, 1), newColumns) data];
                     data = [NaN(size(data, 1), newColumns) data];
                     data = [data; NaN(newRows, size(data, 2))];
                     data(end - newRows + 1:end, end - size(add, 2) + 1:end) = add;
@@ -26,7 +25,6 @@ function data = expandVertCat(data, add, align)
                     data = [data; cell(newRows, size(data, 2))];
                     data(end - newRows + 1:end, 1:size(add, 2)) = add;
             case 'right'
-                    fitz = [cell(size(data, 1), newColumns) data];
                     data = [cell(size(data, 1), newColumns) data];
                     data = [data; cell(newRows, size(data, 2))];
                     data(end - newRows + 1:end, end - size(add, 2) + 1:end) = add;
