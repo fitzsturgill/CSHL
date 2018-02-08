@@ -34,7 +34,7 @@ disp(subjectName);
 savepath = fullfile(basepath, subjectName);
 ensureDirectory(savepath);
 disp(['*** ensuring directory: ' savepath ' ***']);
-%%
+%% truncate sessions according to when mouse becomes sated
 rewardTrialsTrunc = filterTE(TE, 'trialOutcome', 1);
 truncateSessionsFromTE(TE, 'init', 'usLicks', rewardTrialsTrunc);
 %%

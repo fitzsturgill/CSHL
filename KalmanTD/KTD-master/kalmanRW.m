@@ -13,6 +13,10 @@ function model = kalmanRW(X,r,param)
     q = param.q;        % transition variance
     I = eye(D);
     
+    if ~isfield(param, 'std')
+        param.std = 0; % default is KalmanRW, if set to 1, then it's just RW
+    end
+    
     if length(s)==1; s = zeros(N,1)+s; end
     if length(q)==1; q = zeros(N,1)+q; end
     if length(param.lr)==1; param.lr = zeros(N,1)+param.lr; end

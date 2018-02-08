@@ -57,8 +57,8 @@ end
 firstReversals = cellfun(@(x,y) ~strcmp(x(1:5), y(1:5)), AR.csPlus.filename.after(1:end-1,1), AR.csPlus.filename.after(2:end,1));
 firstReversals = [false; firstReversals];
 
-Ch1List = {'DC_17', 'DC_20', 'DC_36', 'DC_37', 'DC_40'};
-Ch2List = {'DC_17', 'DC_20', 'DC_25', 'DC_27', 'DC_36', 'DC_37', 'DC_40'}; % includes VTA fiber of dual 6f mice
+% Ch1List = {'DC_17', 'DC_20', 'DC_36', 'DC_37', 'DC_40'};
+% Ch2List = {'DC_17', 'DC_20', 'DC_25', 'DC_27', 'DC_36', 'DC_37', 'DC_40'}; % includes VTA fiber of dual 6f mice
 
 ch1Reversals = cellfun(@(x) any(strcmp(x(1:5), {'DC_17', 'DC_20', 'DC_36', 'DC_37', 'DC_40'})), AR.csPlus.filename.after(:,1));
 ch2Reversals = cellfun(@(x) any(strcmp(x(1:5), {'DC_17', 'DC_20', 'DC_25', 'DC_27', 'DC_36', 'DC_37', 'DC_40'})), AR.csPlus.filename.after(:,1));
@@ -146,10 +146,10 @@ title('New Cs-');
 
 subplot(3,2,3);
 hla = zeros(1,2);
-[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus_ch1_norm(firstReversals & ch1Reversals, common)), nanSEM(newCsPlus_ch1_norm(firstReversals & ch1Reversals, common))',...
+[hl, hp] = boundedline(newCsPlus_trialNumber(common_newCsPlus), nanmean(newCsPlus_ch1_norm(firstReversals & ch1Reversals, common_newCsPlus)), nanSEM(newCsPlus_ch1_norm(firstReversals & ch1Reversals, common_newCsPlus))',...
     'cmap', [171 55 214]/256 * 0.5);
 hla(1) = hl;
-[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus_ch1_norm(~firstReversals & ch1Reversals, common)), nanSEM(newCsPlus_ch1_norm(~firstReversals & ch1Reversals, common))',...
+[hl, hp] = boundedline(newCsPlus_trialNumber(common_newCsPlus), nanmean(newCsPlus_ch1_norm(~firstReversals & ch1Reversals, common_newCsPlus)), nanSEM(newCsPlus_ch1_norm(~firstReversals & ch1Reversals, common_newCsPlus))',...
     'cmap', [171 55 214]/256);
 hla(2) = hl;
 set(hla, 'LineWidth', 2);
@@ -160,10 +160,10 @@ ylabel('BF ACh.');
 
 subplot(3,2,4);
 hla = zeros(1,2);
-[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsMinus_ch1_norm(firstReversals & ch1Reversals, common)), nanSEM(newCsMinus_ch1_norm(firstReversals & ch1Reversals, common))',...
+[hl, hp] = boundedline(newCsPlus_trialNumber(common_newCsMinus), nanmean(newCsMinus_ch1_norm(firstReversals & ch1Reversals, common_newCsMinus)), nanSEM(newCsMinus_ch1_norm(firstReversals & ch1Reversals, common_newCsMinus))',...
     'cmap', [171 55 214]/256 * 0.5);
 hla(1) = hl;
-[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsMinus_ch1_norm(~firstReversals & ch1Reversals, common)), nanSEM(newCsMinus_ch1_norm(~firstReversals & ch1Reversals, common))',...
+[hl, hp] = boundedline(newCsPlus_trialNumber(common_newCsMinus), nanmean(newCsMinus_ch1_norm(~firstReversals & ch1Reversals, common_newCsMinus)), nanSEM(newCsMinus_ch1_norm(~firstReversals & ch1Reversals, common_newCsMinus))',...
     'cmap', [171 55 214]/256);
 hla(2) = hl;
 set(hla, 'LineWidth', 2);
@@ -173,10 +173,10 @@ h  = addOrginLines;
 
 subplot(3,2,5);
 hla = zeros(1,2);
-[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus_ch2_norm(firstReversals & ch2Reversals, common)), nanSEM(newCsPlus_ch2_norm(firstReversals & ch2Reversals, common))',...
+[hl, hp] = boundedline(newCsPlus_trialNumber(common_newCsPlus), nanmean(newCsPlus_ch2_norm(firstReversals & ch2Reversals, common_newCsPlus)), nanSEM(newCsPlus_ch2_norm(firstReversals & ch2Reversals, common_newCsPlus))',...
     'cmap', [237 125 49]/256 * 0.5);
 hla(1) = hl;
-[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus_ch2_norm(~firstReversals & ch2Reversals, common)), nanSEM(newCsPlus_ch2_norm(~firstReversals & ch2Reversals, common))',...
+[hl, hp] = boundedline(newCsPlus_trialNumber(common_newCsPlus), nanmean(newCsPlus_ch2_norm(~firstReversals & ch2Reversals, common_newCsPlus)), nanSEM(newCsPlus_ch2_norm(~firstReversals & ch2Reversals, common_newCsPlus))',...
     'cmap', [237 125 49]/256);
 hla(2) = hl;
 set(hla, 'LineWidth', 2);
@@ -187,10 +187,10 @@ ylabel('VTA Dop.'); xlabel('Odor Presentations from Reversal');
 
 subplot(3,2,6);
 hla = zeros(1,2);
-[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsMinus_ch2_norm(firstReversals & ch2Reversals, common)), nanSEM(newCsMinus_ch2_norm(firstReversals & ch2Reversals, common))',...
+[hl, hp] = boundedline(newCsPlus_trialNumber(common_newCsPlus), nanmean(newCsMinus_ch2_norm(firstReversals & ch2Reversals, common_newCsPlus)), nanSEM(newCsMinus_ch2_norm(firstReversals & ch2Reversals, common_newCsPlus))',...
     'cmap', [237 125 49]/256 * 0.5);
 hla(1) = hl;
-[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsMinus_ch2_norm(~firstReversals & ch2Reversals, common)), nanSEM(newCsMinus_ch2_norm(~firstReversals & ch2Reversals, common))',...
+[hl, hp] = boundedline(newCsPlus_trialNumber(common_newCsPlus), nanmean(newCsMinus_ch2_norm(~firstReversals & ch2Reversals, common_newCsPlus)), nanSEM(newCsMinus_ch2_norm(~firstReversals & ch2Reversals, common_newCsPlus))',...
     'cmap', [237 125 49]/256);
 hla(2) = hl;
 set(hla, 'LineWidth', 2);
