@@ -1,18 +1,22 @@
 %% finding learning rate with correlation
-load('AR.mat');
+load('C:\Users\Adam\Dropbox\KepecsLab\_Fitz\PFF\AR.mat');
 param = KTD_defparam;
 numCues = 2;
 figure;
 %SET DATA SOURCES
-firstHalf = AR.csMinus;
+firstHalf = AR.csMinus; % good on you for abstracting which halfs are fed into the pipeline
 secondHalf = AR.csPlus;
 mainData = [firstHalf.csLicks.before secondHalf.csLicks.after];
 reversalPoint = size(firstHalf.csLicks.before, 2);
 numTrials = size(mainData,2);
+commonTrials = ~sum(isnan(mainData)); % for simplicity let's find the common range of trials across reversals
+nCommon = sum(commonTrials);
+
 %number of reversals
 n = size(mainData,1);
 rewards = [firstHalf.ReinforcementOutcome.before secondHalf.ReinforcementOutcome.after];
 valves = [firstHalf.OdorValveIndex.before secondHalf.OdorValveIndex.after];
+
 %SET VIEW RANGES FOR GRAPH
 viewBefore = 10;
 viewAfter = 20;
@@ -24,17 +28,17 @@ cmap = colormap;
 lr = linspace(0.01,1,99);
 corrs = zeros(length(lr),1);
 for lrc = 1:length(lr)
-    datas = nan(n,numTrials);
-    models = nan(n,numTrials);
-    zscores = zeros(n,numTrials);
+    datas = nan(n,nCommon);
+    models = nan(n,nCommon);
+    zscores = zeros(n,nCommon);
     totalCorr = 0;
     for reversal = 1:n
-        data = mainData(reversal,:);
+        data = mainData(reversal,commonTrials);
         notnans = find(~isnan(data));
         data = data(notnans(1):notnans(end));
         numTrials = length(data); 
-        rw = rewards(reversal,:);
-        rw = rw(notnans(1):notnans(end));
+        rw = rewards(reversal,:); % rw = rewards(reversal, notnans(1):notnans(end));
+        rw = rw(notnans(1):notnans(end)); % no need to do this in 2 lines, see above
         reward = zeros(numTrials,1);
         for i = (1:numTrials)
           if(rw(i) == "Reward")
@@ -50,7 +54,7 @@ for lrc = 1:length(lr)
         X(valves(reversal,notnans(1):notnans(end)) == 2,2) = 1;
         param.s = lr(1,lrc);
         param.q = 0.01;
-        param.std = 1;
+        param.TD = 1; % param.TD already implements non-kalman RW, it's just a bit misnamed because it should be called param.RW or param.nonKalman
         param.lr = lr(1,lrc);
         model = kalmanRW(X,reward,param);    
         rhat = zeros(n,1); % Predicted reward
@@ -71,9 +75,13 @@ for lrc = 1:length(lr)
         end
         models(reversal,notnans(1):notnans(end)) = value;
     end
-    plotModel = zscore(nanmean((models(:,viewRange + reversalPoint))));
-    plotData = zscore(nanmean(mainData(:,viewRange + reversalPoint)));
-    corrs(lrc) = corr(plotModel', plotData');
+    models = zscore(models(:,viewRange + reversalPoint), 0, 2); % z score across time dimension (rows)
+    lickData = zscore(mainData(:,viewRange + reversalPoint), 0, 2); % z score across time dimension (rows)
+    
+    % compute 'goodness of fit' across reversals
+    corrs(lrc) = corr(nanmean(models)', nanmean(lickData)');
+    
+    absDiff = models - lickData;
     subplot(2,1,1);
     hold on;
     plot(viewRange, smoothdata((plotModel - plotData).^2,'movmean',5),'Color',cmap((ceil((lrc/length(lr)) * 64)),:));
