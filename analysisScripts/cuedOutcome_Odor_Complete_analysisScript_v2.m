@@ -98,7 +98,7 @@ end
     for counter = 1:length(trialTypes)
         trialsByType{counter} = filterTE(TE, 'trialType', trialTypes(counter), 'reject', 0);
     end
-    %% plot photometry averages
+    % plot photometry averages
     h=ensureFigure('Photometry_Averages', 1); 
     mcLandscapeFigSetup(h);
 
