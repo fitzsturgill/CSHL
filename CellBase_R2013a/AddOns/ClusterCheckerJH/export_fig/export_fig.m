@@ -1,7 +1,7 @@
 %EXPORT_FIG  Exports figures suitable for publication
 %
 % Examples:
-%   im = export_fig
+  im = export_fig
 %   [im alpha] = export_fig
 %   export_fig filename
 %   export_fig filename -format1 -format2
