@@ -20,20 +20,18 @@ function rmsNoise = CSC_RMS(varargin)
     else
         filepath = s.filepath;
     end
-    
-    %%
-    fullpth = 'Z:\tetrodeData\tetrodeData_nlx\CD_11\2018-02-12_17-10-36';
+       
     rmsNoise = NaN(numel(s.channels), 1);
     h = waitbar(0, 'RMS noise');   
     for channel = s.channels
         cfilename = sprintf('CSC%d.ncs', channel);
         try
             if isempty(s.timestampRange) && ~isempty(s.indexRange)
-                [Samples, header] = Nlx2MatCSC(fullfile(fullpth, cfilename),[0 0 0 0 1],1,2,s.indexRange);
+                [Samples, header] = Nlx2MatCSC(fullfile(filepath, cfilename),[0 0 0 0 1],1,2,s.indexRange);
             elseif ~isempty(s.timestampRange)
-                [Samples, header] = Nlx2MatCSC(fullfile(fullpth, cfilename),[0 0 0 0 1],1,4,s.timestampRange);
+                [Samples, header] = Nlx2MatCSC(fullfile(filepath, cfilename),[0 0 0 0 1],1,4,s.timestampRange);
             else
-                [Samples, header] = Nlx2MatCSC(fullfile(fullpth, cfilename),[0 0 0 0 1],1,1);
+                [Samples, header] = Nlx2MatCSC(fullfile(filepath, cfilename),[0 0 0 0 1],1,1);
             end
             Samples = reshape(Samples, numel(Samples), 1);
             ADBitVolts = sscanf(header{16}, '-ADBitVolts %f');

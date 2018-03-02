@@ -10,7 +10,7 @@ TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'expFit', 
 TE = makeTE_CuedOutcome_Odor_Complete(sessions);
 TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'simple', 'blMode', 'byTrial');
 
-%% extract peak trial dFF responses to cues and reinforcement and lick counts
+%% extract peak trial dFF responses to cues and reinforcement and lic   counts
 TE.phPeak_cs = bpCalcPeak_dFF(TE.Photometry, 1, [0 2], TE.Cue, 'method', 'mean', 'phField', 'ZS');
 TE.phPeak_us = bpCalcPeak_dFF(TE.Photometry, 1, [0 0.5], TE.Us, 'method', 'mean', 'phField', 'ZS');
 TE.phPeak_preUs = bpCalcPeak_dFF(TE.Photometry, 1, [-0.5 0], TE.Us, 'method', 'mean', 'phField', 'ZS'); % to serve as local baseline to show positive reward and punishment responses
