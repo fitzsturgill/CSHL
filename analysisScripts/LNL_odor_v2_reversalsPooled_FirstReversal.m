@@ -89,17 +89,17 @@ newCsPlus_ch2_norm = smoothdata(newCsPlus_ch2, 2, 'movmean', 3, 'omitnan');
 newCsPlus_cueLicks_norm = smoothdata(newCsPlus_cueLicks, 2, 'movmean', 3, 'omitnan');
 
 
-% if you were to normalize licks
-% newCsPlus_ch1_norm = bsxfun(@rdivide, newCsPlus_ch1_norm, percentile(newCsPlus_ch1_norm(:,1:newCsMinus_firstRevTrial - 1), f, 2));
-% newCsPlus_ch2_norm = bsxfun(@rdivide, newCsPlus_ch2_norm, percentile(newCsPlus_ch2_norm(:,1:newCsMinus_firstRevTrial - 1), f, 2));
+
+newCsPlus_ch1_norm = bsxfun(@rdivide, newCsPlus_ch1_norm, percentile(newCsMinus_ch1_norm(:,1:newCsMinus_firstRevTrial - 1), f, 2));
+newCsPlus_ch2_norm = bsxfun(@rdivide, newCsPlus_ch2_norm, percentile(newCsMinus_ch2_norm(:,1:newCsMinus_firstRevTrial - 1), f, 2));
 
 
 newCsMinus_ch1_norm = smoothdata(newCsMinus_ch1, 2, 'movmean', 3, 'omitnan');
 newCsMinus_ch2_norm = smoothdata(newCsMinus_ch2, 2, 'movmean', 3, 'omitnan');
 newCsMinus_cueLicks_norm = smoothdata(newCsMinus_cueLicks, 2, 'movmean', 3, 'omitnan');
 
-% newCsMinus_ch1_norm = bsxfun(@rdivide, newCsMinus_ch1_norm, percentile(newCsMinus_ch1_norm(:,1:newCsMinus_firstRevTrial - 1), f, 2));
-% newCsMinus_ch2_norm = bsxfun(@rdivide, newCsMinus_ch2_norm, percentile(newCsMinus_ch2_norm(:,1:newCsMinus_firstRevTrial - 1), f, 2));
+newCsMinus_ch1_norm = bsxfun(@rdivide, newCsMinus_ch1_norm, percentile(newCsMinus_ch1_norm(:,1:newCsMinus_firstRevTrial - 1), f, 2));
+newCsMinus_ch2_norm = bsxfun(@rdivide, newCsMinus_ch2_norm, percentile(newCsMinus_ch2_norm(:,1:newCsMinus_firstRevTrial - 1), f, 2));
     
 
 % find first pseudo-common trials across reversals, plot antic lick rate for first reversal vs. subsequent reversals
