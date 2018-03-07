@@ -6,11 +6,14 @@ sessions = bpLoadSessions;
 TE = makeTE_CuedOutcome_Odor_Complete(sessions);
 TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'expFit', 'blMode', 'byTrial');
 
+%% if you want to try baseline expFit option... 
+TE = makeTE_CuedOutcome_Odor_Complete(sessions);
+TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'simple', 'blMode', 'expFit');
 %% For Dopamine GCaMP recordings, don't use expfit dFFMode option
 TE = makeTE_CuedOutcome_Odor_Complete(sessions);
 TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'simple', 'blMode', 'byTrial');
 
-%% extract peak trial dFF responses to cues and reinforcement and lic   counts
+%% extract peak trial dFF responses to cues and reinforcement and lick counts
 TE.phPeak_cs = bpCalcPeak_dFF(TE.Photometry, 1, [0 2], TE.Cue, 'method', 'mean', 'phField', 'ZS');
 TE.phPeak_us = bpCalcPeak_dFF(TE.Photometry, 1, [0 0.5], TE.Us, 'method', 'mean', 'phField', 'ZS');
 TE.phPeak_preUs = bpCalcPeak_dFF(TE.Photometry, 1, [-0.5 0], TE.Us, 'method', 'mean', 'phField', 'ZS'); % to serve as local baseline to show positive reward and punishment responses
@@ -22,21 +25,25 @@ TE.phPeak_cs_sustained = bpCalcPeak_dFF(TE.Photometry, 1, [1 3], TE.Cue, 'method
 TE.csLicks = countEventFromTE(TE, 'Port1In', [-2 0], TE.Us);
 TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], TE.Us);
 
+
 %%
-% savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
-% savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
 basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
-% basepath = uigetdir;
-% basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\initial_sessions';
-sep = strfind(TE.filename{1}, '_');
-subjectName = TE.filename{1}(1:sep(2)-1);
+if length(unique(TE.filename)) > 1
+    sep = strfind(TE.filename{1}, '_');
+    subjectName = TE.filename{1}(1:sep(2)-1);
+else
+    sep = strfind(TE.filename{1}, '.');
+    subjectName = TE.filename{1}(1:sep(1)-1);
+end
 disp(subjectName);
 savepath = fullfile(basepath, subjectName);
 ensureDirectory(savepath);
-disp(['*** ensuring directory: ' savepath ' ***']);
 %% truncate sessions according to when mouse becomes sated
 rewardTrialsTrunc = filterTE(TE, 'trialOutcome', 1);
 truncateSessionsFromTE(TE, 'init', 'usLicks', rewardTrialsTrunc);
+
+%%
+TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', 11, 'Fs', 20, 'startField', 'Start');
 %%
 if saveOn
     save(fullfile(savepath, 'TE.mat'), 'TE');

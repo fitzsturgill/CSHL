@@ -116,7 +116,7 @@ for channel = channels
     % cross trial bleaching fits for each session plotted as axis array
     if 1 %channel == 1
         figname = ['trialBleach_Correction_ch' num2str(channel)];
-        ensureFigure(figname, 1);
+        f1 = ensureFigure(figname, 1);
         nSessions = size(TE.Photometry.bleachFit, 1);
         subA = ceil(sqrt(nSessions));
         for counter = 1:nSessions
@@ -132,8 +132,8 @@ for channel = channels
         [ha, hl] = phPlotAverageFromTE(TE, 1:length(TE.filename), channel,...
     'FluorDataField', 'ZS', 'window', [0.1, max(TE.Photometry.xData) - min(TE.Photometry.xData)], 'zeroTimes', TE.Photometry.startTime); %high value, reward
         if saveOn
-            saveas(gcf, fullfile(savepath, 'trialBleach_Correction.fig'));
-            saveas(gcf, fullfile(savepath, 'trialBleach_Correction.jpg'));
+            saveas(f1, fullfile(savepath, figname), 'fig');
+            saveas(f1, fullfile(savepath, figname), 'jpeg');            
             saveas(gcf, fullfile(savepath, [figname2 '.fig']));
             saveas(gcf, fullfile(savepath, [figname2 '.jpg']));            
         end

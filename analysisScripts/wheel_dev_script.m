@@ -319,7 +319,7 @@ end
 
 
 %%
-
+xdata = linspace(-2, 2, 80);
 [rewards_wheel, ts, tn] = extractDataByTimeStamps(TE.Wheel.data.V, TE.Wheel.startTime, 20, TE.Reward, [-2 2]);
 ensureFigure('rewards_velocity', 1);
 plot(xdata, nanmean(rewards_wheel)); ylabel('velocity'); xlabel('time from reward (s)');

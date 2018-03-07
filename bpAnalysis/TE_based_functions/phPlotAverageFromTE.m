@@ -11,7 +11,7 @@ function varargout = phPlotAverageFromTE(TE, trials, ch, varargin)
         'window', [];... % window to plot with respect to zero time that is already calculated by processTrialAnalysis_Photometry2 (I think !!!!)
         'zeroTimes', [];... % not fully implemented, see usage below
         'cmap', [];...
-        'alpha', 1;...
+        'alpha', 1;...  % you can 
         };    
     [s, ~] = parse_args(defaults, varargin{:});
 

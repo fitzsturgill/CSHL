@@ -8,6 +8,7 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
         'CLimFactor', 3;...  % scales color table -/+ n standard deviations away from the mean
         'trialNumbering', 'consecutive';... % 'consecutive' or 'global'
         'CLim', [];... % if specified, CLimMode set manually
+        'medFilter', 0;... % if specified, set window for median filtering, only works with consecutive mode right now....
         };
     [s, ~] = parse_args(defaults, varargin{:});
     if isempty(s.fig)
@@ -29,7 +30,7 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
         error('TE must be scalar');
     end
     
-    if ~isfield(TE, Photometry);
+    if ~isfield(TE, Photometry)
         error([Photometry ' field does not exist']);
     end
     
@@ -55,8 +56,9 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
     switch s.trialNumbering
         case 'consecutive'
             cData = TE.(Photometry).data(ch).dFF(trials, startP:endP);
-
-%             cData = MEDFILT(cData);
+            if s.medFilter
+                cData = MEDFILT(cData, s.medFilter);
+            end
             sessionBreaks = find(diff(TE.sessionIndex(trials)))';            
         %     sessionBreaks = find(diff(TE.epoch(trials)))';     % kludge for sfn poster, show epoch change (reversal)
             ih = image('Xdata', s.window, 'YData', [1 size(cData, 1)],...
@@ -76,10 +78,10 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
     
 end
 
-function out = MEDFILT(cdata)
+function out = MEDFILT(cdata, window)
     out = zeros(size(cdata));
     for counter = 1:size(cdata, 1)
-        out(counter, :) = medfilt1(cdata(counter, :), 7);
+        out(counter, :) = medfilt1(cdata(counter, :), window);
 %         out(counter, :) = smooth(cdata(counter, :), 7);
     end
 end
