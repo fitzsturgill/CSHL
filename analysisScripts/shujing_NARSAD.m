@@ -1,10 +1,10 @@
-savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\Grants\NARSAD_Shujing';
+% savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\Grants\NARSAD_Shujing';
 
-
+savepath = 'C:\Users\Fitz\Dropbox\KepecsLab\_Fitz\Grants\NARSAD_Shujing';
 load(fullfile('Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\ChAT_60', 'TE.mat'));
 
 %% generate trial lookups for different combinations of conditions
-
+saveOn = 0;
 % reject session 4
 % TE.reject(ismember(TE.sessionIndex, [1 2 3 4 5])) = 0;
 % see Pavlovian_reversals_blocks    blocks 2 and 3
@@ -173,13 +173,14 @@ nTrials = length(TE.filename);
 cueWindow = [0 1];
 traceWindow = [1 2];
 usWindow = [0 0.5];
+usZeros = cellfun(@(x,y,z,a) max(x(1), max(y(1), max(z(1), a(1)))), TE.Reward, TE.Punish, TE.WNoise, TE.Neutral); %'Reward', 'Punish', 'WNoise', 'Neutral'
 
-TE.cueLicks = countEventFromTE(TE, 'Port1In', csWindow, TE.Cue);
+TE.cueLicks = countEventFromTE(TE, 'Port1In', cueWindow, TE.Cue);
 TE.traceLicks = countEventFromTE(TE, 'Port1In', traceWindow, TE.Cue);
 TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], usZeros);
 
 
-usZeros = cellfun(@(x,y,z,a) max(x(1), max(y(1), max(z(1), a(1)))), TE.Reward, TE.Punish, TE.WNoise, TE.Neutral); %'Reward', 'Punish', 'WNoise', 'Neutral'
+
 
 TE.phPeakMean_baseline = bpCalcPeak_dFF(TE.Photometry, 1, [1 4], [], 'method', 'mean', 'phField', 'ZS');
 TE.phPeakMean_us = bpCalcPeak_dFF(TE.Photometry, 1, usWindow, usZeros, 'method', 'mean', 'phField', 'ZS');
@@ -193,9 +194,11 @@ TE.phPeakPercentile_trace = bpCalcPeak_dFF(TE.Photometry, 1, traceWindow, TE.Cue
 TE.phPeakPercentile_us = bpCalcPeak_dFF(TE.Photometry, 1, [0 0.75], usZeros, 'method', 'percentile', 'percentile', 0.5, 'phField', 'ZS');
 
 %%
+saveOn = 1;
 saveName = 'expUncertainty_phAverage';    
 h=ensureFigure(saveName, 1); 
-savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\Grants\NARSAD_Shujing';
+% savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\Grants\NARSAD_Shujing';
+savepath = 'C:\Users\Fitz\Dropbox\KepecsLab\_Fitz\Grants\NARSAD_Shujing';
 
 
 
@@ -210,7 +213,8 @@ savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\Grants\NARSAD_Shujing';
 
 axes; 
 set(gca, 'XLim', [-2 2], 'YLim', [- 1 3]);
-addStimulusPatch(gca, [0 1], '', [0.8 0.8 0.8], 1); 
+addStimulusPatch(gca, [0 1], '', [0.9 0.9 0.9], 1); 
+addStimulusPatch(gca, [1 2], '', [0.5 1 0.5], 1); 
 [ha, hl] = phPlotAverageFromTE(TE, {highTrials, mediumTrials, lowTrials, uncuedReward}, 1, 'FluorDataField', 'ZS', 'window', [-2 2], 'alpha', [],...
     'linespec', {'c', 'b', 'm', 'k'}); %high value, reward
 legend(hl, {'high', 'medium', 'low', 'uncued'}, 'Location', 'northwest', 'FontSize', 8); legend('boxoff');
@@ -235,8 +239,24 @@ for counter = 1:length(trialTypes)
     chat.avg(counter, 2) = mean(data);
     chat.sem(counter, 2) = std(data) ./ sqrt(length(data));    
 end
-h = ensureFigure('uncertainty_summary', 1);
+chat.avg = bsxfun(@rdivide, chat.avg, chat.avg(1,:));
+saveName = 'uncertainty_summary';
+h = ensureFigure(saveName, 1);
 
 axes;
-errorbar(chat.avg, chat.sem);
-set(gca, 'XLim', [0.5 3.5]);
+b = errorbar(chat.avg, chat.sem, 'LineWidth', 1);
+b(1).Color = [0.5 0.5 0.5];
+b(2).Color = [0 1 0];
+% ylabel('\bf\color[rgb]{0.6680,0.2148,0.8359}Cholinergic \color{black}(\fontsize{20}\sigma\fontsize{16}-baseline)');
+% legend(b, {'\color[rgb]{0.5 1 0.5} odor', '\color[rgb]{0 1 0} trace'}, 'Location', 'northwest', 'FontSize', 10, 'Interpreter', 'tex', 'Box', 'off');
+legend(b, {'odor', 'trace'}, 'Location', 'northwest', 'FontSize', 10, 'Box', 'off');
+% legend(b, {['\bf\color{cyan}'], '\bf\color{magenta}'}, 'Location', 'northoutside', 'FontSize', 16, 'Box', 'off'); 
+set(gca, 'XLim', [0.5 3.5], 'XTick', [1 2 3], 'XTickLabel', {'0.25', '0.5', '0.75'});
+xlabel('Probability of Reward'); ylabel('Fluor. (normalized)');
+
+formatFigure('aspect', [1.2 1], 'scaleFactor', 2);
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');    
+    saveas(gcf, fullfile(savepath, saveName), 'epsc');
+end   
