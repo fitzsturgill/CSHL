@@ -43,15 +43,14 @@ trialCount = [1:length(TE.filename)]';
   pm = [2 2];
   
   % - 6 0 4
-     axes; 
-       set(gca, 'XLim', [-2 6], 'YLim', [-0.5 2]);  
+ axes; 
+set(gca, 'XLim', [-2 6], 'YLim', [-0.5 2]);  
 addStimulusPatch(gca, [0 1], '', [0.7 0.7 0.7], 1); 
-  addStimulusPatch(gca, [2.9 3.1], '', [0.7 0.7 0.7], 1);
-    [ha, hl] = phPlotAverageFromTE(TE, {crTrials & punishTrials, crTrials & neutralTrials}, 1,...
-      'FluorDataField', 'ZS', 'window', [-2, 6], 'linespec', {'r', 'k'}, 'alpha', ''); %high value, reward
+addStimulusPatch(gca, [2.9 3.1], '', [0.7 0.7 0.7], 1);
+[ha, hl] = phPlotAverageFromTE(TE, {crTrials & punishTrials, crTrials & neutralTrials}, 1,...
+  'FluorDataField', 'ZS', 'window', [-2, 6], 'linespec', {'r', 'k'}, 'alpha', ''); %high value, reward
 %     legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-?
-?
+
 ylabel('Fluor. (\fontsize{20}\sigma\fontsize{12}-baseline)'); xlabel('Time from odor (s)');  
   
   

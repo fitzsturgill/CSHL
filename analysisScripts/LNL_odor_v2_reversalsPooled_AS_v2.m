@@ -5,15 +5,16 @@ files = {...
     'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\DC_20\', 'RE_DC_20.mat';...
     'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\DC_35\', 'RE_DC_35.mat';...
     'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\DC_36\', 'RE_DC_36.mat';...    
+    'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\DC_37\', 'RE_DC_37.mat';... 
     'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\DC_40\', 'RE_DC_40.mat';... % first reversal currently excluded on DC_40
     };
 
 %% laptop
 
-files = {...
-    'C:\Fitz_Data\SummaryAnalyses\LNL_Analysis_new\DC_17\', 'RE_DC_17.mat';...
-    'C:\Fitz_Data\SummaryAnalyses\LNL_Analysis_new\DC_20\', 'RE_DC_20.mat';...
-    };
+% files = {...
+%     'C:\Fitz_Data\SummaryAnalyses\LNL_Analysis_new\DC_17\', 'RE_DC_17.mat';...
+%     'C:\Fitz_Data\SummaryAnalyses\LNL_Analysis_new\DC_20\', 'RE_DC_20.mat';...
+%     };
 
 %%
 for counter = 1:size(files, 1)
@@ -74,7 +75,7 @@ alwaysCsPlus_ch2 = [AR.csPlus.phPeakMean_cs_ch2.before AR.csPlus.phPeakMean_cs_c
 alwaysCsPlus_trialNumber = (1:size(alwaysCsPlus_ch1, 2)) - size(AR.csPlus.phPeakMean_cs_ch1.before, 2);
 alwaysCsPlus_firstRevTrial = size(AR.csPlus.phPeakMean_cs_ch1.before, 2) + 1;
 
-sb = [5, 5];
+sb = repmat(ceil(sqrt(nReversals)), 1, 2);
 savename1 = 'newCsPlus_ch1_tiled';
 h1 = ensureFigure(savename1, 1);
 savename2 = 'newCsPlus_ch2_tiled';
@@ -85,7 +86,7 @@ for counter = 1:nReversals
     a2 = subplot(sb(1),sb(2),counter, 'Parent', h2); 
     plot(newCsPlus_trialNumber, smoothdata(newCsPlus_ch2(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a2);    
 end
-sb = [5, 5];
+sb = repmat(ceil(sqrt(nReversals)), 1, 2);
 savename1 = 'newCsMinus_ch1_tiled';
 h1 = ensureFigure(savename1, 1);
 savename2 = 'newCsMinus_ch2_tiled';
@@ -103,15 +104,15 @@ alwaysCsPlus_licks = [AR.csPlus.csLicks.before AR.csPlus.csLicks.after];
 
 
 
-%% newCsPlus - normalize by 90% of post reversal values, smooth, find first and last common points across reversals
+%% newCsPlus - normalize by 90% of pre reversal (CS+) values, smooth, find first and last common points across reversals
 f = 0.9;
-newCsPlus_ch1_norm = smoothdata(newCsPlus_ch1, 2, 'movmean', 3, 'omitnan');
-newCsPlus_ch2_norm = smoothdata(newCsPlus_ch2, 2, 'movmean', 3, 'omitnan');
-newCsPlus_licks_norm = smoothdata(newCsPlus_licks, 2, 'movmean', 3, 'omitnan');
+% newCsPlus_ch1_norm = smoothdata(newCsPlus_ch1, 2, 'movmean', 3, 'omitnan');
+% newCsPlus_ch2_norm = smoothdata(newCsPlus_ch2, 2, 'movmean', 3, 'omitnan');
+% newCsPlus_licks_norm = smoothdata(newCsPlus_licks, 2, 'movmean', 3, 'omitnan');
 
-newCsPlus_ch1_norm = bsxfun(@rdivide, newCsPlus_ch1_norm, percentile(newCsPlus_ch1_norm(:,newCsPlus_firstRevTrial:end), f, 2));
-newCsPlus_ch2_norm = bsxfun(@rdivide, newCsPlus_ch2_norm, percentile(newCsPlus_ch2_norm(:,newCsPlus_firstRevTrial:end), f, 2));
-newCsPlus_licks_norm = bsxfun(@rdivide, newCsPlus_licks_norm, percentile(newCsPlus_licks_norm(:,newCsPlus_firstRevTrial:end), f, 2));
+newCsPlus_ch1_norm = bsxfun(@rdivide, newCsPlus_ch1_norm, percentile(newCsMinus_ch1_norm(:,1:newCsPlus_firstRevTrial - 1), f, 2));
+newCsPlus_ch2_norm = bsxfun(@rdivide, newCsPlus_ch2_norm, percentile(newCsMinus_ch2_norm(:,1:newCsPlus_firstRevTrial - 1), f, 2));
+newCsPlus_licks_norm = bsxfun(@rdivide, newCsPlus_licks_norm, percentile(newCsMinus_licks_norm(:,1:newCsPlus_firstRevTrial - 1), f, 2));
 
 
 
@@ -149,9 +150,9 @@ end
 %%
 %% newCsMinus - normalize by 90% of pre reversal values, smooth, find first and last common points across reversals
 f = 0.9;
-newCsMinus_ch1_norm = smoothdata(newCsMinus_ch1, 2, 'movmean', 3, 'omitnan');
-newCsMinus_ch2_norm = smoothdata(newCsMinus_ch2, 2, 'movmean', 3, 'omitnan');
-newCsMinus_licks_norm = smoothdata(newCsMinus_licks, 2, 'movmean', 3, 'omitnan');
+% newCsMinus_ch1_norm = smoothdata(newCsMinus_ch1, 2, 'movmean', 3, 'omitnan');
+% newCsMinus_ch2_norm = smoothdata(newCsMinus_ch2, 2, 'movmean', 3, 'omitnan');
+% newCsMinus_licks_norm = smoothdata(newCsMinus_licks, 2, 'movmean', 3, 'omitnan');
 
 newCsMinus_ch1_norm = bsxfun(@rdivide, newCsMinus_ch1_norm, percentile(newCsMinus_ch1_norm(:,1:newCsMinus_firstRevTrial - 1), f, 2));
 newCsMinus_ch2_norm = bsxfun(@rdivide, newCsMinus_ch2_norm, percentile(newCsMinus_ch2_norm(:,1:newCsMinus_firstRevTrial - 1), f, 2));
@@ -278,7 +279,7 @@ if saveOn
 end    
 
 %% find good example reversals for Ach, Dop, and licking
-sb = [4, 5];
+sb = repmat(ceil(sqrt(nReversals)), 1, 2);
 savename1 = 'newCsPlus_all_tiled';
 h1 = ensureFigure(savename1, 1);
 savename2 = 'newCsMinus_all_tiled';

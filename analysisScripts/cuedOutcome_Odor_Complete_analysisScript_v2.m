@@ -3,8 +3,10 @@ saveOn = 1;
 %% 
 sessions = bpLoadSessions;
 %%
+tau = [1 1];
+%%
 TE = makeTE_CuedOutcome_Odor_Complete(sessions);
-TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'expFit', 'blMode', 'byTrial');
+TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'expFit', 'blMode', 'byTrial', 'tau', tau);
 
 %% if you want to try baseline expFit option... 
 TE = makeTE_CuedOutcome_Odor_Complete(sessions);
