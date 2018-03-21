@@ -66,18 +66,21 @@ end
 nReversals = size(AR.csPlus.globalTrialNumber.after, 1);
 % reversal #s
 revNumber = ones(nReversals,1);
+mouseNumber = ones(nReversals,1);
 
 thisRev = 1;
+thisMouse = 1;
 for counter = 2:nReversals
     if strcmp(AR.csPlus.filename.after{counter - 1,1}(1:5), AR.csPlus.filename.after{counter,1}(1:5))
         thisRev = thisRev + 1;
     else
         thisRev = 1;
+        thisMouse = thisMouse + 1;
     end
     revNumber(counter) = thisRev;
+    mouseNumber(counter) = thisMouse;
 end
 [~, sortRevNumber] = sort(revNumber);
-    
     
 
 
@@ -98,6 +101,7 @@ alwaysCsPlus_ch1 = [AR.csPlus.phPeakMean_cs_ch1.before AR.csPlus.phPeakMean_cs_c
 alwaysCsPlus_ch2 = [AR.csPlus.phPeakMean_cs_ch2.before AR.csPlus.phPeakMean_cs_ch2.after];
 alwaysCsPlus_trialNumber = (1:size(alwaysCsPlus_ch1, 2)) - size(AR.csPlus.phPeakMean_cs_ch1.before, 2);
 alwaysCsPlus_firstRevTrial = size(AR.csPlus.phPeakMean_cs_ch1.before, 2) + 1;
+%% make wrap-around data arrays
 %%
 oldCsPlus_trialNumber = -(size(AR.csPlus.phPeakMean_cs_ch1.before, 2) - 1) : 0;
 
