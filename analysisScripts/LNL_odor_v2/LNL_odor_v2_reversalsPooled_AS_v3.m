@@ -2,12 +2,11 @@
 % LNL_odor_v2_pav_rev  reversal analysis script 9/
 %% desktop 
 files = {...
-    'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\DC_17\', 'RE_DC_17.mat';...
-    'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\DC_20\', 'RE_DC_20.mat';...
-    'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\DC_35\', 'RE_DC_35.mat';...
-    'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\DC_36\', 'RE_DC_36.mat';...    
-    'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\DC_37\', 'RE_DC_37.mat';...    
-    'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\DC_40\', 'RE_DC_40.mat';... % first reversal currently excluded on DC_40
+    'Z:\SummaryAnalyses\LNL_odor_v2_BaselineTrialByTrial_firstReversal\DC_17\', 'RE_DC_17.mat';...
+    'Z:\SummaryAnalyses\LNL_odor_v2_BaselineTrialByTrial_firstReversal\DC_20\', 'RE_DC_20.mat';...
+    'Z:\SummaryAnalyses\LNL_odor_v2_BaselineTrialByTrial_firstReversal\DC_36\', 'RE_DC_36.mat';...    
+    'Z:\SummaryAnalyses\LNL_odor_v2_BaselineTrialByTrial_firstReversal\DC_37\', 'RE_DC_37.mat';...    
+    'Z:\SummaryAnalyses\LNL_odor_v2_BaselineTrialByTrial_firstReversal\DC_40\', 'RE_DC_40.mat';... % first reversal currently excluded on DC_40
     };
 
 %% laptop
@@ -18,7 +17,7 @@ files = {...
 %     };
 
 %%
-smoothWindow = 3;
+smoothWindow = 1;
 %%
 for counter = 1:size(files, 1)
     fileName = files{counter, 2}(1:end-4);
@@ -29,6 +28,9 @@ for counter = 1:size(files, 1)
         RE(counter) = temp.RE;
     end
 end
+
+firstReversals = cellfun(@(x,y) ~strcmp(x(1:5), y(1:5)), AR.csPlus.filename.after(1:end-1,1), AR.csPlus.filename.after(2:end,1));
+firstReversals = [false; firstReversals];
 
 %% 
 %% desktop
@@ -62,7 +64,26 @@ for group = fieldnames(AR)'
     end
 end
 nReversals = size(AR.csPlus.globalTrialNumber.after, 1);
-% 
+% reversal #s
+revNumber = ones(nReversals,1);
+
+thisRev = 1;
+for counter = 2:nReversals
+    if strcmp(AR.csPlus.filename.after{counter - 1,1}(1:5), AR.csPlus.filename.after{counter,1}(1:5))
+        thisRev = thisRev + 1;
+    else
+        thisRev = 1;
+    end
+    revNumber(counter) = thisRev;
+end
+[~, sortRevNumber] = sort(revNumber);
+    
+    
+
+
+
+
+%%
 newCsPlus_ch1 = [AR.csMinus.phPeakMean_cs_ch1.before AR.csPlus.phPeakMean_cs_ch1.after];
 newCsPlus_ch2 = [AR.csMinus.phPeakMean_cs_ch2.before AR.csPlus.phPeakMean_cs_ch2.after];
 newCsPlus_trialNumber = (1:size(newCsPlus_ch1, 2)) - size(AR.csMinus.phPeakMean_cs_ch1.before, 2);
@@ -155,13 +176,13 @@ alwaysCsPlus_licks_norm = smoothdata(alwaysCsPlus_licks, 2, 'movmean', smoothWin
 
 f = 0.9;
 trialsBack = 30;
-% normVector_ch1 = percentile(newCsMinus_ch1_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), f, 2);
-% normVector_ch2 = percentile(newCsMinus_ch2_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), f, 2);
-% normVector_licks = percentile(newCsMinus_licks_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), f, 2);
+normVector_ch1 = percentile(smoothdata(newCsMinus_ch1_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), 2, 'movmean', 5, 'omitnan'), f, 2);
+normVector_ch2 = percentile(smoothdata(newCsMinus_ch2_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), 2, 'movmean', 5, 'omitnan'), f, 2);
+normVector_licks = percentile(smoothdata(newCsMinus_licks_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), 2, 'movmean', 5, 'omitnan'), f, 2);
 
-normVector_ch1 = percentile(newCsPlus_ch1_norm(:,newCsPlus_firstRevTrial:end), f, 2);
-normVector_ch2 = percentile(newCsPlus_ch2_norm(:,newCsPlus_firstRevTrial:end), f, 2);
-normVector_licks = percentile(newCsPlus_licks_norm(:,newCsPlus_firstRevTrial:end), f, 2);
+% normVector_ch1 = percentile(newCsPlus_ch1_norm(:,newCsPlus_firstRevTrial:end), f, 2);
+% normVector_ch2 = percentile(newCsPlus_ch2_norm(:,newCsPlus_firstRevTrial:end), f, 2);
+% normVector_licks = percentile(newCsPlus_licks_norm(:,newCsPlus_firstRevTrial:end), f, 2);
 
 % normVector_ch1 = ones(nReversals, 1);
 % normVector_ch2 = ones(nReversals, 1);
@@ -172,7 +193,17 @@ newCsPlus_ch2_norm = bsxfun(@rdivide, newCsPlus_ch2_norm, normVector_ch2);
 newCsPlus_licks_norm = bsxfun(@rdivide, newCsPlus_licks_norm, normVector_licks);
 
 
+%% image
+ensureFigure('newCsPlus_image', 1);
+subplot(2,2,1);
+xlim = [min(newCsPlus_trialNumber), max(newCsPlus_trialNumber)];
+imagesc('XData', xlim, 'CData', newCsPlus_ch1_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', [-2 2]);
+subplot(2,2,2);
+imagesc('XData', xlim, 'CData', newCsPlus_ch2_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', [-2 2]);
+subplot(2,2,3);
+imagesc('XData', xlim, 'CData', newCsPlus_licks_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', [-2 2]);
 
+%%
 common = sum(~isnan(newCsPlus_ch1_norm)) > 3;
 
 
@@ -246,13 +277,39 @@ if saveOn
     saveas(gcf, fullfile(savepath, [savename '.epsc']));   
 end    
 
-% alwaysCsPlus - normalize by f% of post reversal values, smooth, find first and last common points across reversals
+%% image
+ensureFigure('newCsMinus_image', 1);
+subplot(2,2,1);
+xlim = [min(newCsMinus_trialNumber), max(newCsMinus_trialNumber)];
+imagesc('XData', xlim, 'CData', newCsMinus_ch1_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', [-2 2]);
+subplot(2,2,2);
+imagesc('XData', xlim, 'CData', newCsMinus_ch2_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', [-2 2]);
+subplot(2,2,3);
+imagesc('XData', xlim, 'CData', newCsMinus_licks_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', [-2 2]);
+
+
+
+%% alwaysCsPlus - normalize by f% of post reversal values, smooth, find first and last common points across reversals
 
 
 alwaysCsPlus_ch1_norm = bsxfun(@rdivide, alwaysCsPlus_ch1_norm, normVector_ch1);
 alwaysCsPlus_ch2_norm = bsxfun(@rdivide, alwaysCsPlus_ch2_norm, normVector_ch2);
 alwaysCsPlus_licks_norm = bsxfun(@rdivide, alwaysCsPlus_licks_norm, normVector_licks);
 
+
+
+
+
+%% image
+ensureFigure('alwaysCsPlus_image', 1);
+subplot(2,2,1);
+xlim = [min(alwaysCsPlus_trialNumber), max(alwaysCsPlus_trialNumber)];
+imagesc('XData', xlim, 'CData', alwaysCsPlus_ch1_norm(sortRevNumber, :)); set(gca, 'XLim', xlim); set(gca, 'CLim', [-2 2]);
+subplot(2,2,2);
+imagesc('XData', xlim, 'CData', alwaysCsPlus_ch2_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', [-2 2]);
+subplot(2,2,3);
+imagesc('XData', xlim, 'CData', alwaysCsPlus_licks_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', [-2 2]);
+%%
 
 % common = find(mean(alwaysCsPlus_ch1_norm));% applying mean will reveal NaNs
 common = sum(~isnan(alwaysCsPlus_ch1_norm)) > 3;% applying mean will reveal NaNs

@@ -47,8 +47,8 @@ csWindow(:,2) = cellfun(@(x,y,z) max(x(end), y(end)) - z(1), TE.AnswerLick, TE.A
 % 2) to select AnswerLick time stamp for lick trials (AnswerLick follows
 % AnswerNoLick state)
 
-ch1CsWindow = [0.25 1];
-ch2CsWindow = [0.25 1];
+% ch1CsWindow = [0.25 1];
+% ch2CsWindow = [0.25 1];
 ch1CsWindow = [0.25 2];
 ch2CsWindow = [0.25 2];
 TE.csLicks = countEventFromTE(TE, 'Port1In', csWindow, TE.Cue);
@@ -83,8 +83,8 @@ TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', 11, 'Fs', 20, 'start
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
 % basepath = uigetdir;
-basepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\';
-% basepath = 'Z:\SummaryAnalyses\LNL_odor_v2_BaselineTrialByTrial_firstReversal\';
+% basepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\';
+basepath = 'Z:\SummaryAnalyses\LNL_odor_v2_BaselineTrialByTrial_firstReversal\';
 % basepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\DC_20and17_combined\';
 sep = strfind(TE.filename{1}, '_');
 subjectName = TE.filename{1}(1:sep(2)-1);
