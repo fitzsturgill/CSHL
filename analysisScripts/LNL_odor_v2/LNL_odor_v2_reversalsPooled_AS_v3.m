@@ -16,6 +16,14 @@ files = {...
 %     'C:\Fitz_Data\SummaryAnalyses\LNL_Analysis_new\DC_20\', 'RE_DC_20.mat';...
 %     };
 
+% files = {...
+%     'C:\Fitz_Data\SummaryAnalyses\LNL_odor_v2_BaselineTrialByTrial_firstReversal\DC_17\', 'RE_DC_17.mat';...
+%     'C:\Fitz_Data\SummaryAnalyses\LNL_odor_v2_BaselineTrialByTrial_firstReversal\DC_20\', 'RE_DC_20.mat';...
+%     'C:\Fitz_Data\SummaryAnalyses\LNL_odor_v2_BaselineTrialByTrial_firstReversal\DC_36\', 'RE_DC_36.mat';...    
+% %     'C:\Fitz_Data\SummaryAnalyses\LNL_odor_v2_BaselineTrialByTrial_firstReversal\DC_37\', 'RE_DC_37.mat';...    
+%     'C:\Fitz_Data\SummaryAnalyses\LNL_odor_v2_BaselineTrialByTrial_firstReversal\DC_40\', 'RE_DC_40.mat';... % first reversal currently excluded on DC_40
+%     };
+
 %%
 smoothWindow = 1;
 %%
@@ -29,10 +37,9 @@ for counter = 1:size(files, 1)
     end
 end
 
-firstReversals = cellfun(@(x,y) ~strcmp(x(1:5), y(1:5)), AR.csPlus.filename.after(1:end-1,1), AR.csPlus.filename.after(2:end,1));
-firstReversals = [false; firstReversals];
 
-%% 
+
+
 %% desktop
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SFN_2017\Reversals';
 savepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\Reversals_Pooled';
@@ -63,6 +70,9 @@ for group = fieldnames(AR)'
         end
     end
 end
+
+firstReversals = cellfun(@(x,y) ~strcmp(x(1:5), y(1:5)), AR.csPlus.filename.after(1:end-1,1), AR.csPlus.filename.after(2:end,1));
+firstReversals = [false; firstReversals];
 nReversals = size(AR.csPlus.globalTrialNumber.after, 1);
 % reversal #s
 revNumber = ones(nReversals,1);
@@ -85,6 +95,11 @@ end
 
 
 
+
+%% quality control- calculate auROC for licking pre
+trialWindow = [-30 30];%?
+
+comparisons = {
 
 %%
 newCsPlus_ch1 = [AR.csMinus.phPeakMean_cs_ch1.before AR.csPlus.phPeakMean_cs_ch1.after];
@@ -176,7 +191,7 @@ alwaysCsPlus_ch1_norm = smoothdata(alwaysCsPlus_ch1, 2, 'movmean', smoothWindow,
 alwaysCsPlus_ch2_norm = smoothdata(alwaysCsPlus_ch2, 2, 'movmean', smoothWindow, 'omitnan');
 alwaysCsPlus_licks_norm = smoothdata(alwaysCsPlus_licks, 2, 'movmean', smoothWindow, 'omitnan');
 
-%% newCsPlus - normalize by f% of pre reversal values, smooth, find first and last common points across reversals
+%% normalize by f% of pre reversal values, smooth, find first and last common points across reversals
 
 f = 0.9;
 trialsBack = 30;
@@ -196,16 +211,49 @@ newCsPlus_ch1_norm = bsxfun(@rdivide, newCsPlus_ch1_norm, normVector_ch1);
 newCsPlus_ch2_norm = bsxfun(@rdivide, newCsPlus_ch2_norm, normVector_ch2);
 newCsPlus_licks_norm = bsxfun(@rdivide, newCsPlus_licks_norm, normVector_licks);
 
+newCsMinus_ch1_norm = bsxfun(@rdivide, newCsMinus_ch1_norm, normVector_ch1);
+newCsMinus_ch2_norm = bsxfun(@rdivide, newCsMinus_ch2_norm, normVector_ch2);
+newCsMinus_licks_norm = bsxfun(@rdivide, newCsMinus_licks_norm, normVector_licks);
 
-%% image
+alwaysCsPlus_ch1_norm = bsxfun(@rdivide, alwaysCsPlus_ch1_norm, normVector_ch1);
+alwaysCsPlus_ch2_norm = bsxfun(@rdivide, alwaysCsPlus_ch2_norm, normVector_ch2);
+alwaysCsPlus_licks_norm = bsxfun(@rdivide, alwaysCsPlus_licks_norm, normVector_licks);
+
+
+%% images
+
+% newCsPlus
 ensureFigure('newCsPlus_image', 1);
 subplot(2,2,1);
+clim = [-2 2];
 xlim = [min(newCsPlus_trialNumber), max(newCsPlus_trialNumber)];
-imagesc('XData', xlim, 'CData', newCsPlus_ch1_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', [-2 2]);
+imagesc('XData', xlim, 'CData', newCsPlus_ch1_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', clim);
 subplot(2,2,2);
-imagesc('XData', xlim, 'CData', newCsPlus_ch2_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', [-2 2]);
+imagesc('XData', xlim, 'CData', newCsPlus_ch2_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', clim);
 subplot(2,2,3);
-imagesc('XData', xlim, 'CData', newCsPlus_licks_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', [-2 2]);
+imagesc('XData', xlim, 'CData', newCsPlus_licks_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', clim);
+
+% newCsMinus
+ensureFigure('newCsMinus_image', 1);
+subplot(2,2,1);
+xlim = [min(newCsMinus_trialNumber), max(newCsMinus_trialNumber)];
+imagesc('XData', xlim, 'CData', newCsMinus_ch1_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', clim);
+subplot(2,2,2);
+imagesc('XData', xlim, 'CData', newCsMinus_ch2_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', clim);
+subplot(2,2,3);
+imagesc('XData', xlim, 'CData', newCsMinus_licks_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', clim);
+
+
+
+% alwaysCsPlus 
+ensureFigure('alwaysCsPlus_image', 1);
+subplot(2,2,1);
+xlim = [min(alwaysCsPlus_trialNumber), max(alwaysCsPlus_trialNumber)];
+imagesc('XData', xlim, 'CData', alwaysCsPlus_ch1_norm(sortRevNumber, :)); set(gca, 'XLim', xlim); set(gca, 'CLim', clim);
+subplot(2,2,2);
+imagesc('XData', xlim, 'CData', alwaysCsPlus_ch2_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', clim);
+subplot(2,2,3);
+imagesc('XData', xlim, 'CData', alwaysCsPlus_licks_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', clim);
 
 %%
 common = sum(~isnan(newCsPlus_ch1_norm)) > 3;
@@ -244,9 +292,7 @@ end
 
 
 
-newCsMinus_ch1_norm = bsxfun(@rdivide, newCsMinus_ch1_norm, normVector_ch1);
-newCsMinus_ch2_norm = bsxfun(@rdivide, newCsMinus_ch2_norm, normVector_ch2);
-newCsMinus_licks_norm = bsxfun(@rdivide, newCsMinus_licks_norm, normVector_licks);
+
 
 
 % common = find(mean(newCsMinus_ch1_norm));% applying mean will reveal NaNs
@@ -281,38 +327,7 @@ if saveOn
     saveas(gcf, fullfile(savepath, [savename '.epsc']));   
 end    
 
-%% image
-ensureFigure('newCsMinus_image', 1);
-subplot(2,2,1);
-xlim = [min(newCsMinus_trialNumber), max(newCsMinus_trialNumber)];
-imagesc('XData', xlim, 'CData', newCsMinus_ch1_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', [-2 2]);
-subplot(2,2,2);
-imagesc('XData', xlim, 'CData', newCsMinus_ch2_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', [-2 2]);
-subplot(2,2,3);
-imagesc('XData', xlim, 'CData', newCsMinus_licks_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', [-2 2]);
 
-
-
-%% alwaysCsPlus - normalize by f% of post reversal values, smooth, find first and last common points across reversals
-
-
-alwaysCsPlus_ch1_norm = bsxfun(@rdivide, alwaysCsPlus_ch1_norm, normVector_ch1);
-alwaysCsPlus_ch2_norm = bsxfun(@rdivide, alwaysCsPlus_ch2_norm, normVector_ch2);
-alwaysCsPlus_licks_norm = bsxfun(@rdivide, alwaysCsPlus_licks_norm, normVector_licks);
-
-
-
-
-
-%% image
-ensureFigure('alwaysCsPlus_image', 1);
-subplot(2,2,1);
-xlim = [min(alwaysCsPlus_trialNumber), max(alwaysCsPlus_trialNumber)];
-imagesc('XData', xlim, 'CData', alwaysCsPlus_ch1_norm(sortRevNumber, :)); set(gca, 'XLim', xlim); set(gca, 'CLim', [-2 2]);
-subplot(2,2,2);
-imagesc('XData', xlim, 'CData', alwaysCsPlus_ch2_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', [-2 2]);
-subplot(2,2,3);
-imagesc('XData', xlim, 'CData', alwaysCsPlus_licks_norm(sortRevNumber, :)); set(gca, 'XLim', xlim);set(gca, 'CLim', [-2 2]);
 %%
 
 % common = find(mean(alwaysCsPlus_ch1_norm));% applying mean will reveal NaNs
