@@ -117,20 +117,53 @@ end
 for field = comp
     for rev = 1:nReversals
         % before
-        dPrime.(field{:}).before(rev) = dPrime_SNR(AR.csMinus.(field{:}).before(rev,:), AR.csPlus.(field{:}).before(rev,:));
-        auROC.(field{:}).before(rev) = rocarea(stripNaNs(AR.csMinus.(field{:}).before(rev,:)), stripNaNs(AR.csPlus.(field{:}).before(rev,:)), 'scale');
+        dPrime.(field{:}).before(rev) = dPrime_SNR(AR.csPlus.(field{:}).before(rev,:), AR.csMinus.(field{:}).before(rev,:));
+        auROC.(field{:}).before(rev) = rocarea(stripNaNs(AR.csPlus.(field{:}).before(rev,:)), stripNaNs(AR.csMinus.(field{:}).before(rev,:)), 'scale');
         % after
-        dPrime.(field{:}).after(rev) = dPrime_SNR(AR.csMinus.(field{:}).after(rev,:), AR.csPlus.(field{:}).after(rev,:));
-        auROC.(field{:}).after(rev) = rocarea(stripNaNs(AR.csMinus.(field{:}).after(rev,:)), stripNaNs(AR.csPlus.(field{:}).after(rev,:)), 'scale');        
+        dPrime.(field{:}).after(rev) = dPrime_SNR(AR.csPlus.(field{:}).after(rev,:), AR.csMinus.(field{:}).after(rev,:));
+        auROC.(field{:}).after(rev) = rocarea(stripNaNs(AR.csPlus.(field{:}).after(rev,:)), stripNaNs(AR.csMinus.(field{:}).after(rev,:)), 'scale');        
         % acquisition
-        dPrime.(field{:}).acq(rev) = dPrime_SNR(AR.csMinus.(field{:}).before(rev,:), AR.csPlus.(field{:}).after(rev,:));
-        auROC.(field{:}).acq(rev) = rocarea(stripNaNs(AR.csMinus.(field{:}).before(rev,:)), stripNaNs(AR.csPlus.(field{:}).after(rev,:)), 'scale');                
-        % acquisition
-        dPrime.(field{:}).ext(rev) = dPrime_SNR(AR.csMinus.(field{:}).after(rev,:), AR.csPlus.(field{:}).before(rev,:));
-        auROC.(field{:}).ext(rev) = rocarea(stripNaNs(AR.csMinus.(field{:}).after(rev,:)), stripNaNs(AR.csPlus.(field{:}).before(rev,:)), 'scale');                        
+        dPrime.(field{:}).acq(rev) = dPrime_SNR(AR.csPlus.(field{:}).after(rev,:), AR.csMinus.(field{:}).before(rev,:));
+        auROC.(field{:}).acq(rev) = rocarea(stripNaNs(AR.csPlus.(field{:}).after(rev,:)), stripNaNs(AR.csMinus.(field{:}).before(rev,:)), 'scale');                
+        % extinction
+        dPrime.(field{:}).ext(rev) = dPrime_SNR(AR.csPlus.(field{:}).before(rev,:), AR.csMinus.(field{:}).after(rev,:));
+        auROC.(field{:}).ext(rev) = rocarea(stripNaNs(AR.csPlus.(field{:}).before(rev,:)), stripNaNs(AR.csMinus.(field{:}).after(rev,:)), 'scale');                        
     end    
 end
-    
+%% plot quality control metrics
+
+% auROC vs dPrime
+for field = comp
+    field = field{:};
+    savename = ['auROC_vs_dPrime_Scatter_' field];
+    ensureFigure(savename, 1);
+    subplot(2,2,1); scatter(auROC.(field).before, dPrime.(field).before); ylabel('dPrime'); title('before'); addOrginLines;
+    subplot(2,2,2); scatter(auROC.(field).after, dPrime.(field).after); title('after'); addOrginLines;
+    subplot(2,2,3); scatter(auROC.(field).acq, dPrime.(field).acq); ylabel('dPrime'); xlabel('auROC'); title('acquisition'); addOrginLines;
+    subplot(2,2,4); scatter(auROC.(field).ext, dPrime.(field).ext); xlabel('auROC'); title('extinction'); addOrginLines;
+end
+
+% revNumber vs auROC
+for field = comp
+    field = field{:};
+    savename = ['revNumber_vs_auROC_Scatter_' field];
+    ensureFigure(savename, 1);
+    subplot(2,2,1); scatter(revNumber, auROC.(field).before); ylabel('auROC'); title('before'); addOrginLines;
+    subplot(2,2,2); scatter(revNumber, auROC.(field).after); title('after'); addOrginLines;
+    subplot(2,2,3); scatter(revNumber, auROC.(field).acq); ylabel('auROC'); xlabel('rev #'); title('acquisition'); addOrginLines;
+    subplot(2,2,4); scatter(revNumber, auROC.(field).ext); xlabel('rev #'); title('extinction'); addOrginLines;
+end
+% mouseNumber vs auROC
+for field = comp
+    field = field{:};
+    savename = ['mouseNumber_vs_auROC_Scatter_' field];
+    ensureFigure(savename, 1);
+    subplot(2,2,1); scatter(mouseNumber, auROC.(field).before); ylabel('auROC'); title('before'); addOrginLines;
+    subplot(2,2,2); scatter(mouseNumber, auROC.(field).after); title('after'); addOrginLines;
+    subplot(2,2,3); scatter(mouseNumber, auROC.(field).acq); ylabel('auROC'); xlabel('mouse #'); title('acquisition'); addOrginLines;
+    subplot(2,2,4); scatter(mouseNumber, auROC.(field).ext); xlabel('mouse #'); title('extinction'); addOrginLines;
+end
+
 
 %%
 newCsPlus_ch1 = [AR.csMinus.phPeakMean_cs_ch1.before AR.csPlus.phPeakMean_cs_ch1.after];

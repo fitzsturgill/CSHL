@@ -12,9 +12,9 @@ function auROC_example
     b = exp(b);
     subplot(3,2,3); 
     histogram(b); hold on; histogram(a); set(gca, 'XLim', [0 50]);%, 'YLim', [0 500]);
-    title('exponential versions');
+    title('log normal versions');
     subplot(3,2,4);
-    [a b] = rocarea(a,b,'scale', 'PLOT');
+    [~,~] = rocarea(a,b,'scale', 'PLOT');
     % try uniform
     a = rand(1000,1);
     b = rand(1000,1) + 0.5;
@@ -22,7 +22,7 @@ function auROC_example
     histogram(a); hold on; histogram(b);
     title('2 uniform distributions');
     subplot(3,2,6);
-    [a b] = rocarea(a,b,'scale', 'PLOT');
+    [~,~] = rocarea(a,b,'scale', 'PLOT');
 end
 
 function [D, P] = rocarea(x,y,varargin)
