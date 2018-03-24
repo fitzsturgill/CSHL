@@ -166,6 +166,12 @@ end
 
 
 %% filter reversals according to quality
+goodReversals = ...
+    auROC.csLicks.before > 0 &...
+    auROC.csLicks.after > -0.5 &...
+    auROC.phPeakMean_cs_ch1.before > 0.4 &...
+    auROC.phPeakMean_cs_ch2.before > 0.4;
+
 
 
 %%
@@ -183,12 +189,14 @@ alwaysCsPlus_ch1 = [AR.csPlus.phPeakMean_cs_ch1.before AR.csPlus.phPeakMean_cs_c
 alwaysCsPlus_ch2 = [AR.csPlus.phPeakMean_cs_ch2.before AR.csPlus.phPeakMean_cs_ch2.after];
 alwaysCsPlus_trialNumber = (1:size(alwaysCsPlus_ch1, 2)) - size(AR.csPlus.phPeakMean_cs_ch1.before, 2);
 alwaysCsPlus_firstRevTrial = size(AR.csPlus.phPeakMean_cs_ch1.before, 2) + 1;
+
+oldCsPlus_trialNumber = -(size(AR.csPlus.phPeakMean_cs_ch1.before, 2) - 1) : 0;
+oldCsMinus_trialNumber = -(size(AR.csMinus.phPeakMean_cs_ch1.before, 2) - 1) : 0;
 %% make wrap-around data arrays
 %%
-oldCsPlus_trialNumber = -(size(AR.csPlus.phPeakMean_cs_ch1.before, 2) - 1) : 0;
+
 
 % % combined tiled plot
-% sb = repmat(ceil(sqrt(nReversals)), 1, 2);
 % sb = [3 3];
 % savename1 = 'newCsPlus_combined_tiled';
 % 
@@ -203,8 +211,11 @@ oldCsPlus_trialNumber = -(size(AR.csPlus.phPeakMean_cs_ch1.before, 2) - 1) : 0;
 %     plot(oldCsPlus_trialNumber, smoothdata(AR.csPlus.phPeakMean_cs_ch2.before(counter, :), 'movmean', smoothWindow, 'omitnan'), '--r');
 %     textBox(num2str(counter));
 % end
-%%
 
+
+%% annotate good reversals and plot individual reversals
+reversalsColor = repmat([0 1 0], nReversals, 1);
+reversalsColor = bsxfun(@times, reversalsColor, goodReversals);
 sb = repmat(ceil(sqrt(nReversals)), 1, 2);
 savename1 = 'newCsPlus_ch1_tiled';
 h1 = ensureFigure(savename1, 1);
@@ -212,9 +223,9 @@ savename2 = 'newCsPlus_ch2_tiled';
 h2 = ensureFigure(savename2, 1);
 for counter = 1:nReversals
     a1 = subplot(sb(1),sb(2),counter, 'Parent', h1); 
-    plot(newCsPlus_trialNumber, smoothdata(newCsPlus_ch1(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a1);
+    plot(newCsPlus_trialNumber, smoothdata(newCsPlus_ch1(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a1, 'Color', reversalsColor(counter,:));
     a2 = subplot(sb(1),sb(2),counter, 'Parent', h2); 
-    plot(newCsPlus_trialNumber, smoothdata(newCsPlus_ch2(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a2);    
+    plot(newCsPlus_trialNumber, smoothdata(newCsPlus_ch2(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a2, 'Color', reversalsColor(counter,:));    
 end
 sb = repmat(ceil(sqrt(nReversals)), 1, 2);
 savename1 = 'newCsMinus_ch1_tiled';
@@ -223,9 +234,9 @@ savename2 = 'newCsMinus_ch2_tiled';
 h2 = ensureFigure(savename2, 1);
 for counter = 1:nReversals
     a1 = subplot(sb(1),sb(2),counter, 'Parent', h1); 
-    plot(newCsMinus_trialNumber, smoothdata(newCsMinus_ch1(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a1);
+    plot(newCsMinus_trialNumber, smoothdata(newCsMinus_ch1(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a1, 'Color', reversalsColor(counter,:));
     a2 = subplot(sb(1),sb(2),counter, 'Parent', h2); 
-    plot(newCsMinus_trialNumber, smoothdata(newCsMinus_ch2(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a2);    
+    plot(newCsMinus_trialNumber, smoothdata(newCsMinus_ch2(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a2, 'Color', reversalsColor(counter,:));    
 end
 
 sb = repmat(ceil(sqrt(nReversals)), 1, 2);
@@ -235,11 +246,30 @@ savename2 = 'alwaysCsPlus_ch2_tiled';
 h2 = ensureFigure(savename2, 1);
 for counter = 1:nReversals
     a1 = subplot(sb(1),sb(2),counter, 'Parent', h1); 
-    plot(alwaysCsPlus_trialNumber, smoothdata(alwaysCsPlus_ch1(counter, :), 'movmean', 1, 'omitnan'), 'Parent', a1);
+    plot(alwaysCsPlus_trialNumber, smoothdata(alwaysCsPlus_ch1(counter, :), 'movmean', 1, 'omitnan'), 'Parent', a1, 'Color', reversalsColor(counter,:));
     a2 = subplot(sb(1),sb(2),counter, 'Parent', h2); 
-    plot(alwaysCsPlus_trialNumber, smoothdata(alwaysCsPlus_ch2(counter, :), 'movmean', 1, 'omitnan'), 'Parent', a2);    
+    plot(alwaysCsPlus_trialNumber, smoothdata(alwaysCsPlus_ch2(counter, :), 'movmean', 1, 'omitnan'), 'Parent', a2, 'Color', reversalsColor(counter,:));    
 end
 
+sb = repmat(ceil(sqrt(nReversals)), 1, 2);
+savename1 = 'before_ch1_tiled';
+h1 = ensureFigure(savename1, 1);
+savename2 = 'before_ch2_tiled';
+h2 = ensureFigure(savename2, 1);
+for counter = 1:nReversals
+    a1 = subplot(sb(1),sb(2),counter, 'Parent', h1); hold(a1, 'on');
+    plot(oldCsPlus_trialNumber, smoothdata(AR.csPlus.phPeakMean_cs_ch1.before(counter, :), 'movmean', smoothWindow, 'omitnan'), 'Parent', a1, 'Color', reversalsColor(counter,:)); 
+    plot(oldCsMinus_trialNumber, smoothdata(AR.csMinus.phPeakMean_cs_ch1.before(counter, :), 'movmean', smoothWindow, 'omitnan'), 'Parent', a1, 'LineStyle', '--', 'Color', reversalsColor(counter,:)); 
+    a2 = subplot(sb(1),sb(2),counter, 'Parent', h2); hold(a2, 'on');
+    plot(oldCsPlus_trialNumber, smoothdata(AR.csPlus.phPeakMean_cs_ch2.before(counter, :), 'movmean', smoothWindow, 'omitnan'), 'Parent', a2, 'Color', reversalsColor(counter,:)); 
+    plot(oldCsMinus_trialNumber, smoothdata(AR.csMinus.phPeakMean_cs_ch2.before(counter, :), 'movmean', smoothWindow, 'omitnan'), 'Parent', a2, 'LineStyle', '--', 'Color', reversalsColor(counter,:)); 
+end
+
+
+
+
+
+%% compile data
 newCsPlus_licks = [AR.csMinus.csLicks.before AR.csPlus.csLicks.after];
 newCsMinus_licks = [AR.csPlus.csLicks.before AR.csMinus.csLicks.after];
 alwaysCsPlus_licks = [AR.csPlus.csLicks.before AR.csPlus.csLicks.after];
@@ -329,13 +359,13 @@ common = sum(~isnan(newCsPlus_ch1_norm)) > 3;
 savename = 'reversals_newCsPlus';
 ensureFigure(savename, 1);
 hla = zeros(1,3);
-[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus_ch2_norm(:, common)), nanSEM(newCsPlus_ch2_norm(:, common))',...
+[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus_ch2_norm(goodReversals, common)), nanSEM(newCsPlus_ch2_norm(goodReversals, common))',...
     'cmap', [237 125 49]/256); hold on
 hla(1) = hl;
-[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus_ch1_norm(:, common)), nanSEM(newCsPlus_ch1_norm(:, common))',...
+[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus_ch1_norm(goodReversals, common)), nanSEM(newCsPlus_ch1_norm(goodReversals, common))',...
     'cmap', [171 55 214]/256);
 hla(2) = hl;
-[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus_licks_norm(:, common)), nanSEM(newCsPlus_licks_norm(:, common))',...
+[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus_licks_norm(goodReversals, common)), nanSEM(newCsPlus_licks_norm(goodReversals, common))',...
     'cmap', [0.5 0.5 0.5]/256);
 hla(3) = hl;
 set(hla, 'LineWidth', 2);
@@ -368,13 +398,13 @@ newCsMinus_common = sum(~isnan(newCsMinus_ch1_norm)) > 3;% applying mean will re
 savename = 'reversals_newCsMinus';
 ensureFigure(savename, 1);
 hla = zeros(1,3);
-[hl, hp] = boundedline(newCsMinus_trialNumber(newCsMinus_common), nanmean(newCsMinus_ch2_norm(:, newCsMinus_common)), nanSEM(newCsMinus_ch2_norm(:, newCsMinus_common))',...
+[hl, hp] = boundedline(newCsMinus_trialNumber(newCsMinus_common), nanmean(newCsMinus_ch2_norm(goodReversals, newCsMinus_common)), nanSEM(newCsMinus_ch2_norm(goodReversals, newCsMinus_common))',...
     'cmap', [237 125 49]/256); hold on
 hla(1) = hl;
-[hl, hp] = boundedline(newCsMinus_trialNumber(newCsMinus_common), nanmean(newCsMinus_ch1_norm(:, newCsMinus_common)), nanSEM(newCsMinus_ch1_norm(:, newCsMinus_common))',...
+[hl, hp] = boundedline(newCsMinus_trialNumber(newCsMinus_common), nanmean(newCsMinus_ch1_norm(goodReversals, newCsMinus_common)), nanSEM(newCsMinus_ch1_norm(goodReversals, newCsMinus_common))',...
     'cmap', [171 55 214]/256);
 hla(2) = hl;
-[hl, hp] = boundedline(newCsMinus_trialNumber(newCsMinus_common), nanmean(newCsMinus_licks_norm(:, newCsMinus_common)), nanSEM(newCsMinus_licks_norm(:, newCsMinus_common))',...
+[hl, hp] = boundedline(newCsMinus_trialNumber(newCsMinus_common), nanmean(newCsMinus_licks_norm(goodReversals, newCsMinus_common)), nanSEM(newCsMinus_licks_norm(goodReversals, newCsMinus_common))',...
     'cmap', [0.5 0.5 0.5]/256);
 hla(3) = hl;
 set(hla, 'LineWidth', 2);
@@ -404,13 +434,13 @@ common = sum(~isnan(alwaysCsPlus_ch1_norm)) > 3;% applying mean will reveal NaNs
 savename = 'reversals_alwaysCsPlus';
 ensureFigure(savename, 1);
 hla = zeros(1,3);
-[hl, hp] = boundedline(alwaysCsPlus_trialNumber(common), nanmean(alwaysCsPlus_ch2_norm(:, common)), nanSEM(alwaysCsPlus_ch2_norm(:, common))',...
+[hl, hp] = boundedline(alwaysCsPlus_trialNumber(common), nanmean(alwaysCsPlus_ch2_norm(goodReversals, common)), nanSEM(alwaysCsPlus_ch2_norm(goodReversals, common))',...
     'cmap', [237 125 49]/256); hold on
 hla(1) = hl;
-[hl, hp] = boundedline(alwaysCsPlus_trialNumber(common), nanmean(alwaysCsPlus_ch1_norm(:, common)), nanSEM(alwaysCsPlus_ch1_norm(:, common))',...
+[hl, hp] = boundedline(alwaysCsPlus_trialNumber(common), nanmean(alwaysCsPlus_ch1_norm(goodReversals, common)), nanSEM(alwaysCsPlus_ch1_norm(goodReversals, common))',...
     'cmap', [171 55 214]/256);
 hla(2) = hl;
-[hl, hp] = boundedline(alwaysCsPlus_trialNumber(common), nanmean(alwaysCsPlus_licks_norm(:, common)), nanSEM(alwaysCsPlus_licks_norm(:, common))',...
+[hl, hp] = boundedline(alwaysCsPlus_trialNumber(common), nanmean(alwaysCsPlus_licks_norm(goodReversals, common)), nanSEM(alwaysCsPlus_licks_norm(goodReversals, common))',...
     'cmap', [0.5 0.5 0.5]/256);
 hla(3) = hl;
 set(hla, 'LineWidth', 2);
