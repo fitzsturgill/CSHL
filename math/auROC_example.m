@@ -1,3 +1,30 @@
+
+function auROC_example
+    a = randn(1000,1);
+    b = randn(1000,1) + 1.5;
+    figure;
+    subplot(3,2,1);
+    histogram(a); hold on; histogram(b); legend; title('2 normal distributions');
+    subplot(3,2,2);
+    [~,~] = rocarea(a,b,'scale', 'PLOT');
+    % try log normal
+    a = exp(a);
+    b = exp(b);
+    subplot(3,2,3); 
+    histogram(b); hold on; histogram(a); set(gca, 'XLim', [0 50]);%, 'YLim', [0 500]);
+    title('exponential versions');
+    subplot(3,2,4);
+    [a b] = rocarea(a,b,'scale', 'PLOT');
+    % try uniform
+    a = rand(1000,1);
+    b = rand(1000,1) + 0.5;
+    subplot(3,2,5); 
+    histogram(a); hold on; histogram(b);
+    title('2 uniform distributions');
+    subplot(3,2,6);
+    [a b] = rocarea(a,b,'scale', 'PLOT');
+end
+
 function [D, P] = rocarea(x,y,varargin)
 %
 %  [D, P] = rocarea(x,y,{'boot',n},{'transform'},{'PLOT'})
@@ -119,4 +146,6 @@ if isempty(cdf1) || isempty(cdf2)
     D = NaN;
 else
     D=trapz(cdf1,cdf2);
+end
+end
 end

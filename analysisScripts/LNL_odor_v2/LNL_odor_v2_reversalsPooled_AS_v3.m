@@ -96,10 +96,41 @@ end
 
 
 
-%% quality control- calculate auROC for licking pre
+%% quality control- calculate auROC and dPrime for relevent comparisons
 trialWindow = [-30 30];%?
 
-comparisons = {
+% initialize
+comp = {'csLicks', 'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2'}; % comparisons
+all_ways = struct(...
+    'before', zeros(nReversals, 1),... % compare cs- and cs+ before reversal
+    'after', zeros(nReversals, 1),... % compare cs- and cs+ after reversal
+    'acq', zeros(nReversals, 1),... % acquisition: compare cs- before and cs+ after reversal
+    'ext', zeros(nReversals, 1)...  % extinction: compare cs+ before and cs- after reversal
+    );
+% clear dPrime auROC
+for field = comp
+    dPrime.(field{:}) = all_ways;
+    auROC.(field{:}) = all_ways;
+end
+
+% calculate metrics
+for field = comp
+    for rev = 1:nReversals
+        % before
+        dPrime.(field{:}).before(rev) = dPrime_SNR(AR.csMinus.(field{:}).before(rev,:), AR.csPlus.(field{:}).before(rev,:));
+        auROC.(field{:}).before(rev) = rocarea(stripNaNs(AR.csMinus.(field{:}).before(rev,:)), stripNaNs(AR.csPlus.(field{:}).before(rev,:)), 'scale');
+        % after
+        dPrime.(field{:}).after(rev) = dPrime_SNR(AR.csMinus.(field{:}).after(rev,:), AR.csPlus.(field{:}).after(rev,:));
+        auROC.(field{:}).after(rev) = rocarea(stripNaNs(AR.csMinus.(field{:}).after(rev,:)), stripNaNs(AR.csPlus.(field{:}).after(rev,:)), 'scale');        
+        % acquisition
+        dPrime.(field{:}).acq(rev) = dPrime_SNR(AR.csMinus.(field{:}).before(rev,:), AR.csPlus.(field{:}).after(rev,:));
+        auROC.(field{:}).acq(rev) = rocarea(stripNaNs(AR.csMinus.(field{:}).before(rev,:)), stripNaNs(AR.csPlus.(field{:}).after(rev,:)), 'scale');                
+        % acquisition
+        dPrime.(field{:}).ext(rev) = dPrime_SNR(AR.csMinus.(field{:}).after(rev,:), AR.csPlus.(field{:}).before(rev,:));
+        auROC.(field{:}).ext(rev) = rocarea(stripNaNs(AR.csMinus.(field{:}).after(rev,:)), stripNaNs(AR.csPlus.(field{:}).before(rev,:)), 'scale');                        
+    end    
+end
+    
 
 %%
 newCsPlus_ch1 = [AR.csMinus.phPeakMean_cs_ch1.before AR.csPlus.phPeakMean_cs_ch1.after];
