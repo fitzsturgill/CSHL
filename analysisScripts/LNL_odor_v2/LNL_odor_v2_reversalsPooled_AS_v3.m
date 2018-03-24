@@ -131,38 +131,41 @@ for field = comp
     end    
 end
 %% plot quality control metrics
-
+colorVar = revNumber;
 % auROC vs dPrime
 for field = comp
     field = field{:};
     savename = ['auROC_vs_dPrime_Scatter_' field];
-    ensureFigure(savename, 1);
-    subplot(2,2,1); scatter(auROC.(field).before, dPrime.(field).before); ylabel('dPrime'); title('before'); addOrginLines;
-    subplot(2,2,2); scatter(auROC.(field).after, dPrime.(field).after); title('after'); addOrginLines;
-    subplot(2,2,3); scatter(auROC.(field).acq, dPrime.(field).acq); ylabel('dPrime'); xlabel('auROC'); title('acquisition'); addOrginLines;
-    subplot(2,2,4); scatter(auROC.(field).ext, dPrime.(field).ext); xlabel('auROC'); title('extinction'); addOrginLines;
+    ensureFigure(savename, 1); colormap jet
+    subplot(2,2,1); scatter(auROC.(field).before, dPrime.(field).before, [], colorVar); ylabel('dPrime'); title('before'); addOrginLines;
+    subplot(2,2,2); scatter(auROC.(field).after, dPrime.(field).after, [], colorVar); title('after'); addOrginLines;
+    subplot(2,2,3); scatter(auROC.(field).acq, dPrime.(field).acq, [], colorVar); ylabel('dPrime'); xlabel('auROC'); title('acquisition'); addOrginLines;
+    subplot(2,2,4); scatter(auROC.(field).ext, dPrime.(field).ext, [], colorVar); xlabel('auROC'); title('extinction'); addOrginLines;
 end
 
 % revNumber vs auROC
 for field = comp
     field = field{:};
     savename = ['revNumber_vs_auROC_Scatter_' field];
-    ensureFigure(savename, 1);
-    subplot(2,2,1); scatter(revNumber, auROC.(field).before); ylabel('auROC'); title('before'); addOrginLines;
-    subplot(2,2,2); scatter(revNumber, auROC.(field).after); title('after'); addOrginLines;
-    subplot(2,2,3); scatter(revNumber, auROC.(field).acq); ylabel('auROC'); xlabel('rev #'); title('acquisition'); addOrginLines;
-    subplot(2,2,4); scatter(revNumber, auROC.(field).ext); xlabel('rev #'); title('extinction'); addOrginLines;
+    ensureFigure(savename, 1); colormap jet
+    subplot(2,2,1); scatter(revNumber, auROC.(field).before, [], colorVar); ylabel('auROC'); title('before'); addOrginLines;
+    subplot(2,2,2); scatter(revNumber, auROC.(field).after, [], colorVar); title('after'); addOrginLines;
+    subplot(2,2,3); scatter(revNumber, auROC.(field).acq, [], colorVar); ylabel('auROC'); xlabel('rev #'); title('acquisition'); addOrginLines;
+    subplot(2,2,4); scatter(revNumber, auROC.(field).ext, [], colorVar); xlabel('rev #'); title('extinction'); addOrginLines;
 end
 % mouseNumber vs auROC
 for field = comp
     field = field{:};
     savename = ['mouseNumber_vs_auROC_Scatter_' field];
-    ensureFigure(savename, 1);
-    subplot(2,2,1); scatter(mouseNumber, auROC.(field).before); ylabel('auROC'); title('before'); addOrginLines;
-    subplot(2,2,2); scatter(mouseNumber, auROC.(field).after); title('after'); addOrginLines;
-    subplot(2,2,3); scatter(mouseNumber, auROC.(field).acq); ylabel('auROC'); xlabel('mouse #'); title('acquisition'); addOrginLines;
-    subplot(2,2,4); scatter(mouseNumber, auROC.(field).ext); xlabel('mouse #'); title('extinction'); addOrginLines;
+    ensureFigure(savename, 1); colormap jet
+    subplot(2,2,1); scatter(mouseNumber, auROC.(field).before, [], colorVar); ylabel('auROC'); title('before'); addOrginLines;
+    subplot(2,2,2); scatter(mouseNumber, auROC.(field).after, [], colorVar); title('after'); addOrginLines;
+    subplot(2,2,3); scatter(mouseNumber, auROC.(field).acq, [], colorVar); ylabel('auROC'); xlabel('mouse #'); title('acquisition'); addOrginLines;
+    subplot(2,2,4); scatter(mouseNumber, auROC.(field).ext, [], colorVar); xlabel('mouse #'); title('extinction'); addOrginLines;
 end
+
+
+%% filter reversals according to quality
 
 
 %%
