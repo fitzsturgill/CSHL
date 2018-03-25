@@ -895,7 +895,7 @@ if saveOn
     saveas(gcf, fullfile(savepath, [savename '.jpg']));   
     saveas(gcf, fullfile(savepath, [savename '.epsc']));   
 end    
-    %% make glm
+    %% make glm (NOT really a glm though, not using any linking functions)
     chat_bl = TE.phPeakMean_baseline(1).data(glmTrials);
     pup_bl = TE.pupilBaseline(glmTrials);
     wheel_bl = TE.wheelBaseline(glmTrials);
@@ -914,12 +914,13 @@ end
     ensureFigure('pup_chat_scatter', 1); scatter(pupScatter(:),chatScatter(:), '.');
     
     glmEndTime = 3;
-    input = TE.Photometry.data(1).ZS(glmTrials, bpX2pnt(-1, 20, -4):bpX2pnt(glmEndTime, 20, -4));
+
     input_pup = TE.pupil.pupDiameterNorm(glmTrials, bpX2pnt(-1, 20, -4) + shiftPoints :bpX2pnt(glmEndTime, 20, -4) + shiftPoints);
-    input_pup = input_pup';
-    input_pup = input_pup(:);
-    include = ~isnan(input_pup);
-    
+    input_pup = input_pup'; % just concatenate the trials together
+    input_pup = input_pup(:); % just concatenate the trials together
+    include = ~isnan(input_pup); 
+
+    input = TE.Photometry.data(1).ZS(glmTrials, bpX2pnt(-1, 20, -4):bpX2pnt(glmEndTime, 20, -4));    
     input = input';
     numPoints = size(input, 1);
     numTrials = size(input, 2);
