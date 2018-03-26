@@ -10,4 +10,8 @@ function eventTS = bpEventToTimeSeries(TE, event)
         };
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
     
-    
+    nTrials = length(TE.filename);
+    xData = 
+    eventTS = struct(...
+        'settings', s,...
+        'data', NaN(
