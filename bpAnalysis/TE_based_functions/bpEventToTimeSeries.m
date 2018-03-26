@@ -1,0 +1,13 @@
+function eventTS = bpEventToTimeSeries(TE, event)
+
+    %% optional parameters, first set defaults
+    defaults = {...
+        'zeroField', 'Us';...
+        'startField', 'PreCsRecording';... %
+        'sampleRate', 20;...
+        'uniformOutput', 1;...            % not currently implemented, idea is to set to 0 if acqs are going to be variable in length (store data in cell array)
+        'duration', 11;...
+        };
+    [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
+    
+    
