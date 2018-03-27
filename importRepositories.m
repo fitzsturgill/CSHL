@@ -30,6 +30,3 @@ function success = importRepositories(repos, varargin)
         addpath(genpath(repo));
         disp(['*** added repository: ' repo ' ***']);
     end
-        
-    
-    
