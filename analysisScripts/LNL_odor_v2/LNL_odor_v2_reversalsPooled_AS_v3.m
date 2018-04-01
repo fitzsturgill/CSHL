@@ -171,7 +171,7 @@ goodReversals = ...
     auROC.csLicks.before > 0 &...
     auROC.csLicks.after > -0.7 &...
     auROC.phPeakMean_cs_ch1.before > 0.5 &...
-    auROC.phPeakMean_cs_ch2.before > 0.7;
+    auROC.phPeakMean_cs_ch2.before > 0.5;
 
 % goodReversals = auROC.csLicks.acq > 0.5 & auROC.phPeakMean_cs_ch1.before > 0.4 & auROC.phPeakMean_cs_ch2.before > 0.4;
 
@@ -194,86 +194,6 @@ alwaysCsPlus_firstRevTrial = size(AR.csPlus.phPeakMean_cs_ch1.before, 2) + 1;
 
 oldCsPlus_trialNumber = -(size(AR.csPlus.phPeakMean_cs_ch1.before, 2) - 1) : 0;
 oldCsMinus_trialNumber = -(size(AR.csMinus.phPeakMean_cs_ch1.before, 2) - 1) : 0;
-%% make wrap-around data arrays
-%%
-
-
-% % combined tiled plot
-% sb = [3 3];
-% savename1 = 'newCsPlus_combined_tiled';
-% 
-% h1 = ensureFigure(savename1, 1);
-% mcLandscapeFigSetup(h1);
-% for counter = 1:9    
-%     a1 = subplot(sb(1),sb(2),counter, 'Parent', h1); 
-%     counter = counter + 18;
-%     plot(newCsPlus_trialNumber, smoothdata(newCsPlus_ch1(counter, :), 'movmean', smoothWindow, 'omitnan'), '-g'); hold on
-%     plot(oldCsPlus_trialNumber, smoothdata(AR.csPlus.phPeakMean_cs_ch1.before(counter, :), 'movmean', smoothWindow, 'omitnan'), '--g');
-%     plot(newCsPlus_trialNumber, smoothdata(newCsPlus_ch2(counter, :), 'movmean', smoothWindow, 'omitnan'), '-r'); hold on
-%     plot(oldCsPlus_trialNumber, smoothdata(AR.csPlus.phPeakMean_cs_ch2.before(counter, :), 'movmean', smoothWindow, 'omitnan'), '--r');
-%     textBox(num2str(counter));
-% end
-
-
-%% annotate good reversals and plot individual reversals
-reversalsColor = repmat([0 1 0], nReversals, 1);
-reversalsColor = bsxfun(@times, reversalsColor, goodReversals);
-sb = repmat(ceil(sqrt(nReversals)), 1, 2);
-savename1 = 'newCsPlus_ch1_tiled';
-h1 = ensureFigure(savename1, 1);
-savename2 = 'newCsPlus_ch2_tiled';
-h2 = ensureFigure(savename2, 1);
-savename3 = 'newCsPlus_licks_tiled';
-h3 = ensureFigure(savename3, 1);
-for counter = 1:nReversals
-    a1 = subplot(sb(1),sb(2),counter, 'Parent', h1); 
-    plot(newCsPlus_trialNumber, smoothdata(newCsPlus_ch1(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a1, 'Color', reversalsColor(counter,:));
-    a2 = subplot(sb(1),sb(2),counter, 'Parent', h2); 
-    plot(newCsPlus_trialNumber, smoothdata(newCsPlus_ch2(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a2, 'Color', reversalsColor(counter,:));    
-    a3 = subplot(sb(1),sb(2),counter, 'Parent', h3); 
-    plot(newCsPlus_trialNumber, smoothdata(newCsPlus_licks(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a3, 'Color', reversalsColor(counter,:));        
-end
-sb = repmat(ceil(sqrt(nReversals)), 1, 2);
-savename1 = 'newCsMinus_ch1_tiled';
-h1 = ensureFigure(savename1, 1);
-savename2 = 'newCsMinus_ch2_tiled';
-h2 = ensureFigure(savename2, 1);
-for counter = 1:nReversals
-    a1 = subplot(sb(1),sb(2),counter, 'Parent', h1); 
-    plot(newCsMinus_trialNumber, smoothdata(newCsMinus_ch1(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a1, 'Color', reversalsColor(counter,:));
-    a2 = subplot(sb(1),sb(2),counter, 'Parent', h2); 
-    plot(newCsMinus_trialNumber, smoothdata(newCsMinus_ch2(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a2, 'Color', reversalsColor(counter,:));    
-end
-
-sb = repmat(ceil(sqrt(nReversals)), 1, 2);
-savename1 = 'alwaysCsPlus_ch1_tiled';
-h1 = ensureFigure(savename1, 1);
-savename2 = 'alwaysCsPlus_ch2_tiled';
-h2 = ensureFigure(savename2, 1);
-for counter = 1:nReversals
-    a1 = subplot(sb(1),sb(2),counter, 'Parent', h1); 
-    plot(alwaysCsPlus_trialNumber, smoothdata(alwaysCsPlus_ch1(counter, :), 'movmean', 1, 'omitnan'), 'Parent', a1, 'Color', reversalsColor(counter,:));
-    a2 = subplot(sb(1),sb(2),counter, 'Parent', h2); 
-    plot(alwaysCsPlus_trialNumber, smoothdata(alwaysCsPlus_ch2(counter, :), 'movmean', 1, 'omitnan'), 'Parent', a2, 'Color', reversalsColor(counter,:));    
-end
-
-sb = repmat(ceil(sqrt(nReversals)), 1, 2);
-savename1 = 'before_ch1_tiled';
-h1 = ensureFigure(savename1, 1);
-savename2 = 'before_ch2_tiled';
-h2 = ensureFigure(savename2, 1);
-for counter = 1:nReversals
-    a1 = subplot(sb(1),sb(2),counter, 'Parent', h1); hold(a1, 'on');
-    plot(oldCsPlus_trialNumber, smoothdata(AR.csPlus.phPeakMean_cs_ch1.before(counter, :), 'movmean', smoothWindow, 'omitnan'), 'Parent', a1, 'Color', reversalsColor(counter,:)); 
-    plot(oldCsMinus_trialNumber, smoothdata(AR.csMinus.phPeakMean_cs_ch1.before(counter, :), 'movmean', smoothWindow, 'omitnan'), 'Parent', a1, 'LineStyle', '--', 'Color', reversalsColor(counter,:)); 
-    a2 = subplot(sb(1),sb(2),counter, 'Parent', h2); hold(a2, 'on');
-    plot(oldCsPlus_trialNumber, smoothdata(AR.csPlus.phPeakMean_cs_ch2.before(counter, :), 'movmean', smoothWindow, 'omitnan'), 'Parent', a2, 'Color', reversalsColor(counter,:)); 
-    plot(oldCsMinus_trialNumber, smoothdata(AR.csMinus.phPeakMean_cs_ch2.before(counter, :), 'movmean', smoothWindow, 'omitnan'), 'Parent', a2, 'LineStyle', '--', 'Color', reversalsColor(counter,:)); 
-end
-
-
-
-
 
 %% compile data
 newCsPlus_licks = [AR.csMinus.csLicks.before AR.csPlus.csLicks.after];
@@ -300,9 +220,9 @@ f = 0.8;
 trialsBack = 50;
 
 % normalize by csPlus before reversal
-% normVector_ch1 = percentile(smoothdata(newCsMinus_ch1_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), 2, 'movmean', 3, 'omitnan'), f, 2);
-% normVector_ch2 = percentile(smoothdata(newCsMinus_ch2_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), 2, 'movmean', 3, 'omitnan'), f, 2);
-% normVector_licks = percentile(smoothdata(newCsMinus_licks_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), 2, 'movmean', 3, 'omitnan'), f, 2);
+normVector_ch1 = percentile(smoothdata(newCsMinus_ch1_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), 2, 'movmean', 3, 'omitnan'), f, 2);
+normVector_ch2 = percentile(smoothdata(newCsMinus_ch2_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), 2, 'movmean', 3, 'omitnan'), f, 2);
+normVector_licks = percentile(smoothdata(newCsMinus_licks_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), 2, 'movmean', 3, 'omitnan'), f, 2);
 
 % normalize by csPlus after reversal
 % normVector_ch1 = percentile(newCsPlus_ch1_norm(:,newCsPlus_firstRevTrial:end), f, 2);
@@ -310,9 +230,9 @@ trialsBack = 50;
 % normVector_licks = percentile(newCsPlus_licks_norm(:,newCsPlus_firstRevTrial:end), f, 2);
 
 % no normalization
-normVector_ch1 = ones(nReversals, 1);
-normVector_ch2 = ones(nReversals, 1);
-normVector_licks = ones(nReversals, 1);
+% normVector_ch1 = ones(nReversals, 1);
+% normVector_ch2 = ones(nReversals, 1);
+% normVector_licks = ones(nReversals, 1);
 
 newCsPlus_ch1_norm = bsxfun(@rdivide, newCsPlus_ch1_norm, normVector_ch1);
 newCsPlus_ch2_norm = bsxfun(@rdivide, newCsPlus_ch2_norm, normVector_ch2);
@@ -326,6 +246,93 @@ alwaysCsPlus_ch1_norm = bsxfun(@rdivide, alwaysCsPlus_ch1_norm, normVector_ch1);
 alwaysCsPlus_ch2_norm = bsxfun(@rdivide, alwaysCsPlus_ch2_norm, normVector_ch2);
 alwaysCsPlus_licks_norm = bsxfun(@rdivide, alwaysCsPlus_licks_norm, normVector_licks);
 
+%% make wrap-around data arrays
+%%
+
+
+% % combined tiled plot
+% sb = [3 3];
+% savename1 = 'newCsPlus_combined_tiled';
+% 
+% h1 = ensureFigure(savename1, 1);
+% mcLandscapeFigSetup(h1);
+% for counter = 1:9    
+%     a1 = subplot(sb(1),sb(2),counter, 'Parent', h1); 
+%     counter = counter + 18;
+%     plot(newCsPlus_trialNumber, smoothdata(newCsPlus_ch1(counter, :), 'movmean', smoothWindow, 'omitnan'), '-g'); hold on
+%     plot(oldCsPlus_trialNumber, smoothdata(AR.csPlus.phPeakMean_cs_ch1.before(counter, :), 'movmean', smoothWindow, 'omitnan'), '--g');
+%     plot(newCsPlus_trialNumber, smoothdata(newCsPlus_ch2(counter, :), 'movmean', smoothWindow, 'omitnan'), '-r'); hold on
+%     plot(oldCsPlus_trialNumber, smoothdata(AR.csPlus.phPeakMean_cs_ch2.before(counter, :), 'movmean', smoothWindow, 'omitnan'), '--r');
+%     textBox(num2str(counter));
+% end
+
+
+%% annotate good reversals and plot individual reversals
+tilePos = [961.0000  955.4000  876.0000  648.0000];
+reversalsColor = repmat([0 1 0], nReversals, 1);
+reversalsColor = bsxfun(@times, reversalsColor, goodReversals);
+sb = repmat(ceil(sqrt(nReversals)), 1, 2);
+savename1 = 'newCsPlus_ch1_tiled';
+h1 = ensureFigure(savename1, 1);
+savename2 = 'newCsPlus_ch2_tiled';
+h2 = ensureFigure(savename2, 1);
+savename3 = 'newCsPlus_licks_tiled';
+h3 = ensureFigure(savename3, 1);
+for counter = 1:nReversals
+    a1 = subplot(sb(1),sb(2),counter, 'Parent', h1); 
+    plot(newCsPlus_trialNumber, smoothdata(newCsPlus_ch1(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a1, 'Color', reversalsColor(counter,:));
+    a2 = subplot(sb(1),sb(2),counter, 'Parent', h2); 
+    plot(newCsPlus_trialNumber, smoothdata(newCsPlus_ch2(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a2, 'Color', reversalsColor(counter,:));    
+    a3 = subplot(sb(1),sb(2),counter, 'Parent', h3); 
+    plot(newCsPlus_trialNumber, smoothdata(newCsPlus_licks(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a3, 'Color', reversalsColor(counter,:));        
+end
+set([h1 h2 h3], 'Position', tilePos);
+
+sb = repmat(ceil(sqrt(nReversals)), 1, 2);
+savename1 = 'newCsMinus_ch1_tiled';
+h1 = ensureFigure(savename1, 1);
+savename2 = 'newCsMinus_ch2_tiled';
+h2 = ensureFigure(savename2, 1);
+for counter = 1:nReversals
+    a1 = subplot(sb(1),sb(2),counter, 'Parent', h1); 
+    plot(newCsMinus_trialNumber, smoothdata(newCsMinus_ch1(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a1, 'Color', reversalsColor(counter,:));
+    a2 = subplot(sb(1),sb(2),counter, 'Parent', h2); 
+    plot(newCsMinus_trialNumber, smoothdata(newCsMinus_ch2(counter, :), 'movmean', 3, 'omitnan'), 'Parent', a2, 'Color', reversalsColor(counter,:));    
+end
+set([h1 h2], 'Position', tilePos);
+
+sb = repmat(ceil(sqrt(nReversals)), 1, 2);
+savename1 = 'alwaysCsPlus_ch1_tiled';
+h1 = ensureFigure(savename1, 1);
+savename2 = 'alwaysCsPlus_ch2_tiled';
+h2 = ensureFigure(savename2, 1);
+for counter = 1:nReversals
+    a1 = subplot(sb(1),sb(2),counter, 'Parent', h1); 
+    plot(alwaysCsPlus_trialNumber, smoothdata(alwaysCsPlus_ch1(counter, :), 'movmean', 1, 'omitnan'), 'Parent', a1, 'Color', reversalsColor(counter,:));
+    a2 = subplot(sb(1),sb(2),counter, 'Parent', h2); 
+    plot(alwaysCsPlus_trialNumber, smoothdata(alwaysCsPlus_ch2(counter, :), 'movmean', 1, 'omitnan'), 'Parent', a2, 'Color', reversalsColor(counter,:));    
+end
+set([h1 h2], 'Position', tilePos);
+
+sb = repmat(ceil(sqrt(nReversals)), 1, 2);
+savename1 = 'before_ch1_tiled';
+h1 = ensureFigure(savename1, 1);
+savename2 = 'before_ch2_tiled';
+h2 = ensureFigure(savename2, 1);
+for counter = 1:nReversals
+    a1 = subplot(sb(1),sb(2),counter, 'Parent', h1); hold(a1, 'on');
+    plot(oldCsPlus_trialNumber, smoothdata(AR.csPlus.phPeakMean_cs_ch1.before(counter, :), 'movmean', smoothWindow, 'omitnan'), 'Parent', a1, 'Color', reversalsColor(counter,:)); 
+    plot(oldCsMinus_trialNumber, smoothdata(AR.csMinus.phPeakMean_cs_ch1.before(counter, :), 'movmean', smoothWindow, 'omitnan'), 'Parent', a1, 'LineStyle', '--', 'Color', reversalsColor(counter,:)); 
+    a2 = subplot(sb(1),sb(2),counter, 'Parent', h2); hold(a2, 'on');
+    plot(oldCsPlus_trialNumber, smoothdata(AR.csPlus.phPeakMean_cs_ch2.before(counter, :), 'movmean', smoothWindow, 'omitnan'), 'Parent', a2, 'Color', reversalsColor(counter,:)); 
+    plot(oldCsMinus_trialNumber, smoothdata(AR.csMinus.phPeakMean_cs_ch2.before(counter, :), 'movmean', smoothWindow, 'omitnan'), 'Parent', a2, 'LineStyle', '--', 'Color', reversalsColor(counter,:)); 
+end
+set([h1 h2], 'Position', tilePos);
+
+
+
+
+
 
 %% images
 
@@ -334,13 +341,13 @@ ensureFigure('newCsPlus_image', 1);
 subplot(2,2,1);
 clim = [-10 10];
 xlim = [min(newCsPlus_trialNumber), max(newCsPlus_trialNumber)];
-imagesc('XData', xlim, 'CData', newCsPlus_ch1_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('licks');  set(gca, 'CLim', clim)
+imagesc('XData', xlim, 'CData', newCsPlus_ch1_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('licks');  set(gca, 'CLim', [-5 5])
 scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled'); 
 subplot(2,2,2);
-imagesc('XData', xlim, 'CData', newCsPlus_ch2_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('Ach');  set(gca, 'CLim', clim)
+imagesc('XData', xlim, 'CData', newCsPlus_ch2_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('Ach');  set(gca, 'CLim', [-5 5])
 scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
 subplot(2,2,3);
-imagesc('XData', xlim, 'CData', newCsPlus_licks_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on;title('Dop');  set(gca, 'CLim', clim)
+imagesc('XData', xlim, 'CData', newCsPlus_licks_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on;title('Dop');  set(gca, 'CLim', [-5 5])
 scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
 
 % newCsMinus
@@ -362,13 +369,13 @@ scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversa
 ensureFigure('alwaysCsPlus_image', 1);
 subplot(2,2,1);
 xlim = [min(alwaysCsPlus_trialNumber), max(alwaysCsPlus_trialNumber)];
-imagesc('XData', xlim, 'CData', alwaysCsPlus_ch1_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('licks');  set(gca, 'CLim', clim)
+imagesc('XData', xlim, 'CData', alwaysCsPlus_ch1_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('licks');  set(gca, 'CLim', [-1.5 1.5])
 scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
 subplot(2,2,2);
-imagesc('XData', xlim, 'CData', alwaysCsPlus_ch2_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('Ach');  set(gca, 'CLim', clim)
+imagesc('XData', xlim, 'CData', alwaysCsPlus_ch2_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('Ach');  set(gca, 'CLim', [-1 1])
 scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
 subplot(2,2,3);
-imagesc('XData', xlim, 'CData', alwaysCsPlus_licks_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('Dop');  set(gca, 'CLim', clim)
+imagesc('XData', xlim, 'CData', alwaysCsPlus_licks_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('Dop');  set(gca, 'CLim', [-1.5 1.5])
 scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
 
 %%
@@ -388,7 +395,7 @@ hla(2) = hl;
     'cmap', [0.5 0.5 0.5]/256);
 hla(3) = hl;
 set(hla, 'LineWidth', 2);
-% set(gca, 'XLim', [-40 40]);%, 'YLim', [-1 1]);
+set(gca, 'XLim', [-50 80]);%, 'YLim', [-1 1]);
     h  = addOrginLines;
     set(h, 'LineWidth', 2);
     legend(hla, {'\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.', ...
@@ -428,7 +435,7 @@ hla(2) = hl;
     'cmap', [0.5 0.5 0.5]/256);
 hla(3) = hl;
 set(hla, 'LineWidth', 2);
-% set(gca, 'XLim', [-40 40]);%, 'YLim', [-1 1]);
+% set(gca, 'XLim', [-50 80]);%, 'YLim', [-1 1]);
     h  = addOrginLines;
     set(h, 'LineWidth', 2);
     legend(hla, {'\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.', ...

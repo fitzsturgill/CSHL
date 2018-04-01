@@ -5,7 +5,7 @@
 
 
 %%
-channel = 2;
+channel = 1;
 
 load(fullfile(filepath, filename));
 disp(['*** Loaded ' fullfile(filepath, filename)]);
@@ -20,14 +20,14 @@ TE.licksTS = bpEventToTimeSeries(TE, 'Port1In', 'duration', 11);
 % Initial Conditions
 Fs = 20; % sample rate
 
-Kw = [-0.5 1] ; % Kernel/weight offset window
+Kw = [-1 2] ; % Kernel/weight offset window
 % Kw = [0 2] ; % Kernel/weight offset window
 
 
 % generate weight time offset indices
 Kw2 = Kw * Fs;
-Kwix = Kw2(1):Kw2(2);
-margins = [sum(Kwix < 0) sum(Kwix > 0)]; % to avoid edge effects due to using circ-shifted predictor variables
+Kwix = -Kw2(1):-1:-Kw2(2);
+margins = [sum(Kwix > 0) sum(Kwix < 0)]; % to avoid edge effects due to using circ-shifted predictor variables
 kSize = length(Kwix);
 
 % Target
@@ -113,10 +113,15 @@ subplot(2,2,1); imagesc(T, [-2 2]); title('target');
 subplot(2,2,2); imagesc(R_corrected, [-2 2]); title('residuals');
 subplot(2,2,3); 
 % plot(xData', w(1:kSize), 'b'); hold on; plot(xData', wconf(1:kSize, :),'c'); 
-boundedline(xData', w, wconf(:,1) - w, 'b'); hold on;
-xlabel('time (s)'); ylabel('Beta weights'); title('Kernel');
-boundedline(xData', wshuff, wshuff_sem, 'k'); %plot(xData', wconf_shuff(1:kSize, :), 'm');
+lines = zeros(2,1);
+[hl hp] = boundedline(xData', w, wconf(:,1) - w, 'b'); hold on;
+lines(1) = hl;
+xlabel('time from lick'); ylabel('Beta weights'); title('Kernel');
+[hl hp] = boundedline(xData', wshuff, wshuff_sem, 'k'); %plot(xData', wconf_shuff(1:kSize, :), 'm');
+lines(2) = hl;
+legend(lines, {'unshuffled', 'shuffled trials'}, 'Location', 'northeast', 'FontSize', 12); legend('boxoff');
 subplot(2,2,4); plot(xData', w - wshuff); title('Kernel corrected');
+xlabel('time from licks');
 
 saveas(gcf, fullfile(savepath, savename), 'fig');
 saveas(gcf, fullfile(savepath, savename), 'jpeg');
@@ -138,7 +143,6 @@ licks_shuff = struct(...
     'weights_licks', wshuff(1:kSize),...
     'wconf_licks', wshuff_sem(1:kSize,:),...
     'R', R_shuff,...
-    'Rsq', Rsq_shuff,...
     'xData', xData,...
     'includedTrials', include...
     );
@@ -198,9 +202,9 @@ title('reward conditions'); ylabel('Z Score'); xlabel('time from cue(s)');
 set(gca, 'XLim', [rXData(1) rXData(end)]);
 legend(hl, {'CS+, hit', 'CS+, miss', 'uncued, rew'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
 % 
-% saveas(gcf, fullfile(savepath, savename), 'fig');
-% saveas(gcf, fullfile(savepath, savename), 'jpeg');
-% saveas(gcf, fullfile(savepath, savename), 'epsc');
+saveas(gcf, fullfile(savepath, savename), 'fig');
+saveas(gcf, fullfile(savepath, savename), 'jpeg');
+saveas(gcf, fullfile(savepath, savename), 'epsc');
 
 
 
