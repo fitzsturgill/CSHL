@@ -8,6 +8,7 @@
     validTrials = filterTE(TE, 'reject', 0);
     Odor1Trials = filterTE(TE, 'OdorValveIndex', 1, 'reject', 0);
     Odor2Trials = filterTE(TE, 'OdorValveIndex', 2, 'reject', 0);    
+    Odor3Trials = filterTE(TE, 'OdorValveIndex', 3, 'reject', 0);  
     uncuedTrials = filterTE(TE, 'OdorValveIndex', 0, 'reject', 0);
     rewardTrials = filterTE(TE, 'ReinforcementOutcome', 'Reward', 'reject', 0);
     hitTrials = filterTE(TE, 'trialOutcome', 1, 'reject', 0);
@@ -18,10 +19,12 @@
     block2Trials = filterTE(TE, 'BlockNumber', 2, 'reject', 0);
     block3Trials = filterTE(TE, 'BlockNumber', 3, 'reject', 0);
     csPlusTrials = filterTE(TE, 'CSValence', 1, 'reject', 0);
-    csMinusTrials = filterTE(TE, 'CSValence', -1, 'reject', 0);    
-    trialTypes = 1:4;
+    csMinusTrials = filterTE(TE, 'CSValence', -1, 'reject', 0); 
+    uncuedReward = filterTE(TE, 'ReinforcementOutcome', 'Reward', 'OdorValveIndex', 0, 'reject', 0);
+    uncuedPunish = filterTE(TE, 'ReinforcementOutcome', 'Punish', 'OdorValveIndex', 0,'reject', 0);
+    trialTypes = 1:max(TE.trialType);
     trialsByType = cell(size(trialTypes));
-    for counter = 1:length(trialTypes)
+    for counter = 1:max(TE.trialType)
         trialsByType{counter} = filterTE(TE, 'trialType', trialTypes(counter), 'reject', 0);
     end
 

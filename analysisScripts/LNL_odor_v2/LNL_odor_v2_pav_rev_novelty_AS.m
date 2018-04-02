@@ -141,25 +141,7 @@ for channel = channels
 end
 
 %% generate trial lookups for different combinations of conditions
-% NOTE!  updated these lookups to be general across blocks (don't make use
-% of trial type, etc.)
-    validTrials = filterTE(TE, 'reject', 0);
-    Odor1Trials = filterTE(TE, 'OdorValveIndex', 1, 'reject', 0);
-    Odor2Trials = filterTE(TE, 'OdorValveIndex', 2, 'reject', 0);    
-    Odor3Trials = filterTE(TE, 'OdorValveIndex', 3, 'reject', 0);  
-    
-    rewardTrials = filterTE(TE, 'ReinforcementOutcome', 'Reward', 'reject', 0);
-    hitTrials = filterTE(TE, 'trialOutcome', 1, 'reject', 0);
-    missTrials = filterTE(TE, 'trialOutcome', -1, 'reject', 0);
-    punishTrials = filterTE(TE, 'ReinforcementOutcome', 'Punish', 'reject', 0);    
-    neutralTrials = filterTE(TE, 'ReinforcementOutcome', 'Neutral', 'reject', 0);
-    csPlusTrials = filterTE(TE, 'CSValence', 1, 'reject', 0);
-    csMinusTrials = filterTE(TE, 'CSValence', -1, 'reject', 0);
-    uncuedReward = filterTE(TE, 'ReinforcementOutcome', 'Reward', 'OdorValveIndex', 0, 'reject', 0);
-    uncuedPunish = filterTE(TE, 'ReinforcementOutcome', 'Punish', 'OdorValveIndex', 0,'reject', 0);
-
-
-    trialCount = [1:length(TE.filename)]';
+LNL_conditions;
 %% 
 
 
