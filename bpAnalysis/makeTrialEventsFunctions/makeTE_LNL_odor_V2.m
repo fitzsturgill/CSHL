@@ -62,7 +62,7 @@ function TE = makeTE_LNL_odor_V2(sessions)
     
 
     TE.sessionChange = [0; diff(TE.sessionIndex)];
-    TE.BlockChange = [0; abs(diff(TE.BlockNumber))];
+    TE.BlockChange = [0; diff(TE.BlockNumber) ~= 0];
     
 
     

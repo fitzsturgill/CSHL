@@ -1,9 +1,10 @@
-function [D, P] = rocarea(x,y,varargin)
-%
-%  [D, P] = rocarea(x,y,{'boot',n},{'transform'},{'PLOT'})
+function varargout = rocarea_CI(x,y,varargin)
+% 
+%  [D, P, CI] = rocarea(x,y,{'boot',n},{'transform'},{'PLOT'})
 %
 %  Computes discriminability index or area under ROC curve. 
-%
+% D : discriminability index or auROC
+% Confidence Interval : bootstrapped confidence interval for D statistic 
 %  x, y : data
 %  'boot', n: number of bootstraps
 %  transform: 'swap' -- always gives you results between 0.5 - 1
@@ -13,12 +14,20 @@ function [D, P] = rocarea(x,y,varargin)
 %
 % AK 2/2002
 % AK 4/2005
+% FS 4/2018
 
 Nboot = 0;
 TRANSFORM = 0;
 if isempty(x) || isempty(y)
-    D = NaN;
-    P = NaN;
+    if nargout > 0
+        varargout{1} = NaN; % D
+    end
+    if nargout > 1
+        varargout{2} = NaN; % P
+    end
+    if nargout > 2
+        varargout{3} = [NaN NaN]; % CI
+    end    
    return
 end
 
@@ -62,30 +71,46 @@ D = auc(x,y,Lx,Ly,bins);
 
 
 %%%%%%%%%%%%%%
-% bootstrap- 
-% Fitz Note- gives you a P value for probability that D (auROC value) is
-% different from the null hypothesis that x and y are samples derived from
-% a common distribution
+% bootstrap- bootstrap P value and confidence interval for D statistic
 %%%%%%%%%%%%%
 if Nboot > 0
 
- z = [x; y]; % combine x and y into same distribution to test the null hypothesis
+ z = [x; y]; % null hypothesis, x and y are drawn from same distribution
+ DbootNull = NaN(Nboot, 1);
+ Dboot = NaN(Nboot, 1);
  for i=1:Nboot    
-   order=round(rand(1,Lx+Ly)*(Lx+Ly-1))+1;  %resample with replacement
-   px=z(order(1:Lx));           % resampled 'x' from null distribution
-   py=z(order(Lx+1:Lx+Ly));     % resampled 'y' from null distribution
-   Dboot(i)= auc(px,py,Lx,Ly,bins);     %recalculate D
+   % can we reject null hypothesis?
+   orderNull=round(rand(1,Lx+Ly)*(Lx+Ly-1))+1;  %resample null
+   pxNull=z(orderNull(1:Lx));           %resort
+   pyNull=z(orderNull(Lx+1:Lx+Ly));
+   DbootNull(i)= auc(pxNull,pyNull,Lx,Ly,bins);     %recalculate D
+   
+   % confidence intervals for D
+   orderx = round(rand(1,Lx)*(Lx-1))+1;  %resample x
+   ordery = round(rand(1,Ly)*(Ly-1))+1;  %resample y
+   px=x(orderx);           
+   py=y(ordery);
+   thisD = auc(px,py,Lx,Ly,bins);
+   switch TRANSFORM
+    case 1 
+        thisD=abs(thisD-0.5)+0.5;       % 'swap'
+    case 2
+        thisD=2*(thisD-0.5);            % 'scale'
+   end
+   Dboot(i)= thisD;     % transformed
  end
-
- %
- % Decide which side it should be on
- P = iprctile(Dboot,D);
- 
- if D > mean(Dboot)
-     P = 1 - P;
- end
+    % P value for null hypothesis
+    P = iprctile(DbootNull,D);
+    if D > mean(DbootNull)
+        P = 1 - P;
+    end
+    % compute confidence intervals from bootstrapped distributions
+    CI = zeros(1,2);
+    CI(1) = percentile(Dboot, .05);
+    CI(2) = percentile(Dboot, .95);    
 else
    P = 1;
+   CI = [NaN NaN];
 end
 
 
@@ -111,6 +136,17 @@ if nargin > 2 & strcmp(lower(varargin{end}), 'plot')
   xlabel('False alarm'); ylabel('Hit rate');
   title(num2str(D));
 end
+% set outputs
+if nargout > 0
+    varargout{1} = D;
+end
+if nargout > 1
+    varargout{2} = P;
+end
+if nargout > 2
+    varargout{3} = CI;
+end
+    
 
 function D = auc(x,y,Lx,Ly,bins);
 
