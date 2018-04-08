@@ -38,7 +38,7 @@ LNL_conditions;
 
 %% calculate discriminability of csPlus from csMinus trials according to anticipatory licking
 [D, P, CI] = calc_auROC_reversalsFromTE(TE, TE.csLicks.rate, csPlusTrials, csMinusTrials,...
-    'window', 20, 'reset', 1, 'nBoot', 100);
+    'window', 20, 'windowMode', 'global', 'reset', 1, 'nBoot', 100);
 %
 % [data1, data2, ~] = calc_auROC_reversalsFromTE(TE, TE.csLicks.rate, csPlusTrials, csMinusTrials,...
 %     'window', 10, 'reset', 1, 'nBoot', 100);

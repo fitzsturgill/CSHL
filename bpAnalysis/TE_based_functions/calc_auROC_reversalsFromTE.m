@@ -16,6 +16,7 @@ function varargout = calc_auROC_reversalsFromTE(TE, data, trials1, trials2, vara
 
 defaults = {...
     'window', 20;...
+    'windowMode', 'local';...  % 'local' or 'global', local: distributions gathered from last N instances of "trials1" and "trials2" global: distributions from within last N total trials
     'reset', 1;...
     'nBoot', 0;...
     };
@@ -31,21 +32,29 @@ data = data(:);
 for counter = 1:nTrials
     % reset windowed data arrays upon session or block change
     if s.reset && (counter == 1 || TE.BlockChange(counter) || TE.sessionChange(counter))
-        data1 = [];
-        data2 = [];
+        data1 = []; % local mode
+        data2 = []; % local mode
+        lastReset = counter; % global mode
     end
-    if length(data1) > s.window
-        data1 = data1(2:end);
+    switch s.windowMode
+        case 'local'
+            if length(data1) > s.window
+                data1 = data1(2:end);
+            end
+            if length(data2) > s.window
+                data2 = data2(2:end);
+            end        
+            if trials1(counter)
+                data1(end+1) = data(counter);
+            elseif trials2(counter)
+                data2(end+1) = data(counter);
+            end
+        case 'global'
+            startWindow = max(max(1, counter - s.window + 1), lastReset);
+            thisWindow = data(startWindow:counter);
+            data1 = thisWindow(trials1(startWindow:counter));
+            data2 = thisWindow(trials2(startWindow:counter));            
     end
-    if length(data2) > s.window
-        data2 = data2(2:end);
-    end        
-    if trials1(counter)
-        data1(end+1) = data(counter);
-    elseif trials2(counter)
-        data2(end+1) = data(counter);
-    end
-
     %     calc auROC, normal version (with hypothesis test)
     if s.nBoot
         [D, P, CI] = rocarea_CI(stripNaNs(data1), stripNaNs(data2), 'boot', s.nBoot, 'scale');
