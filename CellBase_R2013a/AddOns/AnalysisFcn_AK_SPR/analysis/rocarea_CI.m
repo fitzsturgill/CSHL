@@ -148,7 +148,7 @@ if nargout > 2
 end
     
 
-function D = auc(x,y,Lx,Ly,bins);
+function D = auc(x,y,Lx,Ly,bins)
 
 p = histc(x,bins);  q = histc(y,bins);
 

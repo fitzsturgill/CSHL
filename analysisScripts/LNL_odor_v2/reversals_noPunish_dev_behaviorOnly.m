@@ -33,6 +33,12 @@ ensureDirectory(savepath);
 
 %%
 truncateSessionsFromTE(TE, 'init', 'usLicks', filterTE(TE, 'trialType', 1));
+
+%%
+if saveOn
+    save(fullfile(savepath, 'TE.mat'), 'TE');
+    disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
+end
 %%  generate trial lookups for different combinations of conditions
 LNL_conditions;
 
