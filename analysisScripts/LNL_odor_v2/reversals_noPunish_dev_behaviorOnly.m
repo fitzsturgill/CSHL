@@ -44,7 +44,7 @@ LNL_conditions;
 
 %% calculate discriminability of csPlus from csMinus trials according to anticipatory licking
 [D, P, CI] = calc_auROC_reversalsFromTE(TE, TE.csLicks.rate, csPlusTrials, csMinusTrials,...
-    'window', 20, 'windowMode', 'global', 'reset', 1, 'nBoot', 100);
+    'window', 30, 'windowMode', 'global', 'reset', 1, 'nBoot', 1000);
 %
 % [data1, data2, ~] = calc_auROC_reversalsFromTE(TE, TE.csLicks.rate, csPlusTrials, csMinusTrials,...
 %     'window', 10, 'reset', 1, 'nBoot', 100);
@@ -72,7 +72,7 @@ line(repmat(find(TE.BlockChange)', 2, 1), repmat(yLims2, 1, sum(TE.BlockChange))
 
 
 %% auROC plots confidence interval
-saveName = [subjectName '_auROCboot_CI'];
+saveName = [subjectName '_auROCboot_CI2'];
 h=ensureFigure(saveName, 1); 
 
 boundedline(trialCount(:), nan2zero(TE.auROC.D(:)), abs([nan2val(TE.auROC.CI(:,1), 0) nan2val(TE.auROC.CI(:,2), 0)] - nan2zero(TE.auROC.D(:))), 'k', 'alpha', 'transparency', 0.1); hold on;
@@ -87,6 +87,15 @@ line(repmat(find(TE.BlockChange)', 2, 1), repmat(yLims2, 1, sum(TE.BlockChange))
 addOrginLines;
 set(gca, 'YLim', [-1.1 1.1]);
 
+%% plot p value
+saveName = [subjectName '_auROCboot_pValue_global'];
+h=ensureFigure(saveName, 1);
+scatter(trialCount(:), TE.auROC.P, 20, TE.auROC.D);
+yLims1 = [0 1];
+yLims2 = [0.1; 0.9];
+% line(repmat(find(TE.sessionChange)', 2, 1), repmat(yLims1, 1, sum(TE.sessionChange)), 'Color', 'r');
+line(repmat(find(TE.BlockChange)', 2, 1), repmat(yLims2, 1, sum(TE.BlockChange)), 'Color', 'g');
+addOrginLines;
 
 
 %% test thing for sanity check

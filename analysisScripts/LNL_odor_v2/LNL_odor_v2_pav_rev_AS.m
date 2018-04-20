@@ -14,8 +14,8 @@ TE = makeTE_LNL_odor_V2(sessions);
 channels=[]; dFFMode = {}; BL = {}; 
 if sessions(1).SessionData.Settings.GUI.LED1_amp > 0
     channels(end+1) = 1;
-    dFFMode{end+1} = 'expFit';
-%     dFFMode{end+1} = 'simple';    
+%     dFFMode{end+1} = 'expFit';
+    dFFMode{end+1} = 'simple';    
     BL{end + 1} = [0 4];
 end
 tau(1) = 1.5;
