@@ -27,6 +27,9 @@ TE.phPeak_cs_sustained = bpCalcPeak_dFF(TE.Photometry, 1, [1 3], TE.Cue, 'method
 TE.csLicks = countEventFromTE(TE, 'Port1In', [-2 0], TE.Us);
 TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], TE.Us);
 
+TE.firstLick = calcEventLatency(TE, 'Port1In', TE.Cue); % 3 seconds from start of odor to outcome, if there are no anticipatory licks, then call it 3 second latency to first lick
+
+
 
 %%
 basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
@@ -95,18 +98,9 @@ end
 
 
 %% generate trial lookups for different combinations of conditions
-    validTrials = filterTE(TE, 'reject', 0);
-    highValueTrials = filterTE(TE, 'trialType', 1:3, 'reject', 0);
-    lowValueTrials = filterTE(TE, 'trialType', 4:6, 'reject', 0);
-    uncuedTrials = filterTE(TE, 'trialType', 7:9, 'reject', 0);    
-    rewardTrials = filterTE(TE, 'trialOutcome', 1, 'reject', 0);
-    punishTrials = filterTE(TE, 'trialOutcome', 2, 'reject', 0);    
-    omitTrials = filterTE(TE, 'trialOutcome', 3, 'reject', 0);
-    trialTypes = 1:9;
-    trialsByType = cell(size(trialTypes));
-    for counter = 1:length(trialTypes)
-        trialsByType{counter} = filterTE(TE, 'trialType', trialTypes(counter), 'reject', 0);
-    end
+    cuedOutcome_Conditions;
+    
+%%
     % plot photometry averages
     h=ensureFigure('Photometry_Averages', 1); 
     mcLandscapeFigSetup(h);

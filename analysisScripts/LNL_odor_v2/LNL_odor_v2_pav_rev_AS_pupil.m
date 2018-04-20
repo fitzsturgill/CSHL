@@ -68,16 +68,18 @@ for channel = channels
         TE.phPeakPercentile_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 0.75], usZeros, 'method', 'percentile', 'percentile', 0.5, 'phField', 'ZS');  
     end
 end
-pupLag = 0.3;
-TE.wheelBaseline = mean(TE.Wheel.data.V(:,bpX2pnt(-3, 20, -4):bpX2pnt(0, 20, -4)), 2);
-TE.pupilBaseline = mean(TE.pupil.pupDiameterNorm(:,bpX2pnt(-3, 20, -4):bpX2pnt(0, 20, -4)), 2);
-% ch1CsWindow = [0.25 1];
-TE.pupil_cs = mean(TE.pupil.pupDiameterNorm(:,bpX2pnt(ch1CsWindow(1) + pupLag, 20, -4):bpX2pnt(ch1CsWindow(2) + pupLag, 20, -4)), 2);
+
 % TE.wheel_cs = mean(TE.Wheel.data.V(:,bpX2pnt(ch1CsWindow(1) + pupLag, 20, -4):bpX2pnt(ch1CsWindow(2) + pupLag, 20, -4)), 2);
 
 
 TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], usZeros);
+%%
+TE = addPupilometryToTE(TE, 'duration', 11, 'zeroField', 'Cue',  'frameRate', 60, 'frameRateNew', 20);
+pupLag = 0.3;
 
+TE.pupilBaseline = mean(TE.pupil.pupDiameterNorm(:,bpX2pnt(-3, 20, -4):bpX2pnt(0, 20, -4)), 2);
+% ch1CsWindow = [0.25 1];
+TE.pupil_cs = mean(TE.pupil.pupDiameterNorm(:,bpX2pnt(ch1CsWindow(1) + pupLag, 20, -4):bpX2pnt(ch1CsWindow(2) + pupLag, 20, -4)), 2);
 %%
 phasicWindow = [-2.7, -2.2];
 sustainedWindow = [-1.5, 0];
@@ -93,7 +95,7 @@ TE.pupBaseline = bpCalcPeak_Pupil(TE.pupil, [1 4]);
 
 %%
 TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', 11, 'Fs', 20, 'startField', 'Start');
-
+TE.wheelBaseline = mean(TE.Wheel.data.V(:,bpX2pnt(-3, 20, -4):bpX2pnt(0, 20, -4)), 2);
 %%
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
@@ -110,8 +112,7 @@ ensureDirectory(savepath);
 
 %%
 truncateSessionsFromTE(TE, 'init', 'usLicks', filterTE(TE, 'trialType', 1));
-%%
-TE = addPupilometryToTE(TE, 'duration', 11, 'zeroField', 'Cue',  'frameRate', 60, 'frameRateNew', 20);
+
 %%
 if saveOn
     save(fullfile(savepath, 'TE.mat'), 'TE');
@@ -372,355 +373,6 @@ end
         saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
     end    
     
-    %%
-    saveName = [subjectName '_scatter'];
-    h=ensureFigure(saveName, 1); 
-    mcLandscapeFigSetup(h);
-    pm = [2 2];    
-    if all(ismember([1 2], channels))    
-        subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1);
-        scatter(TE.phPeakPercentile_cs(2).data(csPlusTrials), TE.phPeakPercentile_cs(1).data(csPlusTrials), '.'); hold on;
-        fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
-        fob = fit(TE.phPeakPercentile_cs(2).data(csPlusTrials), TE.phPeakPercentile_cs(1).data(csPlusTrials), 'poly1', fo); 
-        plot(fob,'predfunc'); legend off;
-        title('CS+, Cue'); ylabel('BF dF/F Zscored'); xlabel('VTA dF/F'); textBox(subjectName);
-    end
-
-    if all(ismember([1 2], channels))    
-        subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1);
-        scatter(TE.phPeakPercentile_us(2).data(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials), '.'); hold on;
-        fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
-        fob = fit(TE.phPeakPercentile_us(2).data(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials), 'poly1', fo); 
-        plot(fob,'predfunc'); legend off;    
-        title('CS+, Reward'); ylabel('BF dF/F Zscored'); xlabel('VTA dF/F');  
-    end
-    
-    if ismember(1, channels)    
-        subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1);
-        scatter(TE.csLicks.rate(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials), 'o'); hold on;
-        fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
-        try
-            fob = fit(TE.csLicks.rate(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(1).data(csPlusTrials & rewardTrials), 'poly1', fo); 
-            plot(fob,'predfunc'); legend off;      
-        end
-        title('CS+, reward vs. cue licks'); ylabel('BF dF/F Zscored'); xlabel('Antic. Lick Rate');    
-    end
-    
-    if ismember(2, channels)        
-        subplot(pm(1), pm(2), 4, 'FontSize', 12, 'LineWidth', 1);
-        scatter(TE.csLicks.rate(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(2).data(csPlusTrials & rewardTrials), 'o'); hold on;
-        fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
-        try
-            fob = fit(TE.csLicks.rate(csPlusTrials & rewardTrials), TE.phPeakPercentile_us(2).data(csPlusTrials & rewardTrials), 'poly1', fo); 
-            plot(fob,'predfunc'); legend off;         
-        end
-        ylabel('VTA dF/F Zscored'); xlabel('Antic. Lick Rate');
-    end
-    
-    if saveOn
-        saveas(gcf, fullfile(savepath, [saveName '.fig']));
-        saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
-    end    
-
- %% single trial traces
-    nTraces = 20;
-    saveName = [subjectName '_singleTrial3'];  
-    h=ensureFigure(saveName, 1); 
-    mcLandscapeFigSetup(h);
-    csPlusRewardTrials = find(csPlusTrials & rewardTrials & expectTrials);
-    rn = rand(length(csPlusRewardTrials), 1);
-    [~, I] = sort(rn);
-    %
-    subplot(2,1,1, 'FontSize', 12, 'LineWidth', 1); plot(TE.Photometry.xData, TE.Photometry.data(1).dFF(I(1:nTraces), :)', 'k'); hold on;
-    phPlotAverageFromTE(TE, csPlusTrials & rewardTrials & expectTrials, 1, 'window', [-4, 7], 'linespec', {'r'});
-    set(gca, 'XLim', [-4, 7]); ylabel('BF dF/F'); xlabel('time from cue (s)');
-    
-    
-    subplot(2,1,2, 'FontSize', 12, 'LineWidth', 1); plot(TE.Photometry.xData, TE.Photometry.data(1).dFF(I(1:5), :)', 'k');
-    set(gca, 'XLim', [-4, 7]); ylabel('BF dF/F'); xlabel('time from cue (s)');
-    
-    if saveOn
-        saveas(gcf, fullfile(savepath, [saveName '.fig']));
-        saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
-    end    
-    
-    %% post-reversal analysis, assuming you always have photometry in channel 1, but not necessarily in channel 2
-    
-    dataToPull = {...
-        'csLicks', TE.csLicks.rate,...
-        'usLicks', TE.usLicks.rate,...
-        'phPeakMean_cs_ch1', TE.phPeakMean_cs(1).data,...
-        'phBaseline_ch1', TE.phPeakMean_baseline(1).data,...
-        'phPeakPercentile_cs_ch1', TE.phPeakPercentile_cs(1).data,...
-        'phPeakMean_us_ch1', TE.phPeakMean_us(1).data,...
-        'phPeakPercentile_us_ch1', TE.phPeakPercentile_us(1).data,...
-        'trialOutcome', TE.trialOutcome,...
-        'trialType', TE.trialType,...
-        'trialNumber', TE.trialNumber...
-        };
-    
-    if ismember(2, channels)
-        dataToPull = [dataToPull...
-            {...
-        'phPeakMean_cs_ch2', TE.phPeakMean_cs(2).data,...
-        'phBaseline_ch2', TE.phPeakMean_baseline(2).data,...        
-        'phPeakPercentile_cs_ch2', TE.phPeakPercentile_cs(2).data,...
-        'phPeakMean_us_ch2', TE.phPeakMean_us(2).data,...
-        'phPeakPercentile_us_ch2', TE.phPeakPercentile_us(2).data}...
-        ];
-    end
-    RE = struct();
-    RE.csPlus = extractReversalsFromTE(TE, csPlusTrials, dataToPull, 'maxReversals', 1);
-    RE.csMinus = extractReversalsFromTE(TE, csMinusTrials, dataToPull, 'maxReversals', 1);
-    RE.csPlusReward = extractReversalsFromTE(TE, csPlusTrials & rewardTrials, dataToPull, 'maxReversals', 1);    
-    nReversals = size(RE.csPlus.phPeakPercentile_cs_ch1.after, 1);
-    
-if saveOn
-    save(fullfile(savepath, ['RE_' subjectName '.mat']), 'RE');
-    disp(['*** saving: ' fullfile(savepath, ['RE_' subjectName '.mat']) ' ***']);
-end
-    
-    %% reversal averages
-
-    peakFieldCh1 = 'phPeakMean_cs_ch1';
-    peakFieldCh2 = 'phPeakMean_cs_ch2';    
-%     peakFieldCh1 = 'phPeakPercentile_cs_ch1';
-%     peakFieldCh2 = 'phPeakPercentile_cs_ch2';        
-    saveName = [subjectName '_' strtok(strtok(peakFieldCh1, '_'), '_') '_phCue_revAvg'];  
-    h=ensureFigure(saveName, 1);
-    mcLandscapeFigSetup(h);
-    subplot(2,1,1);
-    xData = [RE.csMinus.trialsBefore RE.csPlus.trialsAfter];
-    bl(1) = nearest(xData, -30);bl(2) = nearest(xData, 0);bl(3) = nearest(xData, 20);
-    revNormAvg_ch1 = [RE.csMinus.(peakFieldCh1).before RE.csPlus.(peakFieldCh1).after];
-%     revNormAvg_ch1 = nanfastsmooth(nanmean(revNormAvg_ch1), 5);
-    revNormAvg_ch1 = nanmean(revNormAvg_ch1);
-%     revNormAvg_ch1 = nanmean(revNormAvg_ch1);
-%     revNormAvg_ch1 = revNormAvg_ch1 - nanmean(revNormAvg_ch1(bl(1):bl(2)));
-%     revNormAvg_ch1 = revNormAvg_ch1 / percentile(revNormAvg_ch1(bl(2):bl(3)), 0.90);
-    
-    revNormAvg_ch2 = [RE.csMinus.(peakFieldCh2).before RE.csPlus.(peakFieldCh2).after];
-%     revNormAvg_ch2 = nanfastsmooth(nanmean(revNormAvg_ch2), 5);
-    revNormAvg_ch2 = nanmean(revNormAvg_ch2);    
-%     revNormAvg_ch2 = nanmean(revNormAvg_ch2);
-%     revNormAvg_ch2 = revNormAvg_ch2 - nanmean(revNormAvg_ch2(bl(1):bl(2)));
-%     revNormAvg_ch2 = revNormAvg_ch2 / percentile(revNormAvg_ch2(bl(2):bl(3)), 0.90);
-
-    plot(xData, smooth(revNormAvg_ch1), 'g'); hold on;
-    plot(xData, smooth(revNormAvg_ch2), 'r');
-    set(gca, 'XLim', [-10 20], 'YLim', [-2 2]);xlabel('Trials of new CS+ odor from reversal'); 
-    ylabel('Cue dFF ZScored'); title([strtok(peakFieldCh1, '_') ', avg ' num2str(nReversals) ' reversals'], 'Interpreter', 'none');
-
-    % reinforcment response
-    subplot(2,1,2);
-    xData = [RE.csPlusReward.trialsBefore RE.csPlusReward.trialsAfter];
-    bl(1) = nearest(xData, -30);bl(2) = nearest(xData, 0);bl(3) = nearest(xData, 80);
-    revRewNormAvg_ch1 = [RE.csPlusReward.phPeakPercentile_us_ch1.before RE.csPlusReward.phPeakPercentile_us_ch1.after];
-%     revRewNormAvg_ch1 = nanfastsmooth(nanmean(revRewNormAvg_ch1), 5);
-    revRewNormAvg_ch1 = nanmean(revRewNormAvg_ch1);
-%     revRewNormAvg_ch1 = revRewNormAvg_ch1 - nanmean(revRewNormAvg_ch1(bl(1):bl(2)));
-%     revRewNormAvg_ch1 = revRewNormAvg_ch1 / percentile(revRewNormAvg_ch1(bl(2):bl(3)), 0.90);
-    
-    revRewNormAvg_ch2 = [RE.csPlusReward.(peakFieldCh2).before RE.csPlusReward.(peakFieldCh2).after];
-%     revRewNormAvg_ch2 = nanfastsmooth(nanmean(revRewNormAvg_ch2), 5);
-    revRewNormAvg_ch2 = nanmean(revRewNormAvg_ch2);
-%     revRewNormAvg_ch2 = revRewNormAvg_ch2 - nanmean(revRewNormAvg_ch2(bl(1):bl(2)));
-%     revRewNormAvg_ch2 = revRewNormAvg_ch2 / max(revRewNormAvg_ch2); %percentile(revRewNormAvg_ch2(bl(2):bl(3)), 0.90);
-
-%     revRewNormAvg_ch2 = revRewNormAvg_ch2 / percentile(revRewNormAvg_ch2(bl(2):bl(3)), 0.90);
-
-    plot(xData, revRewNormAvg_ch1, 'g'); hold on;
-    plot(xData, revRewNormAvg_ch2, 'r');
-    set(gca, 'XLim', [-40 80]);xlabel('Trials of CS+ odor from reversal');
-    ylabel('Reward dFF ZScored'); title([strtok(peakFieldCh1, '_') ', avg ' num2str(nReversals) ' reversals'], 'Interpreter', 'none');
-    
-    if saveOn
-        saveas(gcf, fullfile(savepath, [saveName '.fig']));
-        saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
-    end
-    
-    
-    %% phCue Reversal array
-    saveName = [subjectName '_' strtok(strtok(peakFieldCh1, '_'), '_') '_phCue_revArray'];  
-    h = ensureFigure(saveName, 1);
-    mcLandscapeFigSetup(h);
-    nReversals = size(RE.csPlus.(peakFieldCh1).after, 1);
-    ass = ceil(sqrt(nReversals));
-    xData = [RE.csMinus.trialsBefore RE.csPlus.trialsAfter];
-    bl(1) = nearest(xData, -30);bl(2) = nearest(xData, 0);bl(3) = nearest(xData, 0);
-    for counter = 1:nReversals
-        subplot(ass,ass,counter);
-        revNorm_ch1 = [RE.csMinus.(peakFieldCh1).before(counter,:) RE.csPlus.(peakFieldCh1).after(counter,:)];
-        revNorm_ch1 = nanfastsmooth(revNorm_ch1, 5,1);
-%         revNorm_ch1 = revNorm_ch1 - nanmean(revNorm_ch1(bl(1):bl(2)));
-%         revNorm_ch1 = revNorm_ch1 / percentile(revNorm_ch1(bl(2):end), 0.90);
-        rev_phBaseline_ch1 = [RE.csMinus.phBaseline_ch1.before(counter,:) RE.csPlus.phBaseline_ch1.after(counter,:)];   
-        rev_phBaseline_ch1 = nanfastsmooth(rev_phBaseline_ch1, 5, 1);
-
-    
-        revNorm_ch2 = [RE.csMinus.(peakFieldCh2).before(counter,:) RE.csPlus.(peakFieldCh2).after(counter,:)];
-        revNorm_ch2 = nanfastsmooth(revNorm_ch2, 5,1);
-%         revNorm_ch2 = revNorm_ch2 - nanmean(revNorm_ch2(bl(1):bl(2)));
-%         revNorm_ch2 = revNorm_ch2 / percentile(revNorm_ch2(bl(2):end), 0.90);
-        rev_phBaseline_ch2 = [RE.csMinus.phBaseline_ch2.before(counter,:) RE.csPlus.phBaseline_ch2.after(counter,:)];   
-        rev_phBaseline_ch2 = nanfastsmooth(rev_phBaseline_ch2, 5, 1);
-
-        revCsLicks = [RE.csMinus.csLicks.before(counter,:) RE.csPlus.csLicks.after(counter,:)];
-%         revCsLicks = nanfastsmooth(revCsLicks, 5,1);
-
-%         plot(xData, revNorm_ch1, 'b'); hold on;
-%         plot(xData, revNorm_ch2, 'r'); hold on;
-        plot(xData, rev_phBaseline_ch1, 'c'); hold on;
-        plot(xData, rev_phBaseline_ch2, 'm');        
-%         plot(xData, revCsLicks, 'b');
-        set(gca, 'XLim', [-40 80]); 
-        if counter == 1
-            title(['Peak method: ' peakFieldCh1], 'Interpreter', 'none');
-            xlabel('Trials of new CS+ odor from reversal');
-            ylabel('Cue dF Zscored'); 
-        end
-    end
-    if saveOn
-        saveas(gcf, fullfile(savepath, [saveName '.fig']));
-        saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
-    end
-    
-      %% phOutcome Reversal array
-    saveName = [subjectName '_' strtok(strtok(peakFieldCh1, '_'), '_') '_phOutcome_revArray'];  
-    h = ensureFigure(saveName, 1);
-    mcLandscapeFigSetup(h);
-    nReversals = size(RE.csPlus.(peakFieldCh1).after, 1);
-    ass = ceil(sqrt(nReversals));
-    xData = [RE.csMinus.trialsBefore RE.csPlus.trialsAfter];
-    bl(1) = nearest(xData, -30);bl(2) = nearest(xData, 0);bl(3) = nearest(xData, 0);
-    for counter = 1:nReversals
-        subplot(ass,ass,counter);
-        revRewNormAvg_ch1 = [RE.csPlusReward.phPeakPercentile_us_ch1.before RE.csPlusReward.phPeakPercentile_us_ch1.after];
-        
-        revNorm_ch1 = [RE.csMinus.(peakFieldCh1).before(counter,:) RE.csPlus.(peakFieldCh1).after(counter,:)];
-        revNorm_ch1 = nanfastsmooth(revNorm_ch1, 5,1);
-%         revNorm_ch1 = revNorm_ch1 - nanmean(revNorm_ch1(bl(1):bl(2)));
-%         revNorm_ch1 = revNorm_ch1 / percentile(revNorm_ch1(bl(2):end), 0.90);
-        rev_phBaseline_ch1 = [RE.csMinus.phBaseline_ch1.before(counter,:) RE.csPlus.phBaseline_ch1.after(counter,:)];   
-        rev_phBaseline_ch1 = nanfastsmooth(rev_phBaseline_ch1, 5, 1);
-
-    
-        revNorm_ch2 = [RE.csMinus.(peakFieldCh2).before(counter,:) RE.csPlus.(peakFieldCh2).after(counter,:)];
-        revNorm_ch2 = nanfastsmooth(revNorm_ch2, 5,1);
-%         revNorm_ch2 = revNorm_ch2 - nanmean(revNorm_ch2(bl(1):bl(2)));
-%         revNorm_ch2 = revNorm_ch2 / percentile(revNorm_ch2(bl(2):end), 0.90);
-        rev_phBaseline_ch2 = [RE.csMinus.phBaseline_ch2.before(counter,:) RE.csPlus.phBaseline_ch2.after(counter,:)];   
-        rev_phBaseline_ch2 = nanfastsmooth(rev_phBaseline_ch2, 5, 1);
-
-        revCsLicks = [RE.csMinus.csLicks.before(counter,:) RE.csPlus.csLicks.after(counter,:)];
-%         revCsLicks = nanfastsmooth(revCsLicks, 5,1);
-
-%         plot(xData, revNorm_ch1, 'b'); hold on;
-%         plot(xData, revNorm_ch2, 'r'); hold on;
-        plot(xData, rev_phBaseline_ch1, 'c'); hold on;
-        plot(xData, rev_phBaseline_ch2, 'm');        
-%         plot(xData, revCsLicks, 'b');
-        set(gca, 'XLim', [-40 80]); 
-        if counter == 1
-            title(['Peak method: ' peakFieldCh1], 'Interpreter', 'none');
-            xlabel('Trials of new CS+ odor from reversal');
-            ylabel('Cue dF Zscored'); 
-        end
-    end
-    if saveOn
-        saveas(gcf, fullfile(savepath, [saveName '.fig']));
-        saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
-    end
-    
-    %% Cue Lick Reversal Array
-    saveName = [subjectName '_cueLicks_revArray'];  
-    h = ensureFigure(saveName, 1);
-    mcLandscapeFigSetup(h);
-    nReversals = size(RE.csPlus.csLicks.after, 1);
-    ass = ceil(sqrt(nReversals));
-    xData = [RE.csMinus.trialsBefore RE.csPlus.trialsAfter];
-    bl(1) = nearest(xData, -30);bl(2) = nearest(xData, 0);bl(3) = nearest(xData, 0);
-    for counter = 1:nReversals
-        subplot(ass,ass,counter);
-        revCsLicks = [RE.csMinus.csLicks.before(counter,:) RE.csPlus.csLicks.after(counter,:)];
-        revCsLicks = nanfastsmooth(revCsLicks, 5,1);
-        
-%         revNorm_ch2 = revNorm_ch2 - nanmean(revNorm_ch2(bl(1):bl(2)));
-%         revNorm_ch2 = revNorm_ch2 / percentile(revNorm_ch2(bl(2):end), 0.90);
-
-        plot(xData, revCsLicks, 'g'); hold on;
-
-        set(gca, 'XLim', [-40 80]); 
-        if counter == 1
-            title('CS Licks', 'Interpreter', 'none');
-            xlabel('Trials of new CS+ odor from reversal');
-            ylabel('Licks/s'); 
-        end
-    end
-    if saveOn
-        saveas(gcf, fullfile(savepath, [saveName '.fig']));
-        saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
-    end
-    
-    %% trial - 1 vs trial correlation (diff)
-    ensureFigure('trial_diff', 1);
-    ch1Data = diff([RE.csMinus.(peakFieldCh1).before RE.csPlus.(peakFieldCh1).after], 2);
-    ch2Data = diff([RE.csMinus.(peakFieldCh2).before RE.csPlus.(peakFieldCh2).after], 2);
-    ch1Data = reshape(ch1Data, numel(ch1Data), 1);
-    ch2Data = reshape(ch2Data, numel(ch2Data), 1);
-    ch1Data = ch1Data(~isnan(ch1Data));
-    ch2Data = ch2Data(~isnan(ch2Data));
-    
-    scatter(ch2Data, ch1Data, '.'); hold on;
-    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
-    fob = fit(ch2Data, ch1Data, 'poly1', fo); 
-    plot(fob,'predfunc'); legend off;
-    addUnityLine;
-    title('CS+, Cue, trial = n vs n + 1 difference'); ylabel('BF delta zscore'); xlabel('VTA delta zscore'); textBox(subjectName);
-    
-    
-   %% accuracy split
-    saveName = [subjectName '_' strtok(strtok(peakFieldCh1, '_'), '_') '_phCue_revAvg_accuracySplit'];  
-    h=ensureFigure(saveName, 1);
-    mcLandscapeFigSetup(h);
-    xData = [RE.csMinus.trialsBefore RE.csPlus.trialsAfter];
-    accuracy_before = sum(ismember(RE.csMinus.trialOutcome.before, [1 2]), 2) ./ sum(~isnan(RE.csMinus.trialOutcome.before), 2);
-    [~, I] = sort(accuracy_before);   
-    bottom = I(1:floor(numel(I) / 2));
-    top = I(floor(numel(I) / 2) + 1:end);
-
-    bottom_revNormAvg_ch1= nanfastsmooth(nanmean([RE.csMinus.(peakFieldCh1).before(bottom,:) RE.csPlus.(peakFieldCh1).after(bottom,:)]), 3);
-    top_revNormAvg_ch1= nanfastsmooth(nanmean([RE.csMinus.(peakFieldCh1).before(top,:) RE.csPlus.(peakFieldCh1).after(top,:)]), 3);
-
-    bottom_revNormAvg_ch2= nanfastsmooth(nanmean([RE.csMinus.(peakFieldCh2).before(bottom,:) RE.csPlus.(peakFieldCh2).after(bottom,:)]), 3);
-    top_revNormAvg_ch2= nanfastsmooth(nanmean([RE.csMinus.(peakFieldCh2).before(top,:) RE.csPlus.(peakFieldCh2).after(top,:)]), 3);
-    
-    subplot(2,2,1);
-    plot(xData, bottom_revNormAvg_ch1, 'g--'); hold on;
-    plot(xData, top_revNormAvg_ch1, 'g');    
-    plot(xData, bottom_revNormAvg_ch2, 'r--'); hold on;
-    plot(xData, top_revNormAvg_ch2, 'r');    
-    legend({'bottom', 'top', 'bottom', 'top'}, 'Location', 'southeast', 'Box', 'off');
-    set(gca, 'XLim', [-40 80]);xlabel('Trials of CS+ odor from reversal');
-    ylabel('Cue dFF ZScored'); title([strtok(peakFieldCh1, '_') ', avg ' num2str(nReversals) ' reversals'], 'Interpreter', 'none');
-    subplot(2,2,2);
-    plot(xData, bottom_revNormAvg_ch1, 'g--'); hold on;
-    plot(xData, top_revNormAvg_ch1, 'g'); 
-    legend({'bottom', 'top'}, 'Location', 'southeast', 'Box', 'off');
-    set(gca, 'XLim', [-40 80]);xlabel('Trials of CS+ odor from reversal');
-    ylabel('Cue dFF ZScored, BF')
-    title('Bottom vs top 50% of pre-reversal acurracy');
-    subplot(2,2,3);
-    plot(xData, bottom_revNormAvg_ch2, 'r--'); hold on;
-    plot(xData, top_revNormAvg_ch2, 'r'); 
-    legend({'bottom', 'top'}, 'Location', 'southeast', 'Box', 'off');
-    set(gca, 'XLim', [-40 80]);xlabel('Trials of CS+ odor from reversal');
-    ylabel('Cue dFF ZScored, VTA')
-
-    if saveOn
-        saveas(gcf, fullfile(savepath, [saveName '.fig']));
-        saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
-    end
     
     %%
     ensureFigure('all_behavior_CsPlus', 1);

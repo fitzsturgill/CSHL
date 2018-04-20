@@ -9,6 +9,7 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
         'trialNumbering', 'consecutive';... % 'consecutive' or 'global'
         'CLim', [];... % if specified, CLimMode set manually
         'medFilter', 0;... % if specified, set window for median filtering, only works with consecutive mode right now....
+        'sortValues', []
         };
     [s, ~] = parse_args(defaults, varargin{:});
     if isempty(s.fig)
