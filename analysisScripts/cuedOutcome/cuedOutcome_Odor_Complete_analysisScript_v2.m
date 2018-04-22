@@ -27,8 +27,7 @@ TE.phPeak_cs_sustained = bpCalcPeak_dFF(TE.Photometry, 1, [1 3], TE.Cue, 'method
 TE.csLicks = countEventFromTE(TE, 'Port1In', [-2 0], TE.Us);
 TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], TE.Us);
 
-TE.firstLick = calcEventLatency(TE, 'Port1In', TE.Cue); % 3 seconds from start of odor to outcome, if there are no anticipatory licks, then call it 3 second latency to first lick
-
+TE.firstLick = calcEventLatency(TE, 'Port1In', TE.Cue, TE.Us); % 3 seconds from start of odor to outcome, if there are no anticipatory licks, then call it 3 second latency to first lick
 
 
 %%
@@ -518,8 +517,32 @@ end
     ensureFigure('phDip_Scatter', 1);
     scatter(TE.usLicks.count(rewardTrials) + rand(length(find(rewardTrials)), 1) - 0.5, TE.phTrough_us.data(rewardTrials), 'b'); 
     
-    %% 
+    %% sorted rasters snippet, in progress...
+        CLimFactor = 2;
+    h=ensureFigure('phRastersFromTE_reward_sorted', 1);
+
+    trials = highValueTrials;
+    subplot(1,4,1);    
+    eventRasterFromTE(TE, trials, 'Port1In', 'trialNumbering', 'consecutive',...
+        'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording', 'sortValues', TE.firstLick);    
     
+    subplot(1,4,2);
+    phRasterFromTE(TE, trials, 1, 'CLimFactor', CLimFactor, 'sortValues', TE.firstLick); hold on;
+    sortValues = sort(TE.firstLick(trials));
+    plot(sortValues + -3, 1:sum(trials), 'r');
+%     title([TE.filename{1}(1:7) ': hival, reward'], 'Interpreter', 'none'); 
+
+
+    trials = lowValueTrials;
+    subplot(1,4,3);
+    eventRasterFromTE(TE, trials, 'Port1In', 'trialNumbering', 'consecutive',...
+        'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording', 'sortValues', TE.firstLick);
+    
+    subplot(1,4,4);
+    phRasterFromTE(TE, trials, 1, 'CLimFactor', CLimFactor, 'sortValues', TE.firstLick); hold on;
+    sortValues = sort(TE.firstLick(trials));
+    plot(sortValues + -3, 1:sum(trials), 'r');
+%     title([TE.filename{1}(1:7) ': hival, reward'], 'Interpreter', 'none'); 
 
 
     

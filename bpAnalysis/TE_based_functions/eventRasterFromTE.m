@@ -6,6 +6,7 @@ function [ax, lh] = eventRasterFromTE(TE, trials, event, varargin)
         'ax', gca;...
         'fig', gcf;...
         'trialNumbering', 'global';... % 'singleSession'- by sesssion, 'consecutive', 'global' cross session        };
+        'sortValues', [];... % overrides trial numbering to 'consecutive'
         };
     [s, ~] = parse_args(defaults, varargin{:});
     if isempty(s.fig)
@@ -15,7 +16,16 @@ function [ax, lh] = eventRasterFromTE(TE, trials, event, varargin)
         figure(s.fig);
         s.ax = axes;
     end
+    if ~isempty(s.sortValues)
+        s.trialNumbering = 'consecutive';
+        if islogical(trials)
+            trials = find(trials);
+        end
+        [~, key] = sort(s.sortValues(trials));
+        trials = trials(key);
+    end
     set(s.ax, 'YDir', 'reverse');
+
     [eventTimes, eventTrials] = extractEventTimesFromTE(TE, trials, event, varargin{:});
     lh = linecustommarker(eventTimes, eventTrials, [], [], s.ax);
     ax = s.ax;
