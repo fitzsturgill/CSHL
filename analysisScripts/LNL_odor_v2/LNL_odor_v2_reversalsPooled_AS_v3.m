@@ -42,7 +42,8 @@ end
 
 %% desktop
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SFN_2017\Reversals';
-savepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\Reversals_Pooled';
+savepath = uigetdir;
+% savepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\Reversals_Pooled';
 saveOn = 1;
 
 
@@ -91,7 +92,8 @@ for counter = 2:nReversals
     mouseNumber(counter) = thisMouse;
 end
 sortVariable = revNumber;
-[~, sortOrder] = sort(revNumber);
+% sortVariable = auROC.phPeakMean_cs_ch1.after;
+[~, sortOrder] = sort(sortVariable);
     
 
 
@@ -170,8 +172,8 @@ end
 goodReversals = ...
     auROC.csLicks.before > 0 &...
     auROC.csLicks.after > -0.7 &...
-    auROC.phPeakMean_cs_ch1.before > 0.5 &...
-    auROC.phPeakMean_cs_ch2.before > 0.5;
+    auROC.phPeakMean_cs_ch1.before > 0.2 &...
+    auROC.phPeakMean_cs_ch2.before > 0.2;
 
 % goodReversals = auROC.csLicks.acq > 0.5 & auROC.phPeakMean_cs_ch1.before > 0.4 & auROC.phPeakMean_cs_ch2.before > 0.4;
 
@@ -217,7 +219,7 @@ alwaysCsPlus_licks_norm = smoothdata(alwaysCsPlus_licks, 2, 'movmean', smoothWin
 % normalize by f% of pre reversal values, smooth, find first and last common points across reversals
 
 f = 0.8;
-trialsBack = 50;
+trialsBack = 20;
 
 % normalize by csPlus before reversal
 normVector_ch1 = percentile(smoothdata(newCsMinus_ch1_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), 2, 'movmean', 3, 'omitnan'), f, 2);
@@ -337,21 +339,29 @@ set([h1 h2], 'Position', tilePos);
 %% images
 
 % newCsPlus
-ensureFigure('newCsPlus_image', 1);
+saveName = 'newCsPlus_image';
+ensureFigure(saveName, 1);
 subplot(2,2,1);
-clim = [-10 10];
+clim = [-1.5 1.5];
 xlim = [min(newCsPlus_trialNumber), max(newCsPlus_trialNumber)];
-imagesc('XData', xlim, 'CData', newCsPlus_ch1_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('licks');  set(gca, 'CLim', [-5 5])
+imagesc('XData', xlim, 'CData', newCsPlus_ch1_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('licks');  set(gca, 'CLim', clim)
 scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled'); 
 subplot(2,2,2);
-imagesc('XData', xlim, 'CData', newCsPlus_ch2_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('Ach');  set(gca, 'CLim', [-5 5])
+imagesc('XData', xlim, 'CData', newCsPlus_ch2_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('Ach');  set(gca, 'CLim', clim)
 scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
 subplot(2,2,3);
-imagesc('XData', xlim, 'CData', newCsPlus_licks_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on;title('Dop');  set(gca, 'CLim', [-5 5])
+imagesc('XData', xlim, 'CData', newCsPlus_licks_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on;title('Dop');  set(gca, 'CLim', clim)
 scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));    
+    disp('figure saved');
+end
+
 
 % newCsMinus
-ensureFigure('newCsMinus_image', 1);
+saveName = 'newCsMinus_image';
+ensureFigure(saveName, 1);
 subplot(2,2,1);
 xlim = [min(newCsMinus_trialNumber), max(newCsMinus_trialNumber)];
 imagesc('XData', xlim, 'CData', newCsMinus_ch1_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('licks');  set(gca, 'CLim', clim)
@@ -362,23 +372,32 @@ scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversa
 subplot(2,2,3);
 imagesc('XData', xlim, 'CData', newCsMinus_licks_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('Dop');  set(gca, 'CLim', clim)
 scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
-
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));    
+    disp('figure saved');
+end
 
 
 % alwaysCsPlus 
-ensureFigure('alwaysCsPlus_image', 1);
+saveName = 'alwaysCsPlus_image';
+ensureFigure(saveName, 1);
 subplot(2,2,1);
 xlim = [min(alwaysCsPlus_trialNumber), max(alwaysCsPlus_trialNumber)];
-imagesc('XData', xlim, 'CData', alwaysCsPlus_ch1_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('licks');  set(gca, 'CLim', [-1.5 1.5])
+imagesc('XData', xlim, 'CData', alwaysCsPlus_ch1_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('licks');  set(gca, 'CLim', clim)
 scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
 subplot(2,2,2);
-imagesc('XData', xlim, 'CData', alwaysCsPlus_ch2_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('Ach');  set(gca, 'CLim', [-1 1])
+imagesc('XData', xlim, 'CData', alwaysCsPlus_ch2_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('Ach');  set(gca, 'CLim', clim)
 scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
 subplot(2,2,3);
-imagesc('XData', xlim, 'CData', alwaysCsPlus_licks_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('Dop');  set(gca, 'CLim', [-1.5 1.5])
+imagesc('XData', xlim, 'CData', alwaysCsPlus_licks_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('Dop');  set(gca, 'CLim', clim)
 scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
-
-%%
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));    
+    disp('figure saved');
+end
+%% normalized
 common = sum(~isnan(newCsPlus_ch1_norm)) > 3;
 
 

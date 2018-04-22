@@ -455,10 +455,10 @@ end
         ];
     end
     RE = struct();
-    RE.csPlus = extractReversalsFromTE(TE, csPlusTrials, dataToPull);%, 'maxReversals', 1);
-    RE.csMinus = extractReversalsFromTE(TE, csMinusTrials, dataToPull);%, 'maxReversals', 1);
-    RE.csPlusReward = extractReversalsFromTE(TE, csPlusTrials & rewardTrials, dataToPull);%, 'maxReversals', 1);
-    RE.allTrials = extractReversalsFromTE(TE, validTrials, dataToPull);%, 'maxReversals', 1);
+    RE.csPlus = extractReversalsFromTE(TE, csPlusTrials, dataToPull, 'maxReversals', 1000);%, 'maxReversals', 1);
+    RE.csMinus = extractReversalsFromTE(TE, csMinusTrials, dataToPull, 'maxReversals', 1000);%, 'maxReversals', 1);
+    RE.csPlusReward = extractReversalsFromTE(TE, csPlusTrials & rewardTrials, dataToPull, 'maxReversals', 1000);%, 'maxReversals', 1);
+    RE.allTrials = extractReversalsFromTE(TE, validTrials, dataToPull, 'maxReversals', 1000);%, 'maxReversals', 1);
     nReversals = size(RE.csPlus.phPeakPercentile_cs_ch1.after, 1);
     
 if saveOn
@@ -485,8 +485,8 @@ end
     %     revNormAvg_ch1 = nanmean(revNormAvg_ch1);
     %     revNormAvg_ch1 = revNormAvg_ch1 - nanmean(revNormAvg_ch1(bl(1):bl(2)));
     %     revNormAvg_ch1 = revNormAvg_ch1 / percentile(revNormAvg_ch1(bl(2):bl(3)), 0.90);
-        plot(xData, smooth(revNormAvg_ch1), 'g'); hold on;
-%         plot(xData, revNormAvg_ch1, 'g'); hold on;
+%         plot(xData, smooth(revNormAvg_ch1), 'g'); hold on;
+        plot(xData, revNormAvg_ch1, 'g'); hold on;
     end
     if ismember(2, channels)    
         revNormAvg_ch2 = [RE.csMinus.(peakFieldCh2).before RE.csPlus.(peakFieldCh2).after];
@@ -495,7 +495,8 @@ end
     %     revNormAvg_ch2 = nanmean(revNormAvg_ch2);
     %     revNormAvg_ch2 = revNormAvg_ch2 - nanmean(revNormAvg_ch2(bl(1):bl(2)));
     %     revNormAvg_ch2 = revNormAvg_ch2 / percentile(revNormAvg_ch2(bl(2):bl(3)), 0.90);
-        plot(xData, smooth(revNormAvg_ch2), 'r');
+%         plot(xData, smooth(revNormAvg_ch2), 'r');
+        plot(xData, revNormAvg_ch2, 'r');
     end
     
 %     set(gca, 'XLim', [-40 60], 'YLim', [-2 3]);
@@ -573,7 +574,7 @@ end
         end
         try
         plot(xData, revNorm_ch2, 'm');        
-%         plot(xData, revCsLicks, 'b');
+%         plot(xData, revCsLicks, 'k');
         catch
         end
         set(gca, 'XLim', [-40 80]); 
