@@ -18,7 +18,7 @@ function Rsq = regressCrossValidate(y, X, nFolds)
         target(:, iFolds) = y(cIdx);
     end
     
-    Rsq = corr2(target(:), predicted(:));
+    Rsq = corr(target(:), predicted(:), 'rows', 'complete');
     
         
         

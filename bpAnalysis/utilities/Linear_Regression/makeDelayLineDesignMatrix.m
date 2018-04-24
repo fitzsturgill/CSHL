@@ -1,4 +1,4 @@
-function [X, truncPoints] = makeWindowedDesignMatrix(x, varargin)
+function [X, truncPoints] = makeDelayLineDesignMatrix(x, varargin)
 % input: x, unshifted regressor, nSamples x nTrials
 % outputs: X, shifted regressor matrix, truncPoints = [startIndex
 % stopIndex], start and stop indices to access matching truncated version
@@ -15,9 +15,9 @@ function [X, truncPoints] = makeWindowedDesignMatrix(x, varargin)
 
     % generate weight time offset indices
     Kw2 = s.window * s.Fs; % scaled kernel window
-    Kwix = -Kw2(1):-1:-Kw2(2); % offset indices
+    Kwix = Kw2(1):Kw2(2); % offset indices
     
-    margins = [sum(Kwix > 0) sum(Kwix < 0)]; % to avoid edge effects due to using circ-shifted versions of the regressor
+    margins = [sum(Kwix < 0) sum(Kwix > 0)]; % to avoid edge effects due to using circ-shifted versions of the regressor
     kSize = length(Kwix);
     
     nSamples = size(x, 1);

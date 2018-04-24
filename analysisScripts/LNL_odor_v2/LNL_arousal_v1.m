@@ -27,87 +27,7 @@
 %     set(ax, 'YLim', [40 80]);
     
 
-%% allBehavior_rasters_SFN
-    firstTrial = 100;
-    all_behavior_trials = csPlusTrials & rewardTrials & hitTrials & ~isnan(mean(TE.pupil.pupDiameterNorm, 2)) & TE.trialNumber >= firstTrial;
-    
-    savename = 'allBehavior_rasters';
-    ensureFigure(savename, 1);
-%     reversals = find(diff(TE.BlockNumber(csPlusTrials, :))) + 1;
-    
-    subplot(1,5,1); 
-    eventRasterFromTE(TE, all_behavior_trials, 'Port1In', 'trialNumbering', 'consecutive',...
-        'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
-    title('Licks'); ylabel('trial number');
-    set(gca, 'XLim', [-4 7]);
-    
-%     set(gca, 'YLim', [0 max(trialCount)]);
-%     set(gca, 'FontSize', 14)
-    wp = [bpX2pnt(-4, 20, -4) bpX2pnt(3, 20, -4)];
-    subplot(1,5,2);    
-    image(TE.Wheel.data.V(all_behavior_trials, :), 'XData', [-4 7], 'CDataMapping', 'Scaled');
-%     set(gca, 'CLim', [min(TE.Wheel.data.V(:)), max(TE.Wheel.data.V(:))]); 
-    set(gca, 'CLim', [mean(TE.Wheel.data.V(:)) - std(TE.Wheel.data.V(:)) * 2, mean(TE.Wheel.data.V(:)) + std(TE.Wheel.data.V(:)) * 2]); 
-%     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 2); % reversal lines    
-    title('Velocity');
-    set(gca, 'YTick', []); 
-
-    subplot(1,5,3);
-    image(TE.pupil.pupDiameterNorm(all_behavior_trials, :), 'XData', [-4 7], 'CDataMapping', 'Scaled');
-    set(gca, 'CLim', [nanmean(TE.pupil.pupDiameterNorm(:)) - std(TE.pupil.pupDiameterNorm(:), 'omitnan') * 2, nanmean(TE.pupil.pupDiameterNorm(:)) + std(TE.pupil.pupDiameterNorm(:), 'omitnan') * 2]); 
-    set(gca, 'XLim', [-4 7]);
-%     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 2); % reversal lines    
-    colormap('parula');  
-    title('Pupil Diameter');  
-        set(gca, 'YTick', []); 
-
-        
-    subplot(1,5,4); phRasterFromTE(TE, all_behavior_trials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', 2); % 'CLimFactor', CLimFactor,
-%     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 2); % reversal lines    
-    set(gca, 'YTick', [], 'XLim', [-4 7]); 
-
-    title('ChAT'); xlabel('Time frome odor (s)');
-    subplot(1,5,5); phRasterFromTE(TE, all_behavior_trials, 2, 'trialNumbering', 'consecutive', 'CLimFactor', 2); % 'CLimFactor', CLimFactor,
-    set(gca, 'YTick', [], 'XLim', [-4 7]); 
-%     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 2); % reversal lines    
-    title('DAT');    
-    ax = findobj(gcf, 'Type', 'Axes');
-    formatFigurePoster([12 4], [], 20);
-        if saveOn    
-        saveas(gcf, fullfile(savepath, savename), 'jpeg');
-        saveas(gcf, fullfile(savepath, savename), 'epsc');
-        saveas(gcf, fullfile(savepath, savename), 'fig');        
-        end
-%     set(ax, 'YLim', [40 80]);
-%% allBehavior_averages_SFN
-%     ylim = [-2 8];
-    savename = 'allBehavior_averages';
-    h=ensureFigure(saveName, 1); 
-    
-    varargin = {'trialNumbering', 'consecutive',...
-        'window', [-4 3], 'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording'};
-    axh = [];
-    subplot(1, 5, 1); [ha, hl] = plotEventAverageFromTE(TE, csPlusTrials & rewardTrials & expectTrials, 'Port1In', varargin{:});    
-
-% [171 55 214]/256 [237 125 49]/256
-    subplot(1, 5, 4);
-    [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & expectTrials}, 1,...
-    'FluorDataField', 'ZS', 'window', [-4, 3], 'cmap', [171 55 214]/256, 'alpha', 0); %high value, reward
-     set(gca, 'XLim', [-4, 3]);%set(gca, 'YLim', ylim);
-
-
-    subplot(1, 5, 5);
-    [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & expectTrials}, 2,...
-        'FluorDataField', 'ZS', 'window', [-4, 3], 'cmap', [237 125 49]/256, 'alpha', 0); %high value, reward
-    legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-    xlabel('time from cue (s)');      set(gca, 'XLim', [-4, 3]);
-
-    formatFigurePoster([12 2], [], 20);
-    if saveOn
-        saveas(gcf, fullfile(savepath, [saveName '.fig']));
-        saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
-    end    
-    %%
+    %
     ensureFigure('all_behavior_CsMinus', 1);
     reversals = find(diff(TE.BlockNumber(csMinusTrials, :))) + 1;
     subplot(1,4,1);
@@ -128,56 +48,115 @@
     subplot(1,4,4); phRasterFromTE(TE, csMinusTrials, 2, 'trialNumbering', 'consecutive', 'CLimFactor', 2); % 'CLimFactor', CLimFactor,
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 2); % reversal lines    
     title('DAT');    
-    
-    
-    %% plot chat, dat, and pupil averages for cue responses
-    
-    savename = 'glm_averages';
-    ensureFigure(savename, 1); ax = axes;
-    yyaxis right;  ax.YColor = [0 0 0]; % ylabel('Pupil Diameter (norm.)');
-    plotPupilAverageFromTE(TE, avgTrials & ~isnan(TE.pupil_cs), 'linespec', {'k'}, 'window', [-1 3]); hold on;
-    set(gca, 'YLim', [1 1.12]);
-    yyaxis left; ax.YColor = [0 0 0]; hold on;
-    [ha, hl] = phPlotAverageFromTE(TE, glmTrials, 1,...
-    'FluorDataField', 'ZS', 'window', [-1, 3], 'cmap', [171 55 214]/256, 'alpha', 0); %high value, reward
-     set(gca, 'XLim', [-4, 3]);%set(gca, 'YLim', ylim);
 
+%% model with delay lines for pupil and odor delivery, god know if this is working correctly...
+    modelTrials = csPlusTrials & rewardTrials & hitTrials;    
+    tdlWindowOdor = [0 1]; % window for tapped delay line, window must be equal to or smaller than data window
+    tdlWindowPupil = [-1 0];
+    dataWindow = [-1 2]; % range of target data 0 1
+    dataFullWindowOdor = tdlWindowOdor + dataWindow; % full window, allowing for delay lines
+    dataFullWindowPupil = tdlWindowPupil + dataWindow; % full window, allowing for delay lines    
 
-    [ha, hl] = phPlotAverageFromTE(TE, glmTrials, 2,...
-        'FluorDataField', 'ZS', 'window', [-1, 3], 'cmap', [237 125 49]/256, 'alpha', 0); %high value, reward
-    xlabel('time from cue (s)');      set(gca, 'XLim', [-1, 3]);
-    formatFigurePoster([5, 3], [], 24);
-if saveOn
-    saveas(gcf, fullfile(savepath, [savename '.fig']));
-    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
-    saveas(gcf, fullfile(savepath, [savename '.epsc']));   
-end    
-    %% make glm (NOT really a glm though, not using any linking functions)
-    chat_bl = TE.phPeakMean_baseline(1).data(glmTrials);
-    pup_bl = TE.pupilBaseline(glmTrials);
-    wheel_bl = TE.wheelBaseline(glmTrials);
-    pup_cs = TE.pupil_cs(glmTrials); % but mouse blinks sometimes so don't include this as regressor initially
-    chat_cs = TE.phPeakMean_cs(1).data(glmTrials);
-    dat_cs = TE.phPeakMean_cs(2).data(glmTrials);
-    table_chat = table(pup_bl, wheel_bl, chat_cs);
+    % target
+    input = TE.Photometry.data(1).ZS(modelTrials, bpX2pnt(dataWindow(1), 20, -4):bpX2pnt(dataWindow(2), 20, -4));    
+    input = input';    
+    numPoints = size(input, 1);
+    numTrials = size(input, 2);   
+    inputTemp = input;
+    input = input(:);
+%     input = zscore(input);
     
-    mdl_chat = fitglm(table_chat);
+    % regressors
+    input_pup = TE.pupil.pupDiameterNorm(modelTrials, bpX2pnt(dataFullWindowPupil(1), 20, -4):bpX2pnt(dataFullWindowPupil(2), 20, -4));
+    input_pup = input_pup'; % nSamples x nTrials
+%     input_pup = zeros(diff(dataFullWindowPupil) * 20, numTrials);
+%     input_pup(bpX2pnt(0, 20, dataFullWindowPupil(1)),:) = 1; % odor time
+    [pup_delayLine, truncPoints] = makeDelayLineDesignMatrix(input_pup, 'Fs', 20, 'window', tdlWindowPupil);
     
-    %% ChAT Model
-    glmTrials = csPlusTrials & rewardTrials & hitTrials;
+    input_odor = zeros(diff(dataFullWindowOdor) * 20 + 1, numTrials);
+    input_odor(bpX2pnt(0, 20, dataFullWindowOdor(1)),:) = 1; % odor time
+    [odor_delayLine, truncPoints] = makeDelayLineDesignMatrix(input_odor, 'Fs', 20, 'window', tdlWindowOdor);    
+    
+    yInt = ones(size(input));
+
+    % regression with design matrix (time as the regressor) 
+    ensureFigure('test', 1); subplot(1,2,1); imagesc(odor_delayLine(1:numPoints,:));
+    subplot(1,2,2); imagesc(pup_delayLine(1:numPoints,:));
+    
+    %%
+    X = [yInt odor_delayLine pup_delayLine];
+    [B_chat bint, r, rint, stats] = regress(input, X);
+    ensureFigure('test', 1); plot(B_chat);
+    Rsq = regressCrossValidate(input, X);
+    disp(['Rsq is ' num2str(Rsq)]);
+    %%
+    X = [yInt pup_delayLine];
+    [B_chat bint, r, rint, stats] = regress(input, X);
+    ensureFigure('test', 1); plot(B_chat, '-o');
+    Rsq = regressCrossValidate(input, X);
+    disp(['Rsq is ' num2str(Rsq)]);
+    %%
+    X = [yInt odor_delayLine];
+    [B_chat bint, r, rint, stats] = regress(input, X);
+    ensureFigure('test', 1); plot(B_chat);
+    Rsq = regressCrossValidate(input, X);
+    disp(['Rsq is ' num2str(Rsq)]);
+    %%
+    
+    
+    % regression with time and pupil
+    
+    x3 = [x2 input_pup];
+    
+    B1_chat = regress(input,x3);
+    ensureFigure('test', 1); plot(B1_chat);
+    
+    %
+    shuff_pup = input_pup(randperm(length(input_pup)));
+    shuff_x2 = x2(randperm(size(x2,1)),randperm(size(x2,2)));
+    
+    nrFolds = 10;
+    for iFolds = 1:nrFolds
+        idx = randperm(length(input));
+        idx = idx(1:round(length(input)/10));
+        cIdx = false(1,length(input));
+        cIdx(idx) = true;
+        
+        B1_chat = regress(input(~cIdx),[x2(~cIdx,:) input_pup(~cIdx)]); %full model
+        B2_chat = regress(input(~cIdx),[x2(~cIdx,:) shuff_pup(~cIdx)]); %time model
+        B3_chat = regress(input(~cIdx),[shuff_x2(~cIdx,:) input_pup(~cIdx)]); %pupil model
+        
+        Y1{iFolds} = B1_chat' * ([x2(cIdx,:) input_pup(cIdx)])';
+        Y2{iFolds} = B2_chat' * ([x2(cIdx,:) shuff_pup(cIdx)])';
+        Y3{iFolds} = B3_chat' * ([shuff_x2(cIdx,:) input_pup(cIdx)])';
+        Y{iFolds} = input(cIdx);
+        
+    end
+    
+    fullY = cat(1,Y{:});
+    fullY1 = cat(2,Y1{:})';
+    fullY2 = cat(2,Y2{:})';
+    fullY3 = cat(2,Y3{:})';
+    
+    Rsq_chat(1) = corr2(fullY,fullY1).^2;
+    Rsq_chat(2) = corr2(fullY,fullY2).^2;
+    Rsq_chat(3) = corr2(fullY,fullY3).^2;
+    
+    
+    
+    
+    %% ChAT and DAT Models, fixed pupil lag
+    modelTrials = csPlusTrials & rewardTrials & hitTrials;
     shiftPoints = 0.3 * 20;  % 0.3s lag and 20Hz sample rate
-    pupScatter = TE.pupil.pupDiameter(:,1 + shiftPoints:end);
-    chatScatter = TE.Photometry.data(1).ZS(:,1:end - shiftPoints);
-    ensureFigure('pup_chat_scatter', 1); scatter(pupScatter(:),chatScatter(:), '.');
     
-    glmEndTime = 3;
+    modelEndTime = 3;
 
-    input_pup = TE.pupil.pupDiameterNorm(glmTrials, bpX2pnt(-1, 20, -4) + shiftPoints :bpX2pnt(glmEndTime, 20, -4) + shiftPoints);
+    input_pup = TE.pupil.pupDiameterNorm(modelTrials, bpX2pnt(-1, 20, -4) + shiftPoints :bpX2pnt(modelEndTime, 20, -4) + shiftPoints);
     input_pup = input_pup'; % just concatenate the trials together
     input_pup = input_pup(:); % just concatenate the trials together
     include = ~isnan(input_pup); 
 
-    input = TE.Photometry.data(1).ZS(glmTrials, bpX2pnt(-1, 20, -4):bpX2pnt(glmEndTime, 20, -4));    
+    input = TE.Photometry.data(1).ZS(modelTrials, bpX2pnt(-1, 20, -4):bpX2pnt(modelEndTime, 20, -4));    
     input = input';
     numPoints = size(input, 1);
     numTrials = size(input, 2);
@@ -233,15 +212,15 @@ end
     Rsq_chat(2) = corr2(fullY,fullY2).^2;
     Rsq_chat(3) = corr2(fullY,fullY3).^2;
     
-%% DAT Model
+% DAT Model
     shiftPoints = 0.3 * 20;  % 0.3s lag and 20Hz sample rate
     pupScatter = TE.pupil.pupDiameter(:,1 + shiftPoints:end);
     datScatter = TE.Photometry.data(2).ZS(:,1:end - shiftPoints);
     ensureFigure('pup_dat_scatter', 1); scatter(pupScatter(:),datScatter(:), '.');
     
 
-    input = TE.Photometry.data(2).ZS(glmTrials, bpX2pnt(-1, 20, -4):bpX2pnt(glmEndTime, 20, -4));
-    input_pup = TE.pupil.pupDiameterNorm(glmTrials, bpX2pnt(-1, 20, -4) + shiftPoints :bpX2pnt(glmEndTime, 20, -4) + shiftPoints);
+    input = TE.Photometry.data(2).ZS(modelTrials, bpX2pnt(-1, 20, -4):bpX2pnt(modelEndTime, 20, -4));
+    input_pup = TE.pupil.pupDiameterNorm(modelTrials, bpX2pnt(-1, 20, -4) + shiftPoints :bpX2pnt(modelEndTime, 20, -4) + shiftPoints);
     input_pup = input_pup';
     input_pup = input_pup(:);
     include = ~isnan(input_pup);

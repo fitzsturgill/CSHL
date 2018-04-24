@@ -538,7 +538,7 @@ end
     
     %% ChAT Model
     glmTrials = csPlusTrials & rewardTrials & hitTrials;
-    shiftPoints = 0.3 * 20;  % 0.3s lag and 20Hz sample rate
+    shiftPoints = 1 * 20;  % 0.3s lag and 20Hz sample rate
     pupScatter = TE.pupil.pupDiameter(:,1 + shiftPoints:end);
     chatScatter = TE.Photometry.data(1).ZS(:,1:end - shiftPoints);
     ensureFigure('pup_chat_scatter', 1); scatter(pupScatter(:),chatScatter(:), '.');
@@ -607,7 +607,7 @@ end
     Rsq_chat(3) = corr2(fullY,fullY3).^2;
     
 %% DAT Model
-    shiftPoints = 0.3 * 20;  % 0.3s lag and 20Hz sample rate
+    shiftPoints = 1 * 20;  % 0.3s lag and 20Hz sample rate
     pupScatter = TE.pupil.pupDiameter(:,1 + shiftPoints:end);
     datScatter = TE.Photometry.data(2).ZS(:,1:end - shiftPoints);
     ensureFigure('pup_dat_scatter', 1); scatter(pupScatter(:),datScatter(:), '.');

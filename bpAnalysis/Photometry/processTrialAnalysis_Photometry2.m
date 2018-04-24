@@ -177,6 +177,9 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                         );
                     model = 'a + b*exp(c*x) + d*exp(e*x)';
                     ft = fittype(model, 'options', fo);
+                    if any(isnan(blF_fit))
+                        blF_fit = inpaint_nans(blF_fit);
+                    end
                     [fitobject, gof, output] = ...
                         fit((1:size(allData, 1))', blF_fit, ft, fo);
                     Photometry.bleachFit(si, fCh).fitobject_session = fitobject;
