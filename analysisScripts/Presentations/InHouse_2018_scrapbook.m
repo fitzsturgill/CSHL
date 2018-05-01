@@ -229,3 +229,22 @@ end
         saveas(gcf, fullfile(inhouseSavepath, figname), 'epsc');           
     end
     
+    
+%% formatting for thomas's figures  
+title('');
+set(gca, 'YLim', [0 0.4]);
+formatFigureTalk;
+figname = 'learningRates_extinction';
+if saveOn
+    saveas(gcf, fullfile(inhouseSavepath, figname), 'fig');
+    saveas(gcf, fullfile(inhouseSavepath, figname), 'jpeg');           
+end
+%%
+title('');
+set(gca, 'YLim', [0 0.6]);
+formatFigureTalk;
+figname = 'learningRates_acquisition';
+if saveOn
+    saveas(gcf, fullfile(inhouseSavepath, figname), 'fig');
+    saveas(gcf, fullfile(inhouseSavepath, figname), 'jpeg');           
+end
