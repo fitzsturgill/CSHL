@@ -5,6 +5,7 @@
 
 %% generate trial lookups for different combinations of conditions
 % see Pavlovian_reversals_blocks    blocks 2 and 3
+ % Outcomes ->  -1: miss (CS+ specific), 0: false alarm (Cs- specific), 1: hit (Cs+ specific), 2: correct rejection (Cs- specific) (see TrialTypeOutcomePlot) 
     validTrials = filterTE(TE, 'reject', 0);
     Odor1Trials = filterTE(TE, 'OdorValveIndex', 1, 'reject', 0);
     Odor2Trials = filterTE(TE, 'OdorValveIndex', 2, 'reject', 0);    
@@ -13,7 +14,7 @@
     rewardTrials = filterTE(TE, 'ReinforcementOutcome', 'Reward', 'reject', 0);
     hitTrials = filterTE(TE, 'trialOutcome', 1, 'reject', 0);
     missTrials = filterTE(TE, 'trialOutcome', -1, 'reject', 0);
-    FATrials = filterTE(TE, 'trialOutcome', 0, 'reject', 0);
+    FATrials = filterTE(TE, 'trialOutcome', 0, 'reject', 0); % "false alarm" trials (even if pavlovian)
     punishTrials = filterTE(TE, 'ReinforcementOutcome', 'Punish', 'reject', 0);    
     neutralTrials = filterTE(TE, 'ReinforcementOutcome', 'Neutral', 'reject', 0);
     block2Trials = filterTE(TE, 'BlockNumber', 2, 'reject', 0);

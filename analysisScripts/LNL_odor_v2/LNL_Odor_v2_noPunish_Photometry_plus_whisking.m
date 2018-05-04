@@ -207,3 +207,68 @@ set(axs, 'FontSize', 18);
 set(axs(2:end), 'YTick', []);
 saveas(gcf, fullfile(savepath, 'allBehavior_whisk_csPlus'), 'fig'); 
 saveas(gcf, fullfile(savepath, 'allBehavior_whisk_csPlus'), 'jpeg');
+
+
+%%
+
+%% 3rd odor
+saveName = [subjectName '_longitudinalCueResponses_thirdOdor'];
+h=ensureFigure(saveName, 1); 
+mcLandscapeFigSetup(h);
+subplot(5,1,1); scatter(trialCount(csPlusTrials), TE.csLicks.rate(csPlusTrials),'o'); % both blLicks and anticipatoryLicks2 are from 2s periods
+% subplot(4,1,1); scatter(1:length(allTE.epoch), cuedReward.anticipatoryLicks2);
+maxLR = max(TE.csLicks.rate(csPlusTrials));
+% subplot(4,1,1); plot(smooth(cuedReward.anticipatoryLicks1 / mean(cuedReward.blLicks)));
+% maxLR = smooth(max(cuedReward.anticipatoryLicks2 / mean(cuedReward.blLicks)));
+hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxLR, 'g', 'Marker', 'none');
+hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxLR, 'r', 'Marker', 'none');
+ylabel('antic. licks'); title('CS+ and/or reward trials, dF/F is Zscored');
+set(gca, 'XLim', [1 length(trialCount)]);
+
+peakField = 'phPeakMean_cs';
+if ismember(1, channels)
+    subplot(5,1,2); scatter(trialCount(csPlusTrials), TE.(peakField)(1).data(csPlusTrials), '.');
+    maxP = max(TE.(peakField)(1).data(csPlusTrials));
+    hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
+    hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
+    ylabel(['BF: ' peakField]);
+    set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
+end
+
+if ismember(2, channels)
+    subplot(5,1,3); scatter(trialCount(csPlusTrials), TE.(peakField)(2).data(csPlusTrials), '.');
+    maxP = max(TE.(peakField)(2).data(csPlusTrials));
+    hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
+    hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
+    ylabel(['VTA: ' peakField]);
+    set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
+end
+
+if ismember(1, channels)
+    subplot(5,1,4); scatter(trialCount(Odor3Trials), TE.(peakField)(1).data(Odor3Trials), '.');
+    maxP = max(TE.(peakField)(1).data(Odor3Trials));
+    hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
+    hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
+    ylabel(['BF: ' peakField]);
+    set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
+end
+
+if ismember(2, channels)
+    subplot(5,1,5); scatter(trialCount(Odor3Trials), TE.(peakField)(2).data(Odor3Trials), '.');
+    maxP = max(TE.(peakField)(2).data(Odor3Trials));
+    hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
+    hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
+    ylabel(['VTA: ' peakField]);
+    set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
+end
+
+
+
+xlabel('Trial Count');
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));    
+    disp('figure saved');
+end
+
+
