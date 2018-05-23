@@ -50,8 +50,8 @@ function split = extractReversalsFromTE(TE, trials, inputData, varargin)
             before(revCounter, 2) = theseReversals(counter) - 1;
             after(revCounter,1) = theseReversals(counter);
             after(revCounter,2) = theseReversals(counter + 1) -1;
-            maxTrials(1) = max(maxTrials(1), sum(trials(before(1):before(2)))); % max before block            
-            maxTrials(2) = max(maxTrials(1), sum(trials(after(1):after(2)))); % max after block                        
+            maxTrials(1) = max(maxTrials(1), sum(trials(before(revCounter, 1):before(revCounter, 2)))); % max before block            
+            maxTrials(2) = max(maxTrials(2), sum(trials(after(revCounter, 1):after(revCounter, 2)))); % max after block % 1/23/18, fixed bug in determination of max trials before and after               
             revCounter = revCounter + 1;
             if counter == s.maxReversals + 1
                 break

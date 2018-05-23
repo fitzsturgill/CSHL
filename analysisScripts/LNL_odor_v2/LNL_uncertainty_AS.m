@@ -75,14 +75,18 @@ truncateSessionsFromTE(TE, 'init', 'usLicks', filterTE(TE, 'trialType', 1));
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
-basepath = uigetdir;
-% basepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\';
+% basepath = uigetdir;
+basepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_expected_uncertainty';
 sep = strfind(TE.filename{1}, '_');
 subjectName = TE.filename{1}(1:sep(2)-1);
 disp(subjectName);
 savepath = fullfile(basepath, subjectName);
 ensureDirectory(savepath);
-
+%%
+if saveOn
+    save(fullfile(savepath, 'TE.mat'), 'TE');
+    disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
+end
 %% cross sessions bleaching curve and exponential fits
 for channel = channels
     figname = ['sessionBleach_Correction_ch' num2str(channel)];

@@ -58,7 +58,7 @@ function Wheel = processTrialAnalysis_Wheel(sessions, varargin)
 
     Wheel.data = data;
     tcounter = 1;    
-    for si = 1:length(sessions);
+    for si = 1:length(sessions)
         SessionData = sessions(si).SessionData;
         nTrials = SessionData.nTrials;
         for trial = 1:nTrials

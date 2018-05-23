@@ -16,7 +16,7 @@ function [D, P] = rocarea(x,y,varargin)
 
 Nboot = 0;
 TRANSFORM = 0;
-if isempty(x) | isempty(y)
+if isempty(x) || isempty(y)
     D = NaN;
     P = NaN;
    return
@@ -62,15 +62,18 @@ D = auc(x,y,Lx,Ly,bins);
 
 
 %%%%%%%%%%%%%%
-% bootstrap
+% bootstrap- 
+% Fitz Note- gives you a P value for probability that D (auROC value) is
+% different from the null hypothesis that x and y are samples derived from
+% a common distribution
 %%%%%%%%%%%%%
 if Nboot > 0
 
- z = [x; y];
+ z = [x; y]; % combine x and y into same distribution to test the null hypothesis
  for i=1:Nboot    
-   order=round(rand(1,Lx+Ly)*(Lx+Ly-1))+1;  %resample
-   px=z(order(1:Lx));           %resort
-   py=z(order(Lx+1:Lx+Ly));
+   order=round(rand(1,Lx+Ly)*(Lx+Ly-1))+1;  %resample with replacement
+   px=z(order(1:Lx));           % resampled 'x' from null distribution
+   py=z(order(Lx+1:Lx+Ly));     % resampled 'y' from null distribution
    Dboot(i)= auc(px,py,Lx,Ly,bins);     %recalculate D
  end
 
@@ -100,8 +103,9 @@ end
 %  P L O T
 %%%%%%%%%%%
 if nargin > 2 & strcmp(lower(varargin{end}), 'plot')
- figure(1)
-  clf;hold on
+  p = histc(x,bins);  q = histc(y,bins);
+  cdf1 = cumsum(p)/Lx;   cdf2 = cumsum(q)/Ly;
+  hold on
   plot(cdf2,cdf1,'b','LineWidth',2);
   plot([0 1],[0 1],'k');
   xlabel('False alarm'); ylabel('Hit rate');

@@ -89,7 +89,7 @@ function TE = addPupilometryToTE(TE, varargin)
             % make sure numbers match
             fname = fileList{i}; % there should exist a .mat file for every index in TE
             pupNumber = str2double(fname(strfind(fname, '_') + 1:strfind(fname, '.mat') - 1)); % Pupil_11.mat, extract 11
-            if TE.trialNumber(tei) ~= pupNumber + 1; % bonsai currently names saved videos starting at 0 in my pipeline
+            if TE.trialNumber(tei) ~= pupNumber + 1 % bonsai currently names saved videos starting at 0 in my pipeline
                 warning(['*** pupil file numbering mismatch for session ' sessionname ' skipping... ***']);
                 break
             end

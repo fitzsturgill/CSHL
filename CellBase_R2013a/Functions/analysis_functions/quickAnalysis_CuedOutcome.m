@@ -12,7 +12,7 @@ function quickAnalysis_CuedOutcome(animalID,sessionID,sessionspec,protocoltag)
 %   for a session specified by the first two input arguments. SESSIONSPEC
 %   should be a 1x3 logical array indicating the need for behavior,
 %   recording and stimulation analysis.
-%
+%ju
 %   QUICKANALYSIS2(ANIMALNO,SESSIONID,SESSIONSPEC,PROTOCOLTAG) accepts a
 %   PROTOCOLTAG argument to allow calls to trial event conversion programs
 %   for different versions of the behavioral protocol.

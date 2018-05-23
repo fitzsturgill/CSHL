@@ -39,8 +39,12 @@ function TE = makeTE_wheel_alternateLEDs(sessions)
             if isfield(session.SessionData, 'Epoch')
                 TE.Epoch(tcounter,1) = session.SessionData.Epoch(counter);
             end
-            TE.LED1_amp(tcounter) = session.SessionData.NidaqData{counter, 2}.amp(1);
-            TE.LED2_amp(tcounter) = session.SessionData.NidaqData{counter, 2}.amp(2);            
+            try
+                TE.LED1_amp(tcounter) = session.SessionData.NidaqData{counter, 2}.amp(1);
+            end
+            try
+                TE.LED2_amp(tcounter) = session.SessionData.NidaqData{counter, 2}.amp(2);
+            end
             tcounter = tcounter + 1; % don't forget :)    
         end
     end

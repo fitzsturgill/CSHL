@@ -3,11 +3,15 @@ saveOn = 1;
 %% 
 sessions = bpLoadSessions;
 %%
+tau = [1 1];
+%%
 TE = makeTE_CuedOutcome_Odor_Complete(sessions);
-TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'expFit', 'blMode', 'byTrial');
+%%
+TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'expFit', 'blMode', 'byTrial', 'tau', tau);
 
+%% if you want to try baseline expFit option... 
+TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'expFit', 'blMode', 'expFit');
 %% For Dopamine GCaMP recordings, don't use expfit dFFMode option
-TE = makeTE_CuedOutcome_Odor_Complete(sessions);
 TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'simple', 'blMode', 'byTrial');
 
 %% extract peak trial dFF responses to cues and reinforcement and lick counts
@@ -18,25 +22,38 @@ TE.phPeak_us_med = bpCalcPeak_dFF(TE.Photometry, 1, [0 0.5], TE.Us, 'method', 'p
 TE.phPeak_preUs_med = bpCalcPeak_dFF(TE.Photometry, 1, [-0.5 0], TE.Us, 'method', 'percentile', 'percentile', 0.5, 'phField', 'ZS'); % median,  % to serve as local baseline to show positive reward and punishment responses
 TE.phPeak_cs_phasic = bpCalcPeak_dFF(TE.Photometry, 1, [0 1], TE.Cue, 'method', 'mean', 'phField', 'ZS');
 TE.phPeak_cs_sustained = bpCalcPeak_dFF(TE.Photometry, 1, [1 3], TE.Cue, 'method', 'mean', 'phField', 'ZS');
-
+TE.phPeak_baseline = bpCalcPeak_dFF(TE.Photometry, 1, [-3 0], TE.Cue, 'method', 'mean', 'phField', 'ZS');
 TE.csLicks = countEventFromTE(TE, 'Port1In', [-2 0], TE.Us);
 TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], TE.Us);
 
+TE.firstLick = calcEventLatency(TE, 'Port1In', TE.Cue, TE.Us); % 3 seconds from start of odor to outcome, if there are no anticipatory licks, then call it 3 second latency to first lick
+
+
 %%
-% savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
-% savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
+basepath = uigetdir;
 % basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
-% basepath = uigetdir;
-basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
-sep = strfind(TE.filename{1}, '_');
-subjectName = TE.filename{1}(1:sep(2)-1);
+if length(unique(TE.filename)) > 1
+    sep = strfind(TE.filename{1}, '_');
+    subjectName = TE.filename{1}(1:sep(2)-1);
+else
+    sep = strfind(TE.filename{1}, '.');
+    subjectName = TE.filename{1}(1:sep(1)-1);
+end
 disp(subjectName);
 savepath = fullfile(basepath, subjectName);
 ensureDirectory(savepath);
-disp(['*** ensuring directory: ' savepath ' ***']);
-%%
+%% truncate sessions according to when mouse becomes sated
 rewardTrialsTrunc = filterTE(TE, 'trialOutcome', 1);
 truncateSessionsFromTE(TE, 'init', 'usLicks', rewardTrialsTrunc);
+
+%%
+TE = addPupilometryToTE(TE, 'duration', 11, 'zeroField', 'Cue',  'frameRate', 60, 'frameRateNew', 20, 'normMode', 'byTrial');
+pupLag = 0.3;
+TE.pupilBaseline = mean(TE.pupil.pupDiameterNorm(:,bpX2pnt(-4, 20, -4):bpX2pnt(0, 20, -4)), 2);
+ch1CsWindow = [1 3];
+TE.pupil_cs = mean(TE.pupil.pupDiameterNorm(:,bpX2pnt(ch1CsWindow(1) + pupLag, 20, -4):bpX2pnt(ch1CsWindow(2) + pupLag, 20, -4)), 2);
+%%
+TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', 11, 'Fs', 20, 'startField', 'Start');
 %%
 if saveOn
     save(fullfile(savepath, 'TE.mat'), 'TE');
@@ -86,19 +103,10 @@ end
 
 
 %% generate trial lookups for different combinations of conditions
-    validTrials = filterTE(TE, 'reject', 0);
-    highValueTrials = filterTE(TE, 'trialType', 1:3, 'reject', 0);
-    lowValueTrials = filterTE(TE, 'trialType', 4:6, 'reject', 0);
-    uncuedTrials = filterTE(TE, 'trialType', 7:9, 'reject', 0);    
-    rewardTrials = filterTE(TE, 'trialOutcome', 1, 'reject', 0);
-    punishTrials = filterTE(TE, 'trialOutcome', 2, 'reject', 0);    
-    omitTrials = filterTE(TE, 'trialOutcome', 3, 'reject', 0);
-    trialTypes = 1:9;
-    trialsByType = cell(size(trialTypes));
-    for counter = 1:length(trialTypes)
-        trialsByType{counter} = filterTE(TE, 'trialType', trialTypes(counter), 'reject', 0);
-    end
-    %% plot photometry averages
+    cuedOutcome_Conditions;
+    
+%%
+    % plot photometry averages
     h=ensureFigure('Photometry_Averages', 1); 
     mcLandscapeFigSetup(h);
 
@@ -515,8 +523,40 @@ end
     ensureFigure('phDip_Scatter', 1);
     scatter(TE.usLicks.count(rewardTrials) + rand(length(find(rewardTrials)), 1) - 0.5, TE.phTrough_us.data(rewardTrials), 'b'); 
     
-    %% 
+    %% sorted rasters snippet, in progress...
+    TE.firstLick = calcEventLatency(TE, 'Port1In', TE.Cue, TE.Us); % 3 seconds from start of odor to outcome, if there are no anticipatory licks, then call it 3 second latency to first lick
+    CLimFactor = 1.5;
+    figname = 'phRastersFromTE_reward_sorted';
+    h=ensureFigure(figname, 1);
+    xlim = [-5 4];
+    trials = highValueTrials;
+    subplot(1,2,1);    
+    eventRasterFromTE(TE, trials, 'Port1In', 'trialNumbering', 'consecutive',...
+        'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording', 'sortValues', TE.firstLick);    
+    set(gca, 'XLim', xlim); xlabel('Time from reinforcement (s)'); set(gca, 'YTick', []);
     
+    subplot(1,2,2);
+    phRasterFromTE(TE, trials, 1, 'CLimFactor', CLimFactor, 'sortValues', TE.firstLick); hold on;
+    sortValues = sort(TE.firstLick(trials));
+    plot(sortValues + -3, 1:sum(trials), 'r', 'LineWidth', 2);
+    set(gca, 'YTick', [], 'XLim', xlim);%, 'YTickLabel', {''});
+%     title([TE.filename{1}(1:7) ': hival, reward'], 'Interpreter', 'none'); 
+    
+    formatFigureTalk([7 4]);
 
+%     trials = lowValueTrials;
+%     subplot(1,4,3);
+%     eventRasterFromTE(TE, trials, 'Port1In', 'trialNumbering', 'consecutive',...
+%         'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording', 'sortValues', TE.firstLick);
+%     
+%     subplot(1,4,4);
+%     phRasterFromTE(TE, trials, 1, 'CLimFactor', CLimFactor, 'sortValues', TE.firstLick); hold on;
+%     sortValues = sort(TE.firstLick(trials));
+%     plot(sortValues + -3, 1:sum(trials), 'r', 'LineWidth', 2);
+% %     title([TE.filename{1}(1:7) ': hival, reward'], 'Interpreter', 'none'); 
 
+    if saveOn
+        saveas(gcf, fullfile(savepath, figname), 'fig');
+        saveas(gcf, fullfile(savepath, figname), 'jpeg');   
+    end
     
