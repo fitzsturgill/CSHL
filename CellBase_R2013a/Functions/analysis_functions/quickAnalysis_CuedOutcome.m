@@ -67,7 +67,9 @@ dbstop if error
 % Convert events file
 if isrec
     nlxcsc2mat2(fullpth,'Channels','Events')
-    TE = makeTE_CuedOutcome_Odor_Complete_Nlx;
+    if isbeh
+        TE = makeTE_CuedOutcome_Odor_Complete_Nlx;
+    end
 end
 
 % Create trial events structure
