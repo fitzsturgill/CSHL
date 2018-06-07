@@ -6,8 +6,24 @@ sessions = bpLoadSessions;
 tau = [2 2];
 %%
 TE = makeTE_CuedOutcome_Odor_Complete(sessions);
+
 %%
-TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'expFit', 'blMode', 'byTrial', 'tau', tau);
+% assume that photometry channels are consistent across sessions
+channels=[]; dFFMode = {}; BL = {};
+if sessions(1).SessionData.Settings.GUI.LED1_amp > 0
+    channels(end+1) = 1;
+% 'expFit' subtracts biexponential fit to initial bleaching transient within
+% trials (flattens this artifact), also try 'simple'
+    dFFMode{end+1} = 'expFit'; 
+    BL{end + 1} = [1 4];
+end
+
+if sessions(1).SessionData.Settings.GUI.LED2_amp > 0
+    channels(end+1) = 2;
+    dFFMode{end+1} = 'expFit';
+    BL{end + 1} = [1 4];    
+end
+TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'expFit', 'blMode', 'byTrial', 'tau', tau, 'channels', channels);
 
 %% if you want to try baseline expFit option... 
 TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'expFit', 'blMode', 'expFit');
@@ -15,20 +31,21 @@ TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'expFit', 
 TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', 'simple', 'blMode', 'byTrial');
 
 %% extract peak trial dFF responses to cues and reinforcement and lick counts
-TE.phPeak_cs = bpCalcPeak_dFF(TE.Photometry, 1, [0 2], TE.Cue, 'method', 'mean', 'phField', 'ZS');
-TE.phPeak_us = bpCalcPeak_dFF(TE.Photometry, 1, [0 0.5], TE.Us, 'method', 'mean', 'phField', 'ZS');
-TE.phPeak_preUs = bpCalcPeak_dFF(TE.Photometry, 1, [-0.5 0], TE.Us, 'method', 'mean', 'phField', 'ZS'); % to serve as local baseline to show positive reward and punishment responses
-TE.phPeak_us_med = bpCalcPeak_dFF(TE.Photometry, 1, [0 0.5], TE.Us, 'method', 'percentile', 'percentile', 0.5, 'phField', 'ZS'); % try median too
-TE.phPeak_preUs_med = bpCalcPeak_dFF(TE.Photometry, 1, [-0.5 0], TE.Us, 'method', 'percentile', 'percentile', 0.5, 'phField', 'ZS'); % median,  % to serve as local baseline to show positive reward and punishment responses
-TE.phPeak_cs_phasic = bpCalcPeak_dFF(TE.Photometry, 1, [0 1], TE.Cue, 'method', 'mean', 'phField', 'ZS');
-TE.phPeak_cs_sustained = bpCalcPeak_dFF(TE.Photometry, 1, [1 3], TE.Cue, 'method', 'mean', 'phField', 'ZS');
-TE.phPeak_baseline = bpCalcPeak_dFF(TE.Photometry, 1, [-3 0], TE.Cue, 'method', 'mean', 'phField', 'ZS');
-TE.csLicks = countEventFromTE(TE, 'Port1In', [-2 0], TE.Us);
-TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], TE.Us);
+for channel = channels
+  TE.phPeak_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [0 2], TE.Cue, 'method', 'mean', 'phField', 'ZS');
+  TE.phPeak_us = bpCalcPeak_dFF(TE.Photometry, 1, [0 0.5], TE.Us, 'method', 'mean', 'phField', 'ZS');
+  TE.phPeak_preUs = bpCalcPeak_dFF(TE.Photometry, 1, [-0.5 0], TE.Us, 'method', 'mean', 'phField', 'ZS'); % to serve as local baseline to show positive reward and punishment responses
+  TE.phPeak_us_med = bpCalcPeak_dFF(TE.Photometry, 1, [0 0.5], TE.Us, 'method', 'percentile', 'percentile', 0.5, 'phField', 'ZS'); % try median too
+  TE.phPeak_preUs_med = bpCalcPeak_dFF(TE.Photometry, 1, [-0.5 0], TE.Us, 'method', 'percentile', 'percentile', 0.5, 'phField', 'ZS'); % median,  % to serve as local baseline to show positive reward and punishment responses
+  TE.phPeak_cs_phasic = bpCalcPeak_dFF(TE.Photometry, 1, [0 1], TE.Cue, 'method', 'mean', 'phField', 'ZS');
+  TE.phPeak_cs_sustained = bpCalcPeak_dFF(TE.Photometry, 1, [1 3], TE.Cue, 'method', 'mean', 'phField', 'ZS');
+  TE.phPeak_baseline = bpCalcPeak_dFF(TE.Photometry, channel, [-3 0], TE.Cue, 'method', 'mean', 'phField', 'ZS');
+  TE.csLicks = countEventFromTE(TE, 'Port1In', [-2 0], TE.Us);
+  TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], TE.Us);
 
-TE.firstLick = calcEventLatency(TE, 'Port1In', TE.Cue, TE.Us); % 3 seconds from start of odor to outcome, if there are no anticipatory licks, then call it 3 second latency to first lick
+  TE.firstLick = calcEventLatency(TE, 'Port1In', TE.Cue, TE.Us); % 3 seconds from start of odor to outcome, if there are no anticipatory licks, then call it 3 second latency to first lick
 
-
+end
 %%
 basepath = uigetdir;
 % basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
@@ -61,27 +78,55 @@ if saveOn
 end
 
 %% cross sessions bleaching curve and dual exponential fits
-ensureFigure('sessionBleach_Correction', 1);
-plot(TE.Photometry.data(1).blF_raw, 'k'); hold on;
-plot(TE.Photometry.data(1).blF, 'r');
-if saveOn
-    saveas(gcf, fullfile(savepath, 'sessionBleach_correction.fig'));
-    saveas(gcf, fullfile(savepath, 'sessionBleach_correction.jpg'));
+% ensureFigure('sessionBleach_Correction', 1);
+% plot(TE.Photometry.data(1).blF_raw, 'k'); hold on;
+% plot(TE.Photometry.data(1).blF, 'r');
+% if saveOn
+%     saveas(gcf, fullfile(savepath, 'sessionBleach_correction.fig'));
+%     saveas(gcf, fullfile(savepath, 'sessionBleach_correction.jpg'));
+% end
+for channel = channels
+    figname = ['sessionBleach_Correction_ch' num2str(channel)];
+    ensureFigure(figname, 1);
+    plot(TE.Photometry.data(channel).blF_raw, 'k'); hold on;
+    plot(TE.Photometry.data(channel).blF, 'r');
+    if saveOn
+        saveas(gcf, fullfile(savepath, [figname '.fig']));
+        saveas(gcf, fullfile(savepath, [figname '.jpg']));
+    end
+    % cross trial bleaching fits for each session plotted as axis array
+    try
+        figname = ['trialBleach_Correction_ch' num2str(channel)];
+        ensureFigure(figname, 1);
+        nSessions = length(TE.Photometry.bleachFit);
+        subA = ceil(sqrt(nSessions));
+        for counter = 1:nSessions
+            subplot(subA, subA, counter);
+            plot(TE.Photometry.bleachFit(counter, channel).trialTemplate, 'k'); hold on;
+            plot(TE.Photometry.bleachFit(counter, channel).trialFit, 'r');
+        %     title(num2str(counter));    
+        end
+        if saveOn
+            saveas(gcf, fullfile(savepath, [figname '.fig']));
+            saveas(gcf, fullfile(savepath, [figname '.jpg']));
+        end
+    catch
+    end
 end
-%% cross trial bleaching fits for each session plotted as axis array
-ensureFigure('trialBleach_Correction', 1);
-nSessions = length(TE.Photometry.bleachFit);
-subA = ceil(sqrt(nSessions));
-for counter = 1:nSessions
-    subplot(subA, subA, counter);
-    plot(TE.Photometry.bleachFit(counter).trialTemplate, 'k'); hold on;
-    plot(TE.Photometry.bleachFit(counter).trialFit, 'r');
-%     title(num2str(counter));    
-end
-if saveOn
-    saveas(gcf, fullfile(savepath, 'trialBleach_Correction.fig'));
-    saveas(gcf, fullfile(savepath, 'trialBleach_Correction.jpg'));
-end
+% %% cross trial bleaching fits for each session plotted as axis array
+% ensureFigure('trialBleach_Correction', 1);
+% nSessions = length(TE.Photometry.bleachFit);
+% subA = ceil(sqrt(nSessions));
+% for counter = 1:nSessions
+%     subplot(subA, subA, counter);
+%     plot(TE.Photometry.bleachFit(counter).trialTemplate, 'k'); hold on;
+%     plot(TE.Photometry.bleachFit(counter).trialFit, 'r');
+% %     title(num2str(counter));    
+% end
+% if saveOn
+%     saveas(gcf, fullfile(savepath, 'trialBleach_Correction.fig'));
+%     saveas(gcf, fullfile(savepath, 'trialBleach_Correction.jpg'));
+% end
 
 %% make tiled array of antic. licks for low and high value odors vs trial number
 smoothFactor = 11;
@@ -103,50 +148,56 @@ end
 
 
 %% generate trial lookups for different combinations of conditions
-    cuedOutcome_Conditions;
+    cuedOutcome_Conditions_SL;
     
-%%
-    % plot photometry averages
-    h=ensureFigure('Photometry_Averages', 1); 
-    mcLandscapeFigSetup(h);
+%% plot photometry averages
+for channel = channels
+%         ensureFigure(figname, 1);
+%         h=ensureFigure('Photometry_Averages', 1); 
+%         mcLandscapeFigSetup(h);
+    saveName = [subjectName '_Photometry_Averages_ch' num2str(channel)];
+    h=ensureFigure(saveName, 1);
+    mcPortraitFigSetup(h);
 
     pm = [3 2];
-    
+
     % - 6 0 4
-    subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 3 7]), 1, 'FluorDataField', 'ZS'); %high value, reward
+    subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 3 7]), channel, 'FluorDataField', 'ZS'); %high value, reward
     legend(hl, {'hival, rew', 'hival, omit', 'rew'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
     title('high value'); ylabel('Z Score'); xlabel('time from reinforcement (s)'); textBox(TE.filename{1}(1:7));
 
-    subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([5 6 8]), 1, 'FluorDataField', 'ZS'); % low value, punish
+    subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([5 6 8]), channel, 'FluorDataField', 'ZS'); % low value, punish
     legend(hl, {'loval, pun', 'loval, omit', 'pun'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
     title('low value'); ylabel('Z Score'); xlabel('time from reinforcement (s)'); 
 
-    subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 4 7]), 1, 'FluorDataField', 'ZS'); % reward, varying degrees of expectation
+    subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 4 7]), channel, 'FluorDataField', 'ZS'); % reward, varying degrees of expectation
     legend(hl, {'hival, rew', 'loval, rew', 'rew'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
     title('reward all'); ylabel('Z Score'); xlabel('time from reinforcement (s)');     
 
-    subplot(pm(1), pm(2), 4, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([5 2 8]), 1, 'FluorDataField', 'ZS'); % punishment, varying degrees of expectation
+    subplot(pm(1), pm(2), 4, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([5 2 8]), channel, 'FluorDataField', 'ZS'); % punishment, varying degrees of expectation
     legend(hl, {'loval, pun', 'hival, pun', 'pun'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
     title('punish all'); ylabel('Z Score'); xlabel('time from reinforcement (s)'); 
 
-    subplot(pm(1), pm(2), 5, 'FontSize', 12, 'LineWidth', 1); [ha, hla] = phPlotAverageFromTE(TE, {lowValueTrials, highValueTrials}, 1,...
+    subplot(pm(1), pm(2), 5, 'FontSize', 12, 'LineWidth', 1); [ha, hla] = phPlotAverageFromTE(TE, {lowValueTrials, highValueTrials}, channel,...
         'window', [-6 0], 'linespec', {'m', 'g'}, 'FluorDataField', 'ZS'); hold on;
-    
-    subplot(pm(1), pm(2), 5); [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, omitTrials}, 1,...
+
+    subplot(pm(1), pm(2), 5); [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, omitTrials}, channel,...
         'window', [0 4], 'linespec', {'b', 'r', 'k'}, 'FluorDataField', 'ZS');
     hl = [hla hl];
     legend(hl, {'loval', 'hival', 'rew', 'pun', 'omit'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
     title('Balazs'); ylabel('Z Score'); xlabel('time from reinforcement (s)'); 
-    
-    subplot(pm(1), pm(2), 6, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([3 6 9]), 1, 'FluorDataField', 'ZS'); % reward, varying degrees of expectation
+
+    subplot(pm(1), pm(2), 6, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = phPlotAverageFromTE(TE, trialsByType([3 6 9]), channel, 'FluorDataField', 'ZS'); % reward, varying degrees of expectation
     legend(hl, {'hival, neutral', 'loval, neutral', 'neutral'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
     title('neutral all'); ylabel('Z Score'); xlabel('time from reinforcement (s)');    
-    
-if saveOn    
-    saveas(gcf, fullfile(savepath, 'phAverages.fig'));
-    saveas(gcf, fullfile(savepath, 'phAverages.jpg'));
-end
 
+    if saveOn    
+%        saveas(gcf, fullfile(savepath, 'phAverages.fig'));
+%        saveas(gcf, fullfile(savepath, 'phAverages.jpg'));
+       saveas(gcf, fullfile(savepath, [saveName '.fig']));
+       saveas(gcf, fullfile(savepath, [saveName '.jpg']));
+    end
+end
 %% graph to pick phasic and sustained analysis windows
 ensureFigure('windowPick', 1);
 axes;
@@ -188,81 +239,106 @@ phPlotAverageFromTE(TE, {lowValueTrials, highValueTrials}, 1,...
     title('Neutral'); ylabel('licks (s)'); xlabel('time r (s)');
     
     sameYScale(axh) % match y scaling
-if saveOn    
+if  saveOn    
     saveas(gcf, fullfile(savepath, 'lickAverages.fig'));
     saveas(gcf, fullfile(savepath, 'lickAverages.jpg'));    
 end
   
 
     %% plot photometry rasters
+for channel = channels
+    %     h=ensureFigure('phRastersFromTE_reward', 1);
+    %     mcPortraitFigSetup(h);    
+    saveName = [subjectName '_phRastersFromTE_reward_ch' num2str(channel)];
+    h=ensureFigure(saveName, 1);
+    mcPortraitFigSetup(h);
     CLimFactor = 2;
-    h=ensureFigure('phRastersFromTE_reward', 1);
-    mcPortraitFigSetup(h);
-    subplot(1,4,1); phRasterFromTE(TE, trialsByType{1}, 1, 'CLimFactor', CLimFactor);
+
+    subplot(1,4,1); phRasterFromTE(TE, trialsByType{1}, channel, 'CLimFactor', CLimFactor);
     title([TE.filename{1}(1:7) ': hival, reward'], 'Interpreter', 'none'); 
-    subplot(1,4,2); phRasterFromTE(TE, trialsByType{4}, 1, 'CLimFactor', CLimFactor);
+    subplot(1,4,2); phRasterFromTE(TE, trialsByType{4}, channel, 'CLimFactor', CLimFactor);
     title('loval, reward'); xlabel('time from reinforcement (s)'); 
-    subplot(1,4,3); phRasterFromTE(TE, trialsByType{7}, 1, 'CLimFactor', CLimFactor);
+    subplot(1,4,3); phRasterFromTE(TE, trialsByType{7}, channel, 'CLimFactor', CLimFactor);
     title('uncued, reward');
-    subplot(1,4,4); phRasterFromTE(TE, trialsByType{3}, 1, 'CLimFactor', CLimFactor);
+    subplot(1,4,4); phRasterFromTE(TE, trialsByType{3}, channel, 'CLimFactor', CLimFactor);
     title('hival, neutral'); xlabel('time from tone (s)'); 
-if saveOn
-    saveas(gcf, fullfile(savepath, 'phRasters_reward.fig'));
-    saveas(gcf, fullfile(savepath, 'phRasters_reward.jpg'));    
-end
-    h = ensureFigure('phRastersFromTE_punish', 1); 
+    if saveOn
+%         saveas(gcf, fullfile(savepath, 'phRasters_reward.fig'));
+%         saveas(gcf, fullfile(savepath, 'phRasters_reward.jpg')); 
+       saveas(gcf, fullfile(savepath, [saveName '.fig']));
+       saveas(gcf, fullfile(savepath, [saveName '.jpg']));
+    end
+    
+%         h = ensureFigure('phRastersFromTE_punish', 1); 
+    saveName = [subjectName '_phRastersFromTE_punish_ch' num2str(channel)];
+    h=ensureFigure(saveName, 1);
     mcPortraitFigSetup(h);
-    subplot(1,4,1); phRasterFromTE(TE, trialsByType{2}, 1, 'CLimFactor', CLimFactor);
+    subplot(1,4,1); phRasterFromTE(TE, trialsByType{2}, channel, 'CLimFactor', CLimFactor);
     title([TE.filename{1}(1:7) ': hival, punish'], 'Interpreter', 'none'); 
-    subplot(1,4,2); phRasterFromTE(TE, trialsByType{5}, 1, 'CLimFactor', CLimFactor);
+    subplot(1,4,2); phRasterFromTE(TE, trialsByType{5}, channel, 'CLimFactor', CLimFactor);
     title('loval, punish'); xlabel('time from reinforcement (s)'); 
-    subplot(1,4,3); phRasterFromTE(TE, trialsByType{8}, 1, 'CLimFactor', CLimFactor);
+    subplot(1,4,3); phRasterFromTE(TE, trialsByType{8}, channel, 'CLimFactor', CLimFactor);
     title('uncued, punish');
-    subplot(1,4,4); phRasterFromTE(TE, trialsByType{6}, 1, 'CLimFactor', CLimFactor);
+    subplot(1,4,4); phRasterFromTE(TE, trialsByType{6}, channel, 'CLimFactor', CLimFactor);
     title('loval, neutral'); xlabel('time from tone (s)'); 
-if saveOn
-    saveas(gcf, fullfile(savepath, 'phRasters_punish.fig'));
-    saveas(gcf, fullfile(savepath, 'phRasters_punish.jpg'));    
+    if saveOn
+%         saveas(gcf, fullfile(savepath, 'phRasters_punish.fig'));
+%         saveas(gcf, fullfile(savepath, 'phRasters_punish.jpg')); 
+        saveas(gcf, fullfile(savepath, [saveName '.fig']));
+        saveas(gcf, fullfile(savepath, [saveName '.jpg']));
+    end
 end
 
-%%
     %% plot photometry rasters reward- alternate for lab meeting
-    CLimFactor = 2;
-    h=ensureFigure('phRastersFromTE_reward', 1);
-    mcPortraitFigSetup(h);
+for channel = channels
+ %     h=ensureFigure('phRastersFromTE_reward', 1);
+    saveName = [subjectName 'phRasters_reward_alternate_ch' num2str(channel)];
+    h=ensureFigure(saveName, 1);
+    mcPortraitFigSetup(h); 
     
+    CLimFactor = 2;      
 
 %     prcd = TE.Photometry.data(1).dFF(prt, :);
     subplot(1,4,1); 
     eventRasterFromTE(TE, trialsByType{1}, 'Port1In', 'trialNumbering', 'consecutive',...
         'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
     title('hival, reward'); xlabel('time from reinforcement (s)'); ylabel('trial number');
-    set(gca, 'XLim', [-6 4]); 
+    set(gca, 'XLim', [-6 6]); 
     set(gca, 'YLim', [0 length(find(trialsByType{1}))]);
     set(gca, 'FontSize', 14)
 
     
-    subplot(1,4,2); phRasterFromTE(TE, trialsByType{1}, 1, 'CLimFactor', CLimFactor);
+    subplot(1,4,2); phRasterFromTE(TE, trialsByType{1}, channel, 'CLimFactor', CLimFactor);
     title('hival, reward', 'Interpreter', 'none'); 
         set(gca, 'FontSize', 14)
-    subplot(1,4,3); phRasterFromTE(TE, trialsByType{4}, 1, 'CLimFactor', CLimFactor);
+    subplot(1,4,3); phRasterFromTE(TE, trialsByType{4}, channel, 'CLimFactor', CLimFactor);
     title('loval, reward'); 
         set(gca, 'FontSize', 14)
-    subplot(1,4,4); phRasterFromTE(TE, trialsByType{7}, 1, 'CLimFactor', CLimFactor);
+    subplot(1,4,4); phRasterFromTE(TE, trialsByType{7}, channel, 'CLimFactor', CLimFactor);
     title('uncued, reward');
         set(gca, 'FontSize', 14)
 
 
-    saveas(gcf, fullfile(savepath, 'phRasters_reward_alternate.fig'));
-    saveas(gcf, fullfile(savepath, 'phRasters_reward_alternate.jpg'));    
+%     saveas(gcf, fullfile(savepath, 'phRasters_reward_alternate.fig'));
+%     saveas(gcf, fullfile(savepath, 'phRasters_reward_alternate.jpg'));    
+    if saveOn
+        saveas(gcf, fullfile(savepath, [saveName '.fig']));
+        saveas(gcf, fullfile(savepath, [saveName '.jpg']));
+    end
+end
 
 %% plot photometry rasters 2 lab meeting
-    h=ensureFigure('phRasters_hival', 1);
-    mcPortraitFigSetup(h);
+for channel = channels
+ %     h=ensureFigure('phRastersFromTE_reward', 1);
+    saveName = [subjectName '_licks_ph_comp_raster_reward_ch' num2str(channel)];
+    h=ensureFigure(saveName, 1);
+    mcPortraitFigSetup(h); 
+%     h=ensureFigure('phRasters_hival', 1);
+%     mcPortraitFigSetup(h);
     prt = trialsByType{1};
 %     prcd = TE.Photometry.data(1).dFF(prt, :);
     subplot(1,2,1); 
-    phRasterFromTE(TE, trialsByType{1}, 1, 'CLimFactor', CLimFactor);
+    phRasterFromTE(TE, trialsByType{1}, channel, 'CLimFactor', CLimFactor);
 %     image('Xdata', [-6 4], 'YData', [1 find(length(prt))],...
 %         'CData', prcd, 'CDataMapping', 'Scaled', 'Parent', gca);
 %     set(gca, 'CLim', [-0.01 .01], 'YDir', 'Reverse');
@@ -277,17 +353,26 @@ end
     set(gca, 'XLim', [-6 4]); 
     set(gca, 'YLim', [0 length(find(trialsByType{1}))]);
     set(gca, 'FontSize', 14)
-if saveOn
-    saveas(gcf, fullfile(savepath, 'licks_ph_comp_raster_reward.fig'));
-    saveas(gcf, fullfile(savepath, 'licks_ph_comp_raster_reward.jpg'));    
+    % if saveOn
+    %     saveas(gcf, fullfile(savepath, 'licks_ph_comp_raster_reward.fig'));
+    %     saveas(gcf, fullfile(savepath, 'licks_ph_comp_raster_reward.jpg'));    
+    % end
+    if saveOn
+        saveas(gcf, fullfile(savepath, [saveName '.fig']));
+        saveas(gcf, fullfile(savepath, [saveName '.jpg']));
+    end
 end
     %% plot photometry rasters lab meeting low value
-    h=ensureFigure('phRasters_lowVal', 1); 
-    mcPortraitFigSetup(h);    
+for channel = channels
+    saveName = [subjectName '_licks_ph_comp_raster_punish_ch' num2str(channel)];
+    h=ensureFigure(saveName, 1);
+    mcPortraitFigSetup(h); 
+%     h=ensureFigure('phRasters_lowVal', 1); 
+%     mcPortraitFigSetup(h);    
     prt = trialsByType{5};
 %     prcd = TE.Photometry.data(1).dFF(prt, :);
     subplot(1,2,1); 
-    phRasterFromTE(TE, trialsByType{5}, 1, 'CLimFactor', CLimFactor);    
+    phRasterFromTE(TE, trialsByType{5}, channel, 'CLimFactor', CLimFactor);    
 %     image('Xdata', [-6 4], 'YData', [1 find(length(prt))],...
 %         'CData', prcd, 'CDataMapping', 'Scaled', 'Parent', gca);
     set(gca, 'CLim', [-0.01 .01], 'YDir', 'Reverse');
@@ -296,16 +381,88 @@ end
     set(gca, 'FontSize', 14)
     title('loVal, punish'); xlabel('time from reinforcement (s)'); 
     subplot(1,2,2);
-    eventRasterFromTE(TE, prt, 'Port1In', 'trialNumbering', 'consecutive',...
+    eventRasterFromTE(TE, trialsByType{5}, 'Port1In', 'trialNumbering', 'consecutive',...
         'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
     title('loVal, punish'); xlabel('time from reinforcement (s)'); 
     set(gca, 'XLim', [-6 4]);     
     set(gca, 'YLim', [0 length(find(trialsByType{5}))]);        
     set(gca, 'FontSize', 14)
-if saveOn
-    saveas(gcf, fullfile(savepath, 'licks_ph_comp_raster_punish.fig'));
-    saveas(gcf, fullfile(savepath, 'licks_ph_comp_raster_punish.jpg'));    
+    % if saveOn
+    %     saveas(gcf, fullfile(savepath, 'licks_ph_comp_raster_punish.fig'));
+    %     saveas(gcf, fullfile(savepath, 'licks_ph_comp_raster_punish.jpg'));    
+    % end
+    if saveOn
+        saveas(gcf, fullfile(savepath, [saveName '.fig']));
+        saveas(gcf, fullfile(savepath, [saveName '.jpg']));
+    end
+end 
+
+    %% plot cue response for anticipatory CS+, no-anticipatory CS+, anticipatory omission, uncued trials
+for channel = channels
+    saveName = [subjectName '_cue response_average'];
+    h=ensureFigure(saveName, 1);
+    mcPortraitFigSetup(h);
+    pm = [3 1];
+    
+    % cue response
+    varargin = {'trialNumbering', 'consecutive',...
+        'window', [-4 0], 'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording'};
+    axh = [];
+    
+    subplot(pm(1), pm(2), 1); [ha, hl] = plotEventAverageFromTE(TE, {highValueTrials & anticipTrials, omitTrials & anticipTrials, highValueTrials & noanticipTrials, uncuedTrials}, 'Port1In', varargin{:});
+    legend(hl, {'anticip-hival', 'anticip-omit', 'noanticip-hival', 'uncued'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    title('Cue Licks'); ylabel('licks (s)'); xlabel('time from reinforcement (s)'); % textBox(TE.filename{1}(1:7));  
+
+    subplot(pm(1), pm(2), 2); [ha, hl] = phPlotAverageFromTE(TE, {highValueTrials & anticipTrials, omitTrials & anticipTrials, highValueTrials & noanticipTrials, uncuedTrials}, 1, 'FluorDataField', 'ZS', varargin{:});...
+    legend(hl, {'anticip-hival', 'anticip-omit', 'noanticip-hival', 'uncued'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    title('Ch1'); ylabel('Ch1 ZS');
+    
+    if ismember(2, channels)
+    subplot(pm(1), pm(2), 3); [ha, hl] = phPlotAverageFromTE(TE, {highValueTrials & anticipTrials, omitTrials & anticipTrials, highValueTrials & noanticipTrials, uncuedTrials}, 2, 'FluorDataField', 'ZS', varargin{:});...
+    legend(hl, {'anticip-hival', 'anticip-omit', 'noanticip-hival', 'uncued'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    title('Ch2'); ylabel('Ch2 ZS');
+    end
+    
+    if saveOn
+        saveas(gcf, fullfile(savepath, [saveName '.fig']));
+        saveas(gcf, fullfile(savepath, [saveName '.jpg']));           
+    end
 end
+    
+    %% plot reward response for anticipatory CS+, no-anticipatory CS+, anticipatory omission, uncued trials
+for channel = channels
+    saveName = [subjectName '_reward response_average'];
+    h=ensureFigure(saveName, 1);
+    mcPortraitFigSetup(h);
+    pm = [3 1];
+    
+    % window changed to US
+    varargin = {'trialNumbering', 'consecutive',...
+        'window', [-4 4], 'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording'};
+    axh = [];
+    
+    subplot(pm(1), pm(2), 1); [ha, hl] = plotEventAverageFromTE(TE, {highValueTrials & anticipTrials, omitTrials & anticipTrials, highValueTrials & noanticipTrials, uncuedTrials}, 'Port1In', varargin{:});
+    legend(hl, {'anticip-hival', 'anticip-omit', 'noanticip-hival', 'uncued'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    title('Cue Licks'); ylabel('licks (s)'); xlabel('time from reinforcement (s)'); % textBox(TE.filename{1}(1:7));  
+
+    subplot(pm(1), pm(2), 2); [ha, hl] = phPlotAverageFromTE(TE, {highValueTrials & anticipTrials, omitTrials & anticipTrials, highValueTrials & noanticipTrials, uncuedTrials}, 1, 'FluorDataField', 'ZS', varargin{:});...
+    legend(hl, {'anticip-hival', 'anticip-omit', 'noanticip-hival', 'uncued'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    title('Ch1'); ylabel('Ch1 ZS');
+    
+    if ismember(2, channels)
+    subplot(pm(1), pm(2), 3); [ha, hl] = phPlotAverageFromTE(TE, {highValueTrials & anticipTrials, omitTrials & anticipTrials, highValueTrials & noanticipTrials, uncuedTrials}, 2, 'FluorDataField', 'ZS', varargin{:});...
+    legend(hl, {'anticip-hival', 'anticip-omit', 'noanticip-hival', 'uncued'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    title('Ch2'); ylabel('Ch2 ZS');
+    end
+    
+
+    if saveOn
+        saveas(gcf, fullfile(savepath, [saveName '.fig']));
+        saveas(gcf, fullfile(savepath, [saveName '.jpg']));           
+    end
+    
+end
+    
     %% summary statistics
 %     TE.phPeak_cs_phasic
     cComplete_summary = struct(...

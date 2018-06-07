@@ -16,7 +16,7 @@ function varargout = plotEventAverageFromTE(TE, trials, event, varargin)
     [s, ~] = parse_args(defaults, varargin{:});
 
     if isempty(s.linespec)
-        s.linespec = {'k', 'r', 'b', 'g'};
+        s.linespec = {'g', 'r', 'b', 'k'};
     end
     if isempty(s.fig)
         s.fig = figure;
