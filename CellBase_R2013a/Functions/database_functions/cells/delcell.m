@@ -34,10 +34,14 @@ end
 CELLIDLIST(cellpos) = [];
 
 % Delete rows from 'TheMatrix;
-TheMatrix(cellpos,:) = [];
+try
+    TheMatrix(cellpos,:) = [];
 
 % Return changed variables to workspace & save all
-assignin('base','TheMatrix',TheMatrix);
+    assignin('base','TheMatrix',TheMatrix);
+catch
+    TheMatrix = [];
+end
 assignin('base','CELLIDLIST',CELLIDLIST);
 cb = getpref('cellbase','fname');
 [pth fnm ext] = fileparts(cb);
@@ -45,7 +49,11 @@ dsr = datestr(now);
 dsr = regexprep(dsr,':','_');
 backup_name = fullfile(pth,[fnm '_' dsr ext]);
 copyfile(cb,backup_name)    % make backup before overwriting
-save(cb,'TheMatrix','ANALYSES','CELLIDLIST');
+% if ~noMatrix
+    save(cb,'TheMatrix','ANALYSES','CELLIDLIST');
+% else
+%     save(cb,'ANALYSES','CELLIDLIST');
+% end
 
 % Feedback
 if ischar(cellid)
