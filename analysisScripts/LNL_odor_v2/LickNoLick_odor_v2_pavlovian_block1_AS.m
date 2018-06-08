@@ -67,7 +67,11 @@ TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], usZeros);
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
-basepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_Pavlovian_Block1';
+thiscomputer = computer;
+switch thiscomputer
+    case 'PCWIN64'
+        basepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_Pavlovian_Block1';
+    case 'MACI64'
 % basepath = uigetdir;
 sep = strfind(TE.filename{1}, '.');
 subjectName = TE.filename{1}(1:sep(1)-1);
