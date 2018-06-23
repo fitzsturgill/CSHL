@@ -251,7 +251,7 @@ end
 %     catch
 %     end
     subplot(1,5,2);
-    imagesc(TE.whisk.whisk(cuedReward, :), 'XData', [-4 7], [0 40])
+    imagesc(TE.Whisk.whiskNorm(cuedReward, :), 'XData', [-4 7], [0 2])
     title('whisking');
     
     subplot(1,5,3);
