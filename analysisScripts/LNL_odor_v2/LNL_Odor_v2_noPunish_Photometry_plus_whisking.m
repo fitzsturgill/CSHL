@@ -47,8 +47,8 @@ nTrials = length(TE.filename);
 
 % set time windows to compute cue/conditioned stimulus (Cs) response for
 % each trial
-ch1CsWindow = [0.25 2];
-ch2CsWindow = [0.25 2];
+ch1CsWindow = [1.5 3];
+ch2CsWindow = [1 2.5];
 
 usWindow = [0 0.75];
 usZeros = cellfun(@(x,y,z,a) max(x(1), max(y(1), max(z(1), a(1)))), TE.Reward, TE.Punish, TE.WNoise, TE.Neutral); %'Reward', 'Punish', 'WNoise', 'Neutral'
@@ -151,6 +151,54 @@ end
 %% generate trial lookups for different combinations of conditions
 LNL_conditions;
 
+%%
+
+%% photometry averages, zscored
+%     ylim = [-2 8];
+    saveName = [subjectName '_phAvgs'];  
+    h=ensureFigure(saveName, 1); 
+    mcLandscapeFigSetup(h);
+
+    pm = [2 2];
+    
+    % - 6 0 4
+    if ismember(1, channels)
+        subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); 
+        [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials, uncuedReward, uncuedPunish}, 1,...
+            'FluorDataField', 'ZS', 'window', [3, 7], 'linespec', {'b', 'r', 'k', 'c', 'm'}); %high value, reward
+        legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+        title('Reinforcement'); ylabel('BF dF/F Zscored'); textBox(subjectName);%set(gca, 'YLim', ylim);
+    end
+    
+    if ismember(2, channels)    
+        subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1); 
+        [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials, uncuedReward, uncuedPunish}, 2,...
+            'FluorDataField', 'ZS', 'window', [3, 7], 'linespec', {'b', 'r', 'k', 'c', 'm'}); %high value, reward
+        legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+        ylabel('VTA dF/F Zscored'); xlabel('time from cue (s)'); %set(gca, 'YLim', ylim);
+    end
+    
+    % - 6 0 4
+    if ismember(1, channels)    
+        subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1); 
+        [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 1,...
+        'FluorDataField', 'ZS', 'window', [-3, 7], 'linespec', {'c', 'm'}); %high value, reward
+        legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+        title('CS+, outcomes'); set(gca, 'XLim', [-3, 7]);%set(gca, 'YLim', ylim);
+    end
+    if ismember(2, channels)    
+        subplot(pm(1), pm(2), 4, 'FontSize', 12, 'LineWidth', 1); 
+        [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 2,...
+            'FluorDataField', 'ZS', 'window', [-3, 7], 'linespec', {'c', 'm'}); %high value, reward
+        legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+        xlabel('time from cue (s)');     set(gca, 'XLim', [-3, 7]);%set(gca, 'YLim', ylim);
+    end
+    
+    if saveOn
+        saveas(gcf, fullfile(savepath, [saveName '.fig']));
+        saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    end    
+
 %% all behavior CsPlus
     saveName = 'all_behavior_CsPlus';
     ensureFigure(saveName, 1);
@@ -180,7 +228,7 @@ LNL_conditions;
 %     catch
 %     end
     subplot(1,5,2);
-    imagesc(TE.Whisk.whiskNorm(csPlusTrials, :), 'XData', [-4 7], [0 2])
+%     imagesc(TE.Whisk.whiskNorm(csPlusTrials, :), 'XData', [-4 7], [0 2])
     
     line(repmat([-4; 7], 1, length(sessionChanges)), [sessionChanges'; sessionChanges'], 'Parent', gca, 'Color', 'w', 'LineWidth', 1); % reversal lines    
     line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
@@ -343,6 +391,7 @@ end
         'filename', TE.filename,...
         'ReinforcementOutcome', TE.ReinforcementOutcome,...
         'OdorValveIndex', TE.OdorValveIndex,...
+        'csLicksROC', TE.AnswerLicksROC,...
         };
     
     if ismember(2, channels)
@@ -369,69 +418,87 @@ if saveOn
 end
     
 %% reversal averages
-    peakFieldCh1 = 'phPeakMean_cs_ch1';
-    peakFieldCh2 = 'phPeakMean_cs_ch2';    
-%     peakFieldCh1 = 'phPeakPercentile_cs_ch1';
-%     peakFieldCh2 = 'phPeakPercentile_cs_ch2';        
+
+smoothWindow = 5;
+
+%     peakFieldCh1 = 'phPeakMean_cs_ch1';
+%     peakFieldCh2 = 'phPeakMean_cs_ch2';    
+    peakFieldCh1 = 'phPeakPercentile_cs_ch1';
+    peakFieldCh2 = 'phPeakPercentile_cs_ch2';        
     saveName = [subjectName '_' strtok(strtok(peakFieldCh1, '_'), '_') '_phCue_revAvg'];  
+
     h=ensureFigure(saveName, 1);
     mcLandscapeFigSetup(h);
-    subplot(2,1,1);
+    subplot(2,2,1);
+
+    % data fields from RE to plot
+    dataFields = {
+        'csLicks', 'k';...        
+        peakFieldCh1, 'g';...
+        };
+    if ismember(2, channels)
+        dataFields = [dataFields; {peakFieldCh2, 'r'}];
+    end
+    
+    % CS MINUS -> CS PLUS
+        % x data and indices for baseline (cs- baseline) and ceiling (cs+
+        % baseline)
     xData = [RE.csMinus.trialsBefore RE.csPlus.trialsAfter];
-    bl(1) = nearest(xData, -30);bl(2) = nearest(xData, 0);bl(3) = nearest(xData, 20);
-    if ismember(1, channels)
-        revNormAvg_ch1 = [RE.csMinus.(peakFieldCh1).before RE.csPlus.(peakFieldCh1).after];
-    %     revNormAvg_ch1 = nanfastsmooth(nanmean(revNormAvg_ch1), 5);
-        revNormAvg_ch1 = nanmean(revNormAvg_ch1);
-    %     revNormAvg_ch1 = nanmean(revNormAvg_ch1);
-    %     revNormAvg_ch1 = revNormAvg_ch1 - nanmean(revNormAvg_ch1(bl(1):bl(2)));
-    %     revNormAvg_ch1 = revNormAvg_ch1 / percentile(revNormAvg_ch1(bl(2):bl(3)), 0.90);
-%         plot(xData, smooth(revNormAvg_ch1), 'g'); hold on;
-        plot(xData, revNormAvg_ch1, 'g'); hold on;
+    bl(1) = nearest(xData, -30);bl(2) = nearest(xData, 0);
+    ceilIx(1) = nearest(RE.csPlus.trialsBefore, -30); ceilIx(2) = nearest(RE.csPlus.trialsBefore, 0);
+    
+    % scale data and plot
+    nFields = size(dataFields, 1);
+    for counter = 1:nFields
+        dataField = dataFields{counter, 1};
+        color = dataFields{counter, 2};
+        revNorm = [RE.csMinus.(dataField).before RE.csPlus.(dataField).after];
+        revNorm = smoothdata(revNorm, 2, 'movmean', smoothWindow, 'omitnan');
+        baseline = nanmean(RE.csMinus.(dataField).before(:,ceilIx(1):ceilIx(2)), 2); % subtract off Cs- prior to reversal
+        ceiling = nanmean(RE.csPlus.(dataField).before(:,ceilIx(1):ceilIx(2)), 2); % divide by Cs+ prior to reversal
+        revNorm = revNorm - baseline;        
+        revNorm = revNorm ./ ceiling;
+        subplot(2, 4, 1); hold on;
+        boundedline(xData, nanmean(revNorm), nanSEM(revNorm), color);
+        set(gca, 'XLim', [-50 50]);
+        subplot(2,4,counter + 1);
+        imagesc('XData', xData, 'CData', revNorm);
         set(gca, 'XLim', [-50 50]);
     end
-    if ismember(2, channels)    
-        revNormAvg_ch2 = [RE.csMinus.(peakFieldCh2).before RE.csPlus.(peakFieldCh2).after];
-    %     revNormAvg_ch2 = nanfastsmooth(nanmean(revNormAvg_ch2), 5);
-        revNormAvg_ch2 = nanmean(revNormAvg_ch2);    
-    %     revNormAvg_ch2 = nanmean(revNormAvg_ch2);
-    %     revNormAvg_ch2 = revNormAvg_ch2 - nanmean(revNormAvg_ch2(bl(1):bl(2)));
-    %     revNormAvg_ch2 = revNormAvg_ch2 / percentile(revNormAvg_ch2(bl(2):bl(3)), 0.90);
-%         plot(xData, smooth(revNormAvg_ch2), 'r');
-        plot(xData, revNormAvg_ch2, 'r');
-        set(gca, 'XLim', [-50 50]);        
-    end
+%     set(gca, 'XLim', [-50 50]);
+%     xlabel('Trials of new CS+ odor from reversal'); 
+%     ylabel('Cue response normalized'); title([strtok(peakFieldCh1, '_') ', avg ' num2str(nReversals) ' reversals'], 'Interpreter', 'none');
     
-%     set(gca, 'XLim', [-40 60], 'YLim', [-2 3]);
-    xlabel('Trials of new CS+ odor from reversal'); 
-    ylabel('Cue dFF ZScored'); title([strtok(peakFieldCh1, '_') ', avg ' num2str(nReversals) ' reversals'], 'Interpreter', 'none');
-
-    % reinforcment response
+    % CS PLUS -> CS MINUS
     subplot(2,1,2);
-    xData = [RE.csPlusReward.trialsBefore RE.csPlusReward.trialsAfter];
-    bl(1) = nearest(xData, -30);bl(2) = nearest(xData, 0);bl(3) = nearest(xData, 80);
-    if ismember(1, channels)   
-        revRewNormAvg_ch1 = [RE.csPlusReward.phPeakPercentile_us_ch1.before RE.csPlusReward.phPeakPercentile_us_ch1.after];
-    %     revRewNormAvg_ch1 = nanfastsmooth(nanmean(revRewNormAvg_ch1), 5);
-        revRewNormAvg_ch1 = nanmean(revRewNormAvg_ch1);
-    %     revRewNormAvg_ch1 = revRewNormAvg_ch1 - nanmean(revRewNormAvg_ch1(bl(1):bl(2)));
-    %     revRewNormAvg_ch1 = revRewNormAvg_ch1 / percentile(revRewNormAvg_ch1(bl(2):bl(3)), 0.90);
-        plot(xData, revRewNormAvg_ch1, 'g'); hold on;
-    end
-    if ismember(2, channels)   
-        revRewNormAvg_ch2 = [RE.csPlusReward.(peakFieldCh2).before RE.csPlusReward.(peakFieldCh2).after];
-    %     revRewNormAvg_ch2 = nanfastsmooth(nanmean(revRewNormAvg_ch2), 5);
-        revRewNormAvg_ch2 = nanmean(revRewNormAvg_ch2);
-    %     revRewNormAvg_ch2 = revRewNormAvg_ch2 - nanmean(revRewNormAvg_ch2(bl(1):bl(2)));
-    %     revRewNormAvg_ch2 = revRewNormAvg_ch2 / max(revRewNormAvg_ch2); %percentile(revRewNormAvg_ch2(bl(2):bl(3)), 0.90);
-    %     revRewNormAvg_ch2 = revRewNormAvg_ch2 / percentile(revRewNormAvg_ch2(bl(2):bl(3)), 0.90);
-        plot(xData, revRewNormAvg_ch2, 'r');
-    end
-
-
-    set(gca, 'XLim', [-40 80]);xlabel('Trials of CS+ odor from reversal');
-    ylabel('Reward dFF ZScored'); title([strtok(peakFieldCh1, '_') ', avg ' num2str(nReversals) ' reversals'], 'Interpreter', 'none');
+        % x data and indices for baseline (cs- baseline) and ceiling (cs+
+        % baseline)        
+    xData = [RE.csPlus.trialsBefore RE.csMinus.trialsAfter];
+    bl(1) = nearest(RE.csMinus.trialsBefore, -30); bl(2) = nearest(RE.csMinus.trialsBefore, 0);
+    ceilIx(1) = nearest(RE.csPlus.trialsBefore, -30); ceilIx(2) = nearest(RE.csPlus.trialsBefore, 0);
     
+    % scale data and plot
+    for counter = 1:size(dataFields, 1)
+        dataField = dataFields{counter, 1};
+        color = dataFields{counter, 2};
+        revNorm = [RE.csPlus.(dataField).before RE.csMinus.(dataField).after];
+        revNorm = smoothdata(revNorm, 2, 'movmean', smoothWindow, 'omitnan');
+        baseline = nanmean(RE.csMinus.(dataField).before(:,ceilIx(1):ceilIx(2)), 2); % subtract off Cs- prior to reversal
+        ceiling = nanmean(RE.csPlus.(dataField).before(:,ceilIx(1):ceilIx(2)), 2); % divide by Cs+ prior to reversal
+        revNorm = revNorm - baseline;        
+        revNorm = revNorm ./ ceiling;
+        subplot(2,4,5); hold on;
+        boundedline(xData, nanmean(revNorm), nanSEM(revNorm), color);
+        set(gca, 'XLim', [-50 50]);
+        subplot(2,4,4 + counter + 1);
+        imagesc('XData', xData, 'CData', revNorm);
+        set(gca, 'XLim', [-50 50]);
+    end
+%     set(gca, 'XLim', [-50 50]);
+%     xlabel('Trials of new CS- odor from reversal'); 
+%     ylabel('Cue response normalized'); title([strtok(peakFieldCh1, '_') ', avg ' num2str(nReversals) ' reversals'], 'Interpreter', 'none');
+    
+
     if saveOn
         saveas(gcf, fullfile(savepath, [saveName '.fig']));
         saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
