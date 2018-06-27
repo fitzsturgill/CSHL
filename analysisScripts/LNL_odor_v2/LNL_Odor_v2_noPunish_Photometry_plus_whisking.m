@@ -12,7 +12,7 @@ TE = makeTE_LNL_odor_V2(sessions);
 channels=[]; dFFMode = {}; BL = {}; 
 if sessions(1).SessionData.Settings.GUI.LED1_amp > 0
     channels(end+1) = 1;
-    dFFMode{end+1} = 'simple';
+    dFFMode{end+1} = 'expFit';
 %     dFFMode{end+1} = 'simple';    
     BL{end + 1} = [1 4];
 end
@@ -228,7 +228,7 @@ LNL_conditions;
 %     catch
 %     end
     subplot(1,5,2);
-%     imagesc(TE.Whisk.whiskNorm(csPlusTrials, :), 'XData', [-4 7], [0 2])
+    imagesc(TE.Whisk.whiskNorm(csPlusTrials, :), 'XData', [-4 7], [0 2])
     
     line(repmat([-4; 7], 1, length(sessionChanges)), [sessionChanges'; sessionChanges'], 'Parent', gca, 'Color', 'w', 'LineWidth', 1); % reversal lines    
     line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
@@ -312,69 +312,6 @@ set(axs(2:end), 'YTick', []);
 saveas(gcf, fullfile(savepath, 'allBehavior_whisk_csMinus'), 'fig'); 
 saveas(gcf, fullfile(savepath, 'allBehavior_whisk_csMinus'), 'jpeg');
 
-
-
-%% 3rd odor
-saveName = [subjectName '_longitudinalCueResponses_thirdOdor'];
-h=ensureFigure(saveName, 1); 
-mcLandscapeFigSetup(h);
-subplot(5,1,1); scatter(trialCount(csPlusTrials), TE.csLicks.rate(csPlusTrials),'o'); % both blLicks and anticipatoryLicks2 are from 2s periods
-% subplot(4,1,1); scatter(1:length(allTE.epoch), cuedReward.anticipatoryLicks2);
-maxLR = max(TE.csLicks.rate(csPlusTrials));
-% subplot(4,1,1); plot(smooth(cuedReward.anticipatoryLicks1 / mean(cuedReward.blLicks)));
-% maxLR = smooth(max(cuedReward.anticipatoryLicks2 / mean(cuedReward.blLicks)));
-hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxLR, 'g', 'Marker', 'none');
-hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxLR, 'r', 'Marker', 'none');
-ylabel('antic. licks'); title('CS+ and/or reward trials, dF/F is Zscored');
-set(gca, 'XLim', [1 length(trialCount)]);
-
-peakField = 'phPeakMean_cs';
-if ismember(1, channels)
-    subplot(5,1,2); scatter(trialCount(csPlusTrials), TE.(peakField)(1).data(csPlusTrials), '.');
-    maxP = max(TE.(peakField)(1).data(csPlusTrials));
-    hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
-    hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-    ylabel(['BF: ' peakField]);
-    set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
-end
-
-if ismember(2, channels)
-    subplot(5,1,3); scatter(trialCount(csPlusTrials), TE.(peakField)(2).data(csPlusTrials), '.');
-    maxP = max(TE.(peakField)(2).data(csPlusTrials));
-    hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
-    hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-    ylabel(['VTA: ' peakField]);
-    set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
-end
-
-if ismember(1, channels)
-    subplot(5,1,4); scatter(trialCount(Odor3Trials), TE.(peakField)(1).data(Odor3Trials), '.');
-    maxP = max(TE.(peakField)(1).data(Odor3Trials));
-    hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
-    hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-    ylabel(['BF: ' peakField]);
-    set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
-end
-
-if ismember(2, channels)
-    subplot(5,1,5); scatter(trialCount(Odor3Trials), TE.(peakField)(2).data(Odor3Trials), '.');
-    maxP = max(TE.(peakField)(2).data(Odor3Trials));
-    hold on; stem(trialCount(TE.BlockChange ~= 0), TE.BlockChange(TE.BlockChange ~= 0) * maxP, 'g', 'Marker', 'none');
-    hold on; stem(trialCount(TE.sessionChange ~= 0), TE.sessionChange(TE.sessionChange ~= 0) * maxP, 'r', 'Marker', 'none');
-    ylabel(['VTA: ' peakField]);
-    set(gca, 'XLim', [1 length(trialCount)]); %set(gca, 'YLim', [-0.2 0.2]);
-end
-
-
-
-xlabel('Trial Count');
-if saveOn
-    saveas(gcf, fullfile(savepath, [saveName '.fig']));
-    saveas(gcf, fullfile(savepath, [saveName '.jpg']));    
-    disp('figure saved');
-end
-
-
 %% compile data into nReversals x nTrials arrays
 
     dataToPull = {...
@@ -454,9 +391,9 @@ smoothWindow = 5;
         color = dataFields{counter, 2};
         revNorm = [RE.csMinus.(dataField).before RE.csPlus.(dataField).after];
         revNorm = smoothdata(revNorm, 2, 'movmean', smoothWindow, 'omitnan');
-        baseline = nanmean(RE.csMinus.(dataField).before(:,ceilIx(1):ceilIx(2)), 2); % subtract off Cs- prior to reversal
-        ceiling = nanmean(RE.csPlus.(dataField).before(:,ceilIx(1):ceilIx(2)), 2); % divide by Cs+ prior to reversal
-        revNorm = revNorm - baseline;        
+%         baseline = nanmean(RE.csMinus.(dataField).before(:,bl(1):bl(2)), 2); % subtract off Cs- prior to reversal
+        ceiling = percentile(RE.csPlus.(dataField).before(:,ceilIx(1):ceilIx(2)), 0.8, 2); % divide by Cs+ prior to reversal
+%         revNorm = revNorm - baseline; % RIGHT NOW JUST NORMALIZE, NO BASELINE SUBTRACTION    
         revNorm = revNorm ./ ceiling;
         subplot(2, 4, 1); hold on;
         boundedline(xData, nanmean(revNorm), nanSEM(revNorm), color);
@@ -483,9 +420,9 @@ smoothWindow = 5;
         color = dataFields{counter, 2};
         revNorm = [RE.csPlus.(dataField).before RE.csMinus.(dataField).after];
         revNorm = smoothdata(revNorm, 2, 'movmean', smoothWindow, 'omitnan');
-        baseline = nanmean(RE.csMinus.(dataField).before(:,ceilIx(1):ceilIx(2)), 2); % subtract off Cs- prior to reversal
-        ceiling = nanmean(RE.csPlus.(dataField).before(:,ceilIx(1):ceilIx(2)), 2); % divide by Cs+ prior to reversal
-        revNorm = revNorm - baseline;        
+%         baseline = nanmean(RE.csMinus.(dataField).before(:,bl(1):bl(2)), 2); % subtract off Cs- prior to reversal
+        ceiling = percentile(RE.csPlus.(dataField).before(:,ceilIx(1):ceilIx(2)), 0.8, 2); % divide by Cs+ prior to reversal
+%         revNorm = revNorm - baseline; % RIGHT NOW JUST NORMALIZE, NO BASELINE SUBTRACTION         
         revNorm = revNorm ./ ceiling;
         subplot(2,4,5); hold on;
         boundedline(xData, nanmean(revNorm), nanSEM(revNorm), color);
