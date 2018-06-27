@@ -397,7 +397,7 @@ subplot(2,2,2); title('Dop');
 imagesc(nanzscore([AR.thirdOdor.phPeakMean_cs_ch2.before AR.thirdOdor.phPeakMean_cs_ch2.after], 0, 2));
 subplot(2,2,3); title('Licks');
 imagesc(nanzscore([AR.thirdOdor.csLicks.before AR.thirdOdor.csLicks.after], 0, 2));
-subplot(2,2,4); title('averages');
+
 
 
 

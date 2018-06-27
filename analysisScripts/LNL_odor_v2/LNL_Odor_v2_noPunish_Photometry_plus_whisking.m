@@ -165,7 +165,7 @@ LNL_conditions;
     if ismember(1, channels)
         subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); 
         [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials, uncuedReward, uncuedPunish}, 1,...
-            'FluorDataField', 'ZS', 'window', [3, 7], 'linespec', {'b', 'r', 'k', 'c', 'm'}); %high value, reward
+            'FluorDataField', 'ZS', 'window', [1, 7], 'linespec', {'b', 'r', 'k', 'c', 'm'}); %high value, reward
         legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
         title('Reinforcement'); ylabel('BF dF/F Zscored'); textBox(subjectName);%set(gca, 'YLim', ylim);
     end
@@ -173,7 +173,7 @@ LNL_conditions;
     if ismember(2, channels)    
         subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1); 
         [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials, uncuedReward, uncuedPunish}, 2,...
-            'FluorDataField', 'ZS', 'window', [3, 7], 'linespec', {'b', 'r', 'k', 'c', 'm'}); %high value, reward
+            'FluorDataField', 'ZS', 'window', [1, 7], 'linespec', {'b', 'r', 'k', 'c', 'm'}); %high value, reward
         legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
         ylabel('VTA dF/F Zscored'); xlabel('time from cue (s)'); %set(gca, 'YLim', ylim);
     end
