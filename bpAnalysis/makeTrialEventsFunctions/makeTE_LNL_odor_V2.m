@@ -30,6 +30,15 @@ function TE = makeTE_LNL_odor_V2(sessions)
         'LickAction', [],...
         'Us', []...
         );
+    
+    % specific to auROC-driven reversals (uses auROC-driven block switch
+    % function)
+    if isfield(sessions(1).SessionData, 'AnswerLicksROC')
+        rocOn = 1;
+        TE.AnswerLicksROC = zeros(nTrials, 1);
+    else
+        rocOn = 0;
+    end
 
     for i = 1:length(statesToAdd)
         TE(1).(statesToAdd{i}) = bpAddStateAsTrialEvent(sessions, statesToAdd{i});
@@ -53,6 +62,9 @@ function TE = makeTE_LNL_odor_V2(sessions)
             TE.BlockNumber(tcounter,1) = session.SessionData.BlockNumber(counter);
             TE.LickAction{tcounter,1} = session.SessionData.LickAction{counter};
             TE.ReinforcementOutcome{tcounter, 1} = session.SessionData.ReinforcementOutcome{counter};   
+            if rocOn
+                TE.AnswerLicksROC(tcounter, 1) = session.SessionData.AnswerLicksROC.auROC(counter);
+            end
             TE.sessionIndex(tcounter, 1) = sCounter;
             usTimes = [TE.Reward{tcounter}; TE.Punish{tcounter}; TE.WNoise{tcounter}; TE.Neutral{tcounter}];
             TE.Us{tcounter, 1} = [max(usTimes(:,1)) max(usTimes(:,2))];

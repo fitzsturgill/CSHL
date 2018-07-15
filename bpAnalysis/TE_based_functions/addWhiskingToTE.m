@@ -65,6 +65,7 @@ function whisk = addWhiskingToTE(TE, varargin)
     if ischar(s.folderSuffix)
         s.folderSuffix = repmat({s.folderSuffix}, length(sessionnames));
     end
+    h = waitbar(0, 'Processing Whisking'); 
     for counter = 1:length(sessionnames)
         sessionname = sessionnames{counter};
         whiskFolder = parseFileName(sessionname, s.folderPrefix); % see subfunction
@@ -123,7 +124,9 @@ function whisk = addWhiskingToTE(TE, varargin)
                     whisk.(normField)(si, :) = rawData / nanmean(nanmean(rawData(:, blStartP:blEndP), 2), 1); % divide by scalar
             end
         end
+        waitbar(counter/length(sessionnames));
     end
+    close(h);
 end
 
 function pupilFolder = parseFileName(filename, folderPrefix)

@@ -51,17 +51,21 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
 %             originalSamples(si) = max(cellfun(@(x) size(x,1), sessions(si).SessionData.NidaqData(:,1)));
 %         end
 %         originalSamples = max(originalSamples);
-        % kludge added 11/05/17
-        originalSamples = sessions(1).SessionData.TrialSettings(1).nidaq.duration * sessions(1).SessionData.TrialSettings(1).nidaq.sample_rate;
-        newSamples = ceil(originalSamples/s.downsample);
+
         try
             sampleRate = sessions(1).SessionData.TrialSettings(1).nidaq.sample_rate;
+            originalSamples = sessions(1).SessionData.TrialSettings(1).nidaq.duration * sessions(1).SessionData.TrialSettings(1).nidaq.sample_rate;            
         catch
             sampleRate = 6100; % very early sessions don't have sample rate in settings
+            originalSamples = sessions(1).SessionData.TrialSettings(1).nidaq.duration * sampleRate;            
         end
+        
+        newSamples = ceil(originalSamples/s.downsample);
         if rem(sampleRate, s.downsample)
             error('downsample must be a factor of sampleRate');
         end
+        % update sampleRate because you no longer need non-decimated sample
+        % rate
         sampleRate = sampleRate / s.downsample; % downsample must be a factor of sampleRate      
         zeroTime = sessions(1).SessionData.RawEvents.Trial{1}.States.(s.zeroField)(1) - ...
             sessions(1).SessionData.RawEvents.Trial{1}.States.(s.startField)(1);

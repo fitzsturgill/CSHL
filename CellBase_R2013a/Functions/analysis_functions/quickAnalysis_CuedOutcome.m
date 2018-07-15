@@ -169,7 +169,7 @@ if isbeh && isrec
         H = ensureFigure([cellids{k} '_outcomes'], 1);
         pause(0.01)
         viewcell2b(cellids(k),'TriggerName','Us_start','SortEvent','trialNumber','eventtype','behav','ShowEvents',{'Us_start'},...
-            'Partitions','#trialOutcome','window',[-1 4], 'dt', 0.05, 'sigma', 0.05, 'PSTHstd', 'on', 'isadaptive', true);
+            'Partitions','#trialOutcome','window',[-1 4], 'dt', 0.01, 'sigma', 0.02, 'PSTHstd', 'on', 'isadaptive', true);
         formatFigureCellbase;        
 %         maximize_figure(H)
         hleg = findobj(H, 'Type', 'legend');
@@ -186,7 +186,7 @@ if isbeh && isrec
         H = ensureFigure([cellids{k} '_cue'], 1);
         pause(0.01)
         viewcell2b(cellids(k),'TriggerName','Cue_start','SortEvent','trialNumber','eventtype','behav','ShowEvents',{'Cue_start'},...
-            'Partitions','#cueCondition','window',[-4 3], 'dt', 0.05, 'sigma', 0.05, 'PSTHstd', 'on', 'isadaptive', true);
+            'Partitions','#cueCondition','window',[-4 3], 'dt', 0.01, 'sigma', 0.02, 'PSTHstd', 'on', 'isadaptive', true);
         formatFigureCellbase;
 %         maximize_figure(H)
 
@@ -205,7 +205,7 @@ if isbeh && isrec
         H = ensureFigure([cellids{k} '_reward'], 1);
         pause(0.01)
         viewcell2b(cellids(k),'TriggerName','Us_start','SortEvent','trialNumber','eventtype','behav','ShowEvents',{'Us_start'},...
-            'Partitions','#trialType: {1 4 7}','window',[-7 4], 'dt', 0.05, 'sigma', 0.05, 'PSTHstd', 'on', 'isadaptive', true);
+            'Partitions','#trialType: {1 4 7}','window',[-7 4], 'dt', 0.01, 'sigma', 0.02, 'PSTHstd', 'on', 'isadaptive', true);
         formatFigureCellbase;        
 %         maximize_figure(H)
         hleg = findobj(H, 'Type', 'legend');
