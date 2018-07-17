@@ -55,7 +55,11 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
     else
         zeroTimes2 = zeroTimes; % not yet tested
     end
-    
+    zeroTimes2 = zeroTimes2(:); 
+    if isscalar(zeroTimes2)
+        zeroTimes2 = repmat(zeroTimes2, nTrials, 1);
+    end
+        
     if size(s.window, 1) == 1
         s.window = repmat(s.window, nTrials, 1);
     end
