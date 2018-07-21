@@ -25,12 +25,7 @@ function [data, xData] = phAlignedWindow(TE, trials, ch, varargin)
 
     
 %%
-    if isempty(s.zeroTimes)
-        zeroTimes = valuecrossing(1:length(TE.Photometry.xData), TE.Photometry.xData, 0); % inferred from xData, historical usage...
-        if isempty(s.window)
-            s.window = TE.Photometry.xData([1 end]);
-        end
-    elseif iscell(s.zeroTimes)
+    if iscell(s.zeroTimes)
         if ~s.referenceFromEnd
             zeroTimes = cellfun(@(x) x(1), s.zeroTimes); % returns vector
         else
@@ -56,9 +51,9 @@ function [data, xData] = phAlignedWindow(TE, trials, ch, varargin)
 
 %% determine maximum number of data points preceding and following zero and initalize data array
     if Photometry.settings.uniformOutput
-        samplesPerTrial = size(TE.Photometry.data(ch).raw); % how many samples per trial
-        paddedSamples = bpX2pnt(max(zeroTimes)) + samplesPerTrial - bpX2pnt(min(zeroTimes)); % for padding array with maximum number of points before and after a trial zero
-        paddedZeroPoint = bpX2pnt(max(zeroTimes));
+        samplesPerTrial = size(TE.Photometry.data(ch).raw, 2); % how many samples per trial
+        paddedSamples = bpX2pnt(max(zeroTimes), Fs) + samplesPerTrial - bpX2pnt(min(zeroTimes), Fs); % for padding array with maximum number of points before and after a trial zero
+        paddedZeroPoint = bpX2pnt(max(zeroTimes), Fs);
         xData = (0:(samplesPerTrial - 1))/Fs - paddedZeroPoint;
     else
         % FINISH CODING!!!!

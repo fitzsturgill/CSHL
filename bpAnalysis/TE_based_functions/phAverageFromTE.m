@@ -11,7 +11,12 @@ function avgData = phAverageFromTE(TE, trials, ch, varargin)
         };    
     [s, ~] = parse_args(defaults, varargin{:});
 
-
+    if isempty(s.zeroTimes)
+        zeroTimes = valuecrossing(1:length(TE.Photometry.xData), TE.Photometry.xData, 0); % inferred from xData, historical usage...
+        if isempty(s.window)
+            s.window = TE.Photometry.xData([1 end]);
+        end
+    end
 
 % 
 %     xData = TE.(Photometry).xData;
