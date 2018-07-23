@@ -1,7 +1,8 @@
 function avgData = phAverageFromTE(TE, trials, ch, varargin)
+% see also phAlignedWindow...
 % output - avgData with fields phMean, phSTD, phSEM, and N
-
-% !!!!!! trials- may be cell array of trials for different conditions !!!!!!
+% !!!!!! trials- may be cell array of trial subsets or a logical or linear
+% index of a single trial subset
     defaults = {...
         'PhotometryField', 'Photometry';...
         'FluorDataField', 'dFF';...
@@ -11,43 +12,55 @@ function avgData = phAverageFromTE(TE, trials, ch, varargin)
         };    
     [s, ~] = parse_args(defaults, varargin{:});
 
+    if ~iscell(trials)
+        trials = {trials};
+    end
+%% handle empty windows or zeroTimes and pass to phAligned window by rewriting varargin (way I'm re-writing varargin is not ideal)
+
+    assert(isfield(TE, s.PhotometryField), [s.PhotometryField ' field does not exist']);    
+
+    Photometry = TE.(s.PhotometryField);
     if isempty(s.zeroTimes)
-        zeroTimes = valuecrossing(1:length(TE.Photometry.xData), TE.Photometry.xData, 0); % inferred from xData, historical usage...
+        s.zeroTimes = valuecrossing(1:length(Photometry.xData), Photometry.xData, 0); % inferred from xData, historical usage...
+        s.zeroTimes = s.zeroTimes + Photometry.startTime; % convert to Bpod time
         if isempty(s.window)
-            s.window = TE.Photometry.xData([1 end]);
+            s.window = Photometry.xData([1 end]);
         end
     end
-
-% 
-%     xData = TE.(Photometry).xData;
-%     if ~isempty(s.window) && ~isempty(s.zeroTimes)
-%         allTrialsZero = zeroTimes(1) - TE.(Photometry).startTime(1);
-%         startP = max(1, bpX2pnt(s.window(1) + allTrialsZero, TE.(Photometry).sampleRate));
-%         endP = min(length(xData), bpX2pnt(s.window(2) + allTrialsZero, TE.(Photometry).sampleRate));
-%     elseif ~isempty(s.window) % use Photometry xData to infer zero point (really using first x value in Photometry xData)
-%         startP = max(1, bpX2pnt(s.window(1), TE.(Photometry).sampleRate, xData(1)));
-%         endP = min(length(xData), bpX2pnt(s.window(2), TE.(Photometry).sampleRate, xData(1)));        
-%     else
-%         startP = 1;
-%         endP = length(xData);
-%         s.window = [xData(1) xData(end)];
-%     end
-
-%% rewrite xData
-    xData = linspace(s.window(1), s.window(2), endP - startP + 1);  % rewrite xData
     
-    Avg = NaN(length(trials), length(xData));
-    STD = NaN(length(trials), length(xData));
-    SEM = NaN(length(trials), length(xData));
-    N = NaN(length(trials), length(xData));    
-    XData = NaN(length(trials), length(xData));        
-    for counter = 1:length(trials)        
+    
+    % rewrite varargin to pass to phAlignedWindow
+    wpos = cellfun(@(x) ischar(x) && strcmp(x, 'window'), varargin);
+    if ~any(wpos)
+        varargin(end+1:end+2) = {'window', s.window};
+    else
+        varargin{find(wpos)+ 1} = s.window;
+    end
+    
+    zpos = cellfun(@(x) ischar(x) && strcmp(x, 'zeroTimes'), varargin);
+    if ~any(zpos)
+        varargin(end+1:end+2) = {'zeroTimes', s.zeroTimes};
+    else
+        varargin{find(zpos) + 1} = s.zeroTimes;
+    end
+    
+    
+
+%% calculate averages
+    for counter = 1:length(trials) 
         currentTrials = trials{counter};
-        currentData = TE.(Photometry).data(ch).(s.FluorDataField)(currentTrials, startP:endP);
-        Avg(counter,:) = nanmean(currentData);
-        STD(counter,:) = std(currentData, 'omitnan');
-        SEM(counter,:) = std(currentData, 'omitnan') ./ sqrt(sum(~isnan(currentData), 1));
-        N(counter, :) = sum(~isnan(currentData), 1);
+        [data, xData] = phAlignedWindow(TE, currentTrials, ch, varargin{:});
+        if counter == 1
+            Avg = NaN(length(trials), length(xData));
+            STD = NaN(length(trials), length(xData));
+            SEM = NaN(length(trials), length(xData));
+            N = NaN(length(trials), length(xData));    
+            XData = NaN(length(trials), length(xData));
+        end
+        Avg(counter,:) = nanmean(data);
+        STD(counter,:) = std(data, 'omitnan');
+        SEM(counter,:) = std(data, 'omitnan') ./ sqrt(sum(~isnan(data), 1));
+        N(counter, :) = sum(~isnan(data), 1);
         XData(counter, :) = xData;
     end
     

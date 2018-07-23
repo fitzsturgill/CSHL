@@ -1,66 +1,68 @@
 function [data, xData] = phAlignedWindow(TE, trials, ch, varargin)
-
+% returns a photometry data array aligned to zero of size nTotalTrials x
+% maxWindowSamples. Zeros for each and every trial are defined relative to Bpod trial start and may
+% be supplied as vectors or cell arrays of length nTotalTrials (in which case you can select first
+% or last element to which to align)
+% totalTrials -> length of TE.filename not count of subset of trials passed
+% via 'trials' argument
     defaults = {...
         'PhotometryField', 'Photometry';...
         'FluorDataField', 'dFF';...
-        'window', [];... % averaging window around alignment point
-        'zeroTimes', [];... % empty- inferred from Photometry xData OR length TE-nTrials cell array or vector containing zero times relative to Bpod trial start
-        'referenceFromEnd', 0;... % relevent when zeroTimes are supplied as a cell array (e.g. if you want to align to the beginning or end of a bpod state)        
+        'zeroTimes', [];... % scalar or length TE-nTrials cell array or vector containing zero times relative to Bpod trial start        
+        'window', [];... % averaging window relative to zero time/ alignment point, e.g. [-3 2] or [cellfun(@(x) x(1), TE.stateBefore) cellfun(@(x) x(end), TE.stateAfter)
+        'referenceFromEnd', 0;... % relevent ONLY when zeroTimes are supplied as a cell array (e.g. if you want to align to the beginning or end of a bpod state)        
         };    
     [s, ~] = parse_args(defaults, varargin{:});
 
-
-    if ~isfield(TE, s.PhotometryField)
-        error([Photometry ' field does not exist']);
-    else
-        Photometry = TE.(s.PhotometryField);
-    end
+%% argument checking    
+    assert(~isempty(s.window), 'window is required parameter');
+    assert(~isempty(s.zeroTimes), 'zeroTimes is required parameter');
+    assert(isfield(TE, s.PhotometryField), [s.PhotometryField ' field does not exist']);
     
-    Fs = 1/Photometry.sampleRate;
+%% local variables    
+    Photometry = TE.(s.PhotometryField);   
+    Fs = Photometry.sampleRate;
 
     if islogical(trials)
         trials = find(trials);
     end
     nTrials = length(trials);
+    totalTrials = length(TE.filename);
 
     
-%%
+%% process zeroTimes and windows
     if iscell(s.zeroTimes)
-        if ~s.referenceFromEnd
+        if ~s.referenceFromEnd % first point in each cell array element
             zeroTimes = cellfun(@(x) x(1), s.zeroTimes); % returns vector
-        else
+        else % last point in each cell array element
             zeroTimes = cellfun(@(x) x(end), zeroTimes); % returns vector
         end
-        assert(~isempty(s.window), 'user must supply window if zero time(s) are supplied as well');
+        
     else
         zeroTimes = s.zeroTimes; 
-        assert(~isempty(s.window), 'user must supply window if zero time(s) are supplied as well');
     end
     
     zeroTimes = zeroTimes(:); 
-    if isscalar(zeroTimes)
-        zeroTimes = repmat(zeroTimes, nTrials, 1);
-    end
+    assert(length(zeroTimes) == totalTrials, 'zeroTimes for entire TE (not just the subset of trials) must be supplied');
         
     if size(s.window, 1) == 1
-        s.window = repmat(s.window, nTrials, 1);
+        s.window = repmat(s.window, totalTrials, 1);
     end
     
     zeroTimes = zeroTimes - TE.Photometry.startTime; % redefine zero times relative to photometry start
     
 
-%% determine maximum number of data points preceding and following zero and initalize data array
+%% initalize data array padded to maximum window size
     if Photometry.settings.uniformOutput
-        samplesPerTrial = size(TE.Photometry.data(ch).raw, 2); % how many samples per trial
-        paddedSamples = bpX2pnt(max(zeroTimes), Fs) + samplesPerTrial - bpX2pnt(min(zeroTimes), Fs); % for padding array with maximum number of points before and after a trial zero
-        paddedZeroPoint = bpX2pnt(max(zeroTimes), Fs);
-        xData = (0:(samplesPerTrial - 1))/Fs - paddedZeroPoint;
+        samplesPerWindow = ceil((max(s.window(:,2)) - min(s.window(:,1))) * Fs); 
+        zeroPoint = bpX2pnt(0, Fs, min(s.window(:,1)));
+        xData = (0:(samplesPerWindow - 1))/Fs + min(s.window(:,1));
     else
         % FINISH CODING!!!!
-        error('finish coding to allow nonUniformOutput');
+        error('finish coding to allow different sized photometry acquisitions');
     end
     
-    data = NaN(nTrials, paddedSamples);
+    data = NaN(nTrials, samplesPerWindow); % intialize
     
 %% loop over trials to fill in data array
     for counter = 1:nTrials
@@ -68,21 +70,24 @@ function [data, xData] = phAlignedWindow(TE, trials, ch, varargin)
         zeroTime = zeroTimes(trial);
         if Photometry.settings.uniformOutput
             trialData = Photometry.data(ch).(s.FluorDataField)(trial, :);
-            nSamples = length(trialData);
-            acqDuration = nSamples / Fs;
         else
             % FINISH CODING!!!!
+            % trialData = Photometry.data(ch).(s.FluorDataField){trial};???
         end
-        if (zeroTime < 0) || (zeroTime > acqDuration)
-            continue % continue if zero time occurs outside photometry acquisition
+        nSamples = length(trialData);
+        acqDuration = nSamples / Fs;
+        
+        if isnan(zeroTime) || (zeroTime < 0) || (zeroTime > acqDuration)|| any(isnan(s.window(trial, :)))
+            continue % continue if zero time occurs outside photometry acquisition or if windows or zeros contain NaNs
         end
+        
         % source data start, end, and zero points
         szero = bpX2pnt(zeroTime, Fs);
-        s1 = bpX2pnt(zeroTime + s.window(1), Fs);
-        s2 = min(bpX2pnt(zeroTime + s.window(2), Fs), nSamples);
+        s1 = max(bpX2pnt(zeroTime + s.window(trial, 1), Fs), 1);
+        s2 = min(bpX2pnt(zeroTime + s.window(trial, 2), Fs), nSamples) - 1; 
         % destination data start and end points
-        d1 = paddedZeroPoint - (szero - s1);
-        d2 = paddedZeroPoint + (s2 - szero);
+        d1 = zeroPoint - (szero - s1);
+        d2 = zeroPoint + (s2 - szero);
         % add trial data to padded array
         data(counter, d1:d2) = trialData(s1:s2);
     end
