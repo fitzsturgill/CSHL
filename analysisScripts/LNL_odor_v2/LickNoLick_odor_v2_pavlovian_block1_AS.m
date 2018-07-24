@@ -1,5 +1,11 @@
 
 saveOn = 1;
+
+%%
+% EmailEvernote = 0;
+
+
+ 
 %%
 sessions = bpLoadSessions;
 %%
@@ -17,13 +23,13 @@ end
 if sessions(1).SessionData.Settings.GUI.LED2_amp > 0
     channels(end+1) = 2;
     dFFMode{end+1} = 'simple';
-    BL{end + 1} = [1 4];    
+    BL{end + 1} = [2 4];    
 end
 
 
     
-TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL);
-% TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL);
+
+TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL);
 %%
 
 
@@ -67,12 +73,14 @@ TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], usZeros);
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % basepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\';
-% thiscomputer = computer;
-% switch thiscomputer
-%     case 'PCWIN64'
+thiscomputer = computer;
+switch thiscomputer
+    case 'PCWIN64'
         basepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_Pavlovian_Block1';
-%     case 'MACI64'
-% end
+    case 'MACI64'
+           %basepath ='/Volumes/homes/fitz/SummaryAnalyses/LickNoLick_odor_v2_Pavlovian_Block1';
+           basepath = '/Volumes/homes/fitz/Aubrey'; 
+end
 % basepath = uigetdir;
 sep = strfind(TE.filename{1}, '.');
 subjectName = TE.filename{1}(1:sep(1)-1);
@@ -88,18 +96,16 @@ disp(subjectName);
 savepath = fullfile(basepath, subjectName);
 ensureDirectory(savepath);
 
-%%
-TE.Whisk = addWhiskingToTE(TE, 'folderPrefix', 'WhiskDiff_');
-%%
-TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', 11, 'Fs', 20, 'startField', 'Start');
-TE.wheelBaseline = mean(TE.Wheel.data.V(:,bpX2pnt(-3, 20, -4):bpX2pnt(0, 20, -4)), 2);
-%%
+    %%
 truncateSessionsFromTE(TE, 'init');
 %%
 if saveOn
     save(fullfile(savepath, 'TE.mat'), 'TE');
     disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
 end
+
+    
+    
 
 %% cross sessions bleaching curve and  exponential fits
 for channel = channels
@@ -145,7 +151,7 @@ end
     
 %%
 %% photometry averages, zscored
-    saveName = 'phAvgs';  
+    saveName = 'phAvgs session1and2';  
     h=ensureFigure(saveName, 1); 
     mcLandscapeFigSetup(h);
 
@@ -172,6 +178,63 @@ end
         saveas(gcf, fullfile(savepath, [saveName '.fig']));
         saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
     end    
+    
+    %%
+    % plot cuedReward trials for session 1 copared to cuedReward trials for
+% session 2
+
+% cuedReward + session1 + ch1
+%            + session 2
+%            
+%            + session 1 + ch2
+%            + session 2
+    saveName = 'phAvgs session1 and session2';  
+    h=ensureFigure(saveName, 1); 
+    mcLandscapeFigSetup(h);
+
+    pm = [1 2];
+    
+ 
+    session1cR = cuedReward & (TE.sessionIndex == 1);
+    session2cR = cuedReward & (TE.sessionIndex == 2);
+    
+    
+    % - 6 0 4
+    if ismember(1, channels)
+        subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); 
+        [ha, hl] = phPlotAverageFromTE(TE, {session1cR}, 1,...
+            'FluorDataField', 'ZS', 'window', [-4, 5.5], 'linespec', {'b'}); %high value, reward
+        legend(hl, {'cued'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+        title('Reinforcement'); ylabel('BF dF/F Zscored'); 
+    end
+    if ismember(2, channels)    
+        subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1); 
+        [ha, hl] = phPlotAverageFromTE(TE, {session1cR}, 2,...
+            'FluorDataField', 'ZS', 'window', [-4, 5.5], 'linespec', {'b'}); %high value, reward
+        legend(hl, {'cued'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+        ylabel('VTA dF/F Zscored'); xlabel('time from cue (s)'); 
+    end
+    
+    
+    if ismember(1, channels)
+        subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); 
+        [ha, hl] = phPlotAverageFromTE(TE, {session2cR}, 1,...
+            'FluorDataField', 'ZS', 'window', [-4, 5.5], 'linespec', {'r'}); %high value, reward
+        legend(hl, {'cued'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+        title('Reinforcement'); ylabel('BF dF/F Zscored'); 
+    end
+    if ismember(2, channels)    
+        subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1); 
+        [ha, hl] = phPlotAverageFromTE(TE, {session2cR}, 2,...
+            'FluorDataField', 'ZS', 'window', [-4, 5.5], 'linespec', {'r'}); %high value, reward
+        legend(hl, {'cued'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+        ylabel('VTA dF/F Zscored'); xlabel('time from cue (s)'); 
+    end
+    
+    if saveOn
+        saveas(gcf, fullfile(savepath, [saveName '.fig']));
+        saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    end 
     
     
 %% Raster Plots
@@ -209,6 +272,7 @@ for channel = channels
         saveas(gcf, fullfile(savepath, [saveName '.fig']));
         saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
     end
+    
 end
 
 %%
@@ -225,52 +289,4 @@ end
         saveas(gcf, fullfile(savepath, [saveName '.fig']));
         saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
     end
-    
-    
-%%
-    %%
-    ensureFigure('all_behavior_cuedReward', 1);
-    reversals = find(diff(TE.BlockNumber(cuedReward, :))) + 1;
-    subplot(1,5,1);
-    
-    image(TE.Wheel.data.V(cuedReward, :), 'XData', [-4 7], 'CDataMapping', 'Scaled');
-%     set(gca, 'CLim', [min(TE.Wheel.data.V(:)), max(TE.Wheel.data.V(:))]); 
-    set(gca, 'CLim', [mean(TE.Wheel.data.V(:)) - std(TE.Wheel.data.V(:)) * 2, mean(TE.Wheel.data.V(:)) + std(TE.Wheel.data.V(:)) * 2]); 
-    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 2); % reversal lines    
-    title('Velocity');
-    ylabel('trial number');
-
-%     subplot(1,5,2);
-%     title('pupil');
-%     try
-%         image(TE.pupil.pupDiameterNorm(cuedReward, :), 'XData', [-4 7], 'CDataMapping', 'Scaled');
-%         set(gca, 'CLim', [nanmean(TE.pupil.pupDiameterNorm(:)) - std(TE.pupil.pupDiameterNorm(:), 'omitnan') * 2, nanmean(TE.pupil.pupDiameterNorm(:)) + std(TE.pupil.pupDiameterNorm(:), 'omitnan') * 2]); 
-%         line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 2); % reversal lines    
-%         colormap('parula');  
-%         title('Pupil Diameter');    
-%     catch
-%     end
-    subplot(1,5,2);
-    imagesc(TE.Whisk.whiskNorm(cuedReward, :), 'XData', [-4 7], [0 2])
-    title('whisking');
-    
-    subplot(1,5,3);
-    eventRasterFromTE(TE, cuedReward, 'Port1In', 'trialNumbering', 'consecutive',...
-        'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
-    set(gca, 'XLim', [-4 7]);
-    title('licking');
-    
-    
-    subplot(1,5,4); phRasterFromTE(TE, cuedReward, 1, 'trialNumbering', 'consecutive', 'CLimFactor', 2); % 'CLimFactor', CLimFactor,
-    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 2); % reversal lines    
-    title('ChAT'); xlabel('Time frome odor (s)');
-    subplot(1,5,5); phRasterFromTE(TE, cuedReward, 2, 'trialNumbering', 'consecutive', 'CLimFactor', 2); % 'CLimFactor', CLimFactor,
-    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 2); % reversal lines    
-    title('DAT');    
-axs = findobj(gcf, 'Type', 'axes');
-
-set(axs, 'FontSize', 18);
-set(axs(2:end), 'YTick', []);
-saveas(gcf, fullfile(savepath, 'allBehavior_whisk_csPlus'), 'fig'); 
-saveas(gcf, fullfile(savepath, 'allBehavior_whisk_csPlus'), 'jpeg');
     
