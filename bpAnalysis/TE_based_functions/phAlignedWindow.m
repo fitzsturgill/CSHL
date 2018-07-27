@@ -55,7 +55,10 @@ function [data, xData] = phAlignedWindow(TE, trials, ch, varargin)
 %% initalize data array padded to maximum window size
     if Photometry.settings.uniformOutput
         samplesPerWindow = ceil((max(s.window(:,2)) - min(s.window(:,1))) * Fs); 
-        zeroPoint = bpX2pnt(0, Fs, min(s.window(:,1)));
+        % NOTE! zeroPoint can be negative or > nSamples if window is DOESN'T contain zero.
+        % for example, you might want a window that extends from 1-3
+        % seconds after or before a zero point.
+        zeroPoint = localX2pnt(0, Fs, min(s.window(:,1))); 
         xData = (0:(samplesPerWindow - 1))/Fs + min(s.window(:,1));
     else
         % FINISH CODING!!!!
@@ -82,13 +85,25 @@ function [data, xData] = phAlignedWindow(TE, trials, ch, varargin)
         end
         
         % source data start, end, and zero points
-        szero = bpX2pnt(zeroTime, Fs);
-        s1 = max(bpX2pnt(zeroTime + s.window(trial, 1), Fs), 1);
-        s2 = min(bpX2pnt(zeroTime + s.window(trial, 2), Fs), nSamples) - 1; 
+        szero = localX2pnt(zeroTime, Fs);
+        s1 = max(localX2pnt(zeroTime + s.window(trial, 1), Fs), 1);
+        s2 = min(localX2pnt(zeroTime + s.window(trial, 2), Fs), nSamples) - 1; 
         % destination data start and end points
         d1 = zeroPoint - (szero - s1);
         d2 = zeroPoint + (s2 - szero);
         % add trial data to padded array
         data(counter, d1:d2) = trialData(s1:s2);
     end
+    
+    
+function p=localX2pnt(x, Fs, startX)
+
+    if nargin < 3
+        startX = 0;
+    end
+    
+    deltaX=1/Fs;
+
+    p=round(1+(x-startX)/deltaX); % local version can return negative points 
+%     p=max(round(1+(x-startX)/deltaX), 1);    
         

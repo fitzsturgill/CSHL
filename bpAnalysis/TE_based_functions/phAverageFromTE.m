@@ -21,8 +21,9 @@ function avgData = phAverageFromTE(TE, trials, ch, varargin)
 
     Photometry = TE.(s.PhotometryField);
     if isempty(s.zeroTimes)
-        s.zeroTimes = valuecrossing(1:length(Photometry.xData), Photometry.xData, 0); % inferred from xData, historical usage...
-        s.zeroTimes = s.zeroTimes + Photometry.startTime; % convert to Bpod time
+%         s.zeroTimes = valuecrossing(1:length(Photometry.xData), Photometry.xData, 0); % inferred from xData, historical usage...
+%         s.zeroTimes = s.zeroTimes + Photometry.startTime; % convert to Bpod time
+          s.zeroTimes = Photometry.startTime - Photometry.xData(1);
         if isempty(s.window)
             s.window = Photometry.xData([1 end]);
         end
@@ -61,7 +62,7 @@ function avgData = phAverageFromTE(TE, trials, ch, varargin)
         STD(counter,:) = std(data, 'omitnan');
         SEM(counter,:) = std(data, 'omitnan') ./ sqrt(sum(~isnan(data), 1));
         N(counter, :) = sum(~isnan(data), 1);
-        XData(counter, :) = xData;
+        XData(counter, :) = xData; % xData is always the same so why do I duplicate it?
     end
     
     avgData = struct(...
@@ -69,7 +70,7 @@ function avgData = phAverageFromTE(TE, trials, ch, varargin)
         'STD', STD,...
         'SEM', SEM,...
         'N', N,...
-        'xData', XData...
+        'xData', XData... % xData is always the same so why do I duplicate it? (can't go back now...)
         );
 
     
