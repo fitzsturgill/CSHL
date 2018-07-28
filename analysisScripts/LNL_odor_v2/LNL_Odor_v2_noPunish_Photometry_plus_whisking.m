@@ -89,7 +89,7 @@ TE.pupilBaseline = mean(TE.pupil.pupDiameterNorm(:,bpX2pnt(-3, 20, -4):bpX2pnt(0
 TE.pupil_cs = mean(TE.pupil.pupDiameterNorm(:,bpX2pnt(ch1CsWindow(1) + pupLag, 20, -4):bpX2pnt(ch1CsWindow(2) + pupLag, 20, -4)), 2);
 %% add whisking
 
-TE.Whisk = addWhiskingToTE(TE, 'folderPrefix', 'WhiskDiff_');
+TE.Whisk = addWhiskingToTE(TE, 'folderPrefix', 'Combined_');
 
 
 %% add wheel

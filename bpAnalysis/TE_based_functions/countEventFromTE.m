@@ -19,7 +19,10 @@ function eventCount = countEventFromTE(TE, event, window, zeroTimes, varargin)
         'settings', s...
         );
     %%
-
+    if isscalar(zeroTimes) % for example if you use bpod time directly you don't need a zero (zero is start of bpod time)
+        zeroTimes = repmat(zeroTimes, nTrials, 1);
+    end
+    
     if iscell(zeroTimes)
         if ~s.referenceFromEnd
             zeroTimes2 = cellfun(@(x) x(1), zeroTimes); 
