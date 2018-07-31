@@ -8,10 +8,10 @@ function varargout = phPlotAverageFromTE(TE, trials, ch, varargin)
         'PhotometryField', 'Photometry';...
         'FluorDataField', 'dFF';...
         'linespec', [];... % {'k', 'r'}
-        'window', [];... % window to plot with respect to zero time that is already calculated by processTrialAnalysis_Photometry2 (I think !!!!)
-        'zeroTimes', [];... % not fully implemented, see usage belowg
+        'window', [];... 
+        'zeroTimes', [];... 
         'cmap', [];...
-        'alpha', 1;...  % you can
+        'alpha', 1;...  % 1 == transparent bounds, 0 == opaque bounds
         'referenceFromEnd', 0;... % relevent when zeroTimes are supplied as a cell array (e.g. if you want to align to the beginning or end of a bpod state)
         };    
     [s, ~] = parse_args(defaults, varargin{:});
@@ -45,9 +45,9 @@ function varargout = phPlotAverageFromTE(TE, trials, ch, varargin)
 
     ax = s.ax;
     nLines = size(avgData.Avg, 1);
+    xData = avgData.xData(1,:);    % fixed across trial subsets, see phAverageFromTE
     for counter = 1:nLines
         thisLinespec = s.linespec{rem(counter - 1, length(s.linespec)) + 1}; % cycle through linespec if it isn't long enough        
-        xData = avgData.xData(1,:);
         if isempty(s.cmap)
             [thisHl, thisHp] = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :), thisLinespec, ax, alpha{:}, 'nan', 'gap');       
         else

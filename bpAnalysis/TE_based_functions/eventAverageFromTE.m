@@ -1,9 +1,14 @@
 function avgData = eventAverageFromTE(TE, trials, event, varargin)
-% output - avgData with fields Avg, STD, SEM, and N
+% output - avgData with fields Avg, STD, SEM and N
 % trials- may be cell array of trials for different conditions
 
 % remember to include varargin-supplied parameters to
-% extractEventTimesFromTE, e.g. 'zeroField', 'startField', 'endField'  
+% extractEventTimesFromTE, e.g. 'zeroField' || 'zeroTimes', 'window' || 'startField' & 'endField'
+% 7/2018, updated to optionally utilize zeroTime. Also updated to utilize
+% window exclusive to (rather than in addition to) startField and endField
+% option to use startField, endField and zeroField maintained for backward
+% compatibility
+
     defaults = {...
         'window', [];...
         'binWidth', 0.25;... % 0.5s bins by default
@@ -12,9 +17,12 @@ function avgData = eventAverageFromTE(TE, trials, event, varargin)
     
     if ~iscell(trials)
         trials = {trials};
-    end    
+    end
     
-    binEdges = linspace(s.window(1), s.window(2), round((s.window(2) - s.window(1))/s.binWidth)); % if interval isn't divisible by width then adjust number of bins
+    maxWindow = [min(s.window(:,1)) max(s.window(:,2))];
+    
+    % if interval isn't divisible by width then adjust number of bins
+    binEdges = linspace(maxWindow(1), maxWindow(2), round((maxWindow(2) - maxWindow(1))/s.binWidth));
     s.binWidth = binEdges(2) - binEdges(1); % and adjust width if necessary
     % initialize 
     Avg = NaN(length(trials), length(binEdges) - 1);
@@ -31,10 +39,10 @@ function avgData = eventAverageFromTE(TE, trials, event, varargin)
         [eventTimes, eventTrials] = extractEventTimesFromTE(TE, currentTrials, event, varargin{:}); 
         counts = histCountsByTrial(eventTimes, eventTrials, binEdges);
         eventRates = counts / s.binWidth;
-        Avg(counter,:) = mean(eventRates);
-        STD(counter, :) = std(eventRates);
-        SEM(counter, :) = std(eventRates) ./ sqrt(nTrials);
-        N(counter, :) = nTrials;
+        Avg(counter,:) = nanmean(eventRates, 1);
+        STD(counter, :) = std(eventRates, 0, 1, 'omitnan');
+        SEM(counter, :) = std(eventRates,  0, 1, 'omitnan') ./ sqrt(sum(~isnan(eventRates), 1));
+        N(counter, :) = sum(~isnan(eventRates), 1);
     end
     
     avgData = struct(...
