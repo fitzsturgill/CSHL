@@ -6,4 +6,4 @@
 %             'FluorDataField', 'ZS', 'window', [1, 7]);
         
         
-        TE.phPeakMean_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, csWindow, 'method', 'mean', 'phField', 'ZS');
+phRasterFromTE(TE, csPlusTrials & (day1Trials | day2Trials) & rewardTrials, channel, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive');

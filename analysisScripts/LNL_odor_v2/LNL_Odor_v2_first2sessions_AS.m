@@ -159,39 +159,36 @@ day2Trials(firstReversalTrial:end) = false; % if firstReversalTrial is empty not
     
     
 %% Raster Plots for licking and both photometry channels
-% CLimFactor = 2;
-% 
-% subplot(1,4,1); 
-% eventRasterFromTE(TE, cuedReward, 'Port1In', 'trialNumbering', 'consecutive',...
-%     'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
-% title('cued'); ylabel('trial number');
-% set(gca, 'YLim', [0 sum(cuedReward)]);
-% set(gca, 'XLim', [-4 7]); 
-% set(gca, 'FontSize', 14)
-% 
-% 
-% saveName = 'Rasters_first2Sessions';
-% h=ensureFigure(saveName, 1);
-% mcPortraitFigSetup(h);
-%     
-% subplot(1,4,2);
-% phRasterFromTE(TE, cuedReward, channel, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive');
-% set(gca, 'FontSize', 14);
-%    
-% 
-%     
-%     subplot(1,4,2); phRasterFromTE(TE, cuedReward, channel, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive');
-%         set(gca, 'FontSize', 14);
-% 
-%     subplot(1,4,3); phRasterFromTE(TE, omit, channel, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive');
-%         set(gca, 'FontSize', 14); title('omission');
-% 
-%     subplot(1,4,4); phRasterFromTE(TE, uncuedReward, channel, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive');
-%         set(gca, 'FontSize', 14); title('uncued');       
-% 
+CLimFactor = 2;
+
+saveName = 'Rasters_first2Sessions';
+h=ensureFigure(saveName, 1);
+mcPortraitFigSetup(h);
+
+subplot(1,4,1); 
+eventRasterFromTE(TE, csPlusTrials & (day1Trials | day2Trials) & rewardTrials, 'Port1In', 'trialNumbering', 'consecutive',...
+    'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
+title('cued'); ylabel('trial number');
+set(gca, 'YLim', [0 sum(csPlusTrials & (day1Trials | day2Trials) & rewardTrials)]);
+set(gca, 'XLim', [-4 7]); 
+set(gca, 'FontSize', 14)
+
+
+
+    
+subplot(1,4,2);
+phRasterFromTE(TE, csPlusTrials & (day1Trials | day2Trials) & rewardTrials, 1, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive');
+set(gca, 'FontSize', 14);
+   
+subplot(1,4,3);
+phRasterFromTE(TE, csPlusTrials & (day1Trials | day2Trials) & rewardTrials, 2, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive');
+set(gca, 'FontSize', 14);
+    
+
+
 %     if saveOn
 %         saveas(gcf, fullfile(savepath, [saveName '.fig']));
 %         saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
 %     end
-% end
+
 

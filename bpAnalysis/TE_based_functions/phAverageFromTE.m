@@ -21,9 +21,7 @@ function avgData = phAverageFromTE(TE, trials, ch, varargin)
 
     Photometry = TE.(s.PhotometryField);
     if isempty(s.zeroTimes)
-%         s.zeroTimes = valuecrossing(1:length(Photometry.xData), Photometry.xData, 0); % inferred from xData, historical usage...
-%         s.zeroTimes = s.zeroTimes + Photometry.startTime; % convert to Bpod time
-          s.zeroTimes = Photometry.startTime - Photometry.xData(1);
+        s.zeroTimes = Photometry.startTime - Photometry.xData(1);
         if isempty(s.window)
             s.window = Photometry.xData([1 end]);
         end
