@@ -18,7 +18,7 @@ function quickAnalysis_CuedOutcome(animalID,sessionID,sessionspec,protocoltag)
 %   for different versions of the behavioral protocol.
 %
 %   See also ADDNEWCELLS, PREALIGNSPIKES and VIEWCELL2B.
-
+global TE TE2
 % Input argument check
 error(nargchk(0,4,nargin))
 
@@ -123,21 +123,48 @@ if isbeh
     title('Punish'); ylabel('licks (s)'); xlabel('time r (s)');
     
     % neutral
-    axh(end + 1) = subplot(pm(1), pm(2), 4); [ha, hl] = plotEventAverageFromTE(TE2, trialsByType([3 6 9]), 'Port1In', varargin{:},...
-        'linespec', {'b', 'r', 'g'});
-    legend(hl, {'hival', 'loval', 'uncued'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+    % kludge 180801 - getting rid of trial type 9 (uncued neutral)
+    axh(end + 1) = subplot(pm(1), pm(2), 4); [ha, hl] = plotEventAverageFromTE(TE2, trialsByType([3 6]), 'Port1In', varargin{:},...
+        'linespec', {'b', 'r'});%, 'g'});
+    legend(hl, {'hival', 'loval'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
     title('Neutral'); ylabel('licks (s)'); xlabel('time r (s)');
     
     sameYScale(axh) % match y scaling
     saveas(h,fullfile(fullpth, ['Lick_Averages.jpg']));  
-%     else
-%         evalstr = ['TE = solo2trialevents4_auditory_gonogo_' protocoltag '([fullpth ''data_@auditory_gonogo_' protocoltag '_balazs_'' animalID2 ''_'' sessionID ''.mat'']);'];
-%         eval(evalstr)
-%     end
-%     if isrec
-%         MakeTrialEvents2_gonogo(fullpth)  % synchronize
-%     end
 
+
+%% lick rasters
+    h = ensureFigure('Lick_Averages', 1);
+
+    mcLandscapeFigSetup(h);
+    subplot(1,3,1); 
+    eventRasterFromTE(TE2, trialsByType{1}, 'Port1In', 'trialNumbering', 'consecutive',...
+        'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
+    title('hival, reward'); xlabel('time from reinforcement (s)'); ylabel('trial number');
+    set(gca, 'XLim', [-6 4]); 
+    set(gca, 'YLim', [0 length(find(trialsByType{1}))]);
+    set(gca, 'FontSize', 14)
+
+    subplot(1,3,2); 
+    eventRasterFromTE(TE2, trialsByType{4}, 'Port1In', 'trialNumbering', 'consecutive',...
+        'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
+    title('lowval, reward'); xlabel('time from reinforcement (s)'); ylabel('trial number');
+    set(gca, 'XLim', [-6 4]); 
+    set(gca, 'YLim', [0 length(find(trialsByType{4}))]);
+    set(gca, 'FontSize', 14)
+
+    subplot(1,3,3); 
+    eventRasterFromTE(TE2, trialsByType{7}, 'Port1In', 'trialNumbering', 'consecutive',...
+        'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
+    title('uncued, reward'); xlabel('time from reinforcement (s)'); ylabel('trial number');
+    set(gca, 'XLim', [-6 4]); 
+    set(gca, 'YLim', [0 length(find(trialsByType{7}))]);
+    set(gca, 'FontSize', 14)
+    
+    saveas(h,fullfile(fullpth, ['Lick_Rasters.jpg']));    
+    
+    
+    
 
 end
 
@@ -152,7 +179,7 @@ end
 if isbeh && isrec
     % Prealign spikes for trial events
     problem_behav_cellid = [];
-    for iC = 1:length(cellids),
+    for iC = 1:length(cellids)
         cellid = cellids(iC);
 %         try
             prealignSpikes(cellid,'FUNdefineEventsEpochs',@defineEventsEpochs_CuedOutcome,'filetype','event','ifsave',1,'ifappend',0, 'writing_behavior', 'overwrite')
@@ -212,7 +239,7 @@ if isbeh && isrec
         hleg.String = {'High Value', 'Low Value', 'Uncued'};
         
         cellidt = cellids{k};
-        cellidt(cellidt=='.') = '_';
+        cellidt(cellidt=='.') = '_';a
         saveas(H,fullfile(fullpth, [cellidt '_Reward.jpg']));        
 
     end    

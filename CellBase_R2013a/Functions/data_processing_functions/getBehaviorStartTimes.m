@@ -1,5 +1,7 @@
 function trialStartTimes = getBehaviorStartTimes(Nttls, EventStrings, TimeStamps, varargin)
     % select trial start times that don't include a laser pulse    
+    % 8/2018, modified to include ALL Bpod trial starts such that correct
+    % trial starts are identified by time shift method
     
         %% optional parameters, first set defaults
     defaults = {...
@@ -17,24 +19,27 @@ function trialStartTimes = getBehaviorStartTimes(Nttls, EventStrings, TimeStamps
     PortID = eventPortFromEventStrings(EventStrings);
     allStartsIx = PortID == s.behaviorPort & Nttls == s.laserNttl;
     allStarts = TimeStamps(allStartsIx);
-    laserIx = PortID == s.laserPort & Nttls == s.laserNttl;
-    pulses = TimeStamps(laserIx);
-    behaviorStartsIx = false(size(allStarts));
-
-    for counter = 1:length(allStarts)
-        thisStart = allStarts(counter);
-        
-
-        if counter == length(allStarts)
-            nextStart = Inf;
-        else
-            nextStart = allStarts(counter + 1);
-        end
-        if any((pulses > thisStart) & (pulses < nextStart)) % if there are pulses in between a trial and the next, it's a laser tagging trial so skip
-            continue
-        end
-        behaviorStartsIx(counter) = true;        
-    end
+%     laserIx = PortID == s.laserPort & Nttls == s.laserNttl;
+%     pulses = TimeStamps(laserIx);
+    trialStartTimes = allStarts;
     
-    trialStartTimes = allStarts(behaviorStartsIx);
+    
+%     behaviorStartsIx = false(size(allStarts));
+
+%     for counter = 1:length(allStarts)
+%         thisStart = allStarts(counter);
+%         
+% 
+%         if counter == length(allStarts)
+%             nextStart = Inf;
+%         else
+%             nextStart = allStarts(counter + 1);
+%         end
+%         if any((pulses > thisStart) & (pulses < nextStart)) % if there are pulses in between a trial and the next, it's a laser tagging trial so skip
+%             continue
+%         end
+%         behaviorStartsIx(counter) = true;        
+%     end
+%     
+%     trialStartTimes = allStarts(behaviorStartsIx);
     
