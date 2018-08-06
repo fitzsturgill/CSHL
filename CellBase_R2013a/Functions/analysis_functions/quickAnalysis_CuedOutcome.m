@@ -239,7 +239,7 @@ if isbeh && isrec
         hleg.String = {'High Value', 'Low Value', 'Uncued'};
         
         cellidt = cellids{k};
-        cellidt(cellidt=='.') = '_';a
+        cellidt(cellidt=='.') = '_';
         saveas(H,fullfile(fullpth, [cellidt '_Reward.jpg']));        
 
     end    
