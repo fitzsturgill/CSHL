@@ -1,12 +1,18 @@
 % load(fullfile('F:\Cellbase\CP6\180703a', 'Events.mat'));   % load Neuralynx events
 % TrialStart_nlx = getBehaviorStartTimes(Events_Nttls, Events_EventStrings, Events_TimeStamps);
 % 
-% 
-% 
-function [a, b] = WTF
-
-a = 5;
-b = 6;
+nChunks = size(sampleCheck.beforeSegments, 1);
+answers = zeros(nChunks, 3);
+range = 1:100;
+for counter = 1:nChunks
+    answers(counter, 1) = strfind(sampleCheck.samples', sampleCheck.beforeSegments(counter, range));
+    answers(counter, 2) = strfind(sampleCheck.samples', sampleCheck.afterSegments(counter, range));
+    try
+        answers(counter, 3) = strfind(sampleCheck.samples', [sampleCheck.afterSegments(counter, :) sampleCheck.beforeSegments(min(counter + 1, nChunks), :)]);
+    catch
+        answers(counter,3) = 0;
+    end
+end
 
 % 
 % %%
