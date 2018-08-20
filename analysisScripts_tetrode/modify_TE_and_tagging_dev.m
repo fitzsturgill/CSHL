@@ -5,8 +5,8 @@
 %    'Partitions','#trialType: {1 4 7}','window',[-7 4], 'dt', 0.01, 'sigma', 0.02, 'PSTHstd', 'on', 'isadaptive', true);
 
 
-rat = 'CP9';
-session = '180730a';
+rat = 'CD17';
+session = '180818a';
 loadcb; % % loads ANALYSES, CELLIDLIST, PREFERENCES, and TheMatrix
 pref = getcbpref; % torben's new way
 fullpath = [pref.datapath '\' rat '\' session '\'];
@@ -18,7 +18,7 @@ MakeStimEvents_Bpod(fullpath,'PulseNttl',128, 'PulsePort', 0); % FS
 
 
 %% add number of outcome Licks occuring between 0.1 and 1s following outcome
-TE.usLicks = countEventFromTE(TE, 'Port1In', [0.1 1], TE.Us);
+TE.usLicks = countEventFromTE(TE, 'Port1In', [0 1], TE.Us);
 TE.usLicks_rate = TE.usLicks.rate;
 TE.csLicks = countEventFromTE(TE, 'Port1In', [0 3], TE.Cue);
 TE.csLicks_rate = TE.csLicks.rate;
@@ -29,7 +29,7 @@ save(fullfile(pref.datapath, rat, session, pref.TrialEvents_fname), 'TE');
 
 
 thesecells = findcell('rat', rat, 'session', session);
-cellid = thesecells{1};
+cellid = thesecells{3};
 % [ratname,session,tetrode,unit] = cellid2tags(cellid);
 TE = loadcb(cellid, 'TrialEvents');
 SP = loadcb(cellid,'EVENTSPIKES');
@@ -55,28 +55,28 @@ fh = [];
 figName = [cellidStripped '_rewardSpikes'];    
 ensureFigure(figName, 1);  viewcell2b(cellid,'TriggerName','Us_start','SortEvent','csLicks_rate',...
     'eventtype','behav','ShowEvents',{'Us_start', 'Cue_start'}, 'Partitions','#trialType: {1 4 7} & rewardReceived',...
-    'window',[0.1 2], 'dt', 0.02, 'sigma', 0.02, 'PSTHstd', 'on', 'isadaptive', true);
+    'window',[-3 2], 'dt', 0.01, 'sigma', 0.02, 'PSTHstd', 'on', 'isadaptive', true);
 legend('High value', 'Low value', 'Uncued'); title(figName, 'Interpreter', 'none');
 fh(end+1) = gcf; formatFigureCellbase;
 
 figName = [cellidStripped '_rewardLicks'];    
 ensureFigure(figName, 1); viewlick({rat, session}, 'TriggerName', 'Us_start', 'SortEvent', 'csLicks_rate',...
     'eventtype', 'behav', 'ShowEvents', {'Us_start', 'Cue_start'}, 'Partitions', '#trialType: {1 4 7} & rewardReceived',...
-    'window',[0.1 2], 'dt', 0.02, 'sigma', 0.02, 'PSTHstd', 'on', 'isadaptive', true, 'LickInField', 'Port1In');
+    'window',[-3 2], 'dt', 0.01, 'sigma', 0.02, 'PSTHstd', 'on', 'isadaptive', true, 'LickInField', 'Port1In');
 legend('High value', 'Low value', 'Uncued'); title(figName, 'Interpreter', 'none');
 fh(end+1) = gcf; formatFigureCellbase;
 
 figName = [cellidStripped '_cueSpikes'];    
 ensureFigure(figName, 1);  viewcell2b(cellid,'TriggerName','Cue_start','SortEvent','csLicks_rate',...
     'eventtype','behav','ShowEvents',{'Cue_start'}, 'Partitions','#cueCondition',...
-    'window',[-2 3], 'dt', 0.1, 'sigma', 0.2, 'PSTHstd', 'on', 'isadaptive', true);
+    'window',[-2 3], 'dt', 0.01, 'sigma', 0.2, 'PSTHstd', 'on', 'isadaptive', true);
 title(figName, 'Interpreter', 'none');
 fh(end+1) = gcf; formatFigureCellbase;
 
 figName = [cellidStripped '_cueLicks'];
 ensureFigure(figName, 1); viewlick({rat, session}, 'TriggerName', 'Cue_start', 'SortEvent', 'csLicks_rate',...
     'eventtype', 'behav', 'ShowEvents', {'Cue_start'}, 'Partitions', '#cueCondition',...
-    'window',[-2 3], 'dt', 0.1, 'sigma', 0.2, 'PSTHstd', 'on', 'isadaptive', true, 'LickInField', 'Port1In');
+    'window',[-2 3], 'dt', 0.01, 'sigma', 0.02, 'PSTHstd', 'on', 'isadaptive', true, 'LickInField', 'Port1In');
 title(figName, 'Interpreter', 'none');
 fh(end+1) = gcf; formatFigureCellbase;
 
@@ -88,13 +88,13 @@ title(figName, 'Interpreter', 'none');
 fh(end+1) = gcf; formatFigureCellbase;
 
 % tagging
-figName = [cellidStripped '_taggingSpikes'];   
-ensureFigure(figName, 1);  
-viewcell2b(cellid,'TriggerName','BurstOn','SortEvent','BurstOn','ShowEvents',{'PulseOn'},...
-    'eventtype','stim','window',[-2 2],'dt',0.01,'sigma',0.02,'PSTHstd','on',...
-    'EventMarkerWidth',0,'PlotZeroLine','off');
-title(figName, 'Interpreter', 'none');
-fh(end+1) = gcf; formatFigureCellbase;
+% figName = [cellidStripped '_taggingSpikes'];   
+% ensureFigure(figName, 1);  
+% viewcell2b(cellid,'TriggerName','BurstOn','SortEvent','BurstOn','ShowEvents',{'PulseOn'},...
+%     'eventtype','stim','window',[-2 2],'dt',0.01,'sigma',0.02,'PSTHstd','on',...
+%     'EventMarkerWidth',0,'PlotZeroLine','off', 'isadaptive', true);
+% title(figName, 'Interpreter', 'none');
+% fh(end+1) = gcf; formatFigureCellbase;
 
 
 pdfname = fullfile(fullpath,['GradedValueSummary_' regexprep(cellid,'\.','_') '.pdf']);
