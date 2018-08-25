@@ -82,14 +82,14 @@ end
 
 %% add pupilometry
 TE = addPupilometryToTE(TE, 'duration', 11, 'zeroField', 'Cue',  'frameRate', 60, 'frameRateNew', 20);
-pupLag = 0.3;
+pupLag = 0;
 
 TE.pupilBaseline = mean(TE.pupil.pupDiameterNorm(:,bpX2pnt(-3, 20, -4):bpX2pnt(0, 20, -4)), 2);
 % ch1CsWindow = [0.25 1];
 TE.pupil_cs = mean(TE.pupil.pupDiameterNorm(:,bpX2pnt(ch1CsWindow(1) + pupLag, 20, -4):bpX2pnt(ch1CsWindow(2) + pupLag, 20, -4)), 2);
 %% add whisking
 
-TE.Whisk = addWhiskingToTE(TE, 'folderPrefix', 'Combined_');
+TE.Whisk = addWhiskingToTE(TE);
 
 
 %% add wheel

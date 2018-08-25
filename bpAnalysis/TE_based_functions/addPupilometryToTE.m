@@ -64,55 +64,99 @@ function TE = addPupilometryToTE(TE, varargin)
     if ischar(s.folderSuffix)
         s.folderSuffix = repmat({s.folderSuffix}, length(sessionnames));
     end
+    
+
+    %% assuming consistent trial durations and alignment
+    startX = TE.(s.startField){1}(1) - TE.(s.zeroField){1}(1);
+    pupil.xData = pupil.xData + startX;
+    blStartP = 1; % just start at beginning of video for baseline
+    blEndP = bpX2pnt(0, s.frameRateNew, startX); % go to zero point        
+
+            
     for counter = 1:length(sessionnames)
         sessionname = sessionnames{counter};
-        pupilFolder = parseFileName(sessionname); % see subfunction
-        pupilPath = fullfile(rootPath, [pupilFolder s.folderSuffix{counter}], filesep); % filesep returns system file separator character
-        if ~isdir(pupilPath)
-            warning(['*** pupil directory: ' pupilPath ' does not exist ***']);
+        % try Pupil_ and Combined_ as a prefixes
+        pupilFolder = {parseFileName(sessionname, 'Pupil_'), parseFileName(sessionname, 'Combined_')}; % see subfunction
+        folderFound = 0;
+        for j = 1:length(pupilFolder)
+            pupilPath = fullfile(rootPath, [pupilFolder{j} s.folderSuffix{counter}], filesep); % filesep returns system file separator character
+            if isdir(pupilPath)
+                folderFound = 1; % pupilPath is correct....
+                break
+            end
+        end
+        if ~folderFound
+            warning('*** Pupil directory does not exist ***');
             continue
         end
         cd(pupilPath);
         fs = dir('*upil_*.mat');
         if length(fs) == 0
             warning(['*** No Pupil_ files found in ' pupilFolder]); % you need to analyze it first!
-            continue;
+            continue
         end
         fileList = {};
         [fileList{1:length(fs)}] = fs(:).name; % see deal documentation I think...
         [fileList,~] = sort_nat(fileList); % alphanumeric sorting
         
-        % find matching session indices within TE
+        % find matching session indices within TE either by matching numeric suffix or total number of files 
         si = find(filterTE(TE, 'filename', sessionname));
-        for i = 1:length(si)
-            tei = si(i); % TE index number
-            % make sure numbers match
-            fname = fileList{i}; % there should exist a .mat file for every index in TE
-            pupNumber = str2double(fname(strfind(fname, '_') + 1:strfind(fname, '.mat') - 1)); % Pupil_11.mat, extract 11
-            if TE.trialNumber(tei) ~= pupNumber + 1 % bonsai currently names saved videos starting at 0 in my pipeline
-                warning(['*** pupil file numbering mismatch for session ' sessionname ' skipping... ***']);
-                break
-            end
+
+        %% verify correct numbering of pupil files
+        methods = [0 0]; % 2 methods of checking
+        % method #1- see if first file is Pupil_0.mat file.....
+        fname = fileList{1}; % there should exist a .mat file for every index in TE
+        firstNumber = str2double(fname(strfind(fname, '_') + 1:strfind(fname, '.mat') - 1));
+        if firstNumber == 0
+            methods(1) = 1;
+        end
+
+        if abs((length(si) - length(fileList))) <= 1
+            methods(2) = 1;
+        end
+        
+        if ~any(methods)
+%             warning(['*** pupil file numbering mismatch for session ' sessionname ' skipping... *** \n']);
+            fprintf('*** First pupil suffix is %d, %d trials vs %d Pupil files for session %s ***, skipping\n', firstNumber, length(si), length(fileList), sessionname);
+            continue
+        end
+        
+        %% loop through pupil .mat files from a given session
+        wb = waitbar(0, num2str(counter)); 
+        for i = 1:min(length(si), length(fileList)) % in case we have one fewer pupil video
+            tei = si(i); % TE index number          
+
             loaded = load(fileList{i});
-            framesAvailable = loaded.pupilData.currentFrame(end);
-            framesToLoad = min(nFrames, max(loaded.pupilData.currentFrame)); % bonsai seems most often to add one extra frame, still handling case where a few frames are dropped, see below
-            newFrames = round(framesToLoad * (s.frameRateNew/s.frameRate)); % is round correct? 
+            [p, q] = rat(s.frameRateNew/s.frameRate);   % see nested function, changerate
+            
+            %% padding with end value
+%             framesToLoad = min(nFrames, loaded.pupilData.currentFrame(end)); % bonsai seems most often to add one extra frame, still handling case where a few frames are dropped, see below
+%             newFrames = s.duration * s.frameRateNew;
+%             pupil.frameRate(tei,1) = s.frameRateNew;
+%             pupil.settings{tei} = loaded.pupilData.settings;          
+% 
+%             pupil.eyeArea(tei, 1:newFrames) = changeRate([loaded.pupilData.eye.area(1:framesToLoad)' repmat(loaded.pupilData.eye.area(end), 1, nFrames - framesToLoad)]);
+%             pupil.blinkDetected(tei, 1:newFrames) = changeRate([loaded.pupilData.eye.blinkDetected(1:framesToLoad)' repmat(loaded.pupilData.eye.blinkDetected(end), 1, nFrames - framesToLoad)]);
+%             pupil.pupArea(tei, 1:newFrames) = changeRate([loaded.pupilData.pupil.area(1:framesToLoad)' repmat(loaded.pupilData.pupil.area(end), 1, nFrames - framesToLoad)]);
+%             pupil.pupDiameter(tei, 1:newFrames) = changeRate([loaded.pupilData.pupil.diameter(1:framesToLoad)' repmat(loaded.pupilData.pupil.diameter(end), 1, nFrames - framesToLoad)]);
+%             pupil.pupResidual(tei, 1:newFrames) = changeRate([loaded.pupilData.pupil.circResidual(1:framesToLoad)' repmat(loaded.pupilData.pupil.circResidual(end), 1, nFrames - framesToLoad)]);
+%             pupil.startTime(tei, 1) = TE.(s.startField){tei}(1);
+%%          just use pre-allocated NaNs as pad
+            framesToLoad = min(nFrames, loaded.pupilData.currentFrame(end)); % bonsai seems most often to add one extra frame, still handling case where a few frames are dropped, see below
+
+            newFrames = ceil(framesToLoad * p/q); % see resample documentation, weird brackets mean 'ceil'
             pupil.frameRate(tei,1) = s.frameRateNew;
             pupil.settings{tei} = loaded.pupilData.settings;          
-            pupil.eyeArea(tei, 1:newFrames) = changeRate([loaded.pupilData.eye.area(1:framesToLoad) repmat(loaded.pupilData.eye.area(end), 1, nFrames - framesToLoad)]);
-            pupil.blinkDetected(tei, 1:newFrames) = changeRate([loaded.pupilData.eye.blinkDetected(1:framesToLoad) repmat(loaded.pupilData.eye.blinkDetected(end), 1, nFrames - framesToLoad)]);
-            pupil.pupArea(tei, 1:newFrames) = changeRate([loaded.pupilData.pupil.area(1:framesToLoad) repmat(loaded.pupilData.pupil.area(end), 1, nFrames - framesToLoad)]);
-            pupil.pupDiameter(tei, 1:newFrames) = changeRate([loaded.pupilData.pupil.diameter(1:framesToLoad) repmat(loaded.pupilData.pupil.diameter(end), 1, nFrames - framesToLoad)]);
-            pupil.pupResidual(tei, 1:newFrames) = changeRate([loaded.pupilData.pupil.circResidual(1:framesToLoad) repmat(loaded.pupilData.pupil.circResidual(end), 1, nFrames - framesToLoad)]);
-            pupil.startTime(tei, 1) = TE.(s.startField){tei}(1);
 
-            if counter == 1 && i == 1
-                startX = TE.(s.startField){1}(1) - TE.(s.zeroField){1}(1);
-                pupil.xData = pupil.xData + startX;
-                blStartP = 1; % just start at beginning of video for baseline
-                blEndP = bpX2pnt(0, s.frameRateNew, startX); % go to zero point        
-            end
-        end  
+            pupil.eyeArea(tei, 1:newFrames) = changeRate(loaded.pupilData.eye.area(1:framesToLoad));
+            pupil.blinkDetected(tei, 1:newFrames) = changeRate(loaded.pupilData.eye.blinkDetected(1:framesToLoad));
+            pupil.pupArea(tei, 1:newFrames) = changeRate(loaded.pupilData.pupil.area(1:framesToLoad));
+            pupil.pupDiameter(tei, 1:newFrames) = changeRate(loaded.pupilData.pupil.diameter(1:framesToLoad));
+            pupil.pupResidual(tei, 1:newFrames) = changeRate(loaded.pupilData.pupil.circResidual(1:framesToLoad));
+            pupil.startTime(tei, 1) = TE.(s.startField){tei}(1);            
+            waitbar(i/length(si));
+        end
+        close(wb);
         %% remove outliers
         pupil.pupDiameter(pupil.pupDiameter > maxDiameter) = NaN;
         
@@ -138,14 +182,13 @@ function TE = addPupilometryToTE(TE, varargin)
         if s.frameRateNew == s.frameRate || isempty(s.frameRateNew)
             out = data;
         else
-            [p, q] = rat(s.frameRateNew/s.frameRate);
             out = resample(data, p, q);
         end
     end
         
 end
 %%
-function pupilFolder = parseFileName(filename)
+function pupilFolder = parseFileName(filename, prefix)
     % extract date and generate file name matching
     % Pupil_[year][month][day] Pupil_161020 for example (october 20th)
     parts = strsplit(filename, '_');
@@ -161,7 +204,7 @@ function pupilFolder = parseFileName(filename)
     if length(d) == 1
         d = ['0' d];
     end
-    pupilFolder = ['Pupil_' y m2 d];
+    pupilFolder = [prefix y m2 d];
 end
     
 

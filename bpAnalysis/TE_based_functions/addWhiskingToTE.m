@@ -66,19 +66,34 @@ function whisk = addWhiskingToTE(TE, varargin)
         s.folderSuffix = repmat({s.folderSuffix}, length(sessionnames));
     end
     h = waitbar(0, 'Processing Whisking'); 
+    
+    %% assuming consistent trial durations and alignment
+    startX = TE.(s.startField){1}(1) - TE.(s.zeroField){1}(1);
+    whisk.xData = whisk.xData + startX;
+    blStartP = 1; % just start at beginning of video for baseline
+    blEndP = bpX2pnt(0, s.sampleRateNew, startX); % go to zero point        
+    [p, q] = rat(s.sampleRateNew/s.sampleRate);
     for counter = 1:length(sessionnames)
         sessionname = sessionnames{counter};
-        whiskFolder = parseFileName(sessionname, s.folderPrefix); % see subfunction
-        whiskPath = fullfile(rootPath, [whiskFolder s.folderSuffix{counter}], filesep); % filesep returns system file separator character
-        if ~isdir(whiskPath)
-            warning(['*** whisk directory: ' whiskPath ' does not exist ***']);
+        % try Whisk_ and Combined_ as prefixes
+        whiskFolder = {parseFileName(sessionname, 'WhiskDiff_'), parseFileName(sessionname, 'Combined_')}; % see subfunction
+        folderFound = 0;
+        for j = 1:length(whiskFolder)
+            whiskPath = fullfile(rootPath, [whiskFolder{j} s.folderSuffix{counter}], filesep); % filesep returns system file separator character
+            if isdir(whiskPath)
+                folderFound = 1; % whiskPath is correct....
+                break
+            end
+        end
+        if ~folderFound
+            warning('*** Whisk directory does not exist ***');
             continue
         end
         cd(whiskPath);
         fs = dir([s.filePrefix '*.csv']);
         if length(fs) == 0
-            warning(['*** No ' s.filePrefix ' files found in ' whiskFolder]); % you need to analyze it first!
-            continue;
+            warning(sprintf('*** No %s files found in %s or %s ***', s.filePrefix ,whiskFolder{1} ,whiskFolder{2})); 
+            continue
         end
         fileList = {};
         [fileList{1:length(fs)}] = fs(:).name; % see deal documentation I think...
@@ -86,31 +101,46 @@ function whisk = addWhiskingToTE(TE, varargin)
         
         % find matching session indices within TE
         si = find(filterTE(TE, 'filename', sessionname));
-        for i = 1:length(si)
+        
+        %% verify correct numbering of whisk files
+        methods = [0 0]; % 2 methods of checking
+        % method #1- see if first file is Pupil_0.mat file.....
+        fname = fileList{1}; % there should exist a .mat file for every index in TE
+        firstNumber = str2double(fname(strfind(fname, '_') + 1:strfind(fname, '.csv') - 1));
+        if firstNumber == 0
+            methods(1) = 1;
+        end
+
+        if abs((length(si) - length(fileList))) <= 1
+            methods(2) = 1;
+        end
+        
+        if ~any(methods)
+%             warning(['*** pupil file numbering mismatch for session ' sessionname ' skipping... *** \n']);
+            fprintf('*** First whisk suffix is %d, %d trials vs %d whisk files for session %s ***, skipping\n', firstNumber, length(si), length(fileList), sessionname);
+            continue
+        end
+        
+        for i = 1:min(length(si), length(fileList))
             tei = si(i); % TE index number
             % make sure numbers match
             fname = fileList{i}; % there should exist a .mat file for every index in TE
-            whiskNumber = str2double(fname(strfind(fname, '_') + 1:strfind(fname, '.csv') - 1)); % whisk_11.mat, extract 11
-            if TE.trialNumber(tei) ~= whiskNumber + 1 % bonsai currently names saved videos starting at 0 in my pipeline
-                warning(['*** whisk file numbering mismatch for session ' sessionname ' skipping... ***']);
-                break
-            end
+
             % extract only first column using csv read
-            loaded = dlmread(fileList{i}, ' ');
+            try
+                loaded = dlmread(fileList{i}, ' ');
+            catch
+                fprintf('*** Skipping %s from %s ***\n', fileList{i}, sessionname);
+                continue
+            end
             loaded = loaded(:,1);
-            samplesAvailable = size(loaded, 1);
-            oldRate = samplesAvailable / s.duration;
-            [p, q] = rat(s.sampleRateNew/oldRate);
+            samplesAvailable = size(loaded, 1);            
+
             resampled = resample(loaded, p, q);
             whisk.sampleRate(tei, 1) = s.sampleRateNew;
-            whisk.whisk(tei,:) = resampled';
+            whisk.whisk(tei,1:min(size(whisk.whisk, 2), length(resampled))) = resampled(1:min(size(whisk.whisk, 2), length(resampled)))';
             
-            if counter == 1 && i == 1
-                startX = TE.(s.startField){1}(1) - TE.(s.zeroField){1}(1);
-                whisk.xData = whisk.xData + startX;
-                blStartP = 1; % just start at beginning of video for baseline
-                blEndP = bpX2pnt(0, s.sampleRateNew, startX); % go to zero point        
-            end            
+     
         end
             %% baseline subtract
         for i = 1:size(normFields, 1)
@@ -129,7 +159,7 @@ function whisk = addWhiskingToTE(TE, varargin)
     close(h);
 end
 
-function pupilFolder = parseFileName(filename, folderPrefix)
+function whiskFolder = parseFileName(filename, folderPrefix)
     % extract date and generate file name matching
     % Pupil_[year][month][day] Pupil_161020 for example (october 20th)
     parts = strsplit(filename, '_');
@@ -145,5 +175,5 @@ function pupilFolder = parseFileName(filename, folderPrefix)
     if length(d) == 1
         d = ['0' d];
     end
-    pupilFolder = [folderPrefix y m2 d];
+    whiskFolder = [folderPrefix y m2 d];
 end
