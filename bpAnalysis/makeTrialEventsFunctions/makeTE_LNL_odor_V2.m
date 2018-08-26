@@ -28,7 +28,8 @@ function TE = makeTE_LNL_odor_V2(sessions)
         'BlockNumber', zeros(nTrials, 1),...                
         'BlockFcn', zeros(nTrials, 1),...                        
         'LickAction', [],...
-        'Us', []...
+        'Us', [],...
+        'TrialStartTimestamp', []...
         );
     
     % specific to auROC-driven reversals (uses auROC-driven block switch
@@ -61,7 +62,8 @@ function TE = makeTE_LNL_odor_V2(sessions)
             TE.CSValence(tcounter,1) = session.SessionData.CSValence(counter);
             TE.BlockNumber(tcounter,1) = session.SessionData.BlockNumber(counter);
             TE.LickAction{tcounter,1} = session.SessionData.LickAction{counter};
-            TE.ReinforcementOutcome{tcounter, 1} = session.SessionData.ReinforcementOutcome{counter};   
+            TE.ReinforcementOutcome{tcounter, 1} = session.SessionData.ReinforcementOutcome{counter};
+            TE.TrialStartTimestamp(tcounter, 1) = session.SessionData.TrialStartTimestamp(counter);
             if rocOn
                 TE.AnswerLicksROC(tcounter, 1) = session.SessionData.AnswerLicksROC.auROC(counter);
             end

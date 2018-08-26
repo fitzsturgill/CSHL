@@ -72,7 +72,9 @@ function TE = addPupilometryToTE(TE, varargin)
     blStartP = 1; % just start at beginning of video for baseline
     blEndP = bpX2pnt(0, s.frameRateNew, startX); % go to zero point        
 
-            
+    wtf.files = [];
+    wtf.trials = [];
+    wtf = repmat(wtf, length(sessionnames), 1);
     for counter = 1:length(sessionnames)
         sessionname = sessionnames{counter};
         % try Pupil_ and Combined_ as a prefixes
@@ -90,23 +92,26 @@ function TE = addPupilometryToTE(TE, varargin)
             continue
         end
         cd(pupilPath);
-        fs = dir('*upil_*.mat');
+%         fs = dir('*upil_*.mat');
+        fs = dir('*upil_*.avi'); % use videos to get time stamps, then generate .mat file name later on which will be derived from the timstamped video file
         if length(fs) == 0
             warning(['*** No Pupil_ files found in ' pupilFolder]); % you need to analyze it first!
             continue
         end
-        fileList = {};
-        [fileList{1:length(fs)}] = fs(:).name; % see deal documentation I think...
-        [fileList,~] = sort_nat(fileList); % alphanumeric sorting
-        
+        fileList = {fs(:).name};        
+        [fileList,ix] = sort_nat(fileList); % alphanumeric sorting
+        dmDelta = seconds(diff(datetime({fs(ix).date})));
+        wtf(counter).files = dmDelta;
         % find matching session indices within TE either by matching numeric suffix or total number of files 
         si = find(filterTE(TE, 'filename', sessionname));
-
+        teDelta = diff(TE.TrialStartTimestamp(si));
+        wtf(counter).trials = teDelta;
         %% verify correct numbering of pupil files
         methods = [0 0]; % 2 methods of checking
         % method #1- see if first file is Pupil_0.mat file.....
         fname = fileList{1}; % there should exist a .mat file for every index in TE
-        firstNumber = str2double(fname(strfind(fname, '_') + 1:strfind(fname, '.mat') - 1));
+        [~,fname,~] = fileparts(fname);
+        firstNumber = str2double(fname(strfind(fname, '_') + 1:end));
         if firstNumber == 0
             methods(1) = 1;
         end
@@ -125,8 +130,12 @@ function TE = addPupilometryToTE(TE, varargin)
         wb = waitbar(0, num2str(counter)); 
         for i = 1:min(length(si), length(fileList)) % in case we have one fewer pupil video
             tei = si(i); % TE index number          
-
-            loaded = load(fileList{i});
+            [~,fname,~] = fileparts(fileList{i});            
+            try
+                loaded = load([fname '.mat']);
+            catch
+                fprintf('*** %s didn''t exist in %s ***\n', [fname '.mat'], pupilPath)
+            end
             [p, q] = rat(s.frameRateNew/s.frameRate);   % see nested function, changerate
             
             %% padding with end value
@@ -148,11 +157,11 @@ function TE = addPupilometryToTE(TE, varargin)
             pupil.frameRate(tei,1) = s.frameRateNew;
             pupil.settings{tei} = loaded.pupilData.settings;          
 
-            pupil.eyeArea(tei, 1:newFrames) = changeRate(loaded.pupilData.eye.area(1:framesToLoad));
-            pupil.blinkDetected(tei, 1:newFrames) = changeRate(loaded.pupilData.eye.blinkDetected(1:framesToLoad));
-            pupil.pupArea(tei, 1:newFrames) = changeRate(loaded.pupilData.pupil.area(1:framesToLoad));
-            pupil.pupDiameter(tei, 1:newFrames) = changeRate(loaded.pupilData.pupil.diameter(1:framesToLoad));
-            pupil.pupResidual(tei, 1:newFrames) = changeRate(loaded.pupilData.pupil.circResidual(1:framesToLoad));
+            pupil.eyeArea(tei, 1:newFrames) = changeRate(loaded.pupilData.eye.area(1:framesToLoad), s, p, q);
+            pupil.blinkDetected(tei, 1:newFrames) = changeRate(loaded.pupilData.eye.blinkDetected(1:framesToLoad), s, p, q);
+            pupil.pupArea(tei, 1:newFrames) = changeRate(loaded.pupilData.pupil.area(1:framesToLoad), s, p, q);
+            pupil.pupDiameter(tei, 1:newFrames) = changeRate(loaded.pupilData.pupil.diameter(1:framesToLoad), s, p, q);
+            pupil.pupResidual(tei, 1:newFrames) = changeRate(loaded.pupilData.pupil.circResidual(1:framesToLoad), s, p, q);
             pupil.startTime(tei, 1) = TE.(s.startField){tei}(1);            
             waitbar(i/length(si));
         end
@@ -177,15 +186,16 @@ function TE = addPupilometryToTE(TE, varargin)
     end
     TE.pupil = pupil;
 
-    %% nested function
-    function out = changeRate(data)
-        if s.frameRateNew == s.frameRate || isempty(s.frameRateNew)
-            out = data;
-        else
-            out = resample(data, p, q);
-        end
+save(fullfile(rootPath, 'WTF.mat'), 'wtf');
+end
+
+    %% subfunctions
+function out = changeRate(data, s, p, q)
+    if s.frameRateNew == s.frameRate || isempty(s.frameRateNew)
+        out = data;
+    else
+        out = resample(data, p, q);
     end
-        
 end
 %%
 function pupilFolder = parseFileName(filename, prefix)
