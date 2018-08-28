@@ -39,7 +39,7 @@ function whisk = addWhiskingToTE(TE, varargin)
     cd(rootPath);    
     
     
-    %% initialize pupil structure
+    %% initialize whisk structure
     dX = 1/s.sampleRateNew;
     startX = []; % to be determined
     nSamples = s.sampleRate * s.duration; 
@@ -97,10 +97,16 @@ function whisk = addWhiskingToTE(TE, varargin)
         end
         fileList = {};
         [fileList{1:length(fs)}] = fs(:).name; % see deal documentation I think...
-        [fileList,~] = sort_nat(fileList); % alphanumeric sorting
+        [fileList,ix] = sort_nat(fileList); % alphanumeric sorting
+        dmDelta = seconds(diff(datetime({fs(ix).date})));
+        if any(dmDelta < 2)
+            error('there are spurious whisk files that you need to delete or deal with');
+        end        
         
         % find matching session indices within TE
         si = find(filterTE(TE, 'filename', sessionname));
+        
+        
         
         %% verify correct numbering of whisk files
         methods = [0 0]; % 2 methods of checking
@@ -110,7 +116,14 @@ function whisk = addWhiskingToTE(TE, varargin)
         if firstNumber == 0
             methods(1) = 1;
         end
-
+        % note 180826 FS
+        % sometimes there is 1 fewer bonsai acq, I think this is because
+        % bonsai gets behind and I need to wait to stop bonsai after a
+        % trial
+        
+        % note 180827 FS, sometimes there are way more bonsai acqs this is
+        % because there are spurious triggers (is my pulse to bonsai too
+        % long?) and you get nearly duplicate bonsai files saved         
         if abs((length(si) - length(fileList))) <= 1
             methods(2) = 1;
         end
@@ -121,7 +134,7 @@ function whisk = addWhiskingToTE(TE, varargin)
             continue
         end
         
-        for i = 1:min(length(si), length(fileList))
+        for i = 1:min(length(si), length(fileList)) % in case we have one fewer pupil video
             tei = si(i); % TE index number
             % make sure numbers match
             fname = fileList{i}; % there should exist a .mat file for every index in TE
@@ -135,12 +148,10 @@ function whisk = addWhiskingToTE(TE, varargin)
             end
             loaded = loaded(:,1);
             samplesAvailable = size(loaded, 1);            
-
+            currentSamples = ceil(samplesAvailable * p/q);
             resampled = resample(loaded, p, q);
             whisk.sampleRate(tei, 1) = s.sampleRateNew;
-            whisk.whisk(tei,1:min(size(whisk.whisk, 2), length(resampled))) = resampled(1:min(size(whisk.whisk, 2), length(resampled)))';
-            
-     
+            whisk.whisk(tei,1:min(nsamplesNew, currentSamples)) = resampled(1:min(nsamplesNew, currentSamples))';               
         end
             %% baseline subtract
         for i = 1:size(normFields, 1)

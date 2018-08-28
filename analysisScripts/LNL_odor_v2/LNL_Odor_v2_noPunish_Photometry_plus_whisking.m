@@ -198,7 +198,37 @@ LNL_conditions;
         saveas(gcf, fullfile(savepath, [saveName '.fig']));
         saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
     end    
+%% pupil averages per session, compare csPlus with uncued to check that trial/file alignment is correct given issues with bonsai
+nSessions = max(TE.sessionIndex);
+ensureFigure('pupil_check_sessions_avg', 1);
+nax = ceil(sqrt(nSessions));
+for counter = 1:nSessions
+    subplot(nax,nax,counter); plotPupilAverageFromTE(TE, {csPlusTrials & TE.sessionIndex == counter, uncuedTrials & TE.sessionIndex == counter});
+end
 
+%% 
+saveName = ('Pupil_averages');
+ensureFigure(saveName, 1); 
+% condition on behavior and cue condition
+subplot(2,2,1);plotPupilAverageFromTE(TE, {uncuedTrials, csPlusTrials & hitTrials, csMinusTrials & CRTrials}, 'window', [-2 6]);
+legend({'uncued', 'cs+, hit', 'cs-, CR'}, 'Box', 'off', 'Location', 'northwest');
+title('Cue condition'); xlabel('time from cue (s)');
+set(gca, 'XLim', [-2 6]);
+% condition on behavior only for csPlus
+subplot(2,2,2);plotPupilAverageFromTE(TE, {hitTrials & csPlusTrials, missTrials & csPlusTrials}, 'window', [-2 6]);
+set(gca, 'XLim', [-2 6]);
+title('Cs+ by behavioral response'); xlabel('time from cue (s)');
+legend({'uncued', 'cs+, hit', 'cs+, miss'}, 'Box', 'off', 'Location', 'northwest');
+% reward, expected vs unexpected
+subplot(2,2,3);plotPupilAverageFromTE(TE, {csPlusTrials & hitTrials & rewardTrials, csMinusTrials & CRTrials & rewardTrials, uncuedReward}, 'window', [-2 6]);
+set(gca, 'XLim', [-2 6]);
+legend({'cs+, hit, reward', 'cs-, CR, reward', 'uncued, reward'}, 'Box', 'off', 'Location', 'northwest');
+title('Reward by cue and behavior'); xlabel('time from cue (s)');
+formatFigure('scaleFactor', 4)
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+end
 %% all behavior CsPlus
     saveName = 'all_behavior_CsPlus';
     ensureFigure(saveName, 1);
@@ -312,6 +342,8 @@ set(axs, 'FontSize', 18);
 set(axs(2:end), 'YTick', []);
 saveas(gcf, fullfile(savepath, 'allBehavior_whisk_csMinus'), 'fig'); 
 saveas(gcf, fullfile(savepath, 'allBehavior_whisk_csMinus'), 'jpeg');
+
+
 
 %% compile data into nReversals x nTrials arrays
 

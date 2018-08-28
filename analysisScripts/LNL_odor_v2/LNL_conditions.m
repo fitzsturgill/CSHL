@@ -15,6 +15,7 @@
     hitTrials = filterTE(TE, 'trialOutcome', 1, 'reject', 0);
     missTrials = filterTE(TE, 'trialOutcome', -1, 'reject', 0);
     FATrials = filterTE(TE, 'trialOutcome', 0, 'reject', 0); % "false alarm" trials (even if pavlovian)
+    CRTrials = filterTE(TE, 'trialOutcome', 2, 'reject', 0); % "correct reject" trials (even if pavlovian)
     punishTrials = filterTE(TE, 'ReinforcementOutcome', 'Punish', 'reject', 0);    
     neutralTrials = filterTE(TE, 'ReinforcementOutcome', 'Neutral', 'reject', 0);
     block2Trials = filterTE(TE, 'BlockNumber', 2, 'reject', 0);

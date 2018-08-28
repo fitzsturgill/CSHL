@@ -22,7 +22,7 @@ function TE = addPupilometryToTE(TE, varargin)
     if isempty(s.frameRateNew)
         s.frameRateNew = s.frameRate;
     end        
-    
+    [p, q] = rat(s.frameRateNew/s.frameRate);   % coefficients for resampling
     if isempty(s.rootPath)
         [~, rootPath] = uiputfile('path', 'Choose data folder containing pupil subdirectories...');
         if rootPath == 0
@@ -101,11 +101,14 @@ function TE = addPupilometryToTE(TE, varargin)
         fileList = {fs(:).name};        
         [fileList,ix] = sort_nat(fileList); % alphanumeric sorting
         dmDelta = seconds(diff(datetime({fs(ix).date})));
-        wtf(counter).files = dmDelta;
+        if any(dmDelta < 2)
+            error('there are spurious pupil files that you need to delete or deal with');
+        end
+%         wtf(counter).files = dmDelta;
         % find matching session indices within TE either by matching numeric suffix or total number of files 
         si = find(filterTE(TE, 'filename', sessionname));
-        teDelta = diff(TE.TrialStartTimestamp(si));
-        wtf(counter).trials = teDelta;
+%         teDelta = diff(TE.TrialStartTimestamp(si));
+%         wtf(counter).trials = teDelta;
         %% verify correct numbering of pupil files
         methods = [0 0]; % 2 methods of checking
         % method #1- see if first file is Pupil_0.mat file.....
@@ -115,7 +118,15 @@ function TE = addPupilometryToTE(TE, varargin)
         if firstNumber == 0
             methods(1) = 1;
         end
-
+        
+        % note 180826 FS
+        % sometimes there is 1 fewer bonsai acq, I think this is because
+        % bonsai gets behind and I need to wait to stop bonsai after a
+        % trial
+        
+        % note 180827 FS, sometimes there are way more bonsai acqs this is
+        % because there are spurious triggers (is my pulse to bonsai too
+        % long?) and you get nearly duplicate bonsai files saved 
         if abs((length(si) - length(fileList))) <= 1
             methods(2) = 1;
         end
@@ -136,7 +147,6 @@ function TE = addPupilometryToTE(TE, varargin)
             catch
                 fprintf('*** %s didn''t exist in %s ***\n', [fname '.mat'], pupilPath)
             end
-            [p, q] = rat(s.frameRateNew/s.frameRate);   % see nested function, changerate
             
             %% padding with end value
 %             framesToLoad = min(nFrames, loaded.pupilData.currentFrame(end)); % bonsai seems most often to add one extra frame, still handling case where a few frames are dropped, see below
