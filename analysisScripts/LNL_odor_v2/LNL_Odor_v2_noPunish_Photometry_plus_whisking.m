@@ -81,7 +81,7 @@ end
 
 
 %% add pupilometry
-TE = addPupilometryToTE(TE, 'duration', 11, 'zeroField', 'Cue',  'frameRate', 60, 'frameRateNew', 20);
+TE = addPupilometryToTE(TE, 'duration', 11, 'zeroField', 'Cue',  'frameRate', 60, 'frameRateNew', 20, 'normMode', 'byTrial');
 pupLag = 0;
 
 TE.pupilBaseline = mean(TE.pupil.pupDiameterNorm(:,bpX2pnt(-3, 20, -4):bpX2pnt(0, 20, -4)), 2);
@@ -203,7 +203,8 @@ nSessions = max(TE.sessionIndex);
 ensureFigure('pupil_check_sessions_avg', 1);
 nax = ceil(sqrt(nSessions));
 for counter = 1:nSessions
-    subplot(nax,nax,counter); plotPupilAverageFromTE(TE, {csPlusTrials & TE.sessionIndex == counter, uncuedTrials & TE.sessionIndex == counter});
+    subplot(nax,nax,counter); plotPupilAverageFromTE(TE, {uncuedTrials & TE.sessionIndex == counter, csPlusTrials & TE.sessionIndex == counter});
+    set(gca, 'XLim', [-2 6]);
 end
 
 %% 

@@ -124,7 +124,7 @@ function whisk = addWhiskingToTE(TE, varargin)
         % note 180827 FS, sometimes there are way more bonsai acqs this is
         % because there are spurious triggers (is my pulse to bonsai too
         % long?) and you get nearly duplicate bonsai files saved         
-        if abs((length(si) - length(fileList))) <= 1
+        if abs((length(si) - length(fileList))) >= 1
             methods(2) = 1;
         end
         

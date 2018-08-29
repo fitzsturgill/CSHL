@@ -101,23 +101,25 @@ function TE = addPupilometryToTE(TE, varargin)
         fileList = {fs(:).name};        
         [fileList,ix] = sort_nat(fileList); % alphanumeric sorting
         dmDelta = seconds(diff(datetime({fs(ix).date})));
+        dmDelta = dmDelta(:);
         if any(dmDelta < 2)
             error('there are spurious pupil files that you need to delete or deal with');
         end
 %         wtf(counter).files = dmDelta;
         % find matching session indices within TE either by matching numeric suffix or total number of files 
         si = find(filterTE(TE, 'filename', sessionname));
-%         teDelta = diff(TE.TrialStartTimestamp(si));
+        teDelta = diff(TE.TrialStartTimestamp(si));
+        teDelta = teDelta(:);
 %         wtf(counter).trials = teDelta;
         %% verify correct numbering of pupil files
-        methods = [0 0]; % 2 methods of checking
+%         methods = [0 0]; % 2 methods of checking
         % method #1- see if first file is Pupil_0.mat file.....
         fname = fileList{1}; % there should exist a .mat file for every index in TE
         [~,fname,~] = fileparts(fname);
         firstNumber = str2double(fname(strfind(fname, '_') + 1:end));
-        if firstNumber == 0
-            methods(1) = 1;
-        end
+%         if firstNumber == 0
+%             methods(1) = 1;
+%         end
         
         % note 180826 FS
         % sometimes there is 1 fewer bonsai acq, I think this is because
@@ -127,25 +129,53 @@ function TE = addPupilometryToTE(TE, varargin)
         % note 180827 FS, sometimes there are way more bonsai acqs this is
         % because there are spurious triggers (is my pulse to bonsai too
         % long?) and you get nearly duplicate bonsai files saved 
-        if abs((length(si) - length(fileList))) <= 1
-            methods(2) = 1;
-        end
+%         if abs((length(si) - length(fileList))) > 1
+%             methods(2) = 1;
+%         end
         
-        if ~any(methods)
-%             warning(['*** pupil file numbering mismatch for session ' sessionname ' skipping... *** \n']);
-            fprintf('*** First pupil suffix is %d, %d trials vs %d Pupil files for session %s ***, skipping\n', firstNumber, length(si), length(fileList), sessionname);
+        % correlate ITIs with date modified on pupil video files, try to
+        % shift if necessary, assuming an alignment problem at the
+        % beginning
+        % cirshift on teDelta, if - works, then the first n trials don't have a pupil file (you need
+        % to skip the first n trials)
+        % otherwise, the first n pupil files don't have a trial ( you need
+        % to skip the first n pupil files)
+        
+        goodShift = [];        
+        ml = min(length(dmDelta), length(teDelta));
+        maxRsq = 0;
+        for shift = -3:3
+            rsq = corr(dmDelta(1:ml), circshift(teDelta(1:ml), shift));
+            maxRsq = max(rsq, maxRsq);
+            if rsq > 0.9
+                goodShift = shift + 1;
+                fprintf('*** Rsq of trial and file ITIs = %.2f with shift of %d for %s ***\n', rsq, goodShift, sessionname); 
+                break
+            end
+        end     
+
+                                                                 
+        if isempty(goodShift)  
+            warning('*** pupil file alignment issue with max Rsq = %.2f for session %s skipping... *** \n', maxRsq, sessionname);
+%             fprintf('*** First pupil suffix is %d, %d trials vs %d Pupil files for session %s ***, skipping\n', firstNumber, length(si), length(fileList), sessionname);            
             continue
         end
         
         %% loop through pupil .mat files from a given session
-        wb = waitbar(0, num2str(counter)); 
-        for i = 1:min(length(si), length(fileList)) % in case we have one fewer pupil video
-            tei = si(i); % TE index number          
-            [~,fname,~] = fileparts(fileList{i});            
+        wb = waitbar(0, num2str(counter));
+        for i = 1:length(si) 
+            tei = si(i); % TE index number    
+            fi = i + goodShift;
+            if fi <= 0 % there isn't a pupil file for this one
+                continue
+            end
+           
             try
+                [~,fname,~] = fileparts(fileList{fi});                 
                 loaded = load([fname '.mat']);
             catch
                 fprintf('*** %s didn''t exist in %s ***\n', [fname '.mat'], pupilPath)
+                continue;
             end
             
             %% padding with end value
