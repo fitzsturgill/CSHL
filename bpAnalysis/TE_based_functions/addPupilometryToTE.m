@@ -72,9 +72,10 @@ function TE = addPupilometryToTE(TE, varargin)
     blStartP = 1; % just start at beginning of video for baseline
     blEndP = bpX2pnt(0, s.frameRateNew, startX); % go to zero point        
 
-    wtf.files = [];
-    wtf.trials = [];
-    wtf = repmat(wtf, length(sessionnames), 1);
+%     wtf.files = [];
+%     wtf.trials = [];
+%     wtf = repmat(wtf, length(sessionnames), 1);
+    
     for counter = 1:length(sessionnames)
         sessionname = sessionnames{counter};
         % try Pupil_ and Combined_ as a prefixes
@@ -112,11 +113,11 @@ function TE = addPupilometryToTE(TE, varargin)
         teDelta = teDelta(:);
 %         wtf(counter).trials = teDelta;
         %% verify correct numbering of pupil files
-%         methods = [0 0]; % 2 methods of checking
+        methods = [0 0]; % 2 methods of checking
         % method #1- see if first file is Pupil_0.mat file.....
         fname = fileList{1}; % there should exist a .mat file for every index in TE
         [~,fname,~] = fileparts(fname);
-        firstNumber = str2double(fname(strfind(fname, '_') + 1:end));
+%         firstNumber = str2double(fname(strfind(fname, '_') + 1:end));
 %         if firstNumber == 0
 %             methods(1) = 1;
 %         end
@@ -129,9 +130,14 @@ function TE = addPupilometryToTE(TE, varargin)
         % note 180827 FS, sometimes there are way more bonsai acqs this is
         % because there are spurious triggers (is my pulse to bonsai too
         % long?) and you get nearly duplicate bonsai files saved 
-%         if abs((length(si) - length(fileList))) > 1
-%             methods(2) = 1;
-%         end
+        if abs((length(si) - length(fileList))) <= 2
+            methods(2) = 1;
+        end
+        
+        if ~any(methods)
+            warning(['*** pupil file numbering mismatch for session ' sessionname ' skipping... ***']);
+            continue
+        end        
         
         % correlate ITIs with date modified on pupil video files, try to
         % shift if necessary, assuming an alignment problem at the
@@ -141,19 +147,32 @@ function TE = addPupilometryToTE(TE, varargin)
         % otherwise, the first n pupil files don't have a trial ( you need
         % to skip the first n pupil files)
         
-        goodShift = [];        
+             
         ml = min(length(dmDelta), length(teDelta));
-        maxRsq = 0;
-        for shift = -3:3
-            rsq = corr(dmDelta(1:ml), circshift(teDelta(1:ml), shift));
-            maxRsq = max(rsq, maxRsq);
-            if rsq > 0.9
-                goodShift = shift + 1;
-                fprintf('*** Rsq of trial and file ITIs = %.2f with shift of %d for %s ***\n', rsq, goodShift, sessionname); 
-                break
-            end
+        shifts = -3:3;
+        Rsqs = zeros(size(shifts));
+       
+        for sc = 1:length(shifts)
+            shift = shifts(sc);
+            Rsqs(sc) = corr(dmDelta(1:ml), circshift(teDelta(1:ml), shift));
         end     
+        
+        [maxRsq, mix] = max(Rsqs);
+        if maxRsq > 0.9
+            goodShift = shifts(mix);            
+        else
+            goodShift = [];   
+        end
+        
+        ensureFigure(sessionname, 1);
+        mcLandscapeFigSetup(gcf);
+        plot(dmDelta, 'b'); hold on; plot(teDelta, 'r'); textBox(sprintf('session %d, diff= %d', counter, numel(dmDelta) - numel(teDelta)));
 
+%             if rsq > 0.9
+%                 goodShift = shift + 1; % why do I need an offset? This is the crux of what I don't understand 180828
+%                 fprintf('*** Rsq of trial and file ITIs = %.2f with shift of %d for %s ***\n', rsq, goodShift, sessionname); 
+%                 break
+%             end
                                                                  
         if isempty(goodShift)  
             warning('*** pupil file alignment issue with max Rsq = %.2f for session %s skipping... *** \n', maxRsq, sessionname);
@@ -226,7 +245,7 @@ function TE = addPupilometryToTE(TE, varargin)
     end
     TE.pupil = pupil;
 
-save(fullfile(rootPath, 'WTF.mat'), 'wtf');
+% save(fullfile(rootPath, 'WTF.mat'), 'wtf');
 end
 
     %% subfunctions

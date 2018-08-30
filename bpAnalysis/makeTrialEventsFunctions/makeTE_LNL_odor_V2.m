@@ -65,7 +65,11 @@ function TE = makeTE_LNL_odor_V2(sessions)
             TE.ReinforcementOutcome{tcounter, 1} = session.SessionData.ReinforcementOutcome{counter};
             TE.TrialStartTimestamp(tcounter, 1) = session.SessionData.TrialStartTimestamp(counter);
             if rocOn
-                TE.AnswerLicksROC(tcounter, 1) = session.SessionData.AnswerLicksROC.auROC(counter);
+                if ~isempty(session.SessionData.AnswerLicksROC.auROC)
+                    TE.AnswerLicksROC(tcounter, 1) = session.SessionData.AnswerLicksROC.auROC(counter);
+                else
+                    TE.AnswerLicksROC(tcounter, 1) = NaN;
+                end
             end
             TE.sessionIndex(tcounter, 1) = sCounter;
             usTimes = [TE.Reward{tcounter}; TE.Punish{tcounter}; TE.WNoise{tcounter}; TE.Neutral{tcounter}];

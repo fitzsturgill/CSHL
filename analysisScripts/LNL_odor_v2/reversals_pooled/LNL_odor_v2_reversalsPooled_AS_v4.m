@@ -1,3 +1,4 @@
+% this is for noPunish auto reversal blocks...
 % normalizing by pre-reversal CSC+ values....
 % pertiment to DC_46 and on... I'm carrying through answerLicksROC value...
 % LNL_odor_v2_pav_rev  reversal analysis script 9/
@@ -5,6 +6,9 @@
 files = {...
     'Z:\SummaryAnalyses\LNL_Odor_v2_noPunish_whisk\DC_46\', 'RE_DC_46.mat';...
     'Z:\SummaryAnalyses\LNL_Odor_v2_noPunish_whisk\DC_47\', 'RE_DC_47.mat';...
+    'Z:\SummaryAnalyses\LNL_Odor_v2_noPunish_whisk\DC_53\', 'RE_DC_53.mat';...
+    'Z:\SummaryAnalyses\LNL_Odor_v2_noPunish_whisk\DC_54\', 'RE_DC_54.mat';...
+    'Z:\SummaryAnalyses\LNL_Odor_v2_noPunish_whisk\DC_56\', 'RE_DC_56.mat';...
     };
 
 
@@ -180,6 +184,11 @@ alwaysCsPlus_ch2 = [AR.csPlus.phPeakMean_cs_ch2.before AR.csPlus.phPeakMean_cs_c
 alwaysCsPlus_trialNumber = (1:size(alwaysCsPlus_ch1, 2)) - size(AR.csPlus.phPeakMean_cs_ch1.before, 2);
 alwaysCsPlus_firstRevTrial = size(AR.csPlus.phPeakMean_cs_ch1.before, 2) + 1;
 
+odor3_ch1 = [AR.thirdOdor.phPeakMean_cs_ch1.before AR.thirdOdor.phPeakMean_cs_ch1.after];
+odor3_ch2 = [AR.thirdOdor.phPeakMean_cs_ch2.before AR.thirdOdor.phPeakMean_cs_ch2.after];
+odor3_licks = [AR.thirdOdor.csLicks.before AR.thirdOdor.csLicks.after];
+odor3_trialNumber = (1:size(odor3_ch1, 2)) - size(AR.thirdOdor.phPeakMean_cs_ch1.before, 2);
+
 oldCsPlus_trialNumber = -(size(AR.csPlus.phPeakMean_cs_ch1.before, 2) - 1) : 0;
 oldCsMinus_trialNumber = -(size(AR.csMinus.phPeakMean_cs_ch1.before, 2) - 1) : 0;
 
@@ -205,18 +214,28 @@ alwaysCsPlus_ch1_norm = smoothdata(alwaysCsPlus_ch1, 2, 'movmean', smoothWindow,
 alwaysCsPlus_ch2_norm = smoothdata(alwaysCsPlus_ch2, 2, 'movmean', smoothWindow, 'omitnan');
 alwaysCsPlus_licks_norm = smoothdata(alwaysCsPlus_licks, 2, 'movmean', smoothWindow, 'omitnan');
 
+% alwaysCsPlus_ch3 = 
 % normalize by f% of pre reversal values, smooth, find first and last common points across reversals
 
 f = 0.8;
 trialsBack = 20;
-
+%%
 % IT SEEMS LIKE WHAT WORKS BEST IS JUST TO NORMALIZE USING THE 80% OR SO
 % OF PRE-REVERSAL CS+ VALUES
 
 % normalize by csPlus before reversal
-normVector_ch1 = percentile(smoothdata(newCsMinus_ch1_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), 2, 'movmean', 3, 'omitnan'), f, 2);
-normVector_ch2 = percentile(smoothdata(newCsMinus_ch2_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), 2, 'movmean', 3, 'omitnan'), f, 2);
-normVector_licks = percentile(smoothdata(newCsMinus_licks_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), 2, 'movmean', 3, 'omitnan'), f, 2);
+% normVector_ch1 = percentile(newCsMinus_ch1_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), f, 2);
+% normVector_ch2 = percentile(newCsMinus_ch2_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), f, 2);
+% normVector_licks = percentile(newCsMinus_licks_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), f, 2);
+normVector_ch1 = nanmean(newCsMinus_ch1_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), 2);
+normVector_ch2 = nanmean(newCsMinus_ch2_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), 2);
+normVector_licks = nanmean(newCsMinus_licks_norm(:,newCsPlus_firstRevTrial - trialsBack - 1:newCsPlus_firstRevTrial - 1), 2);
+
+% alternatively, try normalizing by Odor3 cue response
+% normVector_ch1 = nanmedian(odor3_ch1, 2);
+% normVector_ch2 = nanmean(odor3_ch2, 2);
+% normVector_licks = nanmean(odor3_licks, 2);
+
 
 % only normalization 
 newCsPlus_ch1_norm = newCsPlus_ch1_norm ./ normVector_ch1; % singleton expansion by default
@@ -230,6 +249,10 @@ newCsMinus_licks_norm = newCsMinus_licks_norm ./ normVector_licks;
 alwaysCsPlus_ch1_norm = alwaysCsPlus_ch1_norm ./ normVector_ch1;
 alwaysCsPlus_ch2_norm = alwaysCsPlus_ch2_norm ./ normVector_ch2;
 alwaysCsPlus_licks_norm = alwaysCsPlus_licks_norm ./ normVector_licks;
+
+odor3_ch1_norm = odor3_ch1 ./ normVector_ch1;
+odor3_ch2_norm = odor3_ch2 ./ normVector_ch2;
+odor3_licks_norm = odor3_licks ./ normVector_licks;
 
 %% make wrap-around data arrays
 %%
@@ -320,7 +343,7 @@ end
 saveName = 'newCsPlus_image';
 ensureFigure(saveName, 1);
 subplot(2,2,1);
-clim = [-1.5 1.5];
+clim = [-2 2];
 xlim = [min(newCsPlus_trialNumber), max(newCsPlus_trialNumber)];
 imagesc('XData', xlim, 'CData', newCsPlus_ch1_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('ACh');  set(gca, 'CLim', clim)
 scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled'); 
@@ -388,23 +411,31 @@ if saveOn
     disp('figure saved');
 end
 
-%% images, odor 3
+%  images, odor 3
+xlim = [min(odor3_trialNumber), max(odor3_trialNumber)];
 saveName = 'odor3_image';
 ensureFigure(saveName, 1);
 subplot(2,2,1); title('ACh');
-imagesc(nanzscore([AR.thirdOdor.phPeakMean_cs_ch1.before AR.thirdOdor.phPeakMean_cs_ch1.after], 0, 2));
+imagesc('XData', xlim, 'CData', odor3_ch1_norm(sortOrder, :)); set(gca, 'XLim', xlim); set(gca, 'CLim', clim); hold on;
+scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
 subplot(2,2,2); title('Dop');
-imagesc(nanzscore([AR.thirdOdor.phPeakMean_cs_ch2.before AR.thirdOdor.phPeakMean_cs_ch2.after], 0, 2));
+imagesc('XData', xlim, 'CData', odor3_ch2_norm(sortOrder, :)); set(gca, 'XLim', xlim); set(gca, 'CLim', clim); hold on;
+scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
 subplot(2,2,3); title('Licks');
-imagesc(nanzscore([AR.thirdOdor.csLicks.before AR.thirdOdor.csLicks.after], 0, 2));
-
-
-
-
+imagesc('XData', xlim, 'CData', odor3_licks_norm(sortOrder, :)); set(gca, 'XLim', xlim); set(gca, 'CLim', clim); hold on;
+scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
+set(gcf, 'Position', [304   217   633   485]);
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));    
+    disp('figure saved');
+end
 
 %% normalized
 common = sum(~isnan(newCsPlus_ch1_norm)) > 3;
 
+xlim = [-30 30];
+ylim = [-1 2];
 
 savename = 'reversals_newCsPlus';
 ensureFigure(savename, 1);
@@ -415,7 +446,7 @@ hla(1) = hl;
 [hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus_ch1_norm(goodReversals, common)), nanSEM(newCsPlus_ch1_norm(goodReversals, common))',...
     'cmap', [171 55 214]/256);
 hla(2) = hl;
-[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus_licks_norm(goodReversals, common)), nanSEM(newCsPlus_licks_norm(goodReversals, common))',...
+[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmedian(newCsPlus_licks_norm(goodReversals, common)), zeros(1, sum(common)),...
     'cmap', [0.5 0.5 0.5]/256);
 hla(3) = hl;
 set(hla, 'LineWidth', 2);
@@ -428,7 +459,7 @@ set(hla, 'LineWidth', 2);
     ylabel('Cue response (norm.)');
     
     formatFigurePoster([5.5 4], '', 20);
-    set(gca, 'XLim', [-50 80]);%, 'YLim', [-1 1]);
+    set(gca, 'XLim', xlim, 'YLim', ylim);
 if saveOn
     saveas(gcf, fullfile(savepath, [savename '.fig']));
     saveas(gcf, fullfile(savepath, [savename '.jpg']));   
@@ -455,7 +486,7 @@ hla(1) = hl;
 [hl, hp] = boundedline(newCsMinus_trialNumber(newCsMinus_common), nanmean(newCsMinus_ch1_norm(goodReversals, newCsMinus_common)), nanSEM(newCsMinus_ch1_norm(goodReversals, newCsMinus_common))',...
     'cmap', [171 55 214]/256);
 hla(2) = hl;
-[hl, hp] = boundedline(newCsMinus_trialNumber(newCsMinus_common), nanmean(newCsMinus_licks_norm(goodReversals, newCsMinus_common)), nanSEM(newCsMinus_licks_norm(goodReversals, newCsMinus_common))',...
+[hl, hp] = boundedline(newCsMinus_trialNumber(newCsMinus_common), nanmedian(newCsMinus_licks_norm(goodReversals, newCsMinus_common)), zeros(1, sum(common)),...
     'cmap', [0.5 0.5 0.5]/256);
 hla(3) = hl;
 set(hla, 'LineWidth', 2);
@@ -468,7 +499,7 @@ set(hla, 'LineWidth', 2);
     xlabel('Odor presentations from reversal');
     ylabel('Cue response (norm.)');    
     formatFigurePoster([5.5 4], '', 20);
-    set(gca, 'XLim', [-50 80]);%, 'YLim', [-1 1]);    
+    set(gca, 'XLim', xlim, 'YLim', ylim);    
 if saveOn
     saveas(gcf, fullfile(savepath, [savename '.fig']));
     saveas(gcf, fullfile(savepath, [savename '.jpg']));   
@@ -504,7 +535,7 @@ set(hla, 'LineWidth', 2);
     ylabel('Cue response (norm.)');
     
     formatFigurePoster([5.5 4], '', 20);
-    set(gca, 'XLim', [-20 20]);%, 'YLim', [-1 1]);
+    set(gca, 'XLim', [-20 20], 'YLim', [-1 2]);
 if saveOn
     saveas(gcf, fullfile(savepath, [savename '.fig']));
     saveas(gcf, fullfile(savepath, [savename '.jpg']));   

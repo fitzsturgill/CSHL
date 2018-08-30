@@ -99,12 +99,15 @@ function whisk = addWhiskingToTE(TE, varargin)
         [fileList{1:length(fs)}] = fs(:).name; % see deal documentation I think...
         [fileList,ix] = sort_nat(fileList); % alphanumeric sorting
         dmDelta = seconds(diff(datetime({fs(ix).date})));
+        dmDelta = dmDelta(:);
         if any(dmDelta < 2)
             error('there are spurious whisk files that you need to delete or deal with');
         end        
         
         % find matching session indices within TE
         si = find(filterTE(TE, 'filename', sessionname));
+        teDelta = diff(TE.TrialStartTimestamp(si));
+        teDelta = teDelta(:);              
         
         
         
@@ -112,10 +115,10 @@ function whisk = addWhiskingToTE(TE, varargin)
         methods = [0 0]; % 2 methods of checking
         % method #1- see if first file is Pupil_0.mat file.....
         fname = fileList{1}; % there should exist a .mat file for every index in TE
-        firstNumber = str2double(fname(strfind(fname, '_') + 1:strfind(fname, '.csv') - 1));
-        if firstNumber == 0
-            methods(1) = 1;
-        end
+%         firstNumber = str2double(fname(strfind(fname, '_') + 1:strfind(fname, '.csv') - 1));
+%         if firstNumber == 0
+%             methods(1) = 1;
+%         end
         % note 180826 FS
         % sometimes there is 1 fewer bonsai acq, I think this is because
         % bonsai gets behind and I need to wait to stop bonsai after a
@@ -124,7 +127,7 @@ function whisk = addWhiskingToTE(TE, varargin)
         % note 180827 FS, sometimes there are way more bonsai acqs this is
         % because there are spurious triggers (is my pulse to bonsai too
         % long?) and you get nearly duplicate bonsai files saved         
-        if abs((length(si) - length(fileList))) >= 1
+        if abs((length(si) - length(fileList))) <= 1
             methods(2) = 1;
         end
         
@@ -134,16 +137,39 @@ function whisk = addWhiskingToTE(TE, varargin)
             continue
         end
         
+        goodShift = [];        
+        ml = min(length(dmDelta), length(teDelta));
+        maxRsq = 0;
+        for shift = -3:3
+            rsq = corr(dmDelta(1:ml), circshift(teDelta(1:ml), shift));
+            maxRsq = max(rsq, maxRsq);
+            if rsq > 0.9
+                goodShift = shift + 1; % why do I need an offset? This is the crux of what I don't understand 180828
+                fprintf('*** Rsq of trial and file ITIs = %.2f with shift of %d for %s ***\n', rsq, goodShift, sessionname); 
+                break
+            end
+        end     
+
+                                                                 
+        if isempty(goodShift)  
+            warning('*** whisk file alignment issue with max Rsq = %.2f for session %s skipping... *** \n', maxRsq, sessionname);
+%             fprintf('*** First pupil suffix is %d, %d trials vs %d Pupil files for session %s ***, skipping\n', firstNumber, length(si), length(fileList), sessionname);            
+            continue
+        end        
+        
         for i = 1:min(length(si), length(fileList)) % in case we have one fewer pupil video
             tei = si(i); % TE index number
-            % make sure numbers match
-            fname = fileList{i}; % there should exist a .mat file for every index in TE
+            
+            fi = i + goodShift;
+            if i <= 0 % there isn't a whisk file for this one
+                continue
+            end
 
             % extract only first column using csv read
             try
-                loaded = dlmread(fileList{i}, ' ');
+                loaded = dlmread(fileList{fi}, ' ');
             catch
-                fprintf('*** Skipping %s from %s ***\n', fileList{i}, sessionname);
+                fprintf('*** Skipping %s from %s ***\n', fileList{fi}, sessionname);
                 continue
             end
             loaded = loaded(:,1);
