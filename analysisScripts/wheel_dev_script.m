@@ -90,7 +90,7 @@ end
 
 
 TE.PhotometryHF = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit',...
-    'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 29], 'startField', 'Baseline', 'downsample', 10);
+    'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 119], 'startField', 'Baseline', 'downsample', 10);
 %
 if saveOn
     save(fullfile(savepath, 'TE.mat'), 'TE');
@@ -390,7 +390,7 @@ plot(lags * 1/Fs, r, 'k'); hold on;
 plot(lags * 1/Fs, rawR, 'r');
 plot(lags * 1/Fs, shiftR, 'b');
 xlabel('Time (s)'); ylabel('ChAT AutoCorr'); 
-legend({'corrected', 'raw', 'shift predictor', 'Location', 'northwest'});
+legend({'corrected', 'raw', 'shift predictor'}, 'Location', 'northwest', 'Box', 'off');
 
 subplot(3,2,3);
 [r, shiftR, rawR, lags] = correctedXCorr(data_chat, data_chat, maxLag);
@@ -401,6 +401,7 @@ xlabel('Time (s)'); ylabel('DAT AutoCorr');
 % legend({'corrected', 'raw', 'shift predictor'});
 
 data_pupil = TE.pupil.pupDiameter';
+data_pupil = data_pupil(1:size(data_chat, 1), :);
 % data_pupil = data_pupil(:,2:end) - data_pupil(:,1:end-1); % whiten
 % data_pupil = nanzscore2(data_pupil);
 data_pupil = nanzscore(data_pupil);
@@ -431,7 +432,7 @@ plot(lags * 1/Fs, shiftR, 'b');
 xlabel('Time (s)'); ylabel('Pupil AutoCorr'); 
 % legend({'corrected', 'raw', 'shift predictor'});
 
-
+formatFigurePoster([8 8], '', 13);
 
 if saveOn
     saveas(gcf, fullfile(savepath, 'xcorr_pupil.fig'));
@@ -502,11 +503,11 @@ end
 
 %% scatter
 ensureFigure('scatter_pupil', 1); 
-subplot(2,2,1); scatter(reshape(data_chat, numel(data_chat), 1), reshape(data_pupil, numel(data_pupil), 1), '.');
+subplot(2,2,1); scatter(data_chat(:), reshape(data_pupil(1:size(data_chat, 1), :), numel(data_chat), 1), '.');
 ylabel('pupil'); xlabel('chat');
-subplot(2,2,2); scatter(reshape(data_dat, numel(data_dat), 1), reshape(data_pupil, numel(data_pupil), 1), '.');
+subplot(2,2,2); scatter(reshape(data_dat, numel(data_dat), 1), reshape(data_pupil(1:size(data_chat, 1), :), numel(data_chat), 1), '.');
 ylabel('pupil'); xlabel('dat');
-subplot(2,2,3); scatter(reshape(TE.Wheel.data.V, numel(data_dat), 1), reshape(data_pupil, numel(data_pupil), 1), '.');
+subplot(2,2,3); scatter(reshape(TE.Wheel.data.V(:, 1:size(data_dat, 1)), numel(data_dat), 1), reshape(data_pupil(1:size(data_chat, 1), :), numel(data_chat), 1), '.');
 ylabel('pupil'); xlabel('velocity');
 
 if saveOn
@@ -645,6 +646,7 @@ if saveOn
     saveas(gcf, fullfile(savepath, [figName '.fig']));
     saveas(gcf, fullfile(savepath, [figName '.jpg']));    
 end
+
 %% final example
 trial = 3;
 figName = ['coherence_ex_trial_' num2str(trial)];
@@ -655,6 +657,27 @@ plot(xdata, data_dat(:, trial), 'r');
 set(gca, 'YLim', [-3 7]);
 legend({'ChAT', 'DAT', 'Pupil'}); legend('boxoff');
 formatFigureGRC;
+if saveOn
+    saveas(gcf, fullfile(savepath, [figName '.fig']));
+    saveas(gcf, fullfile(savepath, [figName '.jpg']));    
+    saveas(gcf, fullfile(savepath, [figName '.epsc'])); 
+end
+
+%% 
+trial = 2;
+figName = 'allBehavior_examples';
+ensureFigure('allBehavior', 1);
+subplot(5,1,1);
+plot(TE.Wheel.xData, TE.Wheel.data.V(trial, :), 'LineWidth', 2, 'Color', [0.5 0.5 0.5]/256);  set(gca, 'XLim', [0 120]); ylabel('velocity'); set(gca, 'XTick', []);
+subplot(5,1,2);
+plot(TE.Whisk.xData, TE.Whisk.whiskNorm(trial, :), 'LineWidth', 2, 'Color', [0.5 0.5 0.5]/256); set(gca, 'XLim', [0 120]); ylabel('whisking'); set(gca, 'XTick', []);
+subplot(5,1,3);
+plot(TE.pupil.xData, TE.pupil.pupDiameterNorm(trial, :), 'LineWidth', 2, 'Color', [0.5 0.5 0.5]/256); set(gca, 'XLim', [0 120]); ylabel('pupil diameter'); set(gca, 'XTick', []);
+subplot(5,1,4);
+plot(TE.Photometry.xData, TE.Photometry.data(1).ZS(trial, :), 'LineWidth', 2, 'Color', [171 55 214]/256); set(gca, 'XLim', [0 120]); ylabel('ACh.'); set(gca, 'XTick', []);
+subplot(5,1,5);
+plot(TE.Photometry.xData, TE.Photometry.data(2).ZS(trial, :), 'LineWidth', 2, 'Color', [237 125 49]/256); set(gca, 'XLim', [0 120], 'YLim', [-5 5]);ylabel('Dop.');  xlabel('Time (s)');
+formatFigurePoster([8 8], '', 16);
 if saveOn
     saveas(gcf, fullfile(savepath, [figName '.fig']));
     saveas(gcf, fullfile(savepath, [figName '.jpg']));    

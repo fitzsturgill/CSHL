@@ -1,4 +1,4 @@
-% LNL_Odor_v2_first2sessions_AS
+% LNL_Odor_v2_acquisition_AS
 % 4/10/17  Analysis script for pavlovian reversals using LickNoLick_Odor_V2
 % protocol
 
@@ -65,7 +65,8 @@ for channel = channels
 end
 
 %%
-basepath = uigetdir; % prompts windows/mac osx to give you a location to save
+% basepath = uigetdir; % prompts windows/mac osx to give you a location to save
+basepath = 'Z:\SummaryAnalyses\LNL_odor_v2_first2Sessions';
 sep = strfind(TE.filename{1}, '_');
 subjectName = TE.filename{1}(1:sep(2)-1);
 disp(subjectName);
@@ -118,13 +119,14 @@ for channel = channels
 end
 %% generate trial lookups for different combinations of conditions
 LNL_conditions;
-% find first reversal if it occurs on day 2
-firstReversalBlock = TE.BlockNumber(find(TE.sessionIndex == 2 & TE.OdorValveIndex == 1 & TE.CSValence == -1, 1)); % block number where 1st odor has a negative valence.
-firstReversalTrial = find(TE.BlockNumber == firstReversalBlock, 1);
+% find first reversal if it occurs on day 2+
 day1Trials = TE.sessionIndex == 1 & validTrials;
-day2Trials = TE.sessionIndex == 2 & validTrials;
-day2Trials(firstReversalTrial:end) = false; % if firstReversalTrial is empty nothing happens...
-
+day2PlusTrials = TE.sessionIndex >= 2 & validTrials;
+firstReversalBlock = TE.BlockNumber(find(TE.sessionIndex >= 2 & TE.OdorValveIndex == 1 & TE.CSValence == -1, 1)); % block number where 1st odor has a negative valence.
+if ~isempty(firstReversalBlock)
+    firstReversalTrial = find(TE.BlockNumber == firstReversalBlock, 1);
+    day2PlusTrials(firstReversalTrial:end) = false; % if firstReversalTrial is empty nothing happens...
+end
 %% photometry and lick averages- compare day 1 and day 2
 %     ylim = [-2 8];
     saveName = [subjectName '_phAvgs'];  
@@ -136,7 +138,7 @@ day2Trials(firstReversalTrial:end) = false; % if firstReversalTrial is empty not
     % photometry averages
     if ismember(1, channels)
         subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); 
-        [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & day1Trials & rewardTrials, csPlusTrials & day2Trials & rewardTrials}, 1,...
+        [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & day1Trials & rewardTrials, csPlusTrials & day2PlusTrials & rewardTrials}, 1,...
             'FluorDataField', 'ZS', 'window', window, 'linespec', {'c','b'}, 'zeroTimes', TE.Cue); %high value, reward
         legend(hl, {'cued reward, day 1', 'cued reward, day 2'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
         title('Acquisition'); ylabel('BF dF/F Zscored'); textBox(subjectName);%set(gca, 'YLim', ylim);
@@ -144,7 +146,7 @@ day2Trials(firstReversalTrial:end) = false; % if firstReversalTrial is empty not
     
     if ismember(2, channels)
         subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1); 
-        [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & day1Trials & rewardTrials, csPlusTrials & day2Trials & rewardTrials}, 2,...
+        [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & day1Trials & rewardTrials, csPlusTrials & day2PlusTrials & rewardTrials}, 2,...
             'FluorDataField', 'ZS', 'window', window, 'linespec', {'c','b'}, 'zeroTimes', TE.Cue); %high value, reward
 %         legend(hl, {'cuedReward, day 1', 'cuedReward, day 2'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
         ylabel('VTA dF/F Zscored'); xlabel('time from cue (s)'); textBox(subjectName);%set(gca, 'YLim', ylim); 
@@ -154,41 +156,42 @@ day2Trials(firstReversalTrial:end) = false; % if firstReversalTrial is empty not
     varargin = {'trialNumbering', 'consecutive',...
         'window', window, 'zeroTimes', TE.Cue,'linespec', {'c','b'}};
     axh = [];
-    subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = plotEventAverageFromTE(TE, {csPlusTrials & day1Trials & rewardTrials, csPlusTrials & day2Trials & rewardTrials}, 'Port1In', varargin{:});
+    subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1); [ha, hl] = plotEventAverageFromTE(TE, {csPlusTrials & day1Trials & rewardTrials, csPlusTrials & day2PlusTrials & rewardTrials}, 'Port1In', varargin{:});
     ylabel('licks (s)'); xlabel('time from cue (s)'); 
-    
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+end
     
 %% Raster Plots for licking and both photometry channels
 CLimFactor = 2;
 
-saveName = 'Rasters_first2Sessions';
+saveName = 'Rasters_firstSessions';
 h=ensureFigure(saveName, 1);
 mcPortraitFigSetup(h);
 
 subplot(1,4,1); 
-eventRasterFromTE(TE, csPlusTrials & (day1Trials | day2Trials) & rewardTrials, 'Port1In', 'trialNumbering', 'consecutive',...
+eventRasterFromTE(TE, csPlusTrials & (day1Trials | day2PlusTrials) & rewardTrials, 'Port1In', 'trialNumbering', 'consecutive',...
     'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
 title('cued'); ylabel('trial number');
-set(gca, 'YLim', [0 sum(csPlusTrials & (day1Trials | day2Trials) & rewardTrials)]);
+set(gca, 'YLim', [0 sum(csPlusTrials & (day1Trials | day2PlusTrials) & rewardTrials)]);
 set(gca, 'XLim', [-4 7]); 
 set(gca, 'FontSize', 14)
 
-
-
     
 subplot(1,4,2);
-phRasterFromTE(TE, csPlusTrials & (day1Trials | day2Trials) & rewardTrials, 1, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive');
+phRasterFromTE(TE, csPlusTrials & (day1Trials | day2PlusTrials) & rewardTrials, 1, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive');
 set(gca, 'FontSize', 14);
    
 subplot(1,4,3);
-phRasterFromTE(TE, csPlusTrials & (day1Trials | day2Trials) & rewardTrials, 2, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive');
+phRasterFromTE(TE, csPlusTrials & (day1Trials | day2PlusTrials) & rewardTrials, 2, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive');
 set(gca, 'FontSize', 14);
     
 
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+end
 
-%     if saveOn
-%         saveas(gcf, fullfile(savepath, [saveName '.fig']));
-%         saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
-%     end
-
+%% save data
 

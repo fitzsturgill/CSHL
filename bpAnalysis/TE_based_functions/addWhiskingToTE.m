@@ -169,7 +169,7 @@ function whisk = addWhiskingToTE(TE, varargin)
             try
                 loaded = dlmread(fileList{fi}, ' ');
             catch
-                fprintf('*** Skipping %s from %s ***\n', fileList{fi}, sessionname);
+                fprintf('*** Skipping %s from %s ***\n',  sessionname);
                 continue
             end
             loaded = loaded(:,1);

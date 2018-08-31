@@ -17,6 +17,7 @@ function TE = addPupilometryToTE(TE, varargin)
         'rootPath', [];...
         'normMode', 'bySession';...  % [bySession, byTrial]
         'folderSuffix', '';...
+        'fillNaNs', 0;...
         };
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings    
     if isempty(s.frameRateNew)
@@ -209,6 +210,20 @@ function TE = addPupilometryToTE(TE, varargin)
 %             pupil.pupDiameter(tei, 1:newFrames) = changeRate([loaded.pupilData.pupil.diameter(1:framesToLoad)' repmat(loaded.pupilData.pupil.diameter(end), 1, nFrames - framesToLoad)]);
 %             pupil.pupResidual(tei, 1:newFrames) = changeRate([loaded.pupilData.pupil.circResidual(1:framesToLoad)' repmat(loaded.pupilData.pupil.circResidual(end), 1, nFrames - framesToLoad)]);
 %             pupil.startTime(tei, 1) = TE.(s.startField){tei}(1);
+%% interpolate/extrapolate NaNs if desired
+            if s.fillNaNs
+                fillFields = {'diameter', 'area'};
+                for fcounter = 1:length(fillFields)
+                    try
+                        loaded.pupilData.pupil.(fillFields{fcounter}) = inpaint_nans(loaded.pupilData.pupil.(fillFields{fcounter}));
+                    catch
+                        warning('inpaint_nans failed in addPuupilometryToTE for %', [fname '.mat']);
+                    end
+                end
+            end
+                
+
+
 %%          just use pre-allocated NaNs as pad
             framesToLoad = min(nFrames, loaded.pupilData.currentFrame(end)); % bonsai seems most often to add one extra frame, still handling case where a few frames are dropped, see below
 

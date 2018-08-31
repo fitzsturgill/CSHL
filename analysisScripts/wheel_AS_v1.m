@@ -40,7 +40,9 @@ TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', baselineEnd + 1, 'Fs
 %  [wheelY_new, wheelTimes_new] = resample(wheelY, wheelTimes, 20, 'linear');
 folderSuffix = ''; % or enter folder suffix on command line
 %%
-TE = addPupilometryToTE(TE, 'duration', baselineEnd + 1, 'zeroField', 'Baseline', 'startField', 'Baseline', 'frameRate', 60, 'frameRateNew', 20, 'folderSuffix', folderSuffix);
+TE = addPupilometryToTE(TE, 'duration', baselineEnd + 1, 'zeroField', 'Baseline', 'startField', 'Baseline', 'frameRate', 60, 'frameRateNew', 20, 'folderSuffix', folderSuffix, 'fillNaNs', 1);
+%%
+TE.Whisk = addWhiskingToTE(TE, 'duration', baselineEnd + 1, 'zeroField', 'Baseline', 'startField', 'Baseline', 'sampleRate', 60, 'sampleRateNew', 20, 'folderSuffix', folderSuffix);
 %% Now saved in directory according to first session filename
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
