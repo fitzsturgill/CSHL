@@ -72,10 +72,6 @@ function TE = addPupilometryToTE(TE, varargin)
     pupil.xData = pupil.xData + startX;
     blStartP = 1; % just start at beginning of video for baseline
     blEndP = bpX2pnt(0, s.frameRateNew, startX); % go to zero point        
-
-%     wtf.files = [];
-%     wtf.trials = [];
-%     wtf = repmat(wtf, length(sessionnames), 1);
     
     for counter = 1:length(sessionnames)
         sessionname = sessionnames{counter};
@@ -94,7 +90,7 @@ function TE = addPupilometryToTE(TE, varargin)
             continue
         end
         cd(pupilPath);
-%         fs = dir('*upil_*.mat');
+
         fs = dir('*upil_*.avi'); % use videos to get time stamps, then generate .mat file name later on which will be derived from the timstamped video file
         if length(fs) == 0
             warning(['*** No Pupil_ files found in ' pupilFolder]); % you need to analyze it first!
@@ -102,115 +98,82 @@ function TE = addPupilometryToTE(TE, varargin)
         end
         fileList = {fs(:).name};        
         [fileList,ix] = sort_nat(fileList); % alphanumeric sorting
+%% verify correct numbering of pupil files        
         dmDelta = seconds(diff(datetime({fs(ix).date})));
         dmDelta = dmDelta(:);
         if any(dmDelta < 2)
             error('there are spurious pupil files that you need to delete or deal with');
         end
-%         wtf(counter).files = dmDelta;
+
         % find matching session indices within TE either by matching numeric suffix or total number of files 
         si = find(filterTE(TE, 'filename', sessionname));
         teDelta = diff(TE.TrialStartTimestamp(si));
         teDelta = teDelta(:);
-%         wtf(counter).trials = teDelta;
-        %% verify correct numbering of pupil files
-        methods = [0 0]; % 2 methods of checking
-        % method #1- see if first file is Pupil_0.mat file.....
-        fname = fileList{1}; % there should exist a .mat file for every index in TE
-        [~,fname,~] = fileparts(fname);
-%         firstNumber = str2double(fname(strfind(fname, '_') + 1:end));
-%         if firstNumber == 0
-%             methods(1) = 1;
-%         end
+        teDelta = circshift(teDelta, -1); % shift backward because Bonsai apparently time-stamps the files upon the second trigger rather the end of the 1st trigger's window (e.g. 11sec post-first trigger for reversal experiment)
+
+
+        numFileDifference = length(dmDelta) - length(teDelta);
         
-        % note 180826 FS
-        % sometimes there is 1 fewer bonsai acq, I think this is because
-        % bonsai gets behind and I need to wait to stop bonsai after a
-        % trial
-        
-        % note 180827 FS, sometimes there are way more bonsai acqs this is
-        % because there are spurious triggers (is my pulse to bonsai too
-        % long?) and you get nearly duplicate bonsai files saved 
-        if abs((length(si) - length(fileList))) <= 2
-            methods(2) = 1;
-        end
-        
-        if ~any(methods)
-            warning(['*** pupil file numbering mismatch for session ' sessionname ' skipping... ***']);
-            continue
+        maxDifference = 2;
+        if abs(numFileDifference) > maxDifference            
+            error(['*** spurious or missing pupil.mat files detected for ' sessionname ' you may need to run  bpCleanAndVerifyBonsai ***']);
         end        
         
-        % correlate ITIs with date modified on pupil video files, try to
-        % shift if necessary, assuming an alignment problem at the
-        % beginning
-        % cirshift on teDelta, if - works, then the first n trials don't have a pupil file (you need
-        % to skip the first n trials)
-        % otherwise, the first n pupil files don't have a trial ( you need
-        % to skip the first n pupil files)
-        
-             
-        ml = min(length(dmDelta), length(teDelta));
-        shifts = -3:3;
-        Rsqs = zeros(size(shifts));
-       
-        for sc = 1:length(shifts)
-            shift = shifts(sc);
-            Rsqs(sc) = corr(dmDelta(1:ml), circshift(teDelta(1:ml), shift));
-        end     
-        
-        [maxRsq, mix] = max(Rsqs);
-        if maxRsq > 0.9
-            goodShift = shifts(mix);            
+        % ith element of correctedIx contains trial index matching the ith
+        % pupil.mat file
+        correctedIx = 1:length(dmDelta);
+        if numFileDifference < 0 % there are missing pupil files            
+            startingIndex = 1; 
+            for dc = 1:abs(numFileDifference)
+                Rsqs = zeros(length(dmDelta) - startingIndex + 1, 1);
+                for shc = startingIndex:length(dmDelta)
+                    testCorrection = correctedIx;
+                    testCorrection(shc:end) = testCorrection(shc:end) + 1;
+                    Rsqs(shc) = corr(dmDelta, teDelta(testCorrection));
+                end
+                [maxRsq, mix] = max(Rsqs);
+                correctedIx(mix:end) = correctedIx(mix:end) + 1; % 'save' the first correction/gap prior to searching for the next
+                startingIndex = mix;
+            end
+            ensureFigure(sessionname, 1);
+            mcLandscapeFigSetup(gcf);
+            plot(dmDelta, 'b'); hold on; plot(teDelta(correctedIx), 'r'); textBox(sprintf('session %d, diff= %d, maxRsq= %.2f', counter, numel(dmDelta) - numel(teDelta), corr(dmDelta, teDelta(correctedIx))));
+            legend({'files', 'trials'});
         else
-            goodShift = [];   
+            if numFileDifference > 0
+                % RIGHT NOW I'M ASSUMING THAT EXTRA PUPIL FILES OCCUR AT THE
+                % VERY END
+                correctedIx = correctedIx(1:length(teDelta));
+            end
+            maxRsq = corr(dmDelta(1:length(teDelta)), teDelta);
+            ensureFigure(sessionname, 1);
+            mcLandscapeFigSetup(gcf);
+            plot(dmDelta, 'b'); hold on; plot(teDelta, 'r'); textBox(sprintf('session %d, diff= %d, maxRsq= %.2f', counter, numel(dmDelta) - numel(teDelta), maxRsq));
+            legend({'files', 'trials'});            
         end
+        % convert correctedIx from time differences back to actual
+        % indices (reverse the diff)
+        correctedIx = [1 correctedIx + 1];
         
-        ensureFigure(sessionname, 1);
-        mcLandscapeFigSetup(gcf);
-        plot(dmDelta, 'b'); hold on; plot(teDelta, 'r'); textBox(sprintf('session %d, diff= %d', counter, numel(dmDelta) - numel(teDelta)));
-
-%             if rsq > 0.9
-%                 goodShift = shift + 1; % why do I need an offset? This is the crux of what I don't understand 180828
-%                 fprintf('*** Rsq of trial and file ITIs = %.2f with shift of %d for %s ***\n', rsq, goodShift, sessionname); 
-%                 break
-%             end
-                                                                 
-        if isempty(goodShift)  
-            warning('*** pupil file alignment issue with max Rsq = %.2f for session %s skipping... *** \n', maxRsq, sessionname);
-%             fprintf('*** First pupil suffix is %d, %d trials vs %d Pupil files for session %s ***, skipping\n', firstNumber, length(si), length(fileList), sessionname);            
-            continue
+        if maxRsq < 0.9
+            warning('*** low max Rsq = %.2f for session %s  *** \n', maxRsq, sessionname);
+%             continue            
         end
         
         %% loop through pupil .mat files from a given session
         wb = waitbar(0, num2str(counter));
-        for i = 1:length(si) 
-            tei = si(i); % TE index number    
-            fi = i + goodShift;
-            if fi <= 0 % there isn't a pupil file for this one
-                continue
-            end
-           
+        for i = 1:length(correctedIx)
+            icorrected = correctedIx(i);
+            tei = si(icorrected); % TE index number               
             try
-                [~,fname,~] = fileparts(fileList{fi});                 
+                [~,fname,~] = fileparts(fileList{i});                 
                 loaded = load([fname '.mat']);
             catch
                 fprintf('*** %s didn''t exist in %s ***\n', [fname '.mat'], pupilPath)
                 continue;
             end
             
-            %% padding with end value
-%             framesToLoad = min(nFrames, loaded.pupilData.currentFrame(end)); % bonsai seems most often to add one extra frame, still handling case where a few frames are dropped, see below
-%             newFrames = s.duration * s.frameRateNew;
-%             pupil.frameRate(tei,1) = s.frameRateNew;
-%             pupil.settings{tei} = loaded.pupilData.settings;          
-% 
-%             pupil.eyeArea(tei, 1:newFrames) = changeRate([loaded.pupilData.eye.area(1:framesToLoad)' repmat(loaded.pupilData.eye.area(end), 1, nFrames - framesToLoad)]);
-%             pupil.blinkDetected(tei, 1:newFrames) = changeRate([loaded.pupilData.eye.blinkDetected(1:framesToLoad)' repmat(loaded.pupilData.eye.blinkDetected(end), 1, nFrames - framesToLoad)]);
-%             pupil.pupArea(tei, 1:newFrames) = changeRate([loaded.pupilData.pupil.area(1:framesToLoad)' repmat(loaded.pupilData.pupil.area(end), 1, nFrames - framesToLoad)]);
-%             pupil.pupDiameter(tei, 1:newFrames) = changeRate([loaded.pupilData.pupil.diameter(1:framesToLoad)' repmat(loaded.pupilData.pupil.diameter(end), 1, nFrames - framesToLoad)]);
-%             pupil.pupResidual(tei, 1:newFrames) = changeRate([loaded.pupilData.pupil.circResidual(1:framesToLoad)' repmat(loaded.pupilData.pupil.circResidual(end), 1, nFrames - framesToLoad)]);
-%             pupil.startTime(tei, 1) = TE.(s.startField){tei}(1);
-%% interpolate/extrapolate NaNs if desired
+            %% interpolate/extrapolate NaNs if desired
             if s.fillNaNs
                 fillFields = {'diameter', 'area'};
                 for fcounter = 1:length(fillFields)
@@ -221,9 +184,6 @@ function TE = addPupilometryToTE(TE, varargin)
                     end
                 end
             end
-                
-
-
 %%          just use pre-allocated NaNs as pad
             framesToLoad = min(nFrames, loaded.pupilData.currentFrame(end)); % bonsai seems most often to add one extra frame, still handling case where a few frames are dropped, see below
 

@@ -47,7 +47,7 @@ nTrials = length(TE.filename);
 
 % set time windows to compute cue/conditioned stimulus (Cs) response for
 % each trial
-ch1CsWindow = [1.5 3];
+ch1CsWindow = [1 2.5];
 ch2CsWindow = [1 2.5];
 
 usWindow = [0 0.75];
@@ -83,18 +83,19 @@ end
 %% add pupilometry
 TE = addPupilometryToTE(TE, 'duration', 11, 'zeroField', 'Cue',  'frameRate', 60, 'frameRateNew', 20);
 pupLag = 0;
+TE.pupil_cs = bpCalcPeak_Pupil(TE.pupil, 'zeroTimes', TE.Cue, 'window', [1 3]);
+TE.pupil_us = bpCalcPeak_Pupil(TE.pupil, 'zeroTimes', TE.Us, 'window', [0.5 1.5]);
+TE.pupil_baseline = bpCalcPeak_Pupil(TE.pupil, 'zeroTimes', TE.PreCsRecording, 'window', [0 4]);
 
-TE.pupilBaseline = mean(TE.pupil.pupDiameterNorm(:,bpX2pnt(-3, 20, -4):bpX2pnt(0, 20, -4)), 2);
-% ch1CsWindow = [0.25 1];
-TE.pupil_cs = mean(TE.pupil.pupDiameterNorm(:,bpX2pnt(ch1CsWindow(1) + pupLag, 20, -4):bpX2pnt(ch1CsWindow(2) + pupLag, 20, -4)), 2);
 %% add whisking
-
 TE.Whisk = addWhiskingToTE(TE);
-
+TE.whisk_cs = bpCalcPeak_Whisk(TE.Whisk, 'zeroTimes', TE.Cue, 'window', [0 3]);
+TE.whisk_baseline = bpCalcPeak_Whisk(TE.Whisk, 'zeroTimes', TE.PreCsRecording, 'window', [0 4]);
 
 %% add wheel
 TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', 11, 'Fs', 20, 'startField', 'Start');
-TE.wheelBaseline = mean(TE.Wheel.data.V(:,bpX2pnt(-3, 20, -4):bpX2pnt(0, 20, -4)), 2);
+TE.wheel_baseline = mean(TE.Wheel.data.V(:,bpX2pnt(-4, 20, -4):bpX2pnt(0, 20, -4)), 2);
+TE.wheel_cs = mean(TE.Wheel.data.V(:,bpX2pnt(1, 20, -4):bpX2pnt(3, 20, -4)), 2);
 
 %%
 basepath = uigetdir; % prompts windows/mac osx to give you a location to save
@@ -150,8 +151,6 @@ for channel = channels
 end
 %% generate trial lookups for different combinations of conditions
 LNL_conditions;
-
-%%
 
 %% photometry averages, zscored
 %     ylim = [-2 8];
@@ -211,19 +210,19 @@ end
 saveName = ('Pupil_averages');
 ensureFigure(saveName, 1); 
 % condition on behavior and cue condition
-subplot(2,2,1);plotPupilAverageFromTE(TE, {uncuedTrials, csPlusTrials & hitTrials, csMinusTrials & CRTrials}, 'window', [-2 6]);
-legend({'uncued', 'cs+, hit', 'cs-, CR'}, 'Box', 'off', 'Location', 'northwest');
+subplot(2,2,1);[~, hl] = plotPupilAverageFromTE(TE, {uncuedTrials, csPlusTrials & hitTrials, csMinusTrials & CRTrials}, 'window', [-2 6]);
+legend(hl, {'uncued', 'cs+, hit', 'cs-, CR'}, 'Box', 'off', 'Location', 'northwest');
 title('Cue condition'); xlabel('time from cue (s)');
 set(gca, 'XLim', [-2 6]);
 % condition on behavior only for csPlus
-subplot(2,2,2);plotPupilAverageFromTE(TE, {hitTrials & csPlusTrials, missTrials & csPlusTrials}, 'window', [-2 6]);
+subplot(2,2,2);[~, hl] = plotPupilAverageFromTE(TE, {hitTrials & csPlusTrials, missTrials & csPlusTrials}, 'window', [-2 6]);
 set(gca, 'XLim', [-2 6]);
 title('Cs+ by behavioral response'); xlabel('time from cue (s)');
-legend({'uncued', 'cs+, hit', 'cs+, miss'}, 'Box', 'off', 'Location', 'northwest');
+legend(hl, {'cs+, hit', 'cs+, miss'}, 'Box', 'off', 'Location', 'northwest');
 % reward, expected vs unexpected
-subplot(2,2,3);plotPupilAverageFromTE(TE, {csPlusTrials & hitTrials & rewardTrials, csMinusTrials & CRTrials & rewardTrials, uncuedReward}, 'window', [-2 6]);
+subplot(2,2,3);[~, hl] = plotPupilAverageFromTE(TE, {csPlusTrials & hitTrials & rewardTrials, (csMinusTrials & CRTrials & rewardTrials) | uncuedReward}, 'window', [-2 6]);
 set(gca, 'XLim', [-2 6]);
-legend({'cs+, hit, reward', 'cs-, CR, reward', 'uncued, reward'}, 'Box', 'off', 'Location', 'northwest');
+legend(hl, {'expected reward', 'unexpected reward', 'uncued, reward'}, 'Box', 'off', 'Location', 'northwest');
 title('Reward by cue and behavior'); xlabel('time from cue (s)');
 formatFigure('scaleFactor', 4)
 if saveOn
@@ -363,6 +362,12 @@ saveas(gcf, fullfile(savepath, 'allBehavior_whisk_csMinus'), 'jpeg');
         'ReinforcementOutcome', TE.ReinforcementOutcome,...
         'OdorValveIndex', TE.OdorValveIndex,...
         'csLicksROC', TE.AnswerLicksROC,...
+        'whisk_cs', TE.whisk_cs.data,...
+        'whisk_baseline', TE.whisk_baseline.data,...
+        'pupil_cs', TE.pupil_cs,...
+        'pupil_baseline', TE.pupil_baseline,...  
+        'wheel_cs', TE.wheel_cs,...
+        'wheel_baseline', TE.wheel_baseline,...
         };
     
     if ismember(2, channels)

@@ -98,78 +98,75 @@ function whisk = addWhiskingToTE(TE, varargin)
         fileList = {};
         [fileList{1:length(fs)}] = fs(:).name; % see deal documentation I think...
         [fileList,ix] = sort_nat(fileList); % alphanumeric sorting
+%% verify correct numbering of pupil files        
         dmDelta = seconds(diff(datetime({fs(ix).date})));
         dmDelta = dmDelta(:);
         if any(dmDelta < 2)
-            error('there are spurious whisk files that you need to delete or deal with');
-        end        
-        
-        % find matching session indices within TE
+            error('there are spurious pupil files that you need to delete or deal with');
+        end
+%         wtf(counter).files = dmDelta;
+        % find matching session indices within TE either by matching numeric suffix or total number of files 
         si = find(filterTE(TE, 'filename', sessionname));
         teDelta = diff(TE.TrialStartTimestamp(si));
-        teDelta = teDelta(:);              
-        
-        
-        
-        %% verify correct numbering of whisk files
-        methods = [0 0]; % 2 methods of checking
-        % method #1- see if first file is Pupil_0.mat file.....
-        fname = fileList{1}; % there should exist a .mat file for every index in TE
-%         firstNumber = str2double(fname(strfind(fname, '_') + 1:strfind(fname, '.csv') - 1));
-%         if firstNumber == 0
-%             methods(1) = 1;
-%         end
-        % note 180826 FS
-        % sometimes there is 1 fewer bonsai acq, I think this is because
-        % bonsai gets behind and I need to wait to stop bonsai after a
-        % trial
-        
-        % note 180827 FS, sometimes there are way more bonsai acqs this is
-        % because there are spurious triggers (is my pulse to bonsai too
-        % long?) and you get nearly duplicate bonsai files saved         
-        if abs((length(si) - length(fileList))) <= 1
-            methods(2) = 1;
-        end
-        
-        if ~any(methods)
-%             warning(['*** pupil file numbering mismatch for session ' sessionname ' skipping... *** \n']);
-            fprintf('*** First whisk suffix is %d, %d trials vs %d whisk files for session %s ***, skipping\n', firstNumber, length(si), length(fileList), sessionname);
-            continue
-        end
-        
-        goodShift = [];        
-        ml = min(length(dmDelta), length(teDelta));
-        maxRsq = 0;
-        for shift = -3:3
-            rsq = corr(dmDelta(1:ml), circshift(teDelta(1:ml), shift));
-            maxRsq = max(rsq, maxRsq);
-            if rsq > 0.9
-                goodShift = shift + 1; % why do I need an offset? This is the crux of what I don't understand 180828
-                fprintf('*** Rsq of trial and file ITIs = %.2f with shift of %d for %s ***\n', rsq, goodShift, sessionname); 
-                break
-            end
-        end     
+        teDelta = teDelta(:);
+        teDelta = circshift(teDelta, -1); % shift backward to account for Bonsai's tendency to skip the first time difference (perhaps due to Bonsai 'closing' the first movie file upon the 2nd trigger occurance rather than the end of the 11 sec duration triggeredWindow)
+%         wtf(counter).trials = teDelta;
 
-                                                                 
-        if isempty(goodShift)  
-            warning('*** whisk file alignment issue with max Rsq = %.2f for session %s skipping... *** \n', maxRsq, sessionname);
-%             fprintf('*** First pupil suffix is %d, %d trials vs %d Pupil files for session %s ***, skipping\n', firstNumber, length(si), length(fileList), sessionname);            
-            continue
+        numFileDifference = length(dmDelta) - length(teDelta);
+        
+        maxDifference = 2;
+        if abs(numFileDifference) > maxDifference            
+            error(['*** spurious or missing whisk.csv files detected for ' sessionname ' you may need to run  bpCleanAndVerifyBonsai ***']);
         end        
         
-        for i = 1:min(length(si), length(fileList)) % in case we have one fewer pupil video
-            tei = si(i); % TE index number
-            
-            fi = i + goodShift;
-            if i <= 0 % there isn't a whisk file for this one
-                continue
+        % ith element of correctedIx contains trial index matching the ith
+        % pupil.mat file
+        correctedIx = 1:length(dmDelta);
+        if numFileDifference < 0 % there are missing pupil files            
+            startingIndex = 1; 
+            for dc = 1:abs(numFileDifference)
+                Rsqs = zeros(length(dmDelta) - startingIndex + 1, 1);
+                for shc = startingIndex:length(dmDelta)
+                    testCorrection = correctedIx;
+                    testCorrection(shc:end) = testCorrection(shc:end) + 1;
+                    Rsqs(shc) = corr(dmDelta, teDelta(testCorrection));
+                end
+                [maxRsq, mix] = max(Rsqs);
+                correctedIx(mix:end) = correctedIx(mix:end) + 1;
+                startingIndex = mix;
             end
-
-            % extract only first column using csv read
+            ensureFigure(sessionname, 1);
+            mcLandscapeFigSetup(gcf);
+            plot(dmDelta, 'b'); hold on; plot(teDelta(correctedIx), 'r'); textBox(sprintf('session %d, diff= %d, maxRsq= %.2f', counter, numel(dmDelta) - numel(teDelta), corr(dmDelta, teDelta(correctedIx))));
+            legend({'files', 'trials'});
+        else
+            if numFileDifference > 0
+                % RIGHT NOW I'M ASSUMING THAT EXTRA PUPIL FILES OCCUR AT THE
+                % VERY END
+                correctedIx = correctedIx(1:length(teDelta));
+            end
+            maxRsq = corr(dmDelta(1:length(teDelta)), teDelta);
+            ensureFigure(sessionname, 1);
+            mcLandscapeFigSetup(gcf);
+            plot(dmDelta, 'b'); hold on; plot(teDelta, 'r'); textBox(sprintf('session %d, diff= %d, maxRsq= %.2f', counter, numel(dmDelta) - numel(teDelta), maxRsq));
+            legend({'files', 'trials'});            
+        end
+        % convert correctedIx from time differences back to actual
+        % indices (reverse the diff)
+        correctedIx = [1 correctedIx + 1];
+        
+        if maxRsq < 0.9
+            warning('*** low max Rsq = %.2f for session %s  *** \n', maxRsq, sessionname);
+%             continue            
+        end
+        
+        for i = 1:length(correctedIx)
+            icorrected = correctedIx(i);
+            tei = si(icorrected); % TE index number    
             try
-                loaded = dlmread(fileList{fi}, ' ');
+                loaded = dlmread(fileList{i}, ' ');
             catch
-                fprintf('*** Skipping %s from %s ***\n',  sessionname);
+                fprintf('*** %s didn''t exist in %s ***\n', fileList{i},  sessionname);
                 continue
             end
             loaded = loaded(:,1);
@@ -177,7 +174,8 @@ function whisk = addWhiskingToTE(TE, varargin)
             currentSamples = ceil(samplesAvailable * p/q);
             resampled = resample(loaded, p, q);
             whisk.sampleRate(tei, 1) = s.sampleRateNew;
-            whisk.whisk(tei,1:min(nsamplesNew, currentSamples)) = resampled(1:min(nsamplesNew, currentSamples))';               
+            whisk.whisk(tei,1:min(nsamplesNew, currentSamples)) = resampled(1:min(nsamplesNew, currentSamples))';   
+            whisk.startTime(tei, 1) = TE.(s.startField){tei}(1);     
         end
             %% baseline subtract
         for i = 1:size(normFields, 1)

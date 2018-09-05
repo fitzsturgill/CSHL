@@ -11,7 +11,7 @@ function [data, xData] = phAlignedWindow(TE, trials, ch, varargin)
         'zeroTimes', [];... % scalar or length TE-nTrials cell array or vector containing zero times relative to Bpod trial start        
         'window', [];... % averaging window relative to zero time/ alignment point, e.g. [-3 2] or [cellfun(@(x) x(1), TE.stateBefore) cellfun(@(x) x(end), TE.stateAfter)
         'referenceFromEnd', 0;... % relevent ONLY when zeroTimes are supplied as a cell array (e.g. if you want to align to the beginning or end of a bpod state)        
-        };    
+        };
     [s, ~] = parse_args(defaults, varargin{:});
 
 %% argument checking    
@@ -28,16 +28,14 @@ function [data, xData] = phAlignedWindow(TE, trials, ch, varargin)
     end
     nTrials = length(trials);
     totalTrials = length(TE.filename);
-
     
 %% process zeroTimes and windows
     if iscell(s.zeroTimes)
         if ~s.referenceFromEnd % first point in each cell array element
             zeroTimes = cellfun(@(x) x(1), s.zeroTimes); % returns vector
         else % last point in each cell array element
-            zeroTimes = cellfun(@(x) x(end), zeroTimes); % returns vector
-        end
-        
+            zeroTimes = cellfun(@(x) x(end), s.zeroTimes); % returns vector
+        end        
     else
         zeroTimes = s.zeroTimes; 
     end
