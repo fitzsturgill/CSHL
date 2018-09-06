@@ -121,6 +121,7 @@ function whisk = addWhiskingToTE(TE, varargin)
         
         % ith element of correctedIx contains trial index matching the ith
         % pupil.mat file
+        outlierITI = 35;        
         correctedIx = 1:length(dmDelta);
         if numFileDifference < 0 % there are missing pupil files            
             startingIndex = 1; 
@@ -129,15 +130,20 @@ function whisk = addWhiskingToTE(TE, varargin)
                 for shc = startingIndex:length(dmDelta)
                     testCorrection = correctedIx;
                     testCorrection(shc:end) = testCorrection(shc:end) + 1;
-                    Rsqs(shc) = corr(dmDelta, teDelta(testCorrection));
+                    % remove outliers (hard coded here as ITIs longer than
+                    % outlierITI
+                    clean_dmDelta = dmDelta;
+                    clean_teDelta = teDelta(testCorrection);
+                    cleanIx = (clean_dmDelta < outlierITI) & (clean_teDelta < outlierITI);                    
+                    Rsqs(shc) = corr(clean_dmDelta(cleanIx), clean_teDelta(cleanIx));
                 end
                 [maxRsq, mix] = max(Rsqs);
-                correctedIx(mix:end) = correctedIx(mix:end) + 1;
+                correctedIx(mix:end) = correctedIx(mix:end) + 1; % 'save' the first correction/gap prior to searching for the next
                 startingIndex = mix;
             end
             ensureFigure(sessionname, 1);
             mcLandscapeFigSetup(gcf);
-            plot(dmDelta, 'b'); hold on; plot(teDelta(correctedIx), 'r'); textBox(sprintf('session %d, diff= %d, maxRsq= %.2f', counter, numel(dmDelta) - numel(teDelta), corr(dmDelta, teDelta(correctedIx))));
+           plot(dmDelta, 'b'); hold on; plot(teDelta(correctedIx), 'r'); textBox(sprintf('session %d, diff= %d, maxRsq= %.2f', counter, numel(dmDelta) - numel(teDelta), maxRsq));
             legend({'files', 'trials'});
         else
             if numFileDifference > 0
@@ -145,7 +151,12 @@ function whisk = addWhiskingToTE(TE, varargin)
                 % VERY END
                 correctedIx = correctedIx(1:length(teDelta));
             end
-            maxRsq = corr(dmDelta(1:length(teDelta)), teDelta);
+            % remove outliers (hard coded here as ITIs longer than
+            % outlierITI                          
+            clean_dmDelta = dmDelta(1:length(teDelta));
+            clean_teDelta = teDelta;
+            cleanIx = (clean_dmDelta < outlierITI) & (clean_teDelta < outlierITI);   
+            maxRsq = corr(clean_dmDelta(cleanIx), clean_teDelta(cleanIx));  
             ensureFigure(sessionname, 1);
             mcLandscapeFigSetup(gcf);
             plot(dmDelta, 'b'); hold on; plot(teDelta, 'r'); textBox(sprintf('session %d, diff= %d, maxRsq= %.2f', counter, numel(dmDelta) - numel(teDelta), maxRsq));

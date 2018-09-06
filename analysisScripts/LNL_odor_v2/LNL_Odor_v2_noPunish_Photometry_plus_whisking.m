@@ -98,7 +98,8 @@ TE.wheel_baseline = mean(TE.Wheel.data.V(:,bpX2pnt(-4, 20, -4):bpX2pnt(0, 20, -4
 TE.wheel_cs = mean(TE.Wheel.data.V(:,bpX2pnt(1, 20, -4):bpX2pnt(3, 20, -4)), 2);
 
 %%
-basepath = uigetdir; % prompts windows/mac osx to give you a location to save
+% basepath = uigetdir; % prompts windows/mac osx to give you a location to save
+basepath = 'Z:\SummaryAnalyses\LNL_Odor_v2_noPunish_whisk\';
 sep = strfind(TE.filename{1}, '_');
 subjectName = TE.filename{1}(1:sep(2)-1);
 disp(subjectName);
@@ -281,8 +282,9 @@ end
     title('DAT');    
 axs = findobj(gcf, 'Type', 'axes');
 
-set(axs, 'FontSize', 18);
+set(axs, 'FontSize', 16);
 set(axs(2:end), 'YTick', []);
+set(gcf, 'Position', [1 1 1920 1004]);
 saveas(gcf, fullfile(savepath, saveName), 'fig'); 
 saveas(gcf, fullfile(savepath, saveName), 'jpeg');
 
@@ -338,8 +340,9 @@ saveas(gcf, fullfile(savepath, saveName), 'jpeg');
     title('DAT');    
     axs = findobj(gcf, 'Type', 'axes');
 
-set(axs, 'FontSize', 18);
+set(axs, 'FontSize', 16);
 set(axs(2:end), 'YTick', []);
+set(gcf, 'Position', [1 1 1920 1004]);
 saveas(gcf, fullfile(savepath, 'allBehavior_whisk_csMinus'), 'fig'); 
 saveas(gcf, fullfile(savepath, 'allBehavior_whisk_csMinus'), 'jpeg');
 
@@ -364,8 +367,8 @@ saveas(gcf, fullfile(savepath, 'allBehavior_whisk_csMinus'), 'jpeg');
         'csLicksROC', TE.AnswerLicksROC,...
         'whisk_cs', TE.whisk_cs.data,...
         'whisk_baseline', TE.whisk_baseline.data,...
-        'pupil_cs', TE.pupil_cs,...
-        'pupil_baseline', TE.pupil_baseline,...  
+        'pupil_cs', TE.pupil_cs.data,...
+        'pupil_baseline', TE.pupil_baseline.data,...  
         'wheel_cs', TE.wheel_cs,...
         'wheel_baseline', TE.wheel_baseline,...
         };
