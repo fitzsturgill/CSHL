@@ -27,7 +27,7 @@ end
  TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL,...
     'tau', 2);   
 %% baseline expfit
-TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', {'expFit', 'expFit'}, 'zeroField', 'Cue', 'channels', channels, 'baseline', BL,...
+TE.Photometry2 = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', {'expFit', 'expFit'}, 'zeroField', 'Cue', 'channels', channels, 'baseline', BL,...
     'tau', 2);
 % TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'expFitBegin', 0.1,...
 %     'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL, 'downsample', 305);
@@ -36,11 +36,11 @@ TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, '
 channels = [1 2];
 
 %% extract peak trial dFF responses to cues and reinforcement and lick counts
-% csWindow = cellfun(@(x,y,z) [x(1) max(y(end), z(end))], TE.Cue, TE.AnswerLick, TE.AnswerNoLick); % max- to select either AnswerLick or AnswerNoLick timestamp (unused state contains NaN)
+% csWindow = cellfun(&#64;(x,y,z) [x(1) max(y(end), z(end))], TE.Cue, TE.AnswerLick, TE.AnswerNoLick); % max- to select either AnswerLick or AnswerNoLick timestamp (unused state contains NaN)
 nTrials = length(TE.filename);
 
 % csWindow = zeros(nTrials, 2);
-% csWindow(:,2) = cellfun(@(x,y,z) max(x(end), y(end)) - z(1), TE.AnswerLick, TE.AnswerNoLick, TE.Cue); 
+% csWindow(:,2) = cellfun(&#64;(x,y,z) max(x(end), y(end)) - z(1), TE.AnswerLick, TE.AnswerNoLick, TE.Cue); 
 % max 1) to select AnswerNoLick time stampfor no lick trials (unused state contains NaN)
 % 2) to select AnswerLick time stamp for lick trials (AnswerLick follows
 % AnswerNoLick state)
@@ -158,13 +158,14 @@ for counter = 1:2
     TE.Photometry.data(counter).diff = NaN(size(TE.Photometry.data(counter).ZS));
     TE.Photometry.data(counter).diff(:,2:end) = TE.Photometry.data(counter).ZS(:,2:end) - TE.Photometry.data(counter).ZS(:,1:end-1);
 end
+
 %% photometry averages, zscored
 %     ylim = [-2 8];
     fdField = 'diff';
     saveName = sprintf('%s_phAvgs_%s', subjectName, fdField);  
     h=ensureFigure(saveName, 1); 
     mcLandscapeFigSetup(h);
-    
+
     pm = [2 2];
     
     % - 6 0 4
@@ -209,8 +210,9 @@ nSessions = max(TE.sessionIndex);
 ensureFigure('pupil_check_sessions_avg', 1);
 nax = ceil(sqrt(nSessions));
 for counter = 1:nSessions
-    subplot(nax,nax,counter); plotPupilAverageFromTE(TE, {uncuedTrials & TE.sessionIndex == counter, csPlusTrials & TE.sessionIndex == counter});
-    set(gca, 'XLim', [-2 6]);
+    subplot(nax,nax,counter); 
+        plotPupilAverageFromTE(TE, {uncuedTrials & TE.sessionIndex == counter, csPlusTrials & TE.sessionIndex == counter});
+        set(gca, 'XLim', [-2 6]);
 end
 
 %% 
@@ -229,7 +231,7 @@ legend(hl, {'cs+, hit', 'cs+, miss'}, 'Box', 'off', 'Location', 'northwest');
 % reward, expected vs unexpected
 subplot(2,2,3);[~, hl] = plotPupilAverageFromTE(TE, {csPlusTrials & hitTrials & rewardTrials, (csMinusTrials & CRTrials & rewardTrials) | uncuedReward}, 'window', [-2 6]);
 set(gca, 'XLim', [-2 6]);
-legend(hl, {'expected reward', 'unexpected reward', 'uncued, reward'}, 'Box', 'off', 'Location', 'northwest');
+legend(hl, {'expected reward', 'unexpected reward'}, 'Box', 'off', 'Location', 'northwest');
 title('Reward by cue and behavior'); xlabel('time from cue (s)');
 formatFigure('scaleFactor', 4)
 if saveOn
@@ -237,6 +239,7 @@ if saveOn
     saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
 end
 %% all behavior CsPlus
+    fdField = 'diff';
     saveName = 'all_behavior_CsPlus';
     ensureFigure(saveName, 1);
     
@@ -248,9 +251,9 @@ end
     subplot(1,6,1);    
     image(TE.Wheel.data.V(csPlusTrials, :), 'XData', [-4 7], 'CDataMapping', 'Scaled');
 %     set(gca, 'CLim', [min(TE.Wheel.data.V(:)), max(TE.Wheel.data.V(:))]); 
-    set(gca, 'CLim', [mean(TE.Wheel.data.V(:)) - std(TE.Wheel.data.V(:)) * 2, mean(TE.Wheel.data.V(:)) + std(TE.Wheel.data.V(:)) * 2]); 
+    set(gca, 'CLim', [mean(TE.Wheel.data.V(:)) - std(TE.Wheel.data.V(:)) * 3, mean(TE.Wheel.data.V(:)) + std(TE.Wheel.data.V(:)) * 3]); 
     line(repmat([-4; 7], 1, length(sessionChanges)), [sessionChanges'; sessionChanges'], 'Parent', gca, 'Color', 'w', 'LineWidth', 1); % reversal lines    
-    line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines      
+    line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1);
     title('Velocity');
     ylabel('trial number');
 
@@ -280,10 +283,10 @@ end
     title('licking');
     
     
-    subplot(1,6,5); phRasterFromTE(TE, csPlusTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', 2); % 'CLimFactor', CLimFactor,
+    subplot(1,6,5); phRasterFromTE(TE, csPlusTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', 1, 'FluorDataField', fdField); % 'CLimFactor', CLimFactor,
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
     title('ChAT'); xlabel('Time frome odor (s)');
-    subplot(1,6,6); phRasterFromTE(TE, csPlusTrials, 2, 'trialNumbering', 'consecutive', 'CLimFactor', 2); % 'CLimFactor', CLimFactor,
+    subplot(1,6,6); phRasterFromTE(TE, csPlusTrials, 2, 'trialNumbering', 'consecutive', 'CLimFactor', 1, 'FluorDataField', fdField); % 'CLimFactor', CLimFactor,
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
     title('DAT');    
 axs = findobj(gcf, 'Type', 'axes');
@@ -489,5 +492,4 @@ smoothWindow = 5;
         saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
     end
     
-
-
+    
