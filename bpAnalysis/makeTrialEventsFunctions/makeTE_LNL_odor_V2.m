@@ -4,11 +4,11 @@ function TE = makeTE_LNL_odor_V2(sessions)
     end
     
     % find total number of trials acrosss selected sesssions
-    scounter = zeros(size(sessions));
+    sTally = zeros(size(sessions));
     for i = 1:length(sessions)
-        scounter(i) = sessions(i).SessionData.nTrials;
+        sTally(i) = sessions(i).SessionData.nTrials;
     end
-    nTrials = sum(scounter);
+    nTrials = sum(sTally);
     statesToAdd= {'ITI', 'PreCsRecording', 'Cue', 'AnswerDelay', 'AnswerStart', 'AnswerLick', 'AnswerNoLick',...
         'Reward', 'Punish', 'WNoise', 'Neutral', 'PostUsRecording'};
 
@@ -29,7 +29,14 @@ function TE = makeTE_LNL_odor_V2(sessions)
         'BlockFcn', zeros(nTrials, 1),...                        
         'LickAction', [],...
         'Us', [],...
-        'TrialStartTimestamp', []...
+        'TrialStartTimestamp', [],...
+        'sessions', []... % new 9/2018, store names and filepaths and sessionIndex, this struct is of length nsessions with fields: names, filespaths, indices
+        );
+    
+    TE.sessions = struct(... % sessions fields so that you can easily reload sessions data to modify TE
+        'filename', cell(length(sessions), 1),...
+        'filepath', [],...
+        'index', []...
         );
     
     % specific to auROC-driven reversals (uses auROC-driven block switch
@@ -51,6 +58,9 @@ function TE = makeTE_LNL_odor_V2(sessions)
         tcounter = 1;
     for sCounter = 1:length(sessions)
         session = sessions(sCounter);
+        TE.sessions(sCounter).filename = session.filename;
+        TE.sessions(sCounter).filepath = session.filepath;
+        TE.sessions(sCounter).index = sCounter;
         for counter = 1:session.SessionData.nTrials
             TE.filename{tcounter,1} = session.filename;
             TE.trialNumber(tcounter,1) = counter;

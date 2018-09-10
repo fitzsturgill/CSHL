@@ -1,6 +1,7 @@
 function TE = mergeSessions(TE, sessionIndicesToMerge)
     % sessionsToMerge-   consecutive sessions (as loaded in TE), denoted by sessionIndex  to merge
-
+    
+    sessionIndicesToMerge = sessionIndicesToMerge(:)'; % ensure row vector
     sessionIndicesToMerge = sort(sessionIndicesToMerge);    
     newIndex = TE.sessionIndex(find(TE.sessionIndex == sessionIndicesToMerge(1), 1));
     newName = TE.filename(find(TE.sessionIndex == sessionIndicesToMerge(1), 1));
@@ -16,4 +17,11 @@ function TE = mergeSessions(TE, sessionIndicesToMerge)
     end
     
     TE.sessionChange = [0; diff(TE.sessionIndex)];
+    
+    % if sessions field exists, update indices to reflect change
+    if isfield(TE, 'sessions')
+        for index = sessionIndicesToMerge(2:end)
+            TE.sessions(index).index = newIndex;
+        end
+    end
     

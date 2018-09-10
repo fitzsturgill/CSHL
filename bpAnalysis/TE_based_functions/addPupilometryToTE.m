@@ -185,7 +185,7 @@ function TE = addPupilometryToTE(TE, varargin)
         end        
         
         if any(dmDelta < 2)
-            error('there are short ITI pupil files that you need to delete or deal with possibly using bpCleanAndVerifyBonsai');
+            error('there are short ITI pupil files for %s that you need to delete or deal with possibly using bpCleanAndVerifyBonsai', sessionname);
         end 
         
         if maxRsq < 0.9
