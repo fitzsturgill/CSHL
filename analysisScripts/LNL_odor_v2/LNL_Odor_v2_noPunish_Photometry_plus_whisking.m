@@ -153,43 +153,49 @@ end
 %% generate trial lookups for different combinations of conditions
 LNL_conditions;
 
+%% derivative of photometry signal
+for counter = 1:2
+    TE.Photometry.data(counter).diff = NaN(size(TE.Photometry.data(counter).ZS));
+    TE.Photometry.data(counter).diff(:,2:end) = TE.Photometry.data(counter).ZS(:,2:end) - TE.Photometry.data(counter).ZS(:,1:end-1);
+end
 %% photometry averages, zscored
 %     ylim = [-2 8];
-    saveName = [subjectName '_phAvgs'];  
+    fdField = 'diff';
+    saveName = sprintf('%s_phAvgs_%s', subjectName, fdField);  
     h=ensureFigure(saveName, 1); 
     mcLandscapeFigSetup(h);
-
+    
     pm = [2 2];
     
     % - 6 0 4
     if ismember(1, channels)
         subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); 
         [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, neutralTrials, uncuedReward}, 1,...
-            'FluorDataField', 'ZS', 'window', [1, 7], 'linespec', {'b','k','c'}); %high value, reward
+            'FluorDataField', fdField, 'window', [1, 7], 'linespec', {'b','k','c'}); %high value, reward
         legend(hl, {'rew', 'neutral', 'uncued rew'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-        title('Reinforcement'); ylabel('BF dF/F Zscored'); textBox(subjectName);%set(gca, 'YLim', ylim);
+        title('Reinforcement'); ylabel(sprintf('BF %s', fdField)); textBox(subjectName);%set(gca, 'YLim', ylim);
     end
     
     if ismember(2, channels)    
         subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1); 
         [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, neutralTrials, uncuedReward}, 2,...
-            'FluorDataField', 'ZS', 'window', [1, 7], 'linespec', {'b','k','c'}); %high value, reward
+            'FluorDataField', fdField, 'window', [1, 7], 'linespec', {'b','k','c'}); %high value, reward
         legend(hl, {'rew', 'neutral', 'uncued rew'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-        ylabel('VTA dF/F Zscored'); xlabel('time from cue (s)'); %set(gca, 'YLim', ylim);
+        ylabel(sprintf('VTA %s', fdField)); xlabel('time from cue (s)'); %set(gca, 'YLim', ylim);
     end
     
     % - 6 0 4
     if ismember(1, channels)    
         subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1); 
         [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 1,...
-        'FluorDataField', 'ZS', 'window', [-3, 7], 'linespec', {'c', 'm'}); %high value, reward
+        'FluorDataField', fdField, 'window', [-3, 7], 'linespec', {'c', 'm'}); %high value, reward
         legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
         title('CS+, outcomes'); set(gca, 'XLim', [-3, 7]);%set(gca, 'YLim', ylim);
     end
     if ismember(2, channels)    
         subplot(pm(1), pm(2), 4, 'FontSize', 12, 'LineWidth', 1); 
         [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 2,...
-            'FluorDataField', 'ZS', 'window', [-3, 7], 'linespec', {'c', 'm'}); %high value, reward
+            'FluorDataField', fdField, 'window', [-3, 7], 'linespec', {'c', 'm'}); %high value, reward
         legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
         xlabel('time from cue (s)');     set(gca, 'XLim', [-3, 7]);%set(gca, 'YLim', ylim);
     end
