@@ -1,5 +1,6 @@
 function success = dbLoadExperiment(db, animal, varargin)
 % loads experiment variables into calling workspace 
+% db-   experiment database
     
     success = 1;
     try
@@ -10,5 +11,4 @@ function success = dbLoadExperiment(db, animal, varargin)
     catch ME
         ME.message
         success = 0;
-    end
-    
+    end 

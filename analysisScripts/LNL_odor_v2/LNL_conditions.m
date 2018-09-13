@@ -26,8 +26,9 @@
     uncuedPunish = filterTE(TE, 'ReinforcementOutcome', 'Punish', 'OdorValveIndex', 0,'reject', 0);
     trialTypes = 1:max(TE.trialType);
     trialsByType = cell(size(trialTypes));
-    for counter = 1:max(TE.trialType)
-        trialsByType{counter} = filterTE(TE, 'trialType', trialTypes(counter), 'reject', 0);
+    for ttc = 1:max(TE.trialType)
+        trialsByType{counter} = filterTE(TE, 'trialType', trialTypes(ttc), 'reject', 0);
     end
 
-trialCount = [1:length(TE.filename)]';
+    trialCount = [1:length(TE.filename)]';
+    clear ttc;

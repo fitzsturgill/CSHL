@@ -1,5 +1,5 @@
-function [spikes sampleCheck] = UMS2000_dev(direction)
-    global sampleCheck
+function [spikes, sampleCheck] = UMS2000_dev(direction)
+
     if nargin < 1
         direction = 'up';
     end
@@ -15,7 +15,7 @@ function [spikes sampleCheck] = UMS2000_dev(direction)
 Fs = 32000;
 % [fname, pname] = uiputfile('path', 'Choose CSC path...');
 % filepath = pname;
-filepath = 'F:\Cellbase\CD17\180818a\';
+filepath = 'F:\Cellbase\CD17\180822a\';
 
 nlxcsc2mat2(filepath,'Channels','Events')
 load(fullfile(filepath, 'Events.mat'));
@@ -45,7 +45,7 @@ nChunks = ceil(nValidSamples / chunkSize);
 sampleRange = ((0:nChunks) * chunkSize);
 % for trodeCounter = 1:8
 
-trode = 1;
+trode = 4;
 ttch1 = (4 * (trode - 1)) + 1;
 
 sampleCheck.perChunk = zeros(nChunks, 1);
@@ -109,10 +109,9 @@ spikes = ss_kmeans(spikes);
 spikes = ss_energy(spikes);
 spikes = ss_aggregate(spikes);
 
-
-%% scrapbook for converting into t files for cellbase
 return
-show = spikes.assigns == 156;
+%% scrapbook for converting into t files for cellbase
+show = spikes.assigns == 144;
 tSpikes = spikes.unwrapped_times(show);
 tSpikes = double(tSpikes');
 tSpikes = tSpikes + spikes.startRecording;

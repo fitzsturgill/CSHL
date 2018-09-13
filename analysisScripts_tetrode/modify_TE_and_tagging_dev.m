@@ -5,8 +5,8 @@
 %    'Partitions','#trialType: {1 4 7}','window',[-7 4], 'dt', 0.01, 'sigma', 0.02, 'PSTHstd', 'on', 'isadaptive', true);
 
 
-rat = 'CP9';
-session = '180731a';
+rat = 'CD17';
+session = '180822a';
 loadcb; % % loads ANALYSES, CELLIDLIST, PREFERENCES, and TheMatrix
 pref = getcbpref; % torben's new way
 fullpath = [pref.datapath '\' rat '\' session '\'];
@@ -31,7 +31,7 @@ save(fullfile(pref.datapath, rat, session, pref.TrialEvents_fname), 'TE');
 thesecells = findcell('rat', rat, 'session', session);
 
 %%
-for counter = 1:length(thesecells)
+for counter = length(thesecells)
 cellid = thesecells{counter};
 % [ratname,session,tetrode,unit] = cellid2tags(cellid);
 TE = loadcb(cellid, 'TrialEvents');
@@ -50,50 +50,51 @@ prealignSpikes(cellid,'FUNdefineEventsEpochs',@defineEventsEpochs_laserstim_Bpod
 %
 cellidStripped = regexprep(cellid,'\.','_');
 window = [-7 4];
-dt = 0.05;
-sigma = 0.1;
+dt = 0.01;
+sigma = 0.02;
 winMargin = sigma * 3;
+isadaptive = false;
 
 fh = [];
 figName = [cellidStripped '_rewardSpikes'];    
 ensureFigure(figName, 1);  viewcell2b(cellid,'TriggerName','Us_start','SortEvent','csLicks_rate',...
     'eventtype','behav','ShowEvents',{'Us_start', 'Cue_start'}, 'Partitions','#trialType: {1 4 7} & rewardReceived',...
-    'window',[-5 2], 'dt', 0.01, 'sigma', 0.02, 'PSTHstd', 'on', 'isadaptive', true);
+    'window',[-2 2], 'dt', dt, 'sigma', sigma, 'PSTHstd', 'on', 'isadaptive', isadaptive);
 legend('High value', 'Low value', 'Uncued'); title(figName, 'Interpreter', 'none');
 fh(end+1) = gcf; formatFigureCellbase;
 
-figName = [cellidStripped '_punishSpikes'];    
+figName = [cellidStripped '_punishSpikes'];
 ensureFigure(figName, 1);  viewcell2b(cellid,'TriggerName','Us_start','SortEvent','trialNumber',...
     'eventtype','behav','ShowEvents',{'Us_start', 'Cue_start'}, 'Partitions','#trialType: {2 5 8}',...
-    'window',[-5 2], 'dt', 0.01, 'sigma', 0.02, 'PSTHstd', 'on', 'isadaptive', true);
+    'window',[-2 2], 'dt', dt, 'sigma', sigma, 'PSTHstd', 'on', 'isadaptive', isadaptive);
 legend('High value', 'Low value', 'Uncued'); title(figName, 'Interpreter', 'none');
 fh(end+1) = gcf; formatFigureCellbase;
 
-figName = [cellidStripped '_rewardLicks'];    
+figName = [cellidStripped '_rewardLicks'];
 ensureFigure(figName, 1); viewlick({rat, session}, 'TriggerName', 'Us_start', 'SortEvent', 'csLicks_rate',...
     'eventtype', 'behav', 'ShowEvents', {'Us_start', 'Cue_start'}, 'Partitions', '#trialType: {1 4 7} & rewardReceived',...
-    'window',[-5 2], 'dt', 0.01, 'sigma', 0.02, 'PSTHstd', 'on', 'isadaptive', true, 'LickInField', 'Port1In');
+    'window',[-2 2], 'dt', dt, 'sigma', sigma, 'PSTHstd', 'on', 'isadaptive', isadaptive, 'LickInField', 'Port1In');
 legend('High value', 'Low value', 'Uncued'); title(figName, 'Interpreter', 'none');
 fh(end+1) = gcf; formatFigureCellbase;
 
-figName = [cellidStripped '_cueSpikes'];    
+figName = [cellidStripped '_cueSpikes'];
 ensureFigure(figName, 1);  viewcell2b(cellid,'TriggerName','Cue_start','SortEvent','csLicks_rate',...
     'eventtype','behav','ShowEvents',{'Cue_start'}, 'Partitions','#cueCondition',...
-    'window',[-2 5], 'dt', 0.01, 'sigma', 0.2, 'PSTHstd', 'on', 'isadaptive', true);
+    'window',[-2 5], 'dt', dt, 'sigma', sigma, 'PSTHstd', 'on', 'isadaptive', isadaptive);
 title(figName, 'Interpreter', 'none');
 fh(end+1) = gcf; formatFigureCellbase;
 
 figName = [cellidStripped '_cueLicks'];
 ensureFigure(figName, 1); viewlick({rat, session}, 'TriggerName', 'Cue_start', 'SortEvent', 'csLicks_rate',...
     'eventtype', 'behav', 'ShowEvents', {'Cue_start'}, 'Partitions', '#cueCondition',...
-    'window',[-2 5], 'dt', 0.01, 'sigma', 0.02, 'PSTHstd', 'on', 'isadaptive', true, 'LickInField', 'Port1In');
+    'window',[-2 5], 'dt', dt, 'sigma', sigma, 'PSTHstd', 'on', 'isadaptive', isadaptive, 'LickInField', 'Port1In');
 title(figName, 'Interpreter', 'none');
 fh(end+1) = gcf; formatFigureCellbase;
 
 figName = [cellidStripped '_outcomeSpikes'];    
 ensureFigure(figName, 1);  viewcell2b(cellid,'TriggerName','Us_start', 'SortEvent', 'trialNumber',...
     'eventtype','behav','ShowEvents',{'Us_start'}, 'Partitions','#trialOutcome',...
-    'window',[-2 3], 'dt', 0.01, 'sigma', 0.02, 'PSTHstd', 'on', 'isadaptive', true);
+    'window',[-2 2], 'dt', dt, 'sigma', sigma, 'PSTHstd', 'on', 'isadaptive', isadaptive);
 title(figName, 'Interpreter', 'none');
 fh(end+1) = gcf; formatFigureCellbase;
 
@@ -101,8 +102,8 @@ fh(end+1) = gcf; formatFigureCellbase;
 figName = [cellidStripped '_taggingSpikes'];   
 ensureFigure(figName, 1);  
 viewcell2b(cellid,'TriggerName','BurstOn','SortEvent','BurstOn','ShowEvents',{'PulseOn'},...
-    'eventtype','stim','window',[-2 2],'dt',0.01,'sigma',0.02,'PSTHstd','on',...
-    'EventMarkerWidth',0,'PlotZeroLine','off', 'isadaptive', true);
+    'eventtype','stim','window',[-2 2],'dt',dt,'sigma',sigma,'PSTHstd','on',...
+    'EventMarkerWidth',0,'PlotZeroLine','off', 'isadaptive', isadaptive);
 title(figName, 'Interpreter', 'none');
 fh(end+1) = gcf; formatFigureCellbase;
 
