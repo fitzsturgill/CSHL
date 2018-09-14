@@ -1,4 +1,4 @@
-function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
+function Photometry = processTrialAnalysis_Photometry2_Aud(sessions, varargin)
 % exemplar for new trial analysis functions
     
 
@@ -14,7 +14,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         'startField', 'PreCsRecording';... % TO DO: PROVIDE AUTOMATICALLY BY BPOD NIDAQ CODE 
         'downsample', 305;...
         'uniformOutput', 1;...            % not currently implemented, idea is to set to 0 if acqs are going to be variable in length (store data in cell array)
-        'tau', 3;...
+        'tau', 2;...
         'forceAmp', 0;... % % force demodulation even if the refChannel LED is off (i.e. it's amplitude = 0)
         };
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
@@ -51,29 +51,23 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
 %             originalSamples(si) = max(cellfun(@(x) size(x,1), sessions(si).SessionData.NidaqData(:,1)));
 %         end
 %         originalSamples = max(originalSamples);
-
+        % kludge added 11/05/17
         try
             sampleRate = sessions(1).SessionData.TrialSettings(1).nidaq.sample_rate;
-            originalSamples = sessions(1).SessionData.TrialSettings(1).nidaq.duration * sessions(1).SessionData.TrialSettings(1).nidaq.sample_rate;            
         catch
             sampleRate = 6100; % very early sessions don't have sample rate in settings
-            originalSamples = sessions(1).SessionData.TrialSettings(1).nidaq.duration * sampleRate;            
         end
-        
+%         originalSamples = sessions(1).SessionData.TrialSettings(1).nidaq.duration * sessions(1).SessionData.TrialSettings(1).nidaq.sample_rate;
+        originalSamples = sessions(1).SessionData.TrialSettings(1).nidaq.duration * sampleRate;        
         newSamples = ceil(originalSamples/s.downsample);
+
         if rem(sampleRate, s.downsample)
             error('downsample must be a factor of sampleRate');
         end
-        % update sampleRate because you no longer need non-decimated sample rate
-     
-        sampleRate = sampleRate / s.downsample; % downsample must be a factor of sampleRate  
-        for counter = 1:length(totalTrials)
-            zeroTime = sessions(1).SessionData.RawEvents.Trial{1}.States.(s.zeroField)(1) - ...
-                sessions(1).SessionData.RawEvents.Trial{1}.States.(s.startField)(1);
-
-            xData = linspace(-zeroTime, ((newSamples - 1) / sampleRate) - zeroTime, newSamples);  
-        end
-
+        sampleRate = sampleRate / s.downsample; % downsample must be a factor of sampleRate      
+        zeroTime = sessions(1).SessionData.RawEvents.Trial{1}.States.(s.zeroField)(1) - ...
+            sessions(1).SessionData.RawEvents.Trial{1}.States.(s.startField)(1);
+        xData = linspace(-zeroTime, ((newSamples - 1) / sampleRate) - zeroTime, newSamples);    
     else
         originalSamples = [];
         newSamples = [];
@@ -88,7 +82,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         'sampleRate', sampleRate,... % downsampled sample rate
         'startTime', NaN(totalTrials, 1),... % what if a trial didn't have photometry...., make this NaN initially therefore
         'xData', xData... % you don't have to use xData, you can also use startTime for more flexible alignment to trial events
-   );
+    );
     if s.uniformOutput
         data = struct(...
             'dFF', NaN(totalTrials, newSamples),... % deltaF/F
