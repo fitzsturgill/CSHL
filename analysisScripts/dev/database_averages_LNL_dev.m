@@ -1,7 +1,7 @@
 % compile photometry averages, make grand average
 fdField = 'ZS';
 
-ensureFigure('test', 1);
+ensureFigure('test2', 1);
 for counter = 1:length(DB.animals)
     animal = DB.animals{counter};
     success = dbLoadExperiment(DB, animal);
@@ -15,7 +15,7 @@ for counter = 1:length(DB.animals)
             'FluorDataField', fdField, 'window', [1, 7]); %high value, reward
             grand(channel).reward.components(:,:,counter) = avgData.Avg;
             grand(channel).reward.xData = avgData.xData(1,:); 
-        if channel == 1
+        if channel == 2
             subplot(3,3,counter)
             plot(avgData.xData(1,:), avgData.Avg');
         end
