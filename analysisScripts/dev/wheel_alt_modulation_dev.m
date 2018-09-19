@@ -49,6 +49,12 @@ plot(t(6100:end), filtfilt(sos, g, sessions.SessionData.NidaqData{4,1}(6100:end,
 Fs_raw = 6100;
 Fs = 610;
 % make dummy data and demodulate it to check why the amplitudes don't match between DC and AC modes....
+
+% I think the answer is that 1) you need to subtract off the dark
+% current/voltage from the photodetector  2) (check how big these are given
+% that I saw them on log/log plot but) you are probably not recovering the
+% side lobes that seem to appear on power spectra of modulated data around
+% the reference frequency
 t = linspace(0, 30, 30 * Fs_raw);
 f1 = 5; % 5hz for ch1 and 2
 fmod = 531;
