@@ -20,12 +20,15 @@ catch
     sampleRate = 6100;
 end
 
-
 % optionally emulate/apply AC Coupling to input data (in case photodiode was in DC coupling mode)
 % first generate the transfer function coefficients
-if s.ACfilter
-    highCutoff = 30/sampleRate * 2; % use a 30Hz filter cutoff
-    [b, a] = butter(5, highCutoff, 'high');
+if isscalar(s.ACfilter)
+    s.ACfilter = repmat(s.ACfilter, 1, length(s.channels));
+end
+if any(s.ACfilter)
+    highCutoff = 15/(sampleRate / 2); % use a 30Hz filter cutoff, normalized relative to Nyquist frequency
+    [z,p,k] = butter(5, highCutoff, 'high');
+    [sos, g] = zp2sos(z,p,k);
 end
 
 % initialize demod cell array
@@ -71,7 +74,7 @@ for trial = 1:SessionData.nTrials
         end
         nSamples = size(rawData, 1);
         if s.ACfilter(counter) % whether or not to apply AC filtering for this channel
-            rawData = filtfilt(b, a, rawData);        
+            rawData = filtfilt(sos, g, rawData);        
         end
         switch demodMode
             case 1
