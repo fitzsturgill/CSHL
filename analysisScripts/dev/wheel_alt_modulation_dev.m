@@ -116,7 +116,7 @@ acTrials = rem(TE.trialNumber, 2) > 0;
 dcTrials = ~acTrials;
 
 window = [-2 2];
-blSamples = (0 - window(1)) * fs;
+blSamples = (0 - window(1)) * Fs;
 clims = [-5 5];
 
 [rewards_dat_ac, ts_ac, tn_ac] = extractDataByTimeStamps(TE.Photometry.data(2).ZS(acTrials, :), TE.Photometry.startTime(acTrials), 610, TE.Reward(acTrials), [-2 2]);
@@ -137,6 +137,9 @@ subplot(2,2,4); imagesc([-2 2], [1 size(rewards_dat_dc, 1)],rewards_dat_dc, clim
 bl_ac = squeeze(mean(rewards_ac(:, bpX2pnt(-0.5, Fs, -2):bpX2pnt(0, Fs, -2),:)));
 peak_ac = squeeze(mean(rewards_ac(:,bpX2pnt(0, Fs, -2):bpX2pnt(0.5, Fs, -2),:)));
 
+bl_dc = squeeze(mean(rewards_dc(:, bpX2pnt(-0.5, Fs, -2):bpX2pnt(0, Fs, -2),:)));
+peak_dc = squeeze(mean(rewards_dc(:,bpX2pnt(0, Fs, -2):bpX2pnt(0.5, Fs, -2),:)));
+
 D = []; P = []; CI = [];
 for counter = 1:2    
     [D(1,counter), P(1, counter), CI(1,counter,1:2)] = rocarea_CI(peak_ac(:,counter), bl_ac(:,counter), 'boot', 10000, 'scale');
@@ -153,17 +156,19 @@ legend('ChAT', 'DAT');
 
 %% just plot some unnormalized data
 ensureFigure('rawData', 1);
-subplot(2,1,1);
+subplot(1,2,1);
 plot(TE.Photometry.xData(Fs:end-Fs), TE.Photometry.data(1).raw(3,Fs:end-Fs), 'b'); hold on; 
 plot(TE.PhotometryDC.xData(Fs:end-Fs), TE.PhotometryDC.data(1).raw(4,Fs:end-Fs), 'r'); 
-rawX = linspace(1, 1 + 0.033, 201);
+% rawX = linspace(1, 1 + 0.033, 201);
+rawX = linspace(1, 4, 201);
 plot(rawX, sessions.SessionData.NidaqData{3,1}(6100:6300, 1), 'b');
-legend('AC', 'DC'); set(gca, 'YLim', [0 0.5]);
-subplot(2,1,2);
+legend('AC', 'DC'); set(gca, 'YLim', [0 5]);
+subplot(1,2,2);
 plot(TE.Photometry.xData(Fs:end-Fs), TE.Photometry.data(2).raw(3,Fs:end-Fs), 'b'); hold on;
 plot(TE.PhotometryDC.xData(Fs:end-Fs), TE.PhotometryDC.data(2).raw(4,Fs:end-Fs), 'r'); 
 plot(rawX, sessions.SessionData.NidaqData{3,1}(6100:6300, 2), 'b');
-legend('AC', 'DC');set(gca, 'YLim', [0 0.8]);
+% plot(repmat(min
+legend('AC', 'DC');set(gca, 'YLim', [0 5]);
 %% spectral profile of demodulated data
     
     

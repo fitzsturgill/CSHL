@@ -4,7 +4,7 @@ function demod = phDemod_v2(rawData, refData, refChannel, sampleRate, varargin)
 
 %% optional parameters, first set defaults      
     defaults = {...
-        'lowCutoff', 40;... % 15 before
+        'lowCutoff', 20;... % 15 before
         'forceAmp', 0;... % force demodulation
         };
 
@@ -28,7 +28,7 @@ function demod = phDemod_v2(rawData, refData, refChannel, sampleRate, varargin)
     % note-   5 pole Butterworth filter in Matlab used in Frohlich and McCormick  
      % Create butterworth filter
     lowCutoff = s.lowCutoff/(sampleRate/2); % filter cutoff normalized to nyquist frequency     
-    [z,p,k] = butter(15, lowCutoff, 'low');
+    [z,p,k] = butter(10, lowCutoff, 'low');
     [sos, g] = zp2sos(z,p,k);
     pad = 1; % kludge, always pad
     if pad
