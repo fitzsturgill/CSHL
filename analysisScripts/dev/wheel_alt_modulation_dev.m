@@ -119,11 +119,11 @@ window = [-2 2];
 blSamples = (0 - window(1)) * Fs;
 clims = [-5 5];
 
-[rewards_dat_ac, ts_ac, tn_ac] = extractDataByTimeStamps(TE.Photometry.data(2).ZS(acTrials, :), TE.Photometry.startTime(acTrials), 610, TE.Reward(acTrials), [-2 2]);
-rewards_chat_ac = extractDataByTimeStamps(TE.Photometry.data(1).ZS(acTrials, :), TE.Photometry.startTime(acTrials), 610, TE.Reward(acTrials), [-2 2]);
+[rewards_dat_ac, ts_ac, tn_ac] = extractDataByTimeStamps(TE.Photometry.data(2).dF(acTrials, :), TE.Photometry.startTime(acTrials), 610, TE.Reward(acTrials), [-2 2]);
+rewards_chat_ac = extractDataByTimeStamps(TE.Photometry.data(1).dF(acTrials, :), TE.Photometry.startTime(acTrials), 610, TE.Reward(acTrials), [-2 2]);
 rewards_ac = cat(3, rewards_chat_ac, rewards_dat_ac);
-[rewards_dat_dc, ts_dc, tn_dc] = extractDataByTimeStamps(TE.PhotometryDC.data(2).ZS(dcTrials, :), TE.Photometry.startTime(dcTrials), 610, TE.Reward(dcTrials), [-2 2]);
-rewards_chat_dc = extractDataByTimeStamps(TE.PhotometryDC.data(1).ZS(dcTrials, :), TE.Photometry.startTime(dcTrials), 610, TE.Reward(dcTrials), [-2 2]);
+[rewards_dat_dc, ts_dc, tn_dc] = extractDataByTimeStamps(TE.PhotometryDC.data(2).dF(dcTrials, :), TE.Photometry.startTime(dcTrials), 610, TE.Reward(dcTrials), [-2 2]);
+rewards_chat_dc = extractDataByTimeStamps(TE.PhotometryDC.data(1).dF(dcTrials, :), TE.Photometry.startTime(dcTrials), 610, TE.Reward(dcTrials), [-2 2]);
 rewards_dc = cat(3, rewards_chat_dc, rewards_dat_dc);
 
 
