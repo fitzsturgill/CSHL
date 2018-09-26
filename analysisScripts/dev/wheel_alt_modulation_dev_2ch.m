@@ -16,7 +16,7 @@ fmod2 = 531;
 refAmp = 0.6;
 sigAmp = 0.1;
 sig1 = sin(2*pi*f1 * t) * sigAmp + (sigAmp + 0.1); % signals with offset to mimic real calcium data
-sig2 = sin(2*pi*f2*t) * sigAmp + (sigAmp + 0.1);   % signals with offset to mimic real calcium data
+sig2 = sin(2*pi*f2 * t) * sigAmp + (sigAmp + 0.1);   % signals with offset to mimic real calcium data
 
 ref1 = sin(2*pi*fmod1 * t);
 ref2 = sin(2*pi*fmod2 * t);
@@ -54,6 +54,7 @@ mixed_90_filt = filtfilt(sos, g, mixed_90);
 
 demod = (mixed_0_filt .^2 + mixed_90_filt .^2) .^(1/2); % take pythagorean distance
 demod = demod * 2 / refAmp;
+% demod = demod * 2;
 
  plot(t, sig1, 'b'); hold on; plot(t, demod, 'g--'); set(gca, 'XLim', [0 2], 'YLim', [0 2]);
 legend('original', 'demodulated');
@@ -70,6 +71,7 @@ mixed_90_filt = filtfilt(sos, g, mixed_90);
 
 demod = (mixed_0_filt .^2 + mixed_90_filt .^2) .^(1/2); % take pythagorean distance
 demod = demod * 2 / refAmp;
+% demod = demod * 2;
 
  plot(t, sig2, 'r'); hold on; plot(t, demod, 'y--'); set(gca, 'XLim', [0 2], 'YLim', [0 2]);
 legend('original', 'demodulated');

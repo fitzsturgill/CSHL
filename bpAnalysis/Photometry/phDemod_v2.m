@@ -51,12 +51,31 @@ function demod = phDemod_v2(rawData, refData, refChannel, sampleRate, varargin)
         end            
     end   
     
-    % correct for amplitude of reference     
+    % correct for amplitude of DEMODULATION reference     
     % Vsig = Vsig*Vref/2 + Vsig*Vref/2 * Cos(2*Fmod * time)
     % you filter out the second term
     % multiply by two and divide by Vref to get Vsig
     % demod = demod * 2 / amp;
-    % amp = 1 so it doesn't matter...
-    
+    % amp = 1 for reference so it doesn't matter...
 
     demod = demod * 2;
+    
+%     % HOWEVER you still need to get rid of amplitude of MODULATION reference (e.g.
+%     % if you multiply a DC offset of 3 by a sinusoid of amplitude 5, you
+%     % get a sinusoid of ampltitude 15, so you have to divide by 5 to
+%     % recover the signal.
+% %     measure amplitude of reference    
+%     L = length(rawData);
+%     n = 2 ^ nextpow2(L);
+%     Y = fft(rawData, n);
+%     P2 = abs(Y/n);
+%     P1 = P2(1:n/2 + 1);
+%     P1(2:end-1) = 2 * P1(2:end-1);
+%     f = sampleRate * (0:(n/2))/n;
+%     % find indices of mod frequency
+%     fix = find(f >= refData.freq(chix), 1);
+%     fix = [fix - 1 fix fix + 1]; 
+%     amp = max(P1(fix));
+% 
+% 
+%     demod = demod * 2 / amp;

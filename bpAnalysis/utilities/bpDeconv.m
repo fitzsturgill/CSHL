@@ -1,10 +1,13 @@
-function output = bpDeconv(data, kernel, eps, window)
+function output = bpDeconv(data, kernel, eps, window, truncate)
 
 % Thomas Carey 2018,  Fitz Sturgill 2018 (see mathworks source at bottom)
-if nargin < 4
-    window = "none";
-    if nargin < 3
-        eps = 0.1;
+if nargin < 5
+    truncate = 0;
+    if nargin < 4
+        window = "none";
+        if nargin < 3
+            eps = 0.1;
+        end
     end
 end
 % data must be a row vector or a series of row vectors to be averaged
@@ -13,23 +16,30 @@ end
 % returns a row vector normalized so that its max value is 1
 n = size(data,1); % length of data vector
 L = size(data,2); % number of data vectors to process
-Lx=size(data,2)-length(kernel)+1; % deconvolved length
+Lk = length(kernel);
+if truncate
+    Lx=L-Lk+1; 
+else
+    Lx = L; 
+end
 Lx2=pow2(nextpow2(Lx)); % closed power of two to deconvolved length, makes fft faster
-W = ones(size(data,2),1);
 kernel = kernel / trapz(kernel);
 switch window
     case "none"
-        W = ones(size(data,2),1);
+        W = ones(1, L);
+        Wk = ones(1, Lk);
     case "blackman"
-        W = blackman(size(data,2));
+        W = blackman(L)';
+        Wk = blackman(Lk)';        
     case "hann"
-        W = hann(size(data,2));
+        W = hann(L)';
+        Wk = hann(Lk)';
 end
-%W = blackman(size(data,2)); % window with blackman filter to reduce spectral leakage
+
 H= fft(kernel, Lx2); % transform kernel, kernel is constant so this only need be done once
 out = zeros(n,Lx); % instantiate process vector
 for counter = 1:n
-    Y=fft(data(counter,:) .* W', Lx2); % transform data with window
+    Y=fft(data(counter,:) .* W, Lx2); % transform data with window
     % deconvolve, regularizing with epsilon
     %  X = (Y.*conj(H))./(H.*conj(H)+eps*mean(H.*conj(H))); 
     % rearranging makes more sense to me, recall that conj(H) / |H|^2 = 1/H, effects of frequencies < than the mean spectral power of the kernel are attenuated

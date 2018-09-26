@@ -101,14 +101,20 @@ legend('original', 'demodulated');
 
 % mod_filt or any acquired data specified in seconds should have an even
 % number of samples
-
-Y = fft(mod_filt);
 L = length(mod_filt);
-P2 = abs(Y/length(mod_filt));
-P1 = P2(1:L/2 + 1);
+n = 2 ^ nextpow2(L);
+Y = fft(mod_filt, n);
+Ymixed = fft(mixed_0, n);
+
+P2 = abs(Y/n);
+P1 = P2(1:n/2 + 1);
 P1(2:end-1) = 2 * P1(2:end-1);
-f = Fs_raw * (0:(L/2))/L;
-ensureFigure('fft', 1); plot(f, P1);
+
+P2mixed = abs(Ymixed/n);
+P1mixed = P2mixed(1:n/2 + 1);
+P1mixed(2:end-1) = 2 * P1mixed(2:end-1);
+f = Fs_raw * (0:(n/2))/n;
+ensureFigure('fft', 1); plot(f, P1, 'b'); hold on; plot(f, P1mixed, 'r');
 
 
 %% signal to noise
@@ -174,7 +180,7 @@ legend('AC', 'DC');set(gca, 'YLim', [0 5]);
     
     Fs = TE.Photometry.sampleRate;
     
-    freqRange = [0 100];
+    freqRange = [0 50];
     
     nSamples = length(TE.Photometry.xData);
     
@@ -191,13 +197,13 @@ legend('AC', 'DC');set(gca, 'YLim', [0 5]);
     powerFig = ensureFigure('powerFigure', 1);
     axes('YScale', 'log', 'XScale', 'linear'); hold on
         
-    [S, f] = mtspectrumc(TE.Photometry.data(1).ZS(acTrials, :)', params);
+    [S, f] = mtspectrumc(TE.Photometry.data(1).dF(acTrials, :)', params);
     plot(f, S , 'g'); 
-    [S, f] = mtspectrumc(TE.Photometry.data(2).ZS(acTrials, :)', params);
+    [S, f] = mtspectrumc(TE.Photometry.data(2).dF(acTrials, :)', params);
     plot(f, S, 'r');
-    [S, f] = mtspectrumc(TE.PhotometryDC.data(1).ZS(dcTrials, :)', params);
+    [S, f] = mtspectrumc(TE.PhotometryDC.data(1).dF(dcTrials, :)', params);
     plot(f, S, 'y');    
-    [S, f] = mtspectrumc(TE.PhotometryDC.data(2).ZS(dcTrials, :)', params);
+    [S, f] = mtspectrumc(TE.PhotometryDC.data(2).dF(dcTrials, :)', params);
     plot(f, S, 'm');    
     
 
@@ -205,4 +211,7 @@ legend('AC', 'DC');set(gca, 'YLim', [0 5]);
     ylabel('Power');
     title('Noise Spectra');
         
+%% spectra of raw data
+
+
     
