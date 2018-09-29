@@ -101,7 +101,7 @@ sd_chat = nanmean(nanstd(rewards_chat(:,1:blSamples)));
 nTrials = length(TE.filename);
 ts_abs = zeros(size(ts));
 for counter = 1:length(ts)
-    ts_abs(counter) = ts(counter) + TE.trialStartTimeStamp(tn(counter));    
+    ts_abs(counter) = ts(counter) + TE.TrialStartTimestamp(tn(counter));    
 end
 
 iri_pre = [Inf; diff(ts_abs)];

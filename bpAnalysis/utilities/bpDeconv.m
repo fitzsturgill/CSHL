@@ -1,6 +1,6 @@
 function output = bpDeconv(data, kernel, eps, window, truncate)
 
-% Thomas Carey 2018,  Fitz Sturgill 2018 (see mathworks source at bottom)
+% Fitz Sturgill 2018, Thomas Carey 2018 (see mathworks source at bottom)
 if nargin < 5
     truncate = 0;
     if nargin < 4
@@ -42,7 +42,7 @@ for counter = 1:n
     Y=fft(data(counter,:) .* W, Lx2); % transform data with window
     % deconvolve, regularizing with epsilon
     %  X = (Y.*conj(H))./(H.*conj(H)+eps*mean(H.*conj(H))); 
-    % rearranging makes more sense to me, recall that conj(H) / |H|^2 = 1/H, effects of frequencies < than the mean spectral power of the kernel are attenuated
+    % rearranging makes more sense to me
     X = Y ./ (H + eps * mean(H.*conj(H))./conj(H)); 
     x= real(ifft(X)); % transform back to original domain
     x=x(1:1:Lx); % take valid portion of deconvolved vector

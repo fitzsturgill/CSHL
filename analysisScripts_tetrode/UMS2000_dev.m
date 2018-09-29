@@ -88,7 +88,7 @@ for counter = 1:nChunks
     %     Samples = resample(Samples, 32, 20);
 
         passBand = [300 8000]; % Hz
-        [b, a] = butter(5, passBand/Fs * 2);
+        [b, a] = butter(5, passBand/(Fs/2));
         Samples = filtfilt(b,a,Samples);
         data(1, :,ttcounter) = Samples;
         waitbar(((counter - 1) * 4 + ttcounter) / (nChunks * 4));

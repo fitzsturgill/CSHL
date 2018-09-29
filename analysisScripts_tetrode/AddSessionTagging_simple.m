@@ -4,9 +4,9 @@ function AddSessionTagging_simple(Directory)
 
 if nargin < 1
     Directory = uigetdir();
-else
-    Directory = fullfile([Directory filesep]); % make sure it has a single trailing filesep
 end
+Directory = fullfile([Directory filesep]); % make sure it has a single trailing filesep
+
 cd(Directory);
 
 %% get start of recording time
@@ -52,7 +52,7 @@ for counter = 1:length(listing)
 end
 for f=1:length(Files)
     
-    tetnum=str2num(Files{f}(9:10));
+    tetnum=sscanf(Files{f}, 'clusters%d.mat');
     
     ClusterFileName=strcat('clusters',num2str(tetnum),'.mat');
     CuratedFiringFile=strcat('firings',num2str(tetnum),'.curated.mda');
