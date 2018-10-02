@@ -99,7 +99,7 @@ sd_chat = nanmean(nanstd(rewards_chat(:,1:blSamples)));
 nTrials = length(TE.filename);
 ts_abs = zeros(size(ts));
 for counter = 1:length(ts)
-    ts_abs(counter) = ts(counter) + TE.trialStartTimeStamp(tn(counter));    
+    ts_abs(counter) = ts(counter) + TE.TrialStartTimestamp(tn(counter));    
 end
 
 iri_pre = [Inf; diff(ts_abs)];
@@ -109,7 +109,7 @@ iri_post = [diff(ts_abs); Inf];
 iri_pre_sorted = iri_pre(I);
 rewards_dat_sorted = rewards_dat(I, :);
 rewards_chat_sorted = rewards_chat(I, :);
-climFactor = 4;
+climFactor = 8;
 clim_chat = [-climFactor * sd_chat, climFactor * sd_chat];% + 0.003;
 clim_dat = [-climFactor * sd_dat, climFactor * sd_dat];% + 0.03;
 ensureFigure('random_rewards', 1); 

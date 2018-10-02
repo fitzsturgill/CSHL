@@ -67,7 +67,7 @@ end
 
 %% for lab meeting
 animal = 'DC_46';
-success = dbLoadExperiment(DB, animal);
+success = dbLoadAnimal(DB, animal);
 figs = [];
 fdField = 'dF';
 TE.Photometry.data(1).([fdField 'deconv']) = bpDeconv(TE.Photometry.data(1).(fdField), k, 0, 'none');

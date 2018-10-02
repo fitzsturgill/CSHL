@@ -14,7 +14,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         'startField', 'PreCsRecording';... % TO DO: PROVIDE AUTOMATICALLY BY BPOD NIDAQ CODE 
         'downsample', 305;...
         'uniformOutput', 1;...            % not currently implemented, idea is to set to 0 if acqs are going to be variable in length (store data in cell array)
-        'tau', 3;...
+%         'tau', [];... % tau option currently deprecated
         'forceAmp', 0;... % % force demodulation even if the refChannel LED is off (i.e. it's amplitude = 0)
         'ACfilter', 0;...
         };
@@ -38,7 +38,8 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     if isempty(s.refChannels)
         s.refChannels = s.channels; % use same reference by default
     end
-        
+    s.tau = repmat(s.tau, 1, max(s.channels));    
+    
     % find total number of trials across selected sessions and size of
     % nidaq data
     scounter = zeros(size(sessions));
@@ -93,6 +94,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             'raw', NaN(totalTrials, newSamples),... %
             'blF', NaN(totalTrials, 1),...
             'blF_raw', NaN(totalTrials, 1),...
+            'blF_fit', NaN(totalTrials, 1),...
             'ch', []...
             );    
     else % unfinished, different sized trials are stored in cell arrays
@@ -103,6 +105,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             'raw', {},... %
             'blF', NaN(totalTrials, 1),...
             'blF_raw', NaN(totalTrials, 1),...
+            'blF_fit', NaN(totalTrials, 1),...
             'ch', []...
             );    
     end
@@ -125,12 +128,8 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     Photometry.data = repmat(data, length(s.channels), 1); % length = # channels  
     Photometry.bleachFit = repmat(bleachFit, length(sessions), max(s.channels));
     h = waitbar(0, 'Processing Photometry');    
+
     
-    % KLUDGE 
-    warning('kludgy implementation of tau per channel, will break if you use only channel 2');
-    if length(s.channels) > 1 && length(s.tau) == 1
-        s.tau = repmat(s.tau, 1, length(s.channels));
-    end
     tcounter = 1;    
     for si = 1:length(sessions)
         SessionData = sessions(si).SessionData;
@@ -161,6 +160,30 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             blStartP = bpX2pnt(s.baseline{fCh}(1), sampleRate);
             blEndP = bpX2pnt(s.baseline{fCh}(2), sampleRate); 
             expFitStartP = bpX2pnt(s.expFitBegin{fCh}, sampleRate);
+            
+            
+            % always perform session bleaching fit and store it for later
+            % use
+            blF_fit = nanmean(allData(:, expFitStartP:blEndP), 2); % take mean across time, not trials                   
+            fo = fitoptions('Method', 'NonlinearLeastSquares',...
+                'Upper', [Inf range(blF_fit) 0 range(blF_fit) 0],...
+                'Lower', [0 0 -1 0 -1],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
+                'StartPoint', [min(blF_fit) range(blF_fit)/2 -5 range(blF_fit)/2 -100]...
+                );
+            model = 'a + b*exp(c*x) + d*exp(e*x)';
+            ft = fittype(model, 'options', fo);
+            if any(isnan(blF_fit))
+                blF_fit = inpaint_nans(blF_fit);
+            end
+            [fitobject, gof, output] = ...
+                fit((1:size(allData, 1))', blF_fit, ft, fo);
+            Photometry.bleachFit(si, fCh).fitobject_session = fitobject;
+            Photometry.bleachFit(si, fCh).gof_session = gof;
+            Photometry.bleachFit(si, fCh).output_session = output;
+            x = (0:length(blF_fit)-1)';
+            blF_fit = fitobject.a + fitobject.b * exp(fitobject.c * x) + fitobject.d * exp(fitobject.e * x);   
+            
+            % apply the selected baseline mode
             switch blMode
                 case 'byTrial'
                     blF = nanmean(allData(:, blStartP:blEndP), 2); % take mean across time, not trials
@@ -171,27 +194,8 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                     blF = zeros(size(allData)) + blF;
                     blF_raw = mean(blF, 2);
                 case 'expFit'
-                    blF_raw = nanmean(allData(:, expFitStartP:blEndP), 2); % take mean across time, not trials
-%                     blF_fit = medfilt1(blF_raw, 3, 'truncate'); % median filter baseline fluorescence
-                    blF_fit = blF_raw;
-                    fo = fitoptions('Method', 'NonlinearLeastSquares',...
-                        'Upper', [Inf range(blF_raw) 0 range(blF_raw) 0],...
-                        'Lower', [0 0 -1 0 -1],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
-                        'StartPoint', [min(blF_raw) range(blF_raw)/2 -5 range(blF_raw)/2 -100]...
-                        );
-                    model = 'a + b*exp(c*x) + d*exp(e*x)';
-                    ft = fittype(model, 'options', fo);
-                    if any(isnan(blF_fit))
-                        blF_fit = inpaint_nans(blF_fit);
-                    end
-                    [fitobject, gof, output] = ...
-                        fit((1:size(allData, 1))', blF_fit, ft, fo);
-                    Photometry.bleachFit(si, fCh).fitobject_session = fitobject;
-                    Photometry.bleachFit(si, fCh).gof_session = gof;
-                    Photometry.bleachFit(si, fCh).output_session = output;
-                    x = (0:length(blF_fit)-1)';
-                    blF = fitobject.a + fitobject.b * exp(fitobject.c * x) + fitobject.d * exp(fitobject.e * x);
-                    blF = repmat(blF, 1, size(allData, 2));
+                    blF = repmat(blF_fit, 1, size(allData, 2));
+                    blF_raw = nanmean(allData(:, blStartP:blEndP), 2);
                 otherwise
             end
 %%        commented code below is snippet to show what different coefficients do to an exponential
@@ -217,36 +221,19 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                     trialMeanX = ((0:length(trialMeanY) - 1)/sampleRate + expFitStartP/sampleRate)';   
                     trialMeanYFull = (nanmean(allData(:, 1:blEndP), 1))';        
                     x = (0:size(allData, 2) - 1)/sampleRate;
-%% biexponential
-%                     fo = fitoptions('Method', 'NonlinearLeastSquares',...
-%                         'Lower', [0, 0, -Inf, 0 -Inf],...
-%                         'Upper', [min(trialMeanY) Inf 0 Inf 0],...
-%                         'StartPoint', [min(trialMeanY) * 0.99, 0.01, -0.1, 0.01, -0.1]);                    
-%                     ft = fittype('a + b*exp(c*x) + d*exp(e*x)', 'options', fo);
-%                     [fitobject, gof, output] = ...
-%                         fit(trialMeanX, trialMeanY, ft, fo);
-%                     trialFit = fitobject.a + fitobject.b * exp(fitobject.c * x) + fitobject.d * exp(fitobject.e * x);
-%% single exponential with fixed time constant
-                    tau = s.tau(fCh); % make this an option later, tau = time constant
-                    c = 1/tau;
+
+%% single exponential 
                     fo = fitoptions('Method', 'NonlinearLeastSquares',...
-                        'Lower', [0, range(trialMeanY) * 0.25],...%, -Inf],...
-                        'Upper', [min(trialMeanY) Inf],... 0],...
-                        'StartPoint', [min(trialMeanY) * 0.99, 0.01]);%, -0.3,]);
-%                     fo = fitoptions('Method', 'NonlinearLeastSquares',...
-%                         'Lower', [0, 0, -1],...
-%                         'Upper', [min(trialMeanY) Inf 0],...
-%                         'StartPoint', [min(trialMeanY) * 0.99, 0.01, -0.1,]); 
-                    model = sprintf('a + b*exp(-1 * %010e * x)', c); % c specified up to 10 significant digits
-                   ft = fittype(model, 'options', fo);
-%                     ft = fittype('a + b*exp(c*x)', 'options', fo);
+                        'Lower', [0 0 0.5],...%, -Inf],...
+                        'Upper', [mean(trialMeanY) range(trialMeanY) 4],... 0],...
+                        'StartPoint', [min(trialMeanY) * 0.99, 0.01 2]);%, -0.3,]);
+
+                    model = 'a + b*exp(-1 /c * x)';
+                    ft = fittype(model, 'options', fo);
                     [fitobject, gof, output] = ...
                         fit(trialMeanX, trialMeanY, ft, fo);
-%                     trialFit = fitobject.a + fitobject.b * exp(fitobject.c * x);      
-                    trialFit = fitobject.a + fitobject.b * exp(-1 * c * x);      
-%%
-
-                    
+                    trialFit = fitobject.a + fitobject.b * exp(-1 /fitobject.c * x);      
+%%                    
                     Photometry.bleachFit(si, fCh).fitobject_trial = fitobject;
                     Photometry.bleachFit(si, fCh).gof_trial = gof;
                     Photometry.bleachFit(si, fCh).output_trial = output;
@@ -269,7 +256,8 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             Photometry.data(fCh).ZS(tcounter:tcounter+nTrials - 1, :) = dF / sd; % z-scored
             Photometry.data(fCh).raw(tcounter:tcounter+nTrials - 1, :) = allData;                  
             Photometry.data(fCh).blF(tcounter:tcounter+nTrials - 1, 1) = mean(blF, 2); 
-            Photometry.data(fCh).blF_raw(tcounter:tcounter+nTrials - 1, 1) = blF_raw;            
+            Photometry.data(fCh).blF_raw(tcounter:tcounter+nTrials - 1, 1) = blF_raw;         
+            Photometry.data(fCh).blF_fit(tcounter:tcounter+nTrials - 1, 1) = blF_fit;
             Photometry.data(fCh).ch = fCh;
         end
         Photometry.startTime(tcounter:tcounter+nTrials - 1) = startTimes';

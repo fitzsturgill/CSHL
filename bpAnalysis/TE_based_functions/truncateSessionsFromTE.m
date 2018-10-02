@@ -101,7 +101,7 @@ function TE = truncateSessionsFromTE(TE, action, lickField, rewardTrials)
                     % scan back from last trial and find last rejected
                     % trial (might be able to do this without a loop but whatever)
                     while TRUNC.reject(counter) == 1
-                        if counter == TRUNC.firstTrial(session);
+                        if counter == TRUNC.firstTrial(session)
                             break % if for some reason all trials in session have been rejected, stop at first trial
                         end
                         counter = counter - 1;
