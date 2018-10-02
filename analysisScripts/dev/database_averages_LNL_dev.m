@@ -14,14 +14,12 @@ grand = struct();
 figs = [];
 for counter = 1:length(DB.animals)
     animal = DB.animals{counter};
-    success = dbLoadExperiment(DB, animal);
+    success = dbLoadAnimal(DB, animal);
     if ~success
         disp('wtf');
         continue
     end    
-    if strcmp(animal, 'DC_54')
-        continue % kludge for lab meeting, 54 has wrong delay
-    end
+
     disp(animal);
     for channel = 1:2
         TE.Photometry.data(channel).([fdField 'deconv']) = bpDeconv(TE.Photometry.data(channel).(fdField), k, epsilon, 'none');

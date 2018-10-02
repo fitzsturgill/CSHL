@@ -20,7 +20,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         };
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
     
-    %% if not specified per channel (as a cell array), use identical valies across channels
+    %% if not specified per channel (as a cell array), use identical values across channels
     if ~iscell(s.blMode)
         s.blMode = repmat({s.blMode}, 1, max(s.channels));
     end

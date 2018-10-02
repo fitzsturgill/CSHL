@@ -3,6 +3,7 @@ function success = dbInitExperiment(varargin)
 
 %% optional parameters, first set defaults
 defaults = {...
+    'name', '';...
     'conditions', '';... % name of script to generate sets of trials (to easily recycle code from my analysis scripts which operate in the base workspace)
     'animals', [];... % will contain names/folder specifiers of animal subjects
     };
@@ -14,6 +15,16 @@ if isempty(basepath)
     return
 end
 
+if isempty(s.name)
+    % just use folder name if empty
+    seps = basepath == filesep;
+    sep = find(seps(1:end-1), 1, 'last');
+    s.name = basepath(sep+1:end);
+    if s.name(end) == filesep
+        s.name = s.name(1:end-1);
+    end
+end
+
 ensureDirectory(fullfile(basepath, 'animals', filesep));
 ensureDirectory(fullfile(basepath, 'pooled', filesep));
 
@@ -22,4 +33,6 @@ DB = struct(...
     );
 
 save(fullfile(basepath, 'DB.mat'), 'DB');
+
+dbRegisterExperiment(s.name, basepath);
 disp(['*** Saved: ' fullfile(basepath, 'DB.mat')]);

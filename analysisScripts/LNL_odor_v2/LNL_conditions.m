@@ -27,7 +27,7 @@
     trialTypes = 1:max(TE.trialType);
     trialsByType = cell(size(trialTypes));
     for ttc = 1:max(TE.trialType)
-        trialsByType{counter} = filterTE(TE, 'trialType', trialTypes(ttc), 'reject', 0);
+        trialsByType{ttc} = filterTE(TE, 'trialType', trialTypes(ttc), 'reject', 0);
     end
 
     trialCount = [1:length(TE.filename)]';
