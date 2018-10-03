@@ -14,7 +14,8 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         'startField', 'PreCsRecording';... % TO DO: PROVIDE AUTOMATICALLY BY BPOD NIDAQ CODE 
         'downsample', 305;...
         'uniformOutput', 1;...            % not currently implemented, idea is to set to 0 if acqs are going to be variable in length (store data in cell array)
-%         'tau', [];... % tau option currently deprecated
+%         'tau', [];... % tau option currently deprecated, now tau is a
+%         free parameter
         'forceAmp', 0;... % % force demodulation even if the refChannel LED is off (i.e. it's amplitude = 0)
         'ACfilter', 0;...
         };
@@ -37,8 +38,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     
     if isempty(s.refChannels)
         s.refChannels = s.channels; % use same reference by default
-    end
-    s.tau = repmat(s.tau, 1, max(s.channels));    
+    end   
     
     % find total number of trials across selected sessions and size of
     % nidaq data
@@ -222,10 +222,10 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                     trialMeanYFull = (nanmean(allData(:, 1:blEndP), 1))';        
                     x = (0:size(allData, 2) - 1)/sampleRate;
 
-%% single exponential 
+%% single exponential, 
                     fo = fitoptions('Method', 'NonlinearLeastSquares',...
                         'Lower', [0 0 0.5],...%, -Inf],...
-                        'Upper', [mean(trialMeanY) range(trialMeanY) 4],... 0],...
+                        'Upper', [max(trialMeanY) range(trialMeanY) 4],... 0],...
                         'StartPoint', [min(trialMeanY) * 0.99, 0.01 2]);%, -0.3,]);
 
                     model = 'a + b*exp(-1 /c * x)';
