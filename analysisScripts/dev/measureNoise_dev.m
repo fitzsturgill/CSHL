@@ -40,9 +40,9 @@ for counter = 1:length(trials)
 end
 baseline_dc2 = baseline_dc(2:end, :) - baseline_dc(1,:); % subtract off dark volrate
 noise_dc2 = noise_dc(2:end,:); % doesn't include LED off
-plot(baseline_dc, noise_dc);
+plot(baseline_dc, noise_dc, '+-');
 
-ensureFigure('justthetrials', 1); plot(TE.PhotometryDC.data(2).raw(trials, :)');
+% ensureFigure('justthetrials', 1); plot(TE.PhotometryDC.data(2).raw(trials, :)');
     
     
 %% plot curve for Photometry AC
@@ -61,9 +61,15 @@ plot(baseline_ac, noise_ac);
 
 ensureFigure('justthetrials', 1); plot(TE.Photometry.data(2).raw(trials, :)');
 
+%% plot both AC and DC
  ensureFigure('both', 1); hold on;
- plot(baseline_dc2(:,1), noise_dc2(:,1), 'g'); 
- plot(baseline_ac(2:end,1), noise_ac(2:end,1), 'r'); 
+ subplot(1,2,1);
+ plot(baseline_dc2(:,1), noise_dc2(:,1), 'g'); hold on;
+ plot(baseline_ac(2:end,1), noise_ac(2:end,1), 'k');
+ legend('dc', 'ac'); xlabel('baseline (mean)'); ylabel('noise (std)');
+ subplot(1,2,2);
+ plot(baseline_dc2(:,2), noise_dc2(:,2), 'r'); hold on;
+ plot(baseline_ac(2:end,2), noise_ac(2:end,2), 'k');
  legend('dc', 'ac'); xlabel('baseline (mean)'); ylabel('noise (std)');
  
  %% compare DC and AC single trials
@@ -74,4 +80,5 @@ ensureFigure('justthetrials', 1); plot(TE.Photometry.data(2).raw(trials, :)');
  ensureFigure('compare2', 1); hold on;
  histogram(TE.Photometry.data(1).raw(19, 610:end-610) - mean(TE.Photometry.data(1).raw(19, 610:end-610)), linspace(-0.01, .01, 200));
  histogram(TE.PhotometryDC.data(1).raw(20, 610:end-610) - mean(TE.PhotometryDC.data(1).raw(20, 610:end-610)), linspace(-0.01, .01, 200)); 
+ set(gca', 'XLim', [-0.005 0.005]);
  legend(sprintf('ACsigma=%.3g', std(TE.Photometry.data(1).raw(19, :))), sprintf('DCsigma=%.3g', std(TE.PhotometryDC.data(1).raw(20, :))));

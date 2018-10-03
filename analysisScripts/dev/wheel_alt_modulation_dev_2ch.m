@@ -31,7 +31,7 @@ subplot(3,1,3); plot(t, mod, 'g');  set(gca, 'XLim', [0 2]); set(gca, 'YLim', [0
  
  %% AC filter modulated data and plot filtered version of signal
  figure;
- [z,p,k] = butter(5, 25/(Fs_raw/2), 'high'); % 25Hz cutoff frequency normalized to maximum component frequency (1/2 sample rate according to Nyquist theorem)
+ [z,p,k] = butter(5, 25/(Fs_raw/2), 'high'); % 25Hz cutoff frequency normalized to Nyquist frequency
 [sos, g] = zp2sos(z,p,k);
 mod_filt = filtfilt(sos, g, mod);
 plot(t, mod_filt , 'g');  set(gca, 'XLim', [0 2]);
@@ -41,7 +41,7 @@ title('AC filtered data');
 figure;
 subplot(2,1,1); title('signal 1');
 % make lowpass filter
-[z,p,k] = butter(5, 15/(Fs_raw/2), 'low'); % 15Hz cutoff frequency normalized to maximum component frequency (1/2 sample rate according to Nyquist theorem)
+[z,p,k] = butter(5, 15/(Fs_raw/2), 'low'); % 15Hz cutoff frequency normalized to Nyquist frequency
 [sos, g] = zp2sos(z,p,k);
 
 ref_0 = ref1;
@@ -61,7 +61,8 @@ legend('original', 'demodulated');
 
 % signal 2
 subplot(2,1,2); title('signal 2');
-ref_0 = ref2;
+% ref_0 = ref2;
+ref_0 = sin(2*pi*fmod2 * t); % phase shift by 90 degrees
 ref_90 = sin(2*pi*fmod2 * t + pi/2); % phase shift by 90 degrees
 mixed_0 = mod_filt .* ref_0;
 mixed_90 = mod_filt .* ref_90;

@@ -24,7 +24,7 @@ if sessions(1).SessionData.Settings.GUI.LED2_amp > 0
 end
 
 %% baseline by trial
- TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL);   
+ TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL);
 %% baseline expfit
 TE.Photometry2 = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', {'expFit', 'expFit'}, 'zeroField', 'Cue', 'channels', channels, 'baseline', BL,...
     'tau', 2);
@@ -33,7 +33,6 @@ TE.Photometry2 = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 
 %%
 % if you are reloading TE do this:
 channels = [1 2];
-
 %% extract peak trial dFF responses to cues and reinforcement and lick counts
 % csWindow = cellfun(&#64;(x,y,z) [x(1) max(y(end), z(end))], TE.Cue, TE.AnswerLick, TE.AnswerNoLick); % max- to select either AnswerLick or AnswerNoLick timestamp (unused state contains NaN)
 nTrials = length(TE.filename);

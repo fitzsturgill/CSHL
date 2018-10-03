@@ -32,7 +32,6 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
         };
 
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
-
     nTrials = size(Photometry.data(ch).dFF, 1);
 
     peak = struct(...
@@ -40,7 +39,6 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
         'settings', s,...
         'channel', ch... 
     );
-
 
     if isempty(zeroTimes)
         zeroTimes2 = Photometry.startTime; % just use start of photometry recording if zeroTimes are undefined

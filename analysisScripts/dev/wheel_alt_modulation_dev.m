@@ -125,11 +125,11 @@ window = [-2 2];
 blSamples = (0 - window(1)) * Fs;
 clims = [-5 5];
 
-[rewards_dat_ac, ts_ac, tn_ac] = extractDataByTimeStamps(TE.Photometry.data(2).dF(acTrials, :), TE.Photometry.startTime(acTrials), 610, TE.Reward(acTrials), [-2 2]);
-rewards_chat_ac = extractDataByTimeStamps(TE.Photometry.data(1).dF(acTrials, :), TE.Photometry.startTime(acTrials), 610, TE.Reward(acTrials), [-2 2]);
+[rewards_dat_ac, ts_ac, tn_ac] = extractDataByTimeStamps(TE.Photometry.data(2).ZS(acTrials, :), TE.Photometry.startTime(acTrials), 610, TE.Reward(acTrials), [-2 2]);
+rewards_chat_ac = extractDataByTimeStamps(TE.Photometry.data(1).ZS(acTrials, :), TE.Photometry.startTime(acTrials), 610, TE.Reward(acTrials), [-2 2]);
 rewards_ac = cat(3, rewards_chat_ac, rewards_dat_ac);
-[rewards_dat_dc, ts_dc, tn_dc] = extractDataByTimeStamps(TE.PhotometryDC.data(2).dF(dcTrials, :), TE.Photometry.startTime(dcTrials), 610, TE.Reward(dcTrials), [-2 2]);
-rewards_chat_dc = extractDataByTimeStamps(TE.PhotometryDC.data(1).dF(dcTrials, :), TE.Photometry.startTime(dcTrials), 610, TE.Reward(dcTrials), [-2 2]);
+[rewards_dat_dc, ts_dc, tn_dc] = extractDataByTimeStamps(TE.PhotometryDC.data(2).ZS(dcTrials, :), TE.Photometry.startTime(dcTrials), 610, TE.Reward(dcTrials), [-2 2]);
+rewards_chat_dc = extractDataByTimeStamps(TE.PhotometryDC.data(1).ZS(dcTrials, :), TE.Photometry.startTime(dcTrials), 610, TE.Reward(dcTrials), [-2 2]);
 rewards_dc = cat(3, rewards_chat_dc, rewards_dat_dc);
 
 
@@ -157,24 +157,41 @@ ensureFigure('dPrime', 1);
 errors = abs(CI - D);
 errorbar([1 1; 2 2], D, squeeze(errors(:,:,1)), squeeze(errors(:,:,1)));
 set(gca, 'XLim', [0.5 2.5], 'XTick', [1 2], 'XTickLabel', {'AC', 'DC'});
-set(gca, 'YLim', [0 1]); ylabel('Dprime');
+set(gca, 'YLim', [0 1.3]); ylabel('Dprime');
 legend('ChAT', 'DAT');
 
 %% just plot some unnormalized data
 ensureFigure('rawData', 1);
 subplot(1,2,1);
-plot(TE.Photometry.xData(Fs:end-Fs), TE.Photometry.data(1).raw(3,Fs:end-Fs), 'b'); hold on; 
-plot(TE.PhotometryDC.xData(Fs:end-Fs), TE.PhotometryDC.data(1).raw(4,Fs:end-Fs), 'r'); 
+plot(TE.Photometry.xData(Fs:end-Fs), TE.Photometry.data(1).raw(3,Fs:end-Fs), 'g'); hold on; 
+plot(TE.PhotometryDC.xData(Fs:end-Fs), TE.PhotometryDC.data(1).raw(4,Fs:end-Fs), 'k'); 
 % rawX = linspace(1, 1 + 0.033, 201);
 rawX = linspace(1, 4, 201);
-plot(rawX, sessions.SessionData.NidaqData{3,1}(6100:6300, 1), 'b');
-legend('AC', 'DC'); set(gca, 'YLim', [0 5]);
+plot(rawX, sessions.SessionData.NidaqData{3,1}(6100:6300, 1), 'g');
+legend('AC', 'DC'); %set(gca, 'YLim', [0 0.5]);
 subplot(1,2,2);
-plot(TE.Photometry.xData(Fs:end-Fs), TE.Photometry.data(2).raw(3,Fs:end-Fs), 'b'); hold on;
-plot(TE.PhotometryDC.xData(Fs:end-Fs), TE.PhotometryDC.data(2).raw(4,Fs:end-Fs), 'r'); 
-plot(rawX, sessions.SessionData.NidaqData{3,1}(6100:6300, 2), 'b');
+plot(TE.Photometry.xData(Fs:end-Fs), TE.Photometry.data(2).raw(3,Fs:end-Fs), 'r'); hold on;
+plot(TE.PhotometryDC.xData(Fs:end-Fs), TE.PhotometryDC.data(2).raw(4,Fs:end-Fs), 'k'); 
+plot(rawX, sessions.SessionData.NidaqData{3,1}(6100:6300, 2), 'r');
 % plot(repmat(min
-legend('AC', 'DC');set(gca, 'YLim', [0 5]);
+legend('AC', 'DC');set(gca, 'YLim', [0 1]);
+
+%% just plot zscored data
+ensureFigure('zsData', 1);
+subplot(2,1,1);
+
+acTrial = 7; dcTrial = 2;
+plot(TE.Photometry.xData(Fs:end-Fs), TE.Photometry.data(1).ZS(acTrial,Fs:end-Fs), 'g'); hold on; 
+plot(TE.PhotometryDC.xData(Fs:end-Fs), TE.PhotometryDC.data(1).ZS(dcTrial,Fs:end-Fs), 'k'); 
+title('GCaMP channel, ChAT-cre'); ylabel('ZScore'); xlabel('Time (s)');
+legend('AC', 'DC');
+
+subplot(2,1,2);
+
+plot(TE.Photometry.xData(Fs:end-Fs), TE.Photometry.data(2).ZS(acTrial,Fs:end-Fs), 'r'); hold on;
+plot(TE.PhotometryDC.xData(Fs:end-Fs), TE.PhotometryDC.data(2).ZS(dcTrial,Fs:end-Fs), 'k'); 
+title('RCaMP channel, DAT-cre'); ylabel('ZScore');xlabel('Time (s)');
+legend('AC', 'DC');
 %% spectral profile of demodulated data
     
     
@@ -195,21 +212,23 @@ legend('AC', 'DC');set(gca, 'YLim', [0 5]);
     params.Fs = Fs;
     params.trialave = 1;
     powerFig = ensureFigure('powerFigure', 1);
-    axes('YScale', 'log', 'XScale', 'linear'); hold on
-        
+    subplot(2,1,1, 'YScale', 'log', 'XScale', 'linear'); hold on        
     [S, f] = mtspectrumc(TE.Photometry.data(1).dF(acTrials, :)', params);
     plot(f, S , 'g'); 
-    [S, f] = mtspectrumc(TE.Photometry.data(2).dF(acTrials, :)', params);
-    plot(f, S, 'r');
     [S, f] = mtspectrumc(TE.PhotometryDC.data(1).dF(dcTrials, :)', params);
-    plot(f, S, 'y');    
+    plot(f, S, 'k');    
+    title('GCaMP channel, ChAT-cre'); ylabel('Power');
+
+    subplot(2,1,2, 'YScale', 'log', 'XScale', 'linear'); hold on            
+    [S, f] = mtspectrumc(TE.Photometry.data(2).dF(acTrials, :)', params);
+    plot(f, S, 'r');    
     [S, f] = mtspectrumc(TE.PhotometryDC.data(2).dF(dcTrials, :)', params);
-    plot(f, S, 'm');    
-    
+    plot(f, S, 'k');    
+    title('RCaMP channel, DAT-cre'); 
 
     xlabel('Frequency');
     ylabel('Power');
-    title('Noise Spectra');
+    
         
 %% spectra of raw data
 
