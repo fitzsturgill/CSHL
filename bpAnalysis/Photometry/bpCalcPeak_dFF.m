@@ -35,7 +35,7 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
     nTrials = size(Photometry.data(ch).dFF, 1);
 
     peak = struct(...
-        'data', zeros(nTrials, 1),...
+        'data', NaN(nTrials, 1),...
         'settings', s,...
         'channel', ch... 
     );
@@ -62,8 +62,11 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
     
     for trial = 1:nTrials
         trialZero = zeroTimes2(trial) - Photometry.startTime(trial);        
-        p1 = bpX2pnt(s.window(trial,1) + trialZero, Photometry.sampleRate);
-        p2 = bpX2pnt(s.window(trial,2) + trialZero, Photometry.sampleRate);
+        p1 = localX2pnt(s.window(trial,1) + trialZero, Photometry.sampleRate);
+        p2 = localX2pnt(s.window(trial,2) + trialZero, Photometry.sampleRate);
+        if p1 < 1 || p2 > size(Photometry.data(ch).(s.phField), 2) % skip this trial if points don't occur during photometry data
+            continue
+        end
         trialData = Photometry.data(ch).(s.phField)(trial, p1:p2);
         switch s.method
             case 'mean'
@@ -79,7 +82,18 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
         end
     end
     
+function p=localX2pnt(x, Fs, startX)
+
+    if nargin < 3
+        startX = 0;
+    end
     
+    deltaX=1/Fs;
+
+    p=round(1+(x-startX)/deltaX); % local version can return negative points 
+
+    
+    %     p=max(round(1+(x-startX)/deltaX), 1);   
 % I could just have the window calculated
 % This is a bare bones initial version, in future either:
 % 1) have a flexible wrrapper function OR
