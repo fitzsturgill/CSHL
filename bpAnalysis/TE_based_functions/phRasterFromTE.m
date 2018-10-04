@@ -65,8 +65,9 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
                 if islogical(trials)
                     trials = find(trials);
                 end
-                [sorted, key] = sort(s.sortValues(trials));
+                [~, key] = sort(s.sortValues(trials));
                 trials = trials(key);
+                cData = cData(key, :);
             end
             if s.medFilter
                 cData = MEDFILT(cData, s.medFilter);
