@@ -67,24 +67,11 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             error('downsample must be a factor of sampleRate');
         end
         % update sampleRate because you no longer need non-decimated sample rate
-<<<<<<< HEAD
-     
-        sampleRate = sampleRate / s.downsample; % downsample must be a factor of sampleRate  
-        for counter = 1:length(totalTrials)
-            zeroTime = sessions(1).SessionData.RawEvents.Trial{1}.States.(s.zeroField)(1) - ...
-                sessions(1).SessionData.RawEvents.Trial{1}.States.(s.startField)(1);
-
-            xData = linspace(-zeroTime, ((newSamples - 1) / sampleRate) - zeroTime, newSamples);  
-        end
-
-    else
-=======
         sampleRate = sampleRate / s.downsample; % downsample must be a factor of sampleRate      
         zeroTime = sessions(1).SessionData.RawEvents.Trial{1}.States.(s.zeroField)(1) - ...
             sessions(1).SessionData.RawEvents.Trial{1}.States.(s.startField)(1);
         xData = linspace(-zeroTime, ((newSamples - 1) / sampleRate) - zeroTime, newSamples);    
     else % unfinished, different sized trials are stored in cell arrays
->>>>>>> use_lab_cellbase_test
         originalSamples = [];
         newSamples = [];
     end
@@ -98,13 +85,8 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         'sampleRate', sampleRate,... % downsampled sample rate
         'startTime', NaN(totalTrials, 1),... % what if a trial didn't have photometry...., make this NaN initially therefore
         'xData', xData... % you don't have to use xData, you can also use startTime for more flexible alignment to trial events
-<<<<<<< HEAD
-   );
-    if s.uniformOutput
-=======
     );
     if s.uniformOutput % different sized trials are padded with NaNs, aligned to photometry start
->>>>>>> use_lab_cellbase_test
         data = struct(...
             'dFF', NaN(totalTrials, newSamples),... % deltaF/F
             'dF', NaN(totalTrials, newSamples),... % deltaF            
