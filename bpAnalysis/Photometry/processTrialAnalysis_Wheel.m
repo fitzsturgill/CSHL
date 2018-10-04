@@ -70,7 +70,11 @@ function Wheel = processTrialAnalysis_Wheel(sessions, varargin)
             end
             edges = 0:1/s.Fs:s.duration;
             position = cumsum(histcounts(pulseTimes, edges));
-            position = smooth(position, s.smoothWindow);
+            try
+                position = smooth(position, s.smoothWindow);
+            catch
+                position = smooth(position, 'linear', s.smoothWindow);
+            end
             velocity = gradient(position); % gradient preserves number of points unlike diff
             Wheel.startTime(tcounter) = startTime;
             Wheel.data.X(tcounter,:) = position;

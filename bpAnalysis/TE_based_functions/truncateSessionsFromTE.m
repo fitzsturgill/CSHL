@@ -68,9 +68,9 @@ function TE = truncateSessionsFromTE(TE, action, lickField, rewardTrials)
                 TRUNC.rewardTrials = rewardTrials;
             end
             if isempty(lickField)
-                TRUNC.rewardLicks = smooth(TE.usLicks.rate(TRUNC.rewardTrials), 5);
+                TRUNC.rewardLicks = smooth(TE.usLicks.rate(TRUNC.rewardTrials), 'linear', 5);
             else
-                TRUNC.rewardLicks = smooth(TE.(lickField).rate(TRUNC.rewardTrials), 5);
+                TRUNC.rewardLicks = smooth(TE.(lickField).rate(TRUNC.rewardTrials), 'linear', 5);
             end
             TRUNC.truncTrialHandle = zeros(1, nSessions); % will contain handles for trunc trial indicators
             
@@ -101,7 +101,7 @@ function TE = truncateSessionsFromTE(TE, action, lickField, rewardTrials)
                     % scan back from last trial and find last rejected
                     % trial (might be able to do this without a loop but whatever)
                     while TRUNC.reject(counter) == 1
-                        if counter == TRUNC.firstTrial(session);
+                        if counter == TRUNC.firstTrial(session)
                             break % if for some reason all trials in session have been rejected, stop at first trial
                         end
                         counter = counter - 1;

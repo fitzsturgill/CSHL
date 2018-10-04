@@ -1,68 +1,83 @@
-function peak = bpCalcPeak_Pupil(pupil, window, zeroTimes, varargin)
-% Pupil- output of addPupilometryToTE
-% Window (size = [1,2]): start and stop time for peak calculation in seconds
-% relative to zero time recording during trial
-% zeroTimes- can be cell array of state times (see also referenceFromEnd)
-% or vector (although this option hasn't yet been tested)
+function peak = bpCalcPeak_Pupil(pupil, varargin)
+% pupil- output of addPupilometryToTE
+% Can handle differently sized whisk data per trial (nonUniformOutput mode)
 
 % see also bpCalcPeak_dFF
 
-    if nargin < 4
-        zeroTimes = [];
-    end
     defaults = {...
-        'method', 'mean';... % mean or peak
+        'method', 'mean';... % mean | min | max | percentile (in which case percentile must be specified)
         'pupilField', 'pupDiameterNorm';...
-%         'zeroTimes', [];... % why didn't this work as optional? isssue
-%         with parseargs...
-        'window', window;... % not optional
-        'referenceFromEnd', 0;...
+        'zeroTimes', [];... % 1) empty- inferred from whisk xData 2) cell array or 3) vector containing zero times relative to Bpod trial start
+        'window', [];... % REQUIRED, averaging window around alignment point
+        'referenceFromEnd', 0;... % relevent when zeroTimes are supplied as a cell array (e.g. if you want to align to the beginning or end of a bpod state)        
+        'percentile', [];...
         };
     
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
+    assert(~isempty(s.window), 'Must provide window for whisk peak calculation');
 
+    if strcmp(s.method, 'percentile')
+        assert(~isempty(s.percentile), 'percentile must be specified');
+    end
     nTrials = size(pupil.startTime, 1);
 
+    if isnumeric(pupil.(s.pupilField))
+        uniformOutput = 1;
+    elseif iscell(pupil.(s.pupilField))
+        uniformOutput = 0;
+    else
+        error('pupil data of improper type');
+    end
     peak = struct(...
         'data', zeros(nTrials, 1),...
         'settings', s...
     );
 
-
-    if isempty(zeroTimes)
-        zeroTimes2 = pupil.startTime; % use start of pupil recording if zeroTimes are undefined
-    elseif iscell(zeroTimes)
-        if ~s.referenceFromEnd
-            zeroTimes2 = cellfun(@(x) x(1), zeroTimes); % matrix
-        else
-            zeroTimes2 = cellfun(@(x) x(end), zeroTimes); % matrix
+    if isempty(s.zeroTimes)
+        s.zeroTimes = pupil.startTime - pupil.xData(1);
+    elseif iscell(s.zeroTimes)
+        if ~s.referenceFromEnd % first point in each cell array element
+            zeroTimes = cellfun(@(x) x(1), s.zeroTimes); % returns vector
+        else % last point in each cell array element
+            zeroTimes = cellfun(@(x) x(end), zeroTimes); % returns vector
         end
     else
-        zeroTimes2 = zeroTimes; % not yet tested
+        zeroTimes = s.zeroTimes; 
     end
     
+    zeroTimes = zeroTimes(:); 
+    
+    if size(s.window, 1) == 1
+        s.window = repmat(s.window, nTrials, 1);
+    end
+    
+    zeroTimes = zeroTimes - pupil.startTime; % redefine zero times relative to pupil start    
+    
     for trial = 1:nTrials
-        frameRate = pupil.frameRate(trial);        
-        nFrames = length(pupil.(s.pupilField)(trial, :));
-        trialZero = zeroTimes2(trial) - pupil.startTime(trial);        
-        p1 = bpX2pnt(s.window(1) + trialZero, frameRate);
-        p2 = bpX2pnt(s.window(2) + trialZero, frameRate);        
-        
-%         trialZero = zeroTimes2(trial) - pupil.startTime(trial);        
-%         p1 = bpX2pnt(s.window(1) + trialZero, frameRate);
-%         p2 = bpX2pnt(s.window(2) + trialZero, frameRate);
-        
-%         p1 = max(1, bpX2pnt(w2(1), frameRate));
-%         p2 = min(nFrames, bpX2pnt(w2(2), frameRate));        
-        trialData = pupil.(s.pupilField)(trial, p1:p2);
+        sampleRate = pupil.frameRate(trial);    
+        if uniformOutput
+            trialData = pupil.(s.pupilField)(trial, :);
+        else
+            trialData = pupil.(s.pupilField){trial};
+        end
+        nSamples = length(trialData);
+        acqDuration = nSamples / sampleRate;
+        zeroTime = zeroTimes(trial);
+        if isnan(zeroTime) || (zeroTime < 0) || (zeroTime > acqDuration)|| any(isnan(s.window(trial, :)))
+            continue % continue if zero time occurs outside photometry acquisition or if windows or zeros contain NaNs
+        end        
+        p1 = bpX2pnt(zeroTime + s.window(trial, 1), sampleRate);
+        p2 = min(bpX2pnt(zeroTime + s.window(trial, 2), sampleRate), nSamples);        
+
         switch s.method
             case 'mean'
-                peak.data(trial) = mean(trialData);
+                peak.data(trial) = mean(trialData(p1:p2));
             case 'max'
-                peak.data(trial) = max(trialData);
+                peak.data(trial) = max(trialData(p1:p2));
             case 'min'
-                peak.data(trial) = min(trialData);                
+                peak.data(trial) = min(trialData(p1:p2));                
+            case 'percentile'
+                peak.data(trial) = percentile(trialData(p1:p2), s.percentile);
             otherwise
-                
         end
     end

@@ -1,24 +1,30 @@
 function ih = phRasterFromTE(TE, trials, ch, varargin)
-
+    
+    % FS updated 7/2018, now utilizes phAlignedWindow and gains associated
+    % functionality, you must pass required parameters via varargin to
+    % phAlignedWindow
+    % you can specify fixed or variable zeroTimes and windows, see
+    % phAlignedWindow
     defaults = {...
         'ax', gca;...
         'fig', gcf;...
-        'PhotometryField', 'Photometry';...
-        'window', [];...
         'CLimFactor', 3;...  % scales color table -/+ n standard deviations away from the mean
         'trialNumbering', 'consecutive';... % 'consecutive' or 'global'
         'CLim', [];... % if specified, CLimMode set manually
         'medFilter', 0;... % if specified, set window for median filtering, only works with consecutive mode right now....
         'sortValues', [];... % overrides trialNumbering to 'consecutive', and 'showSessionBreaks', to 0
         'showSessionBreaks', 1;...
+        'window', [];... % averaging window around alignment point
+        'zeroTimes', [];... % empty- inferred from Photometry xData OR cell array or vector containing zero times relative to Bpod trial start        
+        'PhotometryField', 'Photometry';...
+        'FluorDataField', 'dFF';...
         };
     [s, ~] = parse_args(defaults, varargin{:});
     if isempty(s.fig)
         s.fig = figure;
     else
         figure(s.fig);
-    end
-    
+    end   
     
     if isempty(s.ax)
         figure(s.fig);
@@ -32,32 +38,25 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
         s.trialNumbering = 'consecutive';
     end
     
-    Photometry = s.PhotometryField;
-    if ~isscalar(TE)
-        error('TE must be scalar');
+    Photometry = TE.(s.PhotometryField);
+    if isempty(s.zeroTimes)
+%         s.zeroTimes = valuecrossing(1:length(Photometry.xData), Photometry.xData, 0); % inferred from xData, historical usage...
+%         s.zeroTimes = s.zeroTimes + Photometry.startTime; % convert to Bpod time
+          s.zeroTimes = Photometry.startTime - Photometry.xData(1);
+        if isempty(s.window)
+            s.window = Photometry.xData([1 end]);
+        end
     end
+    varargin = rewrite_varargin(s, varargin);
     
-    if ~isfield(TE, Photometry)
-        error([Photometry ' field does not exist']);
-    end
+    [cData, xData] = phAlignedWindow(TE, trials, ch, varargin{:});
     
-    xData = TE.(Photometry).xData;
-    if ~isempty(s.window)
-        startP = max(1, bpX2pnt(s.window(1), TE.(Photometry).sampleRate, xData(1)));
-        endP = min(length(xData), bpX2pnt(s.window(2), TE.(Photometry).sampleRate, xData(1)));
-    else
-        startP = 1;
-        endP = length(xData);
-        s.window = [xData(1) xData(end)];
-    end
-    
-    
-
-    % determine CLim, use all trials so CLim/image scaling is consistent
-    % across conditions or sets of trials
+    % determine CLim, use all trials and points so CLim/image scaling is consistent
+    % across conditions or sets of trials (so you can compare rasters by
+    % eye)
     if isempty(s.CLim)
-        imavg = mean(mean(TE.(Photometry).data(ch).dFF(:, startP:endP), 'omitnan'), 'omitnan');
-        imstd = mean(std(TE.(Photometry).data(ch).dFF(:, startP:endP), 'omitnan'), 'omitnan');
+        imavg = nanmean(nanmean(Photometry.data(ch).(s.FluorDataField), 1), 2);
+        imstd = nanmean(std(Photometry.data(ch).(s.FluorDataField), 1), 2);
         s.CLim = [imavg - s.CLimFactor * imstd, imavg + s.CLimFactor * imstd];
     end
     switch s.trialNumbering
@@ -66,34 +65,32 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
                 if islogical(trials)
                     trials = find(trials);
                 end
-                [sorted, key] = sort(s.sortValues(trials));
+                [~, key] = sort(s.sortValues(trials));
                 trials = trials(key);
+                cData = cData(key, :);
             end
-            cData = TE.(Photometry).data(ch).dFF(trials, startP:endP);
             if s.medFilter
                 cData = MEDFILT(cData, s.medFilter);
             end
             sessionBreaks = find(diff(TE.sessionIndex(trials)))';            
-        %     sessionBreaks = find(diff(TE.epoch(trials)))';     % kludge for sfn poster, show epoch change (reversal)
-            ih = image('Xdata', s.window, 'YData', [1 size(cData, 1)],...
+            ih = image('Xdata', [xData(1) xData(end)], 'YData', [1 size(cData, 1)],...
                 'CData', cData, 'CDataMapping', 'Scaled', 'Parent', gca);
             if s.showSessionBreaks
                 line(repmat(s.window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
             end
 
         case 'global'
-            cData = NaN(length(TE.filename), endP-startP+1);
-            cData(trials,:) = TE.(Photometry).data(ch).dFF(trials, startP:endP);
-            ih = image('Xdata', s.window, 'YData', [1 size(cData, 1)],...
+            cDataCopy = cData;
+            cData = NaN(length(TE.filename), size(cDataCopy, 2));
+            cData(trials,:) = cDataCopy;
+            ih = image('Xdata', [xData(1) xData(end)], 'YData', [1 size(cData, 1)],...
                 'CData', cData, 'CDataMapping', 'Scaled', 'Parent', gca);
             sessionBreaks = find(diff(TE.sessionIndex))';  
             if s.showSessionBreaks            
                 line(repmat(s.window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks            
             end
-    end
-    
-    set(gca, 'YLim', [1 size(cData, 1)], 'XLim', s.window, 'CLim', s.CLim);
-    
+    end    
+    set(gca, 'YLim', [1 size(cData, 1)], 'XLim', [xData(1) xData(end)], 'CLim', s.CLim);    
 end
 
 function out = MEDFILT(cdata, window)

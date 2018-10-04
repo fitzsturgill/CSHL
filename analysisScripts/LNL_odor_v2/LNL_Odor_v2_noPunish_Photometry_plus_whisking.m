@@ -24,30 +24,28 @@ if sessions(1).SessionData.Settings.GUI.LED2_amp > 0
 end
 
 %% baseline by trial
- TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL,...
-    'tau', 2);   
+ TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL);
 %% baseline expfit
-TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', {'expFit', 'expFit'}, 'zeroField', 'Cue', 'channels', channels, 'baseline', BL,...
+TE.Photometry2 = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', {'expFit', 'expFit'}, 'zeroField', 'Cue', 'channels', channels, 'baseline', BL,...
     'tau', 2);
 % TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'expFitBegin', 0.1,...
 %     'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL, 'downsample', 305);
 %%
 % if you are reloading TE do this:
 channels = [1 2];
-
 %% extract peak trial dFF responses to cues and reinforcement and lick counts
-% csWindow = cellfun(@(x,y,z) [x(1) max(y(end), z(end))], TE.Cue, TE.AnswerLick, TE.AnswerNoLick); % max- to select either AnswerLick or AnswerNoLick timestamp (unused state contains NaN)
+% csWindow = cellfun(&#64;(x,y,z) [x(1) max(y(end), z(end))], TE.Cue, TE.AnswerLick, TE.AnswerNoLick); % max- to select either AnswerLick or AnswerNoLick timestamp (unused state contains NaN)
 nTrials = length(TE.filename);
 
 % csWindow = zeros(nTrials, 2);
-% csWindow(:,2) = cellfun(@(x,y,z) max(x(end), y(end)) - z(1), TE.AnswerLick, TE.AnswerNoLick, TE.Cue); 
+% csWindow(:,2) = cellfun(&#64;(x,y,z) max(x(end), y(end)) - z(1), TE.AnswerLick, TE.AnswerNoLick, TE.Cue); 
 % max 1) to select AnswerNoLick time stampfor no lick trials (unused state contains NaN)
 % 2) to select AnswerLick time stamp for lick trials (AnswerLick follows
 % AnswerNoLick state)
 
 % set time windows to compute cue/conditioned stimulus (Cs) response for
 % each trial
-ch1CsWindow = [1.5 3];
+ch1CsWindow = [1 2.5];
 ch2CsWindow = [1 2.5];
 
 usWindow = [0 0.75];
@@ -82,22 +80,24 @@ end
 
 %% add pupilometry
 TE = addPupilometryToTE(TE, 'duration', 11, 'zeroField', 'Cue',  'frameRate', 60, 'frameRateNew', 20);
-pupLag = 0.3;
+pupLag = 0;
+TE.pupil_cs = bpCalcPeak_Pupil(TE.pupil, 'zeroTimes', TE.Cue, 'window', [1 3]);
+TE.pupil_us = bpCalcPeak_Pupil(TE.pupil, 'zeroTimes', TE.Us, 'window', [0.5 1.5]);
+TE.pupil_baseline = bpCalcPeak_Pupil(TE.pupil, 'zeroTimes', TE.PreCsRecording, 'window', [0 4]);
 
-TE.pupilBaseline = mean(TE.pupil.pupDiameterNorm(:,bpX2pnt(-3, 20, -4):bpX2pnt(0, 20, -4)), 2);
-% ch1CsWindow = [0.25 1];
-TE.pupil_cs = mean(TE.pupil.pupDiameterNorm(:,bpX2pnt(ch1CsWindow(1) + pupLag, 20, -4):bpX2pnt(ch1CsWindow(2) + pupLag, 20, -4)), 2);
 %% add whisking
-
-TE.Whisk = addWhiskingToTE(TE, 'folderPrefix', 'WhiskDiff_');
-
+TE.Whisk = addWhiskingToTE(TE);
+TE.whisk_cs = bpCalcPeak_Whisk(TE.Whisk, 'zeroTimes', TE.Cue, 'window', [0 3]);
+TE.whisk_baseline = bpCalcPeak_Whisk(TE.Whisk, 'zeroTimes', TE.PreCsRecording, 'window', [0 4]);
 
 %% add wheel
 TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', 11, 'Fs', 20, 'startField', 'Start');
-TE.wheelBaseline = mean(TE.Wheel.data.V(:,bpX2pnt(-3, 20, -4):bpX2pnt(0, 20, -4)), 2);
+TE.wheel_baseline = mean(TE.Wheel.data.V(:,bpX2pnt(-4, 20, -4):bpX2pnt(0, 20, -4)), 2);
+TE.wheel_cs = mean(TE.Wheel.data.V(:,bpX2pnt(1, 20, -4):bpX2pnt(3, 20, -4)), 2);
 
 %%
-basepath = uigetdir; % prompts windows/mac osx to give you a location to save
+% basepath = uigetdir; % prompts windows/mac osx to give you a location to save
+basepath = 'Z:\SummaryAnalyses\LNL_Odor_v2_noPunish_whisk\';
 sep = strfind(TE.filename{1}, '_');
 subjectName = TE.filename{1}(1:sep(2)-1);
 disp(subjectName);
@@ -151,11 +151,16 @@ end
 %% generate trial lookups for different combinations of conditions
 LNL_conditions;
 
-%%
+%% derivative of photometry signal
+for counter = 1:2
+    TE.Photometry.data(counter).diff = NaN(size(TE.Photometry.data(counter).ZS));
+    TE.Photometry.data(counter).diff(:,2:end) = TE.Photometry.data(counter).ZS(:,2:end) - TE.Photometry.data(counter).ZS(:,1:end-1);
+end
 
 %% photometry averages, zscored
 %     ylim = [-2 8];
-    saveName = [subjectName '_phAvgs'];  
+    fdField = 'diff';
+    saveName = sprintf('%s_phAvgs_%s', subjectName, fdField);  
     h=ensureFigure(saveName, 1); 
     mcLandscapeFigSetup(h);
 
@@ -164,32 +169,32 @@ LNL_conditions;
     % - 6 0 4
     if ismember(1, channels)
         subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); 
-        [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials, uncuedReward, uncuedPunish}, 1,...
-            'FluorDataField', 'ZS', 'window', [1, 7], 'linespec', {'b', 'r', 'k', 'c', 'm'}); %high value, reward
-        legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-        title('Reinforcement'); ylabel('BF dF/F Zscored'); textBox(subjectName);%set(gca, 'YLim', ylim);
+        [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, neutralTrials, uncuedReward}, 1,...
+            'FluorDataField', fdField, 'window', [1, 7], 'linespec', {'b','k','c'}); %high value, reward
+        legend(hl, {'rew', 'neutral', 'uncued rew'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+        title('Reinforcement'); ylabel(sprintf('BF %s', fdField)); textBox(subjectName);%set(gca, 'YLim', ylim);
     end
     
     if ismember(2, channels)    
         subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1); 
-        [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials, uncuedReward, uncuedPunish}, 2,...
-            'FluorDataField', 'ZS', 'window', [1, 7], 'linespec', {'b', 'r', 'k', 'c', 'm'}); %high value, reward
-        legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-        ylabel('VTA dF/F Zscored'); xlabel('time from cue (s)'); %set(gca, 'YLim', ylim);
+        [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, neutralTrials, uncuedReward}, 2,...
+            'FluorDataField', fdField, 'window', [1, 7], 'linespec', {'b','k','c'}); %high value, reward
+        legend(hl, {'rew', 'neutral', 'uncued rew'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+        ylabel(sprintf('VTA %s', fdField)); xlabel('time from cue (s)'); %set(gca, 'YLim', ylim);
     end
     
     % - 6 0 4
     if ismember(1, channels)    
         subplot(pm(1), pm(2), 2, 'FontSize', 12, 'LineWidth', 1); 
         [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 1,...
-        'FluorDataField', 'ZS', 'window', [-3, 7], 'linespec', {'c', 'm'}); %high value, reward
+        'FluorDataField', fdField, 'window', [-3, 7], 'linespec', {'c', 'm'}); %high value, reward
         legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
         title('CS+, outcomes'); set(gca, 'XLim', [-3, 7]);%set(gca, 'YLim', ylim);
     end
     if ismember(2, channels)    
         subplot(pm(1), pm(2), 4, 'FontSize', 12, 'LineWidth', 1); 
         [ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 2,...
-            'FluorDataField', 'ZS', 'window', [-3, 7], 'linespec', {'c', 'm'}); %high value, reward
+            'FluorDataField', fdField, 'window', [-3, 7], 'linespec', {'c', 'm'}); %high value, reward
         legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
         xlabel('time from cue (s)');     set(gca, 'XLim', [-3, 7]);%set(gca, 'YLim', ylim);
     end
@@ -198,8 +203,41 @@ LNL_conditions;
         saveas(gcf, fullfile(savepath, [saveName '.fig']));
         saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
     end    
+%% pupil averages per session, compare csPlus with uncued to check that trial/file alignment is correct given issues with bonsai
+nSessions = max(TE.sessionIndex);
+ensureFigure('pupil_check_sessions_avg', 1);
+nax = ceil(sqrt(nSessions));
+for counter = 1:nSessions
+    subplot(nax,nax,counter); 
+        plotPupilAverageFromTE(TE, {uncuedTrials & TE.sessionIndex == counter, csPlusTrials & TE.sessionIndex == counter});
+        set(gca, 'XLim', [-2 6]);
+end
 
+%% 
+saveName = ('Pupil_averages');
+ensureFigure(saveName, 1); 
+% condition on behavior and cue condition
+subplot(2,2,1);[~, hl] = plotPupilAverageFromTE(TE, {uncuedTrials, csPlusTrials & hitTrials, csMinusTrials & CRTrials}, 'window', [-2 6]);
+legend(hl, {'uncued', 'cs+, hit', 'cs-, CR'}, 'Box', 'off', 'Location', 'northwest');
+title('Cue condition'); xlabel('time from cue (s)');
+set(gca, 'XLim', [-2 6]);
+% condition on behavior only for csPlus
+subplot(2,2,2);[~, hl] = plotPupilAverageFromTE(TE, {hitTrials & csPlusTrials, missTrials & csPlusTrials}, 'window', [-2 6]);
+set(gca, 'XLim', [-2 6]);
+title('Cs+ by behavioral response'); xlabel('time from cue (s)');
+legend(hl, {'cs+, hit', 'cs+, miss'}, 'Box', 'off', 'Location', 'northwest');
+% reward, expected vs unexpected
+subplot(2,2,3);[~, hl] = plotPupilAverageFromTE(TE, {csPlusTrials & hitTrials & rewardTrials, (csMinusTrials & CRTrials & rewardTrials) | uncuedReward}, 'window', [-2 6]);
+set(gca, 'XLim', [-2 6]);
+legend(hl, {'expected reward', 'unexpected reward'}, 'Box', 'off', 'Location', 'northwest');
+title('Reward by cue and behavior'); xlabel('time from cue (s)');
+formatFigure('scaleFactor', 4)
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+end
 %% all behavior CsPlus
+    fdField = 'diff';
     saveName = 'all_behavior_CsPlus';
     ensureFigure(saveName, 1);
     
@@ -208,33 +246,33 @@ LNL_conditions;
 
     
     
-    subplot(1,5,1);    
+    subplot(1,6,1);    
     image(TE.Wheel.data.V(csPlusTrials, :), 'XData', [-4 7], 'CDataMapping', 'Scaled');
 %     set(gca, 'CLim', [min(TE.Wheel.data.V(:)), max(TE.Wheel.data.V(:))]); 
-    set(gca, 'CLim', [mean(TE.Wheel.data.V(:)) - std(TE.Wheel.data.V(:)) * 2, mean(TE.Wheel.data.V(:)) + std(TE.Wheel.data.V(:)) * 2]); 
+    set(gca, 'CLim', [mean(TE.Wheel.data.V(:)) - std(TE.Wheel.data.V(:)) * 3, mean(TE.Wheel.data.V(:)) + std(TE.Wheel.data.V(:)) * 3]); 
     line(repmat([-4; 7], 1, length(sessionChanges)), [sessionChanges'; sessionChanges'], 'Parent', gca, 'Color', 'w', 'LineWidth', 1); % reversal lines    
-    line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines      
+    line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1);
     title('Velocity');
     ylabel('trial number');
 
-%     subplot(1,5,2);
-%     title('pupil');
-%     try
-%         image(TE.pupil.pupDiameterNorm(csPlusTrials, :), 'XData', [-4 7], 'CDataMapping', 'Scaled');
-%         set(gca, 'CLim', [nanmean(TE.pupil.pupDiameterNorm(:)) - std(TE.pupil.pupDiameterNorm(:), 'omitnan') * 2, nanmean(TE.pupil.pupDiameterNorm(:)) + std(TE.pupil.pupDiameterNorm(:), 'omitnan') * 2]); 
-%         line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 2); % reversal lines    
-%         colormap('parula');  
-%         title('Pupil Diameter');    
-%     catch
-%     end
-    subplot(1,5,2);
+    subplot(1,6,2);
+    title('pupil');
+    try
+        image(TE.pupil.pupDiameterNorm(csPlusTrials, :), 'XData', [-4 7], 'CDataMapping', 'Scaled');
+        set(gca, 'CLim', [nanmean(TE.pupil.pupDiameterNorm(:)) - std(TE.pupil.pupDiameterNorm(:), 'omitnan') * 2, nanmean(TE.pupil.pupDiameterNorm(:)) + std(TE.pupil.pupDiameterNorm(:), 'omitnan') * 2]); 
+        line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 2); % reversal lines    
+        colormap('parula');  
+        title('Pupil Diameter');    
+    catch
+    end
+    subplot(1,6,3);
     imagesc(TE.Whisk.whiskNorm(csPlusTrials, :), 'XData', [-4 7], [0 2])
     
     line(repmat([-4; 7], 1, length(sessionChanges)), [sessionChanges'; sessionChanges'], 'Parent', gca, 'Color', 'w', 'LineWidth', 1); % reversal lines    
     line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
     title('whisking');
     
-    subplot(1,5,3);
+    subplot(1,6,4);
     eventRasterFromTE(TE, csPlusTrials, 'Port1In', 'trialNumbering', 'consecutive',...
         'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
     line(repmat([-4; 7], 1, length(sessionChanges)), [sessionChanges'; sessionChanges'], 'Parent', gca, 'Color', 'k', 'LineWidth', 1); % reversal lines    
@@ -243,16 +281,17 @@ LNL_conditions;
     title('licking');
     
     
-    subplot(1,5,4); phRasterFromTE(TE, csPlusTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', 2); % 'CLimFactor', CLimFactor,
+    subplot(1,6,5); phRasterFromTE(TE, csPlusTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', 1, 'FluorDataField', fdField); % 'CLimFactor', CLimFactor,
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
     title('ChAT'); xlabel('Time frome odor (s)');
-    subplot(1,5,5); phRasterFromTE(TE, csPlusTrials, 2, 'trialNumbering', 'consecutive', 'CLimFactor', 2); % 'CLimFactor', CLimFactor,
+    subplot(1,6,6); phRasterFromTE(TE, csPlusTrials, 2, 'trialNumbering', 'consecutive', 'CLimFactor', 1, 'FluorDataField', fdField); % 'CLimFactor', CLimFactor,
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
     title('DAT');    
 axs = findobj(gcf, 'Type', 'axes');
 
-set(axs, 'FontSize', 18);
+set(axs, 'FontSize', 16);
 set(axs(2:end), 'YTick', []);
+set(gcf, 'Position', [1 1 1920 1004]);
 saveas(gcf, fullfile(savepath, saveName), 'fig'); 
 saveas(gcf, fullfile(savepath, saveName), 'jpeg');
 
@@ -264,7 +303,7 @@ saveas(gcf, fullfile(savepath, saveName), 'jpeg');
     reversals = find(diff(TE.BlockNumber(csMinusTrials, :))) + 1;
     sessionChanges = find(diff(TE.sessionIndex(csMinusTrials, :))) + 1;
     
-    subplot(1,5,1);    
+    subplot(1,6,1);    
     image(TE.Wheel.data.V(csMinusTrials, :), 'XData', [-4 7], 'CDataMapping', 'Scaled');
 %     set(gca, 'CLim', [min(TE.Wheel.data.V(:)), max(TE.Wheel.data.V(:))]); 
     set(gca, 'CLim', [mean(TE.Wheel.data.V(:)) - std(TE.Wheel.data.V(:)) * 2, mean(TE.Wheel.data.V(:)) + std(TE.Wheel.data.V(:)) * 2]); 
@@ -273,24 +312,24 @@ saveas(gcf, fullfile(savepath, saveName), 'jpeg');
     title('Velocity');
     ylabel('trial number');
 
-%     subplot(1,5,2);
-%     title('pupil');
-%     try
-%         image(TE.pupil.pupDiameterNorm(csMinusTrials, :), 'XData', [-4 7], 'CDataMapping', 'Scaled');
-%         set(gca, 'CLim', [nanmean(TE.pupil.pupDiameterNorm(:)) - std(TE.pupil.pupDiameterNorm(:), 'omitnan') * 2, nanmean(TE.pupil.pupDiameterNorm(:)) + std(TE.pupil.pupDiameterNorm(:), 'omitnan') * 2]); 
-%         line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 2); % reversal lines    
-%         colormap('parula');  
-%         title('Pupil Diameter');    
-%     catch
-%     end
-    subplot(1,5,2);
+    subplot(1,6,2);
+    title('pupil');
+    try
+        image(TE.pupil.pupDiameterNorm(csMinusTrials, :), 'XData', [-4 7], 'CDataMapping', 'Scaled');
+        set(gca, 'CLim', [nanmean(TE.pupil.pupDiameterNorm(:)) - std(TE.pupil.pupDiameterNorm(:), 'omitnan') * 2, nanmean(TE.pupil.pupDiameterNorm(:)) + std(TE.pupil.pupDiameterNorm(:), 'omitnan') * 2]); 
+        line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 2); % reversal lines    
+        colormap('parula');  
+        title('Pupil Diameter');    
+    catch
+    end
+    subplot(1,6,3);
     imagesc(TE.Whisk.whiskNorm(csMinusTrials, :), 'XData', [-4 7], [0 2])
     
     line(repmat([-4; 7], 1, length(sessionChanges)), [sessionChanges'; sessionChanges'], 'Parent', gca, 'Color', 'w', 'LineWidth', 1); % reversal lines    
     line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
     title('whisking');
     
-    subplot(1,5,3);
+    subplot(1,6,4);
     eventRasterFromTE(TE, csMinusTrials, 'Port1In', 'trialNumbering', 'consecutive',...
         'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
     line(repmat([-4; 7], 1, length(sessionChanges)), [sessionChanges'; sessionChanges'], 'Parent', gca, 'Color', 'k', 'LineWidth', 1); % reversal lines    
@@ -299,18 +338,22 @@ saveas(gcf, fullfile(savepath, saveName), 'jpeg');
     title('licking');
     
     
-    subplot(1,5,4); phRasterFromTE(TE, csMinusTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', 2); % 'CLimFactor', CLimFactor,
+    subplot(1,6,5); phRasterFromTE(TE, csMinusTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', 2); % 'CLimFactor', CLimFactor,
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
     title('ChAT'); xlabel('Time frome odor (s)');
-    subplot(1,5,5); phRasterFromTE(TE, csMinusTrials, 2, 'trialNumbering', 'consecutive', 'CLimFactor', 2); % 'CLimFactor', CLimFactor,
+    
+    subplot(1,6,6); phRasterFromTE(TE, csMinusTrials, 2, 'trialNumbering', 'consecutive', 'CLimFactor', 2); % 'CLimFactor', CLimFactor,
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
     title('DAT');    
-axs = findobj(gcf, 'Type', 'axes');
+    axs = findobj(gcf, 'Type', 'axes');
 
-set(axs, 'FontSize', 18);
+set(axs, 'FontSize', 16);
 set(axs(2:end), 'YTick', []);
+set(gcf, 'Position', [1 1 1920 1004]);
 saveas(gcf, fullfile(savepath, 'allBehavior_whisk_csMinus'), 'fig'); 
 saveas(gcf, fullfile(savepath, 'allBehavior_whisk_csMinus'), 'jpeg');
+
+
 
 %% compile data into nReversals x nTrials arrays
 
@@ -329,6 +372,12 @@ saveas(gcf, fullfile(savepath, 'allBehavior_whisk_csMinus'), 'jpeg');
         'ReinforcementOutcome', TE.ReinforcementOutcome,...
         'OdorValveIndex', TE.OdorValveIndex,...
         'csLicksROC', TE.AnswerLicksROC,...
+        'whisk_cs', TE.whisk_cs.data,...
+        'whisk_baseline', TE.whisk_baseline.data,...
+        'pupil_cs', TE.pupil_cs.data,...
+        'pupil_baseline', TE.pupil_baseline.data,...  
+        'wheel_cs', TE.wheel_cs,...
+        'wheel_baseline', TE.wheel_baseline,...
         };
     
     if ismember(2, channels)
@@ -441,5 +490,4 @@ smoothWindow = 5;
         saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
     end
     
-
-
+    

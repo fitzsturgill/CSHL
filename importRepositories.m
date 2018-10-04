@@ -1,9 +1,15 @@
-function success = importRepositories(repos, varargin)
+function importRepositories(repos, varargin)
 % recursively add repositories to matlab path, repositories correspond to
 % folder names within the repository path, optional parameters-  'path',
 % specify repository path
     % defaults
-    path = 'C:\Users\Adam\Documents\Repos\';
+    if ispref('Repos', 'path')
+        path = getpref('Repos', 'path');
+    else
+        [~, path] = uiputfile('path', 'Select default folder containing your repositories...');
+        setpref('Repos', 'path', path);
+    end
+        
     % parse input parameter pairs
     counter = 1;
     while counter+1 <= length(varargin) 
@@ -29,4 +35,4 @@ function success = importRepositories(repos, varargin)
         repo = fullfile(path, repo);
         addpath(genpath(repo));
         disp(['*** added repository: ' repo ' ***']);
-    end
+    end    

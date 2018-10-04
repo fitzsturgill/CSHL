@@ -3,7 +3,8 @@ function eventCount = countEventFromTE(TE, event, window, zeroTimes, varargin)
     % window- can be either a 1x2 row vector or a nTrials x 2 matrix (to
     % provide specific windows for every trial)
 
-
+    % Important- you can omit zeroTimes if window is specified in Bpod time
+    % (i.e. relative to Bpod trial start)
     defaults = {...    
         'referenceFromEnd', 0;... % if you provide zeroTimes as a cell array of times (say extracted from state times), you can use start of first or end of last
         };    
@@ -19,7 +20,10 @@ function eventCount = countEventFromTE(TE, event, window, zeroTimes, varargin)
         'settings', s...
         );
     %%
-
+    if nargin < 4 % if you use bpod time directly you don't need a zero (zero is start of bpod time)
+        zeroTimes = zeros(nTrials, 1);
+    end
+    
     if iscell(zeroTimes)
         if ~s.referenceFromEnd
             zeroTimes2 = cellfun(@(x) x(1), zeroTimes); 

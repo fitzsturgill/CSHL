@@ -1,4 +1,7 @@
 function TE = makeTE_CuedOutcome_Odor_Complete(sessions, cellBaseMode)
+% cellbase mode adds bpod states to TE as a pair of state fields appended
+% by _start and _stop in addition to the bpod state as a cell nTrial x 1
+% cell array
     if nargin < 1
         sessions = bpLoadSessions;
     end
@@ -34,6 +37,7 @@ function TE = makeTE_CuedOutcome_Odor_Complete(sessions, cellBaseMode)
         else
             TE(1).([statesToAdd{i} '_start']) = bpAddStateAsTrialEvent(sessions, statesToAdd{i}, [], 0, 'first');
             TE(1).([statesToAdd{i} '_stop']) = bpAddStateAsTrialEvent(sessions, statesToAdd{i}, [], 0, 'last');
+            TE(1).(statesToAdd{i}) = bpAddStateAsTrialEvent(sessions, statesToAdd{i});            
         end
     end
     TE(1).Port1In = bpAddEventAsTrialEvent(sessions, 'Port1In');

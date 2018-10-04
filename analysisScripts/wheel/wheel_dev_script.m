@@ -90,7 +90,7 @@ end
 
 
 TE.PhotometryHF = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit',...
-    'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 29], 'startField', 'Baseline', 'downsample', 10);
+    'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 119], 'startField', 'Baseline', 'downsample', 10);
 %
 if saveOn
     save(fullfile(savepath, 'TE.mat'), 'TE');
@@ -234,7 +234,7 @@ dc_phi_corrected = dc_cc.phi - allShuffled_phi;
 C_timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.trialStartTimeStamp, 'dataTimes', dc_cc.t);
 C_timeFromReward = repmat(permute(C_timeFromReward, [2 3 1]), 1, size(dc_cc.(crossField), 2));
 
-bins = [0:0.1:1 2:10];
+bins = [0:0.1:1 2:20];
 [xC_Means, xC_Errors, xC_timeFromReward] = binnedMeansXY(C_timeFromReward(:,coherenceBandIx(1):coherenceBandIx(2), :),...
     dc_C_corrected(:,coherenceBandIx(1):coherenceBandIx(2), :), bins);
 % [xC_Means, xC_Errors, xC_timeFromReward] = binnedMeansXY(C_timeFromReward(:,coherenceBandIx(1):coherenceBandIx(2), :),...
@@ -247,9 +247,9 @@ ensureFigure('crossCoherence_vs_timeFromReward', 1);
 subplot(1,2,1);
 errorbar(xC_timeFromReward, xC_Means, xC_Errors, 'b'); hold on; 
 % errorbar(xC_timeFromReward_shuff, xC_Means_shuff, xC_Errors_shuff, 'k');
-xlabel('time from reward'); ylabel('Cross coherence'); set(gca, 'XLim', [0 10]);% set(gca, 'YLim', [0 max(xC_Means + xC_Errors)]);
+xlabel('time from reward'); ylabel('Cross coherence'); set(gca, 'XLim', [0 20]);% set(gca, 'YLim', [0 max(xC_Means + xC_Errors)]);
 subplot(1,2,2); title(['Frequency band = ' num2str(coherenceBand(1)) ' to ' num2str(coherenceBand(2))]);
-errorbar(xPhi_timeFromReward, xPhi_Means, xPhi_Errors, 'b'); hold on; set(gca, 'XLim', [0 10]); 
+errorbar(xPhi_timeFromReward, xPhi_Means, xPhi_Errors, 'b'); hold on; set(gca, 'XLim', [0 20]); 
 % errorbar(xC_timeFromReward_shuff, xC_Means_shuff, xC_Errors_shuff, 'k');
 xlabel('time from reward'); ylabel('Coherence Phase');% set(gca, 'YLim', [0 max(xC_Means + xC_Errors)]);
 title(['Frequency band = ' num2str(coherenceBand(1)) ' to ' num2str(coherenceBand(2))]);
@@ -332,7 +332,7 @@ end
 
 channel = 1;
 ensureFigure(['annotated_' num2str(channel)], 1);
-for trial = 1:18
+for trial = 1:12
 
     subplot(6,3,trial);
     trial = trial + 18 * 0;
