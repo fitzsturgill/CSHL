@@ -26,7 +26,7 @@ end
 %% baseline by trial
  TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL);
 %% baseline expfit
-TE.Photometry2 = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', {'expFit', 'expFit'}, 'zeroField', 'Cue', 'channels', channels, 'baseline', BL,...
+TE.PhotometryExpFit = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', {'expFit', 'expFit'}, 'zeroField', 'Cue', 'channels', channels, 'baseline', BL,...
     'tau', 2);
 % TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'expFitBegin', 0.1,...
 %     'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL, 'downsample', 305);
@@ -37,16 +37,16 @@ channels = [1 2];
 % csWindow = cellfun(&#64;(x,y,z) [x(1) max(y(end), z(end))], TE.Cue, TE.AnswerLick, TE.AnswerNoLick); % max- to select either AnswerLick or AnswerNoLick timestamp (unused state contains NaN)
 nTrials = length(TE.filename);
 
-% csWindow = zeros(nTrials, 2);
-% csWindow(:,2) = cellfun(&#64;(x,y,z) max(x(end), y(end)) - z(1), TE.AnswerLick, TE.AnswerNoLick, TE.Cue); 
+csWindow = zeros(nTrials, 2);
+csWindow(:,2) = cellfun(@(x,y,z) max(x(end), y(end)) - z(1), TE.AnswerLick, TE.AnswerNoLick, TE.Cue); 
 % max 1) to select AnswerNoLick time stampfor no lick trials (unused state contains NaN)
 % 2) to select AnswerLick time stamp for lick trials (AnswerLick follows
 % AnswerNoLick state)
 
 % set time windows to compute cue/conditioned stimulus (Cs) response for
 % each trial
-ch1CsWindow = [1 2.5];
-ch2CsWindow = [1 2.5];
+ch1CsWindow = csWindow;
+ch2CsWindow = csWindow;
 
 usWindow = [0 0.75];
 usZeros = cellfun(@(x,y,z,a) max(x(1), max(y(1), max(z(1), a(1)))), TE.Reward, TE.Punish, TE.WNoise, TE.Neutral); %'Reward', 'Punish', 'WNoise', 'Neutral'
@@ -81,19 +81,19 @@ end
 %% add pupilometry
 TE = addPupilometryToTE(TE, 'duration', 11, 'zeroField', 'Cue',  'frameRate', 60, 'frameRateNew', 20);
 pupLag = 0;
-TE.pupil_cs = bpCalcPeak_Pupil(TE.pupil, 'zeroTimes', TE.Cue, 'window', [1 3]);
+TE.pupil_cs = bpCalcPeak_Pupil(TE.pupil, 'zeroTimes', TE.Cue, 'window', csWindow);
 TE.pupil_us = bpCalcPeak_Pupil(TE.pupil, 'zeroTimes', TE.Us, 'window', [0.5 1.5]);
 TE.pupil_baseline = bpCalcPeak_Pupil(TE.pupil, 'zeroTimes', TE.PreCsRecording, 'window', [0 4]);
 
 %% add whisking
 TE.Whisk = addWhiskingToTE(TE);
-TE.whisk_cs = bpCalcPeak_Whisk(TE.Whisk, 'zeroTimes', TE.Cue, 'window', [0 3]);
+TE.whisk_cs = bpCalcPeak_Whisk(TE.Whisk, 'zeroTimes', TE.Cue, 'window', csWindow);
 TE.whisk_baseline = bpCalcPeak_Whisk(TE.Whisk, 'zeroTimes', TE.PreCsRecording, 'window', [0 4]);
 
 %% add wheel
 TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', 11, 'Fs', 20, 'startField', 'Start');
 TE.wheel_baseline = mean(TE.Wheel.data.V(:,bpX2pnt(-4, 20, -4):bpX2pnt(0, 20, -4)), 2);
-TE.wheel_cs = mean(TE.Wheel.data.V(:,bpX2pnt(1, 20, -4):bpX2pnt(3, 20, -4)), 2);
+TE.wheel_cs = mean(TE.Wheel.data.V(:,bpX2pnt(csWindow(1), 20, -4):bpX2pnt(csWindow(2), 20, -4)), 2);
 
 %%
 % basepath = uigetdir; % prompts windows/mac osx to give you a location to save
@@ -151,11 +151,6 @@ end
 %% generate trial lookups for different combinations of conditions
 LNL_conditions;
 
-%% derivative of photometry signal
-for counter = 1:2
-    TE.Photometry.data(counter).diff = NaN(size(TE.Photometry.data(counter).ZS));
-    TE.Photometry.data(counter).diff(:,2:end) = TE.Photometry.data(counter).ZS(:,2:end) - TE.Photometry.data(counter).ZS(:,1:end-1);
-end
 
 %% photometry averages, zscored
 %     ylim = [-2 8];

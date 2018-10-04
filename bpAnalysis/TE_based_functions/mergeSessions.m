@@ -23,5 +23,11 @@ function TE = mergeSessions(TE, sessionIndicesToMerge)
         for index = sessionIndicesToMerge(2:end)
             TE.sessions(index).index = newIndex;
         end
+        if index < length(TE.sessions)
+            for trailing = index+1:length(TE.sessions)
+                TE.sessions(trailing).index = TE.sessions(trailing - 1).index + 1;
+            end
+        end
+        
     end
     

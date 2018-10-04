@@ -69,7 +69,7 @@ end
 animal = 'DC_46';
 success = dbLoadAnimal(DB, animal);
 figs = [];
-fdField = 'dF';
+fdField = 'dFF';
 TE.Photometry.data(1).([fdField 'deconv']) = bpDeconv(TE.Photometry.data(1).(fdField), k, 0, 'none');
 TE.Photometry.data(2).([fdField 'deconv']) = bpDeconv(TE.Photometry.data(2).(fdField), k, 0, 'none');    
 TE.Photometry.data(1).([fdField 'deconvReg']) = bpDeconv(TE.Photometry.data(1).(fdField), k, 0.2, 'none');
