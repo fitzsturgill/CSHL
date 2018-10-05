@@ -20,11 +20,13 @@ function TE = mergeSessions(TE, sessionIndicesToMerge)
     
     % if sessions field exists, update indices to reflect change
     if isfield(TE, 'sessions')
+        oldIndices = [TE.sessions.index];
         for index = sessionIndicesToMerge(2:end)
-            TE.sessions(index).index = newIndex;
+            position = find(oldIndices == index);
+            TE.sessions(position).index = newIndex;
         end
-        if index < length(TE.sessions)
-            for trailing = index+1:length(TE.sessions)
+        if position < length(TE.sessions)
+            for trailing = position+1:length(TE.sessions)
                 TE.sessions(trailing).index = TE.sessions(trailing - 1).index + 1;
             end
         end

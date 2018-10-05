@@ -68,9 +68,9 @@ function TE = truncateSessionsFromTE(TE, action, lickField, rewardTrials)
                 TRUNC.rewardTrials = rewardTrials;
             end
             if isempty(lickField)
-                TRUNC.rewardLicks = smooth(TE.usLicks.rate(TRUNC.rewardTrials), 'linear', 5);
+                TRUNC.rewardLicks = smooth(TE.usLicks.rate(TRUNC.rewardTrials), 5);
             else
-                TRUNC.rewardLicks = smooth(TE.(lickField).rate(TRUNC.rewardTrials), 'linear', 5);
+                TRUNC.rewardLicks = smooth(TE.(lickField).rate(TRUNC.rewardTrials), 5);
             end
             TRUNC.truncTrialHandle = zeros(1, nSessions); % will contain handles for trunc trial indicators
             

@@ -8,7 +8,7 @@ sessions = bpLoadSessions;
 TE = makeTE_LNL_odor_V2(sessions);
 %%
 % assume that photometry channels are consistent across sessions, bleach
-% fit dFF for GCaMP6f (ch1) and simple dFF for jRGECO1a (ch2)
+% fit dFF for GCaMP6f (ch1) and simple dFF for jRCaMP (ch2)
 channels=[]; dFFMode = {}; BL = {}; 
 if sessions(1).SessionData.Settings.GUI.LED1_amp > 0
     channels(end+1) = 1;
@@ -154,7 +154,7 @@ LNL_conditions;
 
 %% photometry averages, zscored
 %     ylim = [-2 8];
-    fdField = 'diff';
+    fdField = 'ZS';
     saveName = sprintf('%s_phAvgs_%s', subjectName, fdField);  
     h=ensureFigure(saveName, 1); 
     mcLandscapeFigSetup(h);

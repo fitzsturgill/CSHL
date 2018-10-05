@@ -1,4 +1,4 @@
-
+DB = dbLoadExperiment('reversals_noPunish_publish');
 saveOn = 1;
 %%
 sessions = bpLoadSessions;
@@ -31,25 +31,25 @@ TE.PhotometryExpFit = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFM
 
 
 %% add pupilometry
-TE = addPupilometryToTE(TE, 'duration', 11, 'zeroField', 'Cue',  'frameRate', 60, 'frameRateNew', 20);
+duration = length(TE.Photometry.xData) / TE.Photometry.sampleRate;
+TE = addPupilometryToTE(TE, 'duration', duration, 'zeroField', 'Cue',  'frameRate', 60, 'frameRateNew', 20);
 
 
 %% add whisking
-TE.Whisk = addWhiskingToTE(TE);
+TE.Whisk = addWhiskingToTE(TE, 'duration', duration);
 
 %% add wheel
-TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', 11, 'Fs', 20, 'startField', 'Start');
+TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', duration, 'Fs', 20, 'startField', 'Start');
 
 %%
-% basepath = uigetdir; % prompts windows/mac osx to give you a location to save
-basepath = 'Z:\SummaryAnalyses\LNL_Odor_v2_noPunish_whisk\';
 sep = strfind(TE.filename{1}, '_');
 subjectName = TE.filename{1}(1:sep(2)-1);
-disp(subjectName);
-savepath = fullfile(basepath, subjectName);
-ensureDirectory(savepath);
+DB = dbRegisterAnimal(DB, subjectName);
+savepath = dbGetAnimalPath(DB, subjectName);
 
-%%
+%% truncate sessions
+usZeros = cellfun(@(x,y,z,a) max(x(1), max(y(1), max(z(1), a(1)))), TE.Reward, TE.Punish, TE.WNoise, TE.Neutral); %'Reward', 'Punish', 'WNoise', 'Neutral'
+TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], usZeros);
 truncateSessionsFromTE(TE, 'init', 'usLicks', filterTE(TE, 'trialType', 1));
 %%
 if saveOn
@@ -62,8 +62,8 @@ end
 for channel = channels
     figname = ['sessionBleach_Correction_ch' num2str(channel)];
     ensureFigure(figname, 1);
-    plot(TE.Photometry.data(channel).blF_raw, 'k'); hold on;
-    plot(TE.Photometry.data(channel).blF, 'r');
+    plot(TE.PhotometryExpFit.data(channel).blF_raw, 'k'); hold on;
+    plot(TE.PhotometryExpFit.data(channel).blF, 'r');
     if saveOn
         saveas(gcf, fullfile(savepath, [figname '.fig']));
         saveas(gcf, fullfile(savepath, [figname '.jpg']));
@@ -71,20 +71,20 @@ for channel = channels
     % cross trial bleaching fits for each session plotted as axis array
         figname = ['trialBleach_Correction_ch' num2str(channel)];
         ensureFigure(figname, 1);
-        nSessions = size(TE.Photometry.bleachFit, 1);
+        nSessions = size(TE.PhotometryExpFit.bleachFit, 1);
         subA = ceil(sqrt(nSessions));
         for counter = 1:nSessions
             subplot(subA, subA, counter);
-            plot(TE.Photometry.bleachFit(counter, channel).trialTemplateFullX, TE.Photometry.bleachFit(counter, channel).trialTemplateFull, 'g'); hold on;            
-            plot(TE.Photometry.bleachFit(counter, channel).trialTemplateX, TE.Photometry.bleachFit(counter, channel).trialTemplate, 'b'); 
-            plot(TE.Photometry.bleachFit(counter, channel).fitX, TE.Photometry.bleachFit(counter, channel).trialFit, 'r');
+            plot(TE.PhotometryExpFit.bleachFit(counter, channel).trialTemplateFullX, TE.PhotometryExpFit.bleachFit(counter, channel).trialTemplateFull, 'g'); hold on;            
+            plot(TE.PhotometryExpFit.bleachFit(counter, channel).trialTemplateX, TE.PhotometryExpFit.bleachFit(counter, channel).trialTemplate, 'b'); 
+            plot(TE.PhotometryExpFit.bleachFit(counter, channel).fitX, TE.PhotometryExpFit.bleachFit(counter, channel).trialFit, 'r');
         %     title(num2str(counter));    
         end
         % average of all trials for this channel to eyeball correction
         figname2 = ['corrected_allTrials_ch' num2str(channel)]; 
         ensureFigure(figname2, 1);
         [ha, hl] = phPlotAverageFromTE(TE, 1:length(TE.filename), channel,...
-    'FluorDataField', 'ZS', 'window', [0.1, max(TE.Photometry.xData) - min(TE.Photometry.xData)], 'zeroTimes', TE.Photometry.startTime); %high value, reward
+    'FluorDataField', 'ZS', 'window', [0.1, max(TE.PhotometryExpFit.xData) - min(TE.PhotometryExpFit.xData)], 'zeroTimes', TE.PhotometryExpFit.startTime); %high value, reward
         if saveOn
             saveas(gcf, fullfile(savepath, 'trialBleach_Correction.fig'));
             saveas(gcf, fullfile(savepath, 'trialBleach_Correction.jpg'));
