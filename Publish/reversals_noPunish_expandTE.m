@@ -76,4 +76,5 @@ for counter = 1:length(DB.animals)
     end 
     
     dbSaveAnimal(DB, animal);    
+    
 end
