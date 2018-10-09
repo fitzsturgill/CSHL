@@ -188,32 +188,34 @@ for oix = 1:length(orderings)
     saveName = [revOrder '_image'];
     ensureFigure(saveName, 1);
     
-    subplot(2,3,1);    
-    xlim = [min(newCsPlus_trialNumber), max(newCsPlus_trialNumber)];
-    imagesc('XData', xlim, 'CData', newCsPlus_ch1_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('ACh');  set(gca, 'CLim', clim)
-    scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled'); 
-    set(gca, 'YLim', [1 nReversals]);
-    ylabel('Reversal #');
-    subplot(2,2,2);
-    imagesc('XData', xlim, 'CData', newCsPlus_ch2_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('Dop');  set(gca, 'CLim', clim)
-    scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
-    set(gca, 'YLim', [1 nReversals]);
-    subplot(2,2,3);
-    imagesc('XData', xlim, 'CData', newCsPlus_licks_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on;title('Licks');  set(gca, 'CLim', clim)
-    scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
-    set(gca, 'YLim', [1 nReversals]);
-    xlabel('new Cs+ trials from reversal');
-    ylabel('Reversal #');
-    subplot(2,2,4);
-    imagesc('XData', xlim, 'CData', newCsPlus_roc(sortOrder, :)); set(gca, 'XLim', xlim); hold on;title('Lick auROC');  %set(gca, 'CLim', clim)
-    scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
-    set(gca, 'YLim', [1 nReversals]);
-    xlabel('new Cs+ trials from reversal');
-    set(gcf, 'Position', [304   217   633   485]);
-    if saveOn
-        saveas(gcf, fullfile(savepath, [saveName '.fig']));
-        saveas(gcf, fullfile(savepath, [saveName '.jpg']));    
-        disp('figure saved');
+    for fcounter = 1:length(fieldsToShow)
+        subplot(2,3,fcounter);
+        xlim = [min(newCsPlus_trialNumber), max(newCsPlus_trialNumber)];
+        imagesc('XData', xlim, 'CData', newCsPlus_ch1_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('ACh');  set(gca, 'CLim', clim)
+        scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled'); 
+        set(gca, 'YLim', [1 nReversals]);
+        ylabel('Reversal #');
+        subplot(2,2,2);
+        imagesc('XData', xlim, 'CData', newCsPlus_ch2_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on; title('Dop');  set(gca, 'CLim', clim)
+        scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
+        set(gca, 'YLim', [1 nReversals]);
+        subplot(2,2,3);
+        imagesc('XData', xlim, 'CData', newCsPlus_licks_norm(sortOrder, :)); set(gca, 'XLim', xlim); hold on;title('Licks');  set(gca, 'CLim', clim)
+        scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
+        set(gca, 'YLim', [1 nReversals]);
+        xlabel('new Cs+ trials from reversal');
+        ylabel('Reversal #');
+        subplot(2,2,4);
+        imagesc('XData', xlim, 'CData', newCsPlus_roc(sortOrder, :)); set(gca, 'XLim', xlim); hold on;title('Lick auROC');  %set(gca, 'CLim', clim)
+        scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled');
+        set(gca, 'YLim', [1 nReversals]);
+        xlabel('new Cs+ trials from reversal');
+        set(gcf, 'Position', [304   217   633   485]);
+        if saveOn
+            saveas(gcf, fullfile(savepath, [saveName '.fig']));
+            saveas(gcf, fullfile(savepath, [saveName '.jpg']));    
+            disp('figure saved');
+        end
     end
 
 
