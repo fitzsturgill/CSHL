@@ -399,25 +399,37 @@ xlim = [-30 30];
 savename = 'reversals_pupWhisk_newCsPlus';
 ensureFigure(savename, 1);
 hla = [];
+subplot(1,2,1);
 [hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus.pupil_csBaselined(goodReversals, common)), nanSEM(newCsPlus.pupil_csBaselined(goodReversals, common))',...
     'k', 'nan', 'gap'); hold on
 hla(end+1) = hl;
-[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus.whisk_cs(goodReversals, common)), nanSEM(newCsPlus.whisk_cs(goodReversals, common))',...
-    'g', 'nan', 'gap');
-hla(end+1) = hl;
-hla(end+1) = plot(odor3_trialNumber(common_odor3), nanmean(odor3.pupil_cs(goodReversals, common_odor3)), 'k--');
-hla(end+1) = plot(odor3_trialNumber(common_odor3), nanmean(odor3.whisk_cs(goodReversals, common_odor3)), 'g--');
+hla(end+1) = plot(odor3_trialNumber(common_odor3), nanmean(odor3.pupil_csBaselined(goodReversals, common_odor3)), 'k--');
 title('New Cs+');
 set(hla, 'LineWidth', 2);
 set(gca, 'XLim', xlim);%, 'YLim', ylim);
 h  = addOrginLines;
 set(h, 'LineWidth', 2);
-legend(hla, {'Pupil', 'Whisk', 'odor 3', 'odor 3'},...        
-    'Location', 'southeast', 'FontSize', 14, 'Interpreter', 'tex', 'Box', 'off');
+legend(hla, {'new CS+', 'odor 3'},...        
+    'Location', 'best', 'FontSize', 14, 'Interpreter', 'tex', 'Box', 'off');
 xlabel('Odor presentations from reversal');
-ylabel('Cue response (norm.)');
+ylabel('Pupil cue response (baselined)');
 
-formatFigurePoster([5.5 4], '', 16);
+subplot(1,2,2);
+hla = [];
+[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus.whisk_cs(goodReversals, common)), nanSEM(newCsPlus.whisk_cs(goodReversals, common))',...
+    'k', 'nan', 'gap'); hold on;
+hla(end+1) = hl;
+hla(end+1) = plot(odor3_trialNumber(common_odor3), nanmean(odor3.whisk_cs(goodReversals, common_odor3)), 'k--');
+title('New Cs+');
+set(hla, 'LineWidth', 2);
+set(gca, 'XLim', xlim);%, 'YLim', ylim);
+h  = addOrginLines;
+set(h, 'LineWidth', 2);
+legend(hla, {'new CS+', 'odor 3'},...        
+    'Location', 'best', 'FontSize', 14, 'Interpreter', 'tex', 'Box', 'off');
+xlabel('Odor presentations from reversal');
+ylabel('Whisk cue response');
+formatFigurePoster([10 4], '', 16);
 
 % new Cs-
 common = sum(~isnan(newCsMinus.licks_cs)) > 3;
@@ -425,25 +437,37 @@ xlim = [-30 30];
 savename = 'reversals_pupWhisk_newCsMinus';
 ensureFigure(savename, 1);
 hla = [];
-[hl, hp] = boundedline(newCsMinus_trialNumber(common), nanmean(newCsMinus.pupil_cs(goodReversals, common)), nanSEM(newCsMinus.pupil_cs(goodReversals, common))',...
+subplot(1,2,1);
+[hl, hp] = boundedline(newCsMinus_trialNumber(common), nanmean(newCsMinus.pupil_csBaselined(goodReversals, common)), nanSEM(newCsMinus.pupil_csBaselined(goodReversals, common))',...
     'k', 'nan', 'gap'); hold on
 hla(end+1) = hl;
-[hl, hp] = boundedline(newCsMinus_trialNumber(common), nanmean(newCsMinus.whisk_cs(goodReversals, common)), nanSEM(newCsMinus.whisk_cs(goodReversals, common))',...
-    'g', 'nan', 'gap');
-hla(end+1) = hl;
-hla(end+1) = plot(odor3_trialNumber(common_odor3), nanmean(odor3.pupil_cs(goodReversals, common_odor3)), 'k--');
-hla(end+1) = plot(odor3_trialNumber(common_odor3), nanmean(odor3.whisk_cs(goodReversals, common_odor3)), 'g--');
+hla(end+1) = plot(odor3_trialNumber(common_odor3), nanmean(odor3.pupil_csBaselined(goodReversals, common_odor3)), 'k--');
 title('New Cs-');
 set(hla, 'LineWidth', 2);
 set(gca, 'XLim', xlim);%, 'YLim', ylim);
 h  = addOrginLines;
 set(h, 'LineWidth', 2);
-legend(hla, {'Pupil', 'Whisk', 'odor 3', 'odor 3'},...        
-    'Location', 'southeast', 'FontSize', 14, 'Interpreter', 'tex', 'Box', 'off');
+legend(hla, {'new CS-', 'odor 3'},...        
+    'Location', 'best', 'FontSize', 14, 'Interpreter', 'tex', 'Box', 'off');
 xlabel('Odor presentations from reversal');
-ylabel('Cue response (norm.)');
+ylabel('Pupil cue response (baselined)');
 
-formatFigurePoster([5.5 4], '', 16);
+subplot(1,2,2);
+hla = [];
+[hl, hp] = boundedline(newCsMinus_trialNumber(common), nanmean(newCsMinus.whisk_cs(goodReversals, common)), nanSEM(newCsMinus.whisk_cs(goodReversals, common))',...
+    'k', 'nan', 'gap'); hold on;
+hla(end+1) = hl;
+hla(end+1) = plot(odor3_trialNumber(common_odor3), nanmean(odor3.whisk_cs(goodReversals, common_odor3)), 'k--');
+title('New Cs-');
+set(hla, 'LineWidth', 2);
+set(gca, 'XLim', xlim);%, 'YLim', ylim);
+h  = addOrginLines;
+set(h, 'LineWidth', 2);
+legend(hla, {'new CS-', 'odor 3'},...        
+    'Location', 'best', 'FontSize', 14, 'Interpreter', 'tex', 'Box', 'off');
+xlabel('Odor presentations from reversal');
+ylabel('Whisk cue response');
+formatFigurePoster([10 4], '', 16)
 
 % always Cs+
 common = sum(~isnan(alwaysCsPlus.licks_cs)) > 3;
@@ -451,61 +475,38 @@ xlim = [-30 30];
 savename = 'reversals_pupWhisk_alwaysCsPlus';
 ensureFigure(savename, 1);
 hla = [];
+subplot(1,2,1);
 [hl, hp] = boundedline(alwaysCsPlus_trialNumber(common), nanmean(alwaysCsPlus.pupil_csBaselined(goodReversals, common)), nanSEM(alwaysCsPlus.pupil_csBaselined(goodReversals, common))',...
     'k', 'nan', 'gap'); hold on
 hla(end+1) = hl;
-[hl, hp] = boundedline(alwaysCsPlus_trialNumber(common), nanmean(alwaysCsPlus.whisk_cs(goodReversals, common)), nanSEM(alwaysCsPlus.whisk_cs(goodReversals, common))',...
-    'g', 'nan', 'gap');
-hla(end+1) = hl;
 hla(end+1) = plot(odor3_trialNumber(common_odor3), nanmean(odor3.pupil_csBaselined(goodReversals, common_odor3)), 'k--');
-hla(end+1) = plot(odor3_trialNumber(common_odor3), nanmean(odor3.whisk_cs(goodReversals, common_odor3)), 'g--');
 title('Always Cs+');
 set(hla, 'LineWidth', 2);
 set(gca, 'XLim', xlim);%, 'YLim', ylim);
 h  = addOrginLines;
 set(h, 'LineWidth', 2);
-legend(hla, {'Pupil', 'Whisk', 'odor 3', 'odor 3'},...        
-    'Location', 'southeast', 'FontSize', 14, 'Interpreter', 'tex', 'Box', 'off');
+legend(hla, {'always CS+', 'odor 3'},...        
+    'Location', 'best', 'FontSize', 14, 'Interpreter', 'tex', 'Box', 'off');
 xlabel('Odor presentations from reversal');
-ylabel('Cue response (norm.)');
+ylabel('Pupil cue response (baselined)');
 
-formatFigurePoster([5.5 4], '', 16);
+subplot(1,2,2);
+hla = [];
+[hl, hp] = boundedline(alwaysCsPlus_trialNumber(common), nanmean(alwaysCsPlus.whisk_cs(goodReversals, common)), nanSEM(alwaysCsPlus.whisk_cs(goodReversals, common))',...
+    'k', 'nan', 'gap'); hold on;
+hla(end+1) = hl;
+hla(end+1) = plot(odor3_trialNumber(common_odor3), nanmean(odor3.whisk_cs(goodReversals, common_odor3)), 'k--');
+title('Always Cs+');
+set(hla, 'LineWidth', 2);
+set(gca, 'XLim', xlim);%, 'YLim', ylim);
+h  = addOrginLines;
+set(h, 'LineWidth', 2);
+legend(hla, {'Always CS+', 'odor 3'},...        
+    'Location', 'best', 'FontSize', 14, 'Interpreter', 'tex', 'Box', 'off');
+xlabel('Odor presentations from reversal');
+ylabel('Whisk cue response');
+formatFigurePoster([10 4], '', 16)
 
-return
-%% dev
 
-% new Cs+
-commonPlus = sum(~isnan(newCsPlus.licks_cs)) > 3;
-commonMinus = sum(~isnan(newCsMinus.licks_cs)) > 3;
-xlim = [-50 50];
-savename = 'reversals_pupWhisk_newCsPlus';
-ensureFigure(savename, 1);
-subplot(2,2,1);
-hla = [];
-[hl, hp] = boundedline(newCsPlus_trialNumber(commonPlus), nanmean(newCsPlus.pupil_csBaselined(goodReversals, commonPlus)), nanSEM(newCsPlus.pupil_csBaselined(goodReversals, commonPlus))',...
-    'g', 'nan', 'gap'); hold on
-[hl, hp] = boundedline(newCsMinus_trialNumber(commonMinus), nanmean(newCsMinus.pupil_csBaselined(goodReversals, commonMinus)), nanSEM(newCsMinus.pupil_csBaselined(goodReversals, commonMinus))',...
-    'k', 'nan', 'gap'); hold on
-set(gca, 'XLim', xlim);
-subplot(2,2,2);
-hla = [];
-[hl, hp] = boundedline(newCsPlus_trialNumber(commonPlus), nanmean(newCsPlus.pupil_cs(goodReversals, commonPlus)), nanSEM(newCsPlus.pupil_cs(goodReversals, commonPlus))',...
-    'g', 'nan', 'gap'); hold on
-[hl, hp] = boundedline(newCsMinus_trialNumber(commonMinus), nanmean(newCsMinus.pupil_cs(goodReversals, commonMinus)), nanSEM(newCsMinus.pupil_cs(goodReversals, commonMinus))',...
-    'k', 'nan', 'gap'); hold on
-set(gca, 'XLim', xlim);
-subplot(2,2,3);
-hla = [];
-[hl, hp] = boundedline(newCsPlus_trialNumber(commonPlus), nanmean(newCsPlus.whisk_cs(goodReversals, commonPlus)), nanSEM(newCsPlus.whisk_cs(goodReversals, commonPlus))',...
-    'g', 'nan', 'gap'); hold on
-[hl, hp] = boundedline(newCsMinus_trialNumber(commonMinus), nanmean(newCsMinus.whisk_cs(goodReversals, commonMinus)), nanSEM(newCsMinus.whisk_cs(goodReversals, commonMinus))',...
-    'k', 'nan', 'gap'); hold on
-set(gca, 'XLim', xlim);
-subplot(2,2,4);
-hla = [];
-[hl, hp] = boundedline(newCsPlus_trialNumber(commonPlus), nanmean(newCsPlus.licks_cs(goodReversals, commonPlus)), nanSEM(newCsPlus.licks_cs(goodReversals, commonPlus))',...
-    'g', 'nan', 'gap'); hold on
-[hl, hp] = boundedline(newCsMinus_trialNumber(commonMinus), nanmean(newCsMinus.licks_cs(goodReversals, commonMinus)), nanSEM(newCsMinus.licks_cs(goodReversals, commonMinus))',...
-    'k', 'nan', 'gap'); hold on
-set(gca, 'XLim', xlim);
+
 
