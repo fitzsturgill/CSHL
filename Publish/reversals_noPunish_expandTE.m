@@ -3,7 +3,7 @@
 % LNL_Odor_v2_noPunish_Photometry_Publish
 
 DB = dbLoadExperiment('reversals_noPunish_publish');
-
+channels = [1 2];
 % deconvolve photometry data
 tau = 2; % time constant of exponential decay kernel
 kDuration = 3; % duration of kernel
@@ -54,10 +54,11 @@ for counter = 1:length(DB.animals)
     TE.licks_us = countEventFromTE(TE, 'Port1In', [0 2], TE.Us);
     TE.licks_baseline = countEventFromTE(TE, 'Port1In', [0 4], TE.PreCsRecording);
     
-    pupLag = 0.3;
-    TE.pupil_cs = bpCalcPeak_Pupil(TE.pupil, 'zeroTimes', TE.Cue, 'window', csWindow);
+    pupLag = 0.3; pupilWindow = [0.5 csWindow(2)]; % pupil never really ascends until nearly a second after the cue turns on
+    TE.pupil_cs = bpCalcPeak_Pupil(TE.pupil, 'zeroTimes', TE.Cue, 'window', csWindow + pupLag);
     TE.pupil_us = bpCalcPeak_Pupil(TE.pupil, 'zeroTimes', TE.Us, 'window', usWindow + pupLag);
     TE.pupil_baseline = bpCalcPeak_Pupil(TE.pupil, 'zeroTimes', TE.PreCsRecording, 'window', [0 4]);
+    TE.pupil_csBaselined.data = TE.pupil_cs.data - TE.pupil_baseline.data;
         
     TE.whisk_cs = bpCalcPeak_Whisk(TE.Whisk, 'zeroTimes', TE.Cue, 'window', csWindow);
     TE.whisk_us = bpCalcPeak_Whisk(TE.Whisk, 'zeroTimes', TE.Us, 'window', usWindow);
@@ -75,6 +76,5 @@ for counter = 1:length(DB.animals)
         TE.phPeakPercentile_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, usWindow, TE.Us, 'method', 'percentile', 'percentile', percentValue, 'phField', 'ZS');
     end 
     
-    dbSaveAnimal(DB, animal);    
-    
+    dbSaveAnimal(DB, animal);        
 end

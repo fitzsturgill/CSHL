@@ -31,4 +31,5 @@ yh = line('Parent',hax,'XData',[yp1(1) yp2(1)],'YData',[yp1(2) yp2(2)]);
 
 h = [xh yh];
 set(h,'Color',c);
+set(hax, 'XLim', xlim, 'YLim', ylim); % FS MOD 10/2018
 

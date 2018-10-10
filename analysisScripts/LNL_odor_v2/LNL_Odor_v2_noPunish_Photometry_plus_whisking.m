@@ -282,13 +282,13 @@ end
     subplot(1,6,6); phRasterFromTE(TE, csPlusTrials, 2, 'trialNumbering', 'consecutive', 'CLimFactor', 1, 'FluorDataField', fdField); % 'CLimFactor', CLimFactor,
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
     title('DAT');    
-axs = findobj(gcf, 'Type', 'axes');
+    axs = findobj(gcf, 'Type', 'axes');
 
-set(axs, 'FontSize', 16);
-set(axs(2:end), 'YTick', []);
-set(gcf, 'Position', [1 1 1920 1004]);
-saveas(gcf, fullfile(savepath, saveName), 'fig'); 
-saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+    set(axs, 'FontSize', 16);
+    set(axs(2:end), 'YTick', []);
+    set(gcf, 'Position', [1 1 1920 1004]);
+    saveas(gcf, fullfile(savepath, saveName), 'fig'); 
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
 
 
 %% all behavior CsMinus
