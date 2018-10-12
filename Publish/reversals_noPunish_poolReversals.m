@@ -513,47 +513,47 @@ xlabel('Odor presentations from reversal');
 ylabel('Whisk cue response');
 formatFigurePoster([10 4], '', 12)
 
-%% averages, Reweard response, deconvolved
-common_odor3 = (-9 <= odor3_trialNumber) & (odor3_trialNumber <= 9);
-xlim = [-30 30];
-ylim = [-1 2];
+% %% averages, Reweard response, deconvolved
+% common_odor3 = (-9 <= odor3_trialNumber) & (odor3_trialNumber <= 9);
+% xlim = [-30 30];
+% ylim = [-1 2];
+% 
+% 
+% % always cs plus reward
+% common = sum(~isnan(alwaysCsPlusReward.licks_cs)) > 3;
+% savename = 'reversals_alwaysCsPlusDeconv';
+% fh(end + 1) = ensureFigure(savename, 1);
+% hla = []'
+% [hl, hp] = boundedline(alwaysCsPlus_trialNumber(common), nanmean(alwaysCsPlusReward.phPeakMean_us_ch2_deconv(goodReversals, common)), nanSEM(alwaysCsPlusReward.phPeakMean_us_ch2_deconv(goodReversals, common))',...
+%     'cmap', [237 125 49]/256); hold on
+% hla(end+1) = hl;
+% [hl, hp] = boundedline(alwaysCsPlus_trialNumber(common), nanmean(alwaysCsPlusReward.phPeakMean_us_ch1_deconv(goodReversals, common)), nanSEM(alwaysCsPlusReward.phPeakMean_us_ch1_deconv(goodReversals, common))',...
+%     'cmap', [171 55 214]/256);
+% hla(end+1) = hl;
+% 
+% hla(end+1) = plot(odor3_trialNumber(common_odor3), nanmean(odor3.phPeakMean_us_ch2_deconv(goodReversals, common_odor3)), '--', 'Color', [237 125 49]/256);
+% hla(end+1) = plot(odor3_trialNumber(common_odor3), nanmean(odor3.phPeakMean_us_ch1_deconv(goodReversals, common_odor3)), '--', 'Color', [171 55 214]/256);
+% 
+% set(hla, 'LineWidth', 2);
+% set(gca, 'XLim', xlim);%, 'YLim', ylim);    
+% h  = addOrginLines;
+% set(h, 'LineWidth', 2);
+% % legend(hla, {'\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.', '\bf\color[rgb]{0.5,0.5,0.5}Licks',...
+% %     '\color[rgb]{0.9258,0.4883,0.1914}Odor 3', '\color[rgb]{0.6680,0.2148,0.8359}Odor 3', '\color[rgb]{0.5,0.5,0.5}Odor 3'},...
+% %     'Location', 'best', 'FontSize', 12, 'Interpreter', 'tex', 'Box', 'off');
+% title('Always Cs+');
+% xlabel('CS+ and reward presentations from reversal');
+% ylabel('Reward response');    
+% formatFigurePoster([5.5 4], '', 12);
+% 
+% if saveOn
+%     saveas(gcf, fullfile(savepath, [savename '.fig']));
+%     saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+%     saveas(gcf, fullfile(savepath, [savename '.epsc']));   
+% end 
+% 
 
 
-% always cs plus reward
-common = sum(~isnan(alwaysCsPlusReward.licks_cs)) > 3;
-savename = 'reversals_alwaysCsPlusDeconv';
-fh(end + 1) = ensureFigure(savename, 1);
-hla = []'
-[hl, hp] = boundedline(alwaysCsPlus_trialNumber(common), nanmean(alwaysCsPlusReward.phPeakMean_us_ch2_deconv(goodReversals, common)), nanSEM(alwaysCsPlusReward.phPeakMean_us_ch2_deconv(goodReversals, common))',...
-    'cmap', [237 125 49]/256); hold on
-hla(end+1) = hl;
-[hl, hp] = boundedline(alwaysCsPlus_trialNumber(common), nanmean(alwaysCsPlusReward.phPeakMean_us_ch1_deconv(goodReversals, common)), nanSEM(alwaysCsPlusReward.phPeakMean_us_ch1_deconv(goodReversals, common))',...
-    'cmap', [171 55 214]/256);
-hla(end+1) = hl;
-
-hla(end+1) = plot(odor3_trialNumber(common_odor3), nanmean(odor3.phPeakMean_us_ch2_deconv(goodReversals, common_odor3)), '--', 'Color', [237 125 49]/256);
-hla(end+1) = plot(odor3_trialNumber(common_odor3), nanmean(odor3.phPeakMean_us_ch1_deconv(goodReversals, common_odor3)), '--', 'Color', [171 55 214]/256);
-
-set(hla, 'LineWidth', 2);
-set(gca, 'XLim', xlim);%, 'YLim', ylim);    
-h  = addOrginLines;
-set(h, 'LineWidth', 2);
-% legend(hla, {'\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.', '\bf\color[rgb]{0.5,0.5,0.5}Licks',...
-%     '\color[rgb]{0.9258,0.4883,0.1914}Odor 3', '\color[rgb]{0.6680,0.2148,0.8359}Odor 3', '\color[rgb]{0.5,0.5,0.5}Odor 3'},...
-%     'Location', 'best', 'FontSize', 12, 'Interpreter', 'tex', 'Box', 'off');
-title('Always Cs+');
-xlabel('CS+ and reward presentations from reversal');
-ylabel('Reward response');    
-formatFigurePoster([5.5 4], '', 12);
-
-if saveOn
-    saveas(gcf, fullfile(savepath, [savename '.fig']));
-    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
-    saveas(gcf, fullfile(savepath, [savename '.epsc']));   
-end 
-
-
-return;
 %% write to pdf
 
 h = waitbar(0, 'slowly writing pdfs');
