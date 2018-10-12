@@ -63,17 +63,25 @@ for counter = 1:length(DB.animals)
     TE.whisk_cs = bpCalcPeak_Whisk(TE.Whisk, 'zeroTimes', TE.Cue, 'window', csWindow);
     TE.whisk_us = bpCalcPeak_Whisk(TE.Whisk, 'zeroTimes', TE.Us, 'window', usWindow);
     TE.whisk_baseline = bpCalcPeak_Whisk(TE.Whisk, 'zeroTimes', TE.PreCsRecording, 'window', [0 4]);    
-                
+    TE.whisk_csBaselined.data = TE.whisk_cs.data - TE.whisk_baseline.data;                
+
     TE.wheel_cs = bpCalcPeak_Wheel(TE.Wheel, 'zeroTimes', TE.Cue, 'window', csWindow);
     TE.wheel_us = bpCalcPeak_Wheel(TE.Wheel, 'zeroTimes', TE.Us, 'window', usWindow);
     TE.wheel_baseline = bpCalcPeak_Wheel(TE.Wheel, 'zeroTimes', TE.PreCsRecording, 'window', [0 4]);    
     
-    for channel = channels                
+
+    for channel = channels
         TE.phPeakMean_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, csWindow, TE.Cue, 'method', 'mean', 'phField', 'ZS');
         TE.phPeakMean_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, usWindow, TE.Us, 'method', 'mean', 'phField', 'ZS');
         TE.phPeakMean_baseline(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [1 4], [], 'method', 'mean', 'phField', 'ZS');
         TE.phPeakPercentile_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, csWindow, TE.Cue, 'method', 'percentile', 'percentile', percentValue, 'phField', 'ZS');
         TE.phPeakPercentile_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, usWindow, TE.Us, 'method', 'percentile', 'percentile', percentValue, 'phField', 'ZS');
+        
+        TE.phPeakMean_cs_deconv(channel) = bpCalcPeak_dFF(TE.Photometry, channel, csWindow, TE.Cue, 'method', 'mean', 'phField', 'ZSdeconv');
+        TE.phPeakMean_us_deconv(channel) = bpCalcPeak_dFF(TE.Photometry, channel, usWindow, TE.Us, 'method', 'mean', 'phField', 'ZSdeconv');
+        TE.phPeakMean_baseline_deconv(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [1 4], [], 'method', 'mean', 'phField', 'ZSdeconv');
+        TE.phPeakPercentile_cs_deconv(channel) = bpCalcPeak_dFF(TE.Photometry, channel, csWindow, TE.Cue, 'method', 'percentile', 'percentile', percentValue, 'phField', 'ZSdeconv');
+        TE.phPeakPercentile_us_deconv(channel) = bpCalcPeak_dFF(TE.Photometry, channel, usWindow, TE.Us, 'method', 'percentile', 'percentile', percentValue, 'phField', 'ZSdeconv');
     end 
     
     dbSaveAnimal(DB, animal);        

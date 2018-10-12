@@ -7,8 +7,14 @@ function ax=textAxes(h, txt, fsize)
         fsize =  8;
     end
     
-    ax = axes('Parent', h);
-    axis off
+    if isa(h, 'matlab.ui.Figure')
+        ax = axes('Parent', h);
+        axis off
+    else
+        axes(h);
+        cla;
+        axis off;
+    end
     
 
         
@@ -23,7 +29,6 @@ function ax=textAxes(h, txt, fsize)
             'FontSize', fsize,...
             'HorizontalAlignment', 'center',...
             'VerticalAlignment', 'middle',...
-            'Interpreter', 'none',...
-            'Parent', ax...
+            'Interpreter', 'none'...
             );
     end

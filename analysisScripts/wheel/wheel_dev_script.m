@@ -13,8 +13,9 @@
  
  %%
 D = 12.7; % diameter of wheel in cm
-pr = 200; % pulses/rotation 
-dpp = pi * 12.7 / 200;
+pr = 20; % 200 if not downsampled, pulses/rotation
+warning('pulses per rotation is changed');
+dpp = pi * 12.7 / pr;
 
 wheelTimes = rawTimes(rawTimes < 30);
 edges = 0:1/20:30;
@@ -45,7 +46,7 @@ rewards_chat = bsxfun(@minus, rewards_chat, bl_chat);
 rewards_chat = bsxfun(@rdivide, rewards_chat, bl_chat);
 % 
 
-ts_abs = TE.trialStartTimeStamp;
+ts_abs = TE.TrialStartTimestamp;
 
 iri_pre = [Inf; diff(ts_abs)];
 iri_post = [diff(ts_abs); Inf];
@@ -225,13 +226,13 @@ rewards_mean_phi_corrected = rewards_mean_phi - rewards_mean_phi_shuffled;
 
 
 % coherence as a function of time from reward
-TE.timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.trialStartTimeStamp, 'duration', baselineEnd + 1);
+TE.timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.TrialStartTimestamp, 'duration', baselineEnd + 1);
 % dc_cc - coherence output,    
 coherenceBand = [1 5]; % frequency range across which to pool coherence measurments
 coherenceBandIx = [find(dc_cc.f >= coherenceBand(1), 1) find(dc_cc.f <= coherenceBand(2), 1, 'last')];
 dc_C_corrected = dc_cc.(crossField) - allShuffled;
 dc_phi_corrected = dc_cc.phi - allShuffled_phi;
-C_timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.trialStartTimeStamp, 'dataTimes', dc_cc.t);
+C_timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.TrialStartTimestamp, 'dataTimes', dc_cc.t);
 C_timeFromReward = repmat(permute(C_timeFromReward, [2 3 1]), 1, size(dc_cc.(crossField), 2));
 
 bins = [0:0.1:1 2:20];
@@ -639,7 +640,7 @@ for counter = 1:2
 %     plot(xdata, nanzscore(data_pupil(:, trial)), 'b');
     plot(xdata, nanzscore(data_wheel(:, trial)), 'k');
     
-    set(gca, 'XLim', [0 30], 'YLim', [-5 10]); ylabel(['trial ' num2str(trial)]); 
+%     set(gca, 'XLim', [0 30], 'YLim', [-5 10]); ylabel(['trial ' num2str(trial)]); 
 end
 if saveOn
     saveas(gcf, fullfile(savepath, [figName '.fig']));

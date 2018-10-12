@@ -117,7 +117,7 @@ function TE = addPupilometryToTE(TE, varargin)
         
         % ith element of correctedIx_dm contains trial index matching the ith
         % pupil.mat file
-        outlierITI = 35;
+        outlierITI = 24;
         correctedIx_dm = 1:length(dmDelta);
         if numFileDifference < 0 % there are missing pupil files            
             startingIndex = 1; 
@@ -130,7 +130,8 @@ function TE = addPupilometryToTE(TE, varargin)
                     % outlierITI
                     clean_dmDelta = dmDelta;
                     clean_teDelta = teDelta(testCorrection);
-                    cleanIx = (clean_dmDelta < outlierITI) & (clean_teDelta < outlierITI) & (clean_teDelta > 0);
+%                     cleanIx = (clean_dmDelta < outlierITI) & (clean_teDelta < outlierITI) & (clean_teDelta > 0);
+                    cleanIx = (clean_dmDelta < clean_teDelta + outlierITI) & (clean_teDelta < 300) & (clean_teDelta > 0);
                     Rsqs(shc) = corr(clean_dmDelta(cleanIx), clean_teDelta(cleanIx));
                 end
                 [maxRsq, mix] = max(Rsqs);
@@ -150,7 +151,8 @@ function TE = addPupilometryToTE(TE, varargin)
                     clean_dmDelta = dmDelta(~isnan(testCorrection));
                     clean_dmDelta = clean_dmDelta(1:length(teDelta));
                     clean_teDelta = teDelta;
-                    cleanIx = (clean_dmDelta < outlierITI) & (clean_teDelta < outlierITI) & (clean_teDelta > 0);
+%                     cleanIx = (clean_dmDelta < outlierITI) & (clean_teDelta < outlierITI) & (clean_teDelta > 0);
+                    cleanIx = (clean_dmDelta < clean_teDelta + outlierITI) & (clean_teDelta < 300) & (clean_teDelta > 0);
                     Rsqs(shc) = corr(clean_dmDelta(cleanIx), clean_teDelta(cleanIx));                   
                 end
                 [maxRsq, mix] = max(Rsqs);

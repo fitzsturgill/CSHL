@@ -2,13 +2,16 @@
 
 DB = dbLoadExperiment('reversals_noPunish_publish');
 
-photometryField = 'PhotometryExpFit';
-fdField = 'ZS';
+photometryField = 'Photometry';
+fdField = 'ZSdeconv';
 saveOn = 1;
 channels = [1 2];
+climfactor = 2;
 
 fhp = [];
 fhm = [];
+fha = [];
+fhpupil = [];
 for counter = 1:length(DB.animals)
     animal = DB.animals{counter};
     success = dbLoadAnimal(DB, animal);
@@ -24,8 +27,8 @@ for counter = 1:length(DB.animals)
 %     ylim = [-2 8];
 
     saveName = sprintf('%s_phAvgs_%s_%s', animal, photometryField, fdField);  
-    h=ensureFigure(saveName, 1); 
-    mcLandscapeFigSetup(h);
+    fha(end + 1) =ensureFigure(saveName, 1); 
+    mcLandscapeFigSetup(fha(end));
 
     pm = [2 2];
     
@@ -69,7 +72,7 @@ for counter = 1:length(DB.animals)
        
 %%  pupil averages    
     saveName = sprintf('Pupil_avgs_%s', animal); 
-    ensureFigure(saveName, 1); 
+    fhpupil(end + 1) = ensureFigure(saveName, 1); 
     % condition on behavior and cue condition
     subplot(2,2,1);[~, hl] = plotPupilAverageFromTE(TE, {uncuedTrials, csPlusTrials & hitTrials, csMinusTrials & CRTrials}, 'window', [-2 6]);
     legend(hl, {'uncued', 'cs+, hit', 'cs-, CR'}, 'Box', 'off', 'Location', 'northwest');
@@ -85,6 +88,7 @@ for counter = 1:length(DB.animals)
     set(gca, 'XLim', [-2 6]);
     legend(hl, {'expected reward', 'unexpected reward'}, 'Box', 'off', 'Location', 'northwest');
     title('Reward by cue and behavior'); xlabel('time from cue (s)');
+    subplot(2,2,4); textAxes(gca, animal, 12);
     formatFigure('scaleFactor', 4)
     if saveOn
         saveas(gcf, fullfile(savepath, [saveName '.fig']));
@@ -92,8 +96,7 @@ for counter = 1:length(DB.animals)
     end
     
 %% all behavior CsPlus
-    fdField = 'ZS';
-    saveName = sprintf('allBehavior_csPlus_%s_%s', animal, photometryField); 
+    saveName = sprintf('allBehavior_csPlus_%s_%s_%s', animal, photometryField, fdField); 
     fhp(end+1) = ensureFigure(saveName, 1);
     
     reversals = find(diff(TE.BlockNumber(csPlusTrials, :))) + 1;
@@ -115,7 +118,7 @@ for counter = 1:length(DB.animals)
     
     try
         image(TE.pupil.pupDiameterNorm(csPlusTrials, :), 'XData', [-4 7], 'CDataMapping', 'Scaled');
-        set(gca, 'CLim', [nanmean(TE.pupil.pupDiameterNorm(:)) - std(TE.pupil.pupDiameterNorm(:), 'omitnan') * 2, nanmean(TE.pupil.pupDiameterNorm(:)) + std(TE.pupil.pupDiameterNorm(:), 'omitnan') * 2]); 
+        set(gca, 'CLim', [nanmean(TE.pupil.pupDiameterNorm(:)) - std(TE.pupil.pupDiameterNorm(:), 'omitnan') * climfactor, nanmean(TE.pupil.pupDiameterNorm(:)) + std(TE.pupil.pupDiameterNorm(:), 'omitnan') * climfactor]); 
         line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 2); % reversal lines    
         colormap('parula');  
         title('Pupil Diameter');    
@@ -141,10 +144,10 @@ for counter = 1:length(DB.animals)
     title('licking');
     
     
-    subplot(1,6,5); phRasterFromTE(TE, csPlusTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', 1, 'FluorDataField', fdField, 'PhotometryField', 'PhotometryExpFit'); % 'CLimFactor', CLimFactor,
+    subplot(1,6,5); phRasterFromTE(TE, csPlusTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField); % 'CLimFactor', CLimFactor,
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
     title('ChAT'); xlabel('Time frome odor (s)');
-    subplot(1,6,6); phRasterFromTE(TE, csPlusTrials, 2, 'trialNumbering', 'consecutive', 'CLimFactor', 1, 'FluorDataField', fdField, 'PhotometryField', 'PhotometryExpFit'); % 'CLimFactor', CLimFactor,
+    subplot(1,6,6); phRasterFromTE(TE, csPlusTrials, 2, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField); % 'CLimFactor', CLimFactor,
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
     title('DAT');    
     axs = findobj(gcf, 'Type', 'axes');
@@ -156,7 +159,7 @@ for counter = 1:length(DB.animals)
     saveas(gcf, fullfile(savepath, saveName), 'jpeg');
     
 %% all behavior CsMinus
-    saveName = sprintf('allBehavior_csMinus_%s_%s', animal, photometryField);     
+    saveName = sprintf('allBehavior_csMinus_%s_%s_%s', animal, photometryField, fdField);     
     fhm(end + 1) = ensureFigure(saveName, 1);
     
     reversals = find(diff(TE.BlockNumber(csMinusTrials, :))) + 1;
@@ -165,7 +168,7 @@ for counter = 1:length(DB.animals)
     subplot(1,6,1);    
     image(TE.Wheel.data.V(csMinusTrials, :), 'XData', [-4 7], 'CDataMapping', 'Scaled');
 %     set(gca, 'CLim', [min(TE.Wheel.data.V(:)), max(TE.Wheel.data.V(:))]); 
-    set(gca, 'CLim', [mean(TE.Wheel.data.V(:)) - std(TE.Wheel.data.V(:)) * 2, mean(TE.Wheel.data.V(:)) + std(TE.Wheel.data.V(:)) * 2]); 
+    set(gca, 'CLim', [mean(TE.Wheel.data.V(:)) - std(TE.Wheel.data.V(:)) * 3, mean(TE.Wheel.data.V(:)) + std(TE.Wheel.data.V(:)) * 3]); 
     line(repmat([-4; 7], 1, length(sessionChanges)), [sessionChanges'; sessionChanges'], 'Parent', gca, 'Color', 'w', 'LineWidth', 1); % reversal lines    
     line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines      
     title('Velocity');
@@ -175,7 +178,7 @@ for counter = 1:length(DB.animals)
     subplot(1,6,2);    
     try
         image(TE.pupil.pupDiameterNorm(csMinusTrials, :), 'XData', [-4 7], 'CDataMapping', 'Scaled');
-        set(gca, 'CLim', [nanmean(TE.pupil.pupDiameterNorm(:)) - std(TE.pupil.pupDiameterNorm(:), 'omitnan') * 2, nanmean(TE.pupil.pupDiameterNorm(:)) + std(TE.pupil.pupDiameterNorm(:), 'omitnan') * 2]); 
+        set(gca, 'CLim', [nanmean(TE.pupil.pupDiameterNorm(:)) - std(TE.pupil.pupDiameterNorm(:), 'omitnan') * climfactor, nanmean(TE.pupil.pupDiameterNorm(:)) + std(TE.pupil.pupDiameterNorm(:), 'omitnan') * climfactor]); 
         line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 2); % reversal lines    
         colormap('parula');  
         title('Pupil Diameter');    
@@ -200,11 +203,11 @@ for counter = 1:length(DB.animals)
     title('licking');
     
     
-    subplot(1,6,5); phRasterFromTE(TE, csMinusTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', 2, 'PhotometryField', 'PhotometryExpFit'); % 'CLimFactor', CLimFactor,
+    subplot(1,6,5); phRasterFromTE(TE, csMinusTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField);
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
     title('ChAT'); xlabel('Time frome odor (s)');
     
-    subplot(1,6,6); phRasterFromTE(TE, csMinusTrials, 2, 'trialNumbering', 'consecutive', 'CLimFactor', 2, 'PhotometryField', 'PhotometryExpFit'); % 'CLimFactor', CLimFactor,
+    subplot(1,6,6); phRasterFromTE(TE, csMinusTrials, 2, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField);
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
     title('DAT');    
     axs = findobj(gcf, 'Type', 'axes');
@@ -218,26 +221,48 @@ end
 
 % save pdf versions of allBehavior
 
-h = waitbar(0, 'slowly writing pdfs');
+% h = waitbar(0, 'slowly writing pdfs');
+% 
+% pdfPlus = fullfile(DB.path, 'pooled', sprintf('allBehavior_csPlus_%s_%s.pdf', photometryField, fdfield));
+% for counter = 1:length(fhp)    
+%     if counter == 1
+%         export_fig(fhp(counter),pdfPlus);  % write to pdf
+%     else
+%         export_fig(fhp(counter),'-append',pdfPlus);  % write to pdf
+%     end
+%     waitbar(counter/(length(fhp)*2));
+% end
+% 
+% pdfMinus = fullfile(DB.path, 'pooled', sprintf('allBehavior_csMinus_%s_%s.pdf', photometryField, fdfield));
+% for counter = 1:length(fhm)    
+%     if counter == 1
+%         export_fig(fhm(counter),pdfMinus);  % write to pdf
+%     else
+%         export_fig(fhm(counter),'-append',pdfMinus);  % write to pdf
+%     end
+%     waitbar((counter + length(fhm))/(length(fhm) * 2));
+% end
+% close(h);
+% 
+% h = waitbar(0, 'slowly writing even more pdfs');
+% pdfavg = fullfile(DB.path, 'pooled', sprintf('avgs_allAnimals_%s_%s.pdf', photometryField, fdField));
+% for counter = 1:length(fha)    
+%     if counter == 1
+%         export_fig(fha(counter),pdfavg);  % write to pdf
+%     else
+%         export_fig(fha(counter),'-append',pdfavg);  % write to pdf
+%     end
+%     waitbar(counter/(length(fha)*2));
+% end
 
-pdfPlus = fullfile(DB.path, 'pooled', sprintf('allBehavior_csPlus_%s.pdf', photometryField));
-for counter = 1:length(fhp)    
+pdfpupil = fullfile(DB.path, 'pooled', sprintf('pupil_allAnimals.pdf'));
+for counter = 1:length(fhpupil)    
     if counter == 1
-        export_fig(fhp(counter),pdfPlus);  % write to pdf
+        export_fig(fhpupil(counter),pdfpupil);  % write to pdf
     else
-        export_fig(fhp(counter),'-append',pdfPlus);  % write to pdf
+        export_fig(fhpupil(counter),'-append',pdfpupil);  % write to pdf
     end
-    waitbar(counter/(length(fhp)*2));
+%     waitbar(min((counter + length(fha))/(length(fha) * 2), 1));
 end
-
-pdfMinus = fullfile(DB.path, 'pooled', sprintf('allBehavior_csMinus_%s.pdf', photometryField));
-for counter = 1:length(fhm)    
-    if counter == 1
-        export_fig(fhm(counter),pdfMinus);  % write to pdf
-    else
-        export_fig(fhm(counter),'-append',pdfMinus);  % write to pdf
-    end
-    waitbar((counter + length(fhm))/(length(fhm) * 2));
-end
-close(h);
+% close(h);
     

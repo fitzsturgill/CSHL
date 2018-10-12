@@ -25,7 +25,8 @@ end
 
 % baselineEnd = 119;
 try 
-    baselineEnd = sessions(1).SessionData.NidaqData{1,2}.duration(1) - 0.2;
+    acqdur = sessions(1).SessionData.NidaqData{1,2}.duration(1);
+    baselineEnd = acqdur - 0.2;
 catch
     baselineEnd = 119;
 end
@@ -34,13 +35,13 @@ TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, '
     'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 baselineEnd], 'startField', 'Baseline', 'downsample', 305);
 
 %%
-TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', baselineEnd, 'Fs', 20, 'startField', 'Start');
+TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', acqdur, 'Fs', 20, 'startField', 'Start');
 
 %% pupil data
 %  [wheelY_new, wheelTimes_new] = resample(wheelY, wheelTimes, 20, 'linear');
-folderSuffix = ''; % or enter folder suffix on command line
+folderSuffix = 'b'; % or enter folder suffix on command line
 %%
-TE = addPupilometryToTE(TE, 'duration', baselineEnd, 'zeroField', 'Baseline', 'startField', 'Baseline', 'frameRate', 60, 'frameRateNew', 20, 'folderSuffix', folderSuffix);
+TE = addPupilometryToTE(TE, 'duration', acqdur, 'zeroField', 'Baseline', 'startField', 'Baseline', 'frameRate', 60, 'frameRateNew', 20, 'folderSuffix', folderSuffix);
 %% Now saved in directory according to first session filename
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
@@ -147,7 +148,7 @@ end
 % and ChAT correlations with reward and without but doesn't have nice pupil
 % diameter
 % good trials with pupil traces that needed gap filling: 12
-trial = 5; % 7;
+trial = 1; % 7;
 ensureFigure('examples', 1);
 subplot(4,1,1);
 ydata = TE.Photometry.data(1).raw(trial, :);    
@@ -207,7 +208,7 @@ Fs = 20;
 bp = [0.1 2];
 
 
-TE.timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.trialStartTimeStamp, 'duration', baselineEnd + 1);
+TE.timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.TrialStartTimestamp, 'duration', baselineEnd + 1);
 
 % de-trend the signal with a band-pass filter
 % you may need the signal processing toolbox ....
