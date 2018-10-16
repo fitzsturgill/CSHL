@@ -3,7 +3,7 @@
 DB = dbLoadExperiment('reversals_noPunish_publish');
 
 photometryField = 'Photometry';
-fdField = 'ZSdeconv';
+fdField = 'ZS';
 saveOn = 1;
 channels = [1 2];
 climfactor = 2;
@@ -243,26 +243,26 @@ end
 %     waitbar((counter + length(fhm))/(length(fhm) * 2));
 % end
 % close(h);
-% 
-% h = waitbar(0, 'slowly writing even more pdfs');
-% pdfavg = fullfile(DB.path, 'pooled', sprintf('avgs_allAnimals_%s_%s.pdf', photometryField, fdField));
-% for counter = 1:length(fha)    
-%     if counter == 1
-%         export_fig(fha(counter),pdfavg);  % write to pdf
-%     else
-%         export_fig(fha(counter),'-append',pdfavg);  % write to pdf
-%     end
-%     waitbar(counter/(length(fha)*2));
-% end
 
-pdfpupil = fullfile(DB.path, 'pooled', sprintf('pupil_allAnimals.pdf'));
-for counter = 1:length(fhpupil)    
+h = waitbar(0, 'slowly writing even more pdfs');
+pdfavg = fullfile(DB.path, 'pooled', sprintf('avgs_allAnimals_%s_%s.pdf', photometryField, fdField));
+for counter = 1:length(fha)    
     if counter == 1
-        export_fig(fhpupil(counter),pdfpupil);  % write to pdf
+        export_fig(fha(counter),pdfavg);  % write to pdf
     else
-        export_fig(fhpupil(counter),'-append',pdfpupil);  % write to pdf
+        export_fig(fha(counter),'-append',pdfavg);  % write to pdf
     end
-%     waitbar(min((counter + length(fha))/(length(fha) * 2), 1));
+    waitbar(counter/(length(fha)*2));
 end
+
+% pdfpupil = fullfile(DB.path, 'pooled', sprintf('pupil_allAnimals.pdf'));
+% for counter = 1:length(fhpupil)    
+%     if counter == 1
+%         export_fig(fhpupil(counter),pdfpupil);  % write to pdf
+%     else
+%         export_fig(fhpupil(counter),'-append',pdfpupil);  % write to pdf
+%     end
+%     waitbar(min((counter + length(fha))/(length(fha) * 2), 1));
+% end
 % close(h);
     

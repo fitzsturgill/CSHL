@@ -20,7 +20,7 @@ end
 if sessions(1).SessionData.Settings.GUI.LED2_amp > 0
     channels(end+1) = 2;
     dFFMode{end+1} = 'simple';
-    BL{end + 1} = [1 4];    
+    BL{end + 1} = [1 4];
 end
 
 %% baseline by trial

@@ -6,14 +6,14 @@
 
 saveOn = 1;
 %%
-rat = 'CP20';
-session = '180921a';
+rat = 'CP9';
+session = '180731a';
 loadcb; % % loads ANALYSES, CELLIDLIST, PREFERENCES, and TheMatrix
 pref = getcbpref; % torben's new way
 fullpath = [pref.datapath '\' rat '\' session '\'];
 %%
 addnewcells('dir',[rat filesep session]);
-
+nlxcsc2mat2(fullpath,'Channels','Events');
 TE = makeTE_CuedOutcome_Odor_Complete_Nlx(fullpath);
 MakeStimEvents_Bpod(fullpath,'PulseNttl',128, 'PulsePort', 0); % FS
 

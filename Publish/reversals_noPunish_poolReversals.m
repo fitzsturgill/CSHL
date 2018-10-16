@@ -139,14 +139,23 @@ for field = comp
 end
 
 %% filter reversals according to quality
-
 goodReversals = ...
     ~isnan(trialsToCriterion);% &...
 %     auROC.phPeakMean_cs_ch1.before > 0.2 &...
 %     auROC.phPeakMean_cs_ch2.before > 0.2;
 sortVariable = trialsToCriterion;
+% sortVariable(~goodReversals) = NaN;
+
+excludeAnimal = strfind(AR.csPlus.filename.before(:,end), '');
+excludeAnimal = cellfun(@(x) ~isempty(x), excludeAnimal);
+goodReversals = goodReversals & ~excludeAnimal; 
+sortVariable(excludeAnimal) = NaN;
+
+
 [~, sortOrder] = sort(sortVariable);
 %
+
+
 
 goodPupil = auROC.pupil_csBaselined.before > 0.2;
 goodWhisk = auROC.whisk_csBaselined.before > 0.2;
@@ -160,8 +169,6 @@ newCsMinus = struct();
 alwaysCsPlus = struct();
 alwaysCsPlusReward = struct();
 odor3 = struct();
-
-
 
 for counter = 1:length(fieldsToCompile)
     field = fieldsToCompile{counter};
@@ -196,12 +203,14 @@ fh=[];
 saveName = 'newCsPlus_image';
 fh(end+1) = ensureFigure(saveName, 1);
 cLimFactor = 3;
-xlim = [min(newCsPlus_trialNumber), max(newCsPlus_trialNumber)];
+xData = [min(newCsPlus_trialNumber), max(newCsPlus_trialNumber)];
+xlim = [-30 70];
 for fcounter = 1:length(fieldsToShow)
     sfield = fieldsToShow{fcounter};
     subplot(2,3,fcounter);
     cData = newCsPlus.(sfield)(sortOrder, :);
-    imagesc('XData', xlim, 'CData', cData); set(gca, 'XLim', xlim); hold on; 
+    cData = smoothdata(cData, 2, 'movmean', 5, 'omitnan');
+    imagesc('XData', xData, 'CData', cData); set(gca, 'XLim', xlim); hold on; 
     scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled'); 
     set(gca, 'YLim', [1 nReversals]);
     set(gca, 'CLim', [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor]);
@@ -214,12 +223,14 @@ set(gcf, 'Position', [304   217   633   485]);
 saveName = 'newCsMinus_image';
 fh(end+1) = ensureFigure(saveName, 1);
 cLimFactor = 3;
-xlim = [min(newCsMinus_trialNumber), max(newCsMinus_trialNumber)];
+xData = [min(newCsMinus_trialNumber), max(newCsMinus_trialNumber)];
+xlim = [-30 70];
 for fcounter = 1:length(fieldsToShow)
     sfield = fieldsToShow{fcounter};
     subplot(2,3,fcounter);
     cData = newCsMinus.(sfield)(sortOrder, :);
-    imagesc('XData', xlim, 'CData', cData); set(gca, 'XLim', xlim); hold on; 
+    cData = smoothdata(cData, 2, 'movmean', 5, 'omitnan');
+    imagesc('XData', xData, 'CData', cData); set(gca, 'XLim', xlim); hold on; 
     scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled'); 
     set(gca, 'YLim', [1 nReversals]);
     set(gca, 'CLim', [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor]);
@@ -232,12 +243,14 @@ set(gcf, 'Position', [304   217   633   485]);
 saveName = 'alwaysCsPlus_image';
 fh(end+1) = ensureFigure(saveName, 1);
 cLimFactor = 3;
-xlim = [min(alwaysCsPlus_trialNumber), max(alwaysCsPlus_trialNumber)];
+xData = [min(alwaysCsPlus_trialNumber), max(alwaysCsPlus_trialNumber)];
+xlim = [-30 70];
 for fcounter = 1:length(fieldsToShow)
     sfield = fieldsToShow{fcounter};
     subplot(2,3,fcounter);
     cData = alwaysCsPlus.(sfield)(sortOrder, :);
-    imagesc('XData', xlim, 'CData', cData); set(gca, 'XLim', xlim); hold on; 
+    cData = smoothdata(cData, 2, 'movmean', 5, 'omitnan');
+    imagesc('XData', xData, 'CData', cData); set(gca, 'XLim', xlim); hold on; 
     scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled'); 
     set(gca, 'YLim', [1 nReversals]);
     set(gca, 'CLim', [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor]);
