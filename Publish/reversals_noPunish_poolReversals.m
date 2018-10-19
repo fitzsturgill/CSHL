@@ -7,6 +7,9 @@ saveOn = 1;
 AR = struct('csPlus', [], 'csMinus', [], 'csPlusReward', [], 'thirdOdor', []); % AR = all reversals
 for si = 1:length(DB.animals)    
     animal = DB.animals{si};
+    if strcmp(animal, 'DC_51')
+        continue;
+    end
     load(fullfile(DB.path, 'pooled', ['RE_' animal '.mat']));
     for group = fieldnames(AR)'
         sgroup = group{:};
@@ -54,7 +57,7 @@ sortVariable = revNumber;
 
 
 % quality control- calculate auROC and dPrime for relevent comparisons
-trialWindow = [-30 30];%?
+trialWindow = [-20 60];%?
 
 % initialize
 comp = {'licks_cs', 'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'pupil_csBaselined', 'whisk_csBaselined'}; % comparisons
@@ -84,13 +87,13 @@ for field = comp
         auROC.(field{:}).acq(rev) = rocarea(stripNaNs(AR.csPlus.(field{:}).after(rev,1:trialWindow(2))), stripNaNs(AR.csMinus.(field{:}).before(rev,trialWindow(1) + end + 1:end)), 'scale');                
         % extinction
         dPrime.(field{:}).ext(rev) = dPrime_SNR(AR.csPlus.(field{:}).before(rev,trialWindow(1) + end + 1:end), AR.csMinus.(field{:}).after(rev,1:trialWindow(2)));
-        auROC.(field{:}).ext(rev) = rocarea(stripNaNs(AR.csPlus.(field{:}).before(rev,trialWindow(1) + end + 1:end)), stripNaNs(AR.csMinus.(field{:}).after(rev,1:trialWindow(2))), 'scale');                        
+        auROC.(field{:}).ext(rev) = rocarea(stripNaNs(AR.csPlus.(field{:}).before(rev,trialWindow(1) + end + 1:end)), stripNaNs(AR.csMinus.(field{:}).after(rev,1:trialWindow(2))), 'scale');
     end    
 end
 
 % quality control % 2
 % detect when auROC values first exceed threshold
-rocThresh = 0.6;
+rocThresh = 0.5;
 trialsToCriterion = NaN(nReversals, 1);
 % looping is just easier
 for counter = 1:nReversals    
@@ -102,57 +105,24 @@ for counter = 1:nReversals
     end
 end
 
-%% plot quality control metrics
-colorVar = revNumber;
 
-% auROC vs dPrime
-for field = comp
-    field = field{:};
-    savename = ['auROC_vs_dPrime_Scatter_' field];
-    ensureFigure(savename, 1); colormap jet
-    subplot(2,2,1); scatter(auROC.(field).before, dPrime.(field).before, [], colorVar); ylabel('dPrime'); title('before'); addOrginLines;
-    subplot(2,2,2); scatter(auROC.(field).after, dPrime.(field).after, [], colorVar); title('after'); addOrginLines;
-    subplot(2,2,3); scatter(auROC.(field).acq, dPrime.(field).acq, [], colorVar); ylabel('dPrime'); xlabel('auROC'); title('acquisition'); addOrginLines;
-    subplot(2,2,4); scatter(auROC.(field).ext, dPrime.(field).ext, [], colorVar); xlabel('auROC'); title('extinction'); addOrginLines;
-end
-
-% revNumber vs auROC
-for field = comp
-    field = field{:};
-    savename = ['revNumber_vs_auROC_Scatter_' field];
-    ensureFigure(savename, 1); colormap jet
-    subplot(2,2,1); scatter(revNumber, auROC.(field).before, [], colorVar); ylabel('auROC'); title('before'); addOrginLines;
-    subplot(2,2,2); scatter(revNumber, auROC.(field).after, [], colorVar); title('after'); addOrginLines;
-    subplot(2,2,3); scatter(revNumber, auROC.(field).acq, [], colorVar); ylabel('auROC'); xlabel('rev #'); title('acquisition'); addOrginLines;
-    subplot(2,2,4); scatter(revNumber, auROC.(field).ext, [], colorVar); xlabel('rev #'); title('extinction'); addOrginLines;
-end
-
-% mouseNumber vs auROC
-for field = comp
-    field = field{:};
-    savename = ['mouseNumber_vs_auROC_Scatter_' field];
-    ensureFigure(savename, 1); colormap jet
-    subplot(2,2,1); scatter(mouseNumber, auROC.(field).before, [], colorVar); ylabel('auROC'); title('before'); addOrginLines;
-    subplot(2,2,2); scatter(mouseNumber, auROC.(field).after, [], colorVar); title('after'); addOrginLines;
-    subplot(2,2,3); scatter(mouseNumber, auROC.(field).acq, [], colorVar); ylabel('auROC'); xlabel('mouse #'); title('acquisition'); addOrginLines;
-    subplot(2,2,4); scatter(mouseNumber, auROC.(field).ext, [], colorVar); xlabel('mouse #'); title('extinction'); addOrginLines;
-end
 
 %% filter reversals according to quality
 goodReversals = ...
-    ~isnan(trialsToCriterion);% &...
-%     auROC.phPeakMean_cs_ch1.before > 0.2 &...
-%     auROC.phPeakMean_cs_ch2.before > 0.2;
+    ~isnan(trialsToCriterion) &...
+    auROC.phPeakMean_cs_ch1.acq > 0 &...
+    auROC.phPeakMean_cs_ch2.acq > 0;
 sortVariable = trialsToCriterion;
-% sortVariable(~goodReversals) = NaN;
+sortVariable(~goodReversals) = NaN;
 
-excludeAnimal = strfind(AR.csPlus.filename.before(:,end), '');
-excludeAnimal = cellfun(@(x) ~isempty(x), excludeAnimal);
-goodReversals = goodReversals & ~excludeAnimal; 
-sortVariable(excludeAnimal) = NaN;
+% excludeAnimal = strfind(AR.csPlus.filename.before(:,end), '');
+% excludeAnimal = cellfun(@(x) ~isempty(x), excludeAnimal);
+% goodReversals = goodReversals & ~excludeAnimal; 
+% sortVariable(excludeAnimal) = NaN;
 
 
-[~, sortOrder] = sort(sortVariable);
+[sorted, sortOrder] = sort(sortVariable);
+% sortOrder = sortOrder(~isnan(sorted));
 %
 
 
@@ -192,7 +162,41 @@ odor3_trialNumber = (1:size(odor3.licks_cs, 2)) - size(AR.thirdOdor.licks_cs.bef
 oldCsPlus_trialNumber = -(size(AR.csPlus.licks_cs.before, 2) - 1) : 0;
 oldCsMinus_trialNumber = -(size(AR.csMinus.licks_cs.before, 2) - 1) : 0;
 
+%% plot quality control metrics
+colorVar = revNumber;
 
+% auROC vs dPrime
+for field = comp
+    field = field{:};
+    savename = ['auROC_vs_dPrime_Scatter_' field];
+    ensureFigure(savename, 1); colormap jet
+    subplot(2,2,1); scatter(auROC.(field).before, dPrime.(field).before, [], colorVar); ylabel('dPrime'); title('before'); addOrginLines;
+    subplot(2,2,2); scatter(auROC.(field).after, dPrime.(field).after, [], colorVar); title('after'); addOrginLines;
+    subplot(2,2,3); scatter(auROC.(field).acq, dPrime.(field).acq, [], colorVar); ylabel('dPrime'); xlabel('auROC'); title('acquisition'); addOrginLines;
+    subplot(2,2,4); scatter(auROC.(field).ext, dPrime.(field).ext, [], colorVar); xlabel('auROC'); title('extinction'); addOrginLines;
+end
+
+% revNumber vs auROC
+for field = comp
+    field = field{:};
+    savename = ['revNumber_vs_auROC_Scatter_' field];
+    ensureFigure(savename, 1); colormap jet
+    subplot(2,2,1); scatter(revNumber, auROC.(field).before, [], colorVar); ylabel('auROC'); title('before'); addOrginLines;
+    subplot(2,2,2); scatter(revNumber, auROC.(field).after, [], colorVar); title('after'); addOrginLines;
+    subplot(2,2,3); scatter(revNumber, auROC.(field).acq, [], colorVar); ylabel('auROC'); xlabel('rev #'); title('acquisition'); addOrginLines;
+    subplot(2,2,4); scatter(revNumber, auROC.(field).ext, [], colorVar); xlabel('rev #'); title('extinction'); addOrginLines;
+end
+
+% mouseNumber vs auROC
+for field = comp
+    field = field{:};
+    savename = ['mouseNumber_vs_auROC_Scatter_' field];
+    ensureFigure(savename, 1); colormap jet
+    subplot(2,2,1); scatter(mouseNumber, auROC.(field).before, [], colorVar); ylabel('auROC'); title('before'); addOrginLines;
+    subplot(2,2,2); scatter(mouseNumber, auROC.(field).after, [], colorVar); title('after'); addOrginLines;
+    subplot(2,2,3); scatter(mouseNumber, auROC.(field).acq, [], colorVar); ylabel('auROC'); xlabel('mouse #'); title('acquisition'); addOrginLines;
+    subplot(2,2,4); scatter(mouseNumber, auROC.(field).ext, [], colorVar); xlabel('mouse #'); title('extinction'); addOrginLines;
+end
 %% images
 % orderings = {'newCsPlus', 'newCsMinus', 'alwaysCsPlus'};
 fieldsToShow = {'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'licks_cs', 'csLicksROC', 'pupil_cs', 'whisk_cs'};
@@ -211,8 +215,8 @@ for fcounter = 1:length(fieldsToShow)
     cData = newCsPlus.(sfield)(sortOrder, :);
     cData = smoothdata(cData, 2, 'movmean', 5, 'omitnan');
     imagesc('XData', xData, 'CData', cData); set(gca, 'XLim', xlim); hold on; 
-    scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled'); 
-    set(gca, 'YLim', [1 nReversals]);
+    scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:length(sortOrder), [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled'); 
+    set(gca, 'YLim', [1 length(sortOrder)]);
     set(gca, 'CLim', [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor]);
     t = textBox(titles{fcounter}, gca, [0.1 0.95]); set(t, 'Color', [0 0 0], 'FontSize', 10, 'FontWeight', 'bold', 'BackgroundColor', [0.8 0.8 0.8], 'HorizontalAlignment', 'left');
 end
@@ -231,8 +235,8 @@ for fcounter = 1:length(fieldsToShow)
     cData = newCsMinus.(sfield)(sortOrder, :);
     cData = smoothdata(cData, 2, 'movmean', 5, 'omitnan');
     imagesc('XData', xData, 'CData', cData); set(gca, 'XLim', xlim); hold on; 
-    scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled'); 
-    set(gca, 'YLim', [1 nReversals]);
+    scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:length(sortOrder), [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled'); 
+    set(gca, 'YLim', [1 length(sortOrder)]);
     set(gca, 'CLim', [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor]);
     t = textBox(titles{fcounter}, gca, [0.1 0.95]); set(t, 'Color', [0 0 0], 'FontSize', 10, 'FontWeight', 'bold', 'BackgroundColor', [0.8 0.8 0.8], 'HorizontalAlignment', 'left');
 end
@@ -251,8 +255,8 @@ for fcounter = 1:length(fieldsToShow)
     cData = alwaysCsPlus.(sfield)(sortOrder, :);
     cData = smoothdata(cData, 2, 'movmean', 5, 'omitnan');
     imagesc('XData', xData, 'CData', cData); set(gca, 'XLim', xlim); hold on; 
-    scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:nReversals, [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled'); 
-    set(gca, 'YLim', [1 nReversals]);
+    scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:length(sortOrder), [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled'); 
+    set(gca, 'YLim', [1 length(sortOrder)]);
     set(gca, 'CLim', [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor]);
     t = textBox(titles{fcounter}, gca, [0.1 0.95]); set(t, 'Color', [0 0 0], 'FontSize', 10, 'FontWeight', 'bold', 'BackgroundColor', [0.8 0.8 0.8], 'HorizontalAlignment', 'left');
 end
@@ -569,19 +573,96 @@ formatFigurePoster([10 4], '', 12)
 
 %% write to pdf
 
-h = waitbar(0, 'slowly writing pdfs');
+% h = waitbar(0, 'slowly writing pdfs');
+% 
+% pdfname = fullfile(DB.path, 'pooled', 'reversals_noPunish_pooled.pdf');
+% for counter = 1:length(fh)    
+%     if counter == 1
+%         export_fig(fh(counter),pdfname);  % write to pdf
+%     else
+%         export_fig(fh(counter),'-append',pdfname);  % write to pdf
+%     end
+%     waitbar(counter/length(fh));
+% end
+% close(h);
 
-pdfname = fullfile(DB.path, 'pooled', 'reversals_noPunish_pooled.pdf');
-for counter = 1:length(fh)    
-    if counter == 1
-        export_fig(fh(counter),pdfname);  % write to pdf
-    else
-        export_fig(fh(counter),'-append',pdfname);  % write to pdf
-    end
-    waitbar(counter/length(fh));
+
+
+%% fit weibell function to best reversals
+% works shittastically
+
+baselineTrials = 20;
+fitFields = {...
+    'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'licks_cs', 'whisk_cs'};
+
+
+
+fitField = fitFields{3};
+model = 'a * (1 - exp(-1 * (x/b)^c)) + d'; % weibull function, CDF form
+fitData = [AR.csMinus.(fitField).before(goodReversals, end - baselineTrials + 1:end) AR.csPlus.(fitField).after(goodReversals, :)];% - nanmean(AR.csMinus.licks_cs.before(goodReversals, end - baselineTrials + 1:end), 2); % zero/baseline data at start
+
+results = struct('object', [], 'gof', [], 'output', [], 'toFit', []);
+results = repmat(results, size(fitData, 1), 1);
+for counter = 1:size(fitData, 1)
+    toFit = fitData(counter, ~isnan(fitData(counter, :)));
+    fo = fitoptions('Method', 'NonlinearLeastSquares',...
+        'Upper', [Inf  Inf Inf Inf],...
+        'Lower', [0 baselineTrials 0 -Inf],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
+        'StartPoint', [mean(toFit) baselineTrials baselineTrials min(toFit)]...
+        );
+    ft = fittype(model, 'options', fo);
+%     xData = (0:length(toFit) - 1)';
+    [fitobject, gof, output] = fit((0:length(toFit) - 1)', toFit', ft, fo);
+    results(counter).object = fitobject;
+    results(counter).gof = gof;
+    results(counter).output = output;
+    results(counter).toFit = toFit;
+%     results(counter).xData = xData - baselineTrials;
 end
-close(h);
+
+% 
+
+spm = [5 4];
+nShow = prod(spm);
+ensureFigure('weibull_test', 1);
+toShow = randperm(length(results), min(nShow, length(results)));
+for counter = 1:length(toShow)   
+    subplot(spm(1), spm(2), counter);
+    plot(results(toShow(counter)).toFit, 'g.'); hold on;
+    plot(results(toShow(counter)).object); legend off;
+    plot(smoothdata(results(toShow(counter)).toFit, 2, 'movmean', 5, 'omitnan'));
+    set(gca, 'XLim', [0 120]);
+end
+    
+
+%% plot cumsum and do changepoint detection
+
+baselineTrials = 20;
+% fitFields = {...
+%     'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'licks_cs'};
+% linecolors = {'g', 'r', 'k'};
+fitFields = {...
+    'licks_cs'};
+linecolors = {'k'};
 
 
+spm = [5 4];
+nShow = prod(spm);
+ensureFigure('test', 1);
 
-
+revsToShow = find(goodReversals);
+revsToShow = revsToShow(randperm(length(revsToShow), min(length(revsToShow), nShow)));
+for counter = 1:length(revsToShow)
+    subplot(spm(1), spm(2), counter); hold on;
+    for thisField = 1:length(fitFields)
+%     for thisField = 1
+        plotData = [AR.csMinus.(fitFields{thisField}).before(revsToShow(counter), end - baselineTrials + 1:end) AR.csPlus.(fitFields{thisField}).after(revsToShow(counter), :)];
+        plotData = plotData(~isnan(plotData));
+        plotData = cumsum(plotData);
+        % scale between 0 and 1
+        plotData = plotData - min(plotData);
+        plotData = plotData / max(plotData);
+        plot((0:length(plotData) - 1) - baselineTrials, plotData, linecolors{thisField});
+    end
+end
+        

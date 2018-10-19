@@ -175,12 +175,16 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             if any(isnan(blF_fit))
                 blF_fit = inpaint_nans(blF_fit);
             end
-            [fitobject, gof, output] = ...
-                fit((1:size(allData, 1))', blF_fit, ft, fo);
+            x = (0:length(blF_fit)-1)';
+%             [fitobject, gof, output] = ...  % old
+%                 fit((1:size(allData, 1))', blF_fit, ft, fo);
+            [fitobject, gof, output] = ... % new
+                fit(x, blF_fit, ft, fo);
+            warning('check this in processTrialAnalysis_Photometry2, x should start at 0 for session bleach fit'); % old --> new
             Photometry.bleachFit(si, fCh).fitobject_session = fitobject;
             Photometry.bleachFit(si, fCh).gof_session = gof;
             Photometry.bleachFit(si, fCh).output_session = output;
-            x = (0:length(blF_fit)-1)';
+
             blF_fit = fitobject.a + fitobject.b * exp(fitobject.c * x) + fitobject.d * exp(fitobject.e * x);   
             
             % apply the selected baseline mode
