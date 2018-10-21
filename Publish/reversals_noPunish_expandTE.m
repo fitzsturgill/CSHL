@@ -51,6 +51,7 @@ for counter = 1:length(DB.animals)
     % estimate respones for different events in each trial for photometry
     % (bpCalcPeak_dFF) and for licking (countEventFromTE)
     TE.licks_cs = countEventFromTE(TE, 'Port1In', csWindow, TE.Cue);
+    TE.lickIntervals_cs = eventIntervalsFromTE(TE, 'Port1In', csWindow, TE.Cue);
     TE.licks_us = countEventFromTE(TE, 'Port1In', [0 2], TE.Us);
     TE.licks_baseline = countEventFromTE(TE, 'Port1In', [0 4], TE.PreCsRecording);
     

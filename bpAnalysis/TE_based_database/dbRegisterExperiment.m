@@ -1,5 +1,6 @@
 function dbRegisterExperiment(experiment, path)
     % registers an experiment in preferences and stores path to DB file
+    % USE TO ADD AN OLD DATABASE TO A NEW COMPUTER!!!
     
     % DB preference contains with fields containing cell arrays of size
     % nExperiments x 1
