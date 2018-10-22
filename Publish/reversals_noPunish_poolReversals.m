@@ -645,7 +645,6 @@ fitFields = {...
     'licks_cs'};
 linecolors = {'k'};
 
-
 spm = [5 4];
 nShow = prod(spm);
 ensureFigure('test', 1);

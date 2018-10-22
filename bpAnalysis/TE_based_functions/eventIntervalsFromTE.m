@@ -46,7 +46,7 @@ function intervals = eventIntervalsFromTE(TE, event, window, zeroTimes, varargin
             trialWindow = window(trial,:) + zeroTimes2(trial);
             eventIndices = find(trialWindow(1) < trialEvents & trialEvents < trialWindow(2));
             intervals.count(trial) = length(eventIndices);
-            intervals.intervals{trial} = diff(trialEvents(eventIndices) - trialWindow(1));
+            intervals.intervals{trial} = diff([trialWindow(1) trialEvents(eventIndices) trialWindow(2)]);
             intervals.duration(trial) = diff(trialWindow);
             intervals.rate(trial) = intervals.count(trial) / intervals.duration(trial);
         end
