@@ -588,21 +588,17 @@ formatFigurePoster([10 4], '', 12)
 
 
 
-%% fit weibell function to best reversals
-% works shittastically
+%% to detect latency to learning, fit weibell function, also changepoint detection
 
+% weibell doesn't work great due to overfitting and noisy data
 baselineTrials = 20;
-fitFields = {...
-    'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'licks_cs', 'whisk_cs'};
 
-
-
-fitField = fitFields{3};
+fitField = 'licks_cs';
 model = 'a * (1 - exp(-1 * (x/b)^c)) + d'; % weibull function, CDF form
-fitData = [AR.csMinus.(fitField).before(goodReversals, end - baselineTrials + 1:end) AR.csPlus.(fitField).after(goodReversals, :)];% - nanmean(AR.csMinus.licks_cs.before(goodReversals, end - baselineTrials + 1:end), 2); % zero/baseline data at start
+fitData = [AR.csMinus.(fitField).before(:, end - baselineTrials + 1:end) AR.csPlus.(fitField).after(:, :)];% - nanmean(AR.csMinus.licks_cs.before(goodReversals, end - baselineTrials + 1:end), 2); % zero/baseline data at start
 
-results = struct('object', [], 'gof', [], 'output', [], 'toFit', []);
-results = repmat(results, size(fitData, 1), 1);
+weibell = struct('object', [], 'gof', [], 'output', [], 'toFit', []);
+weibell = repmat(weibell, size(fitData, 1), 1);
 for counter = 1:size(fitData, 1)
     toFit = fitData(counter, ~isnan(fitData(counter, :)));
     fo = fitoptions('Method', 'NonlinearLeastSquares',...
@@ -613,55 +609,49 @@ for counter = 1:size(fitData, 1)
     ft = fittype(model, 'options', fo);
 %     xData = (0:length(toFit) - 1)';
     [fitobject, gof, output] = fit((0:length(toFit) - 1)', toFit', ft, fo);
-    results(counter).object = fitobject;
-    results(counter).gof = gof;
-    results(counter).output = output;
-    results(counter).toFit = toFit;
-%     results(counter).xData = xData - baselineTrials;
+    weibell(counter).object = fitobject;
+    weibell(counter).gof = gof;
+    weibell(counter).output = output;
+    weibell(counter).toFit = toFit;
+%     weibell(counter).xData = xData - baselineTrials;
 end
 
-% 
-
-spm = [5 4];
-nShow = prod(spm);
-ensureFigure('weibull_test', 1);
-toShow = randperm(length(results), min(nShow, length(results)));
-for counter = 1:length(toShow)   
-    subplot(spm(1), spm(2), counter);
-    plot(results(toShow(counter)).toFit, 'g.'); hold on;
-    plot(results(toShow(counter)).object); legend off;
-    plot(smoothdata(results(toShow(counter)).toFit, 2, 'movmean', 5, 'omitnan'));
-    set(gca, 'XLim', [0 120]);
-end
-    
-
-%% plot cumsum and do changepoint detection
+% plot cumsum and do changepoint detection
 
 baselineTrials = 20;
-% fitFields = {...
-%     'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'licks_cs'};
-% linecolors = {'g', 'r', 'k'};
-fitFields = {...
-    'licks_cs'};
-linecolors = {'k'};
+cp_licks = bpChangePoints([AR.csMinus.licks_cs.before(:, end - baselineTrials + 1:end) AR.csPlus.licks_cs.after(:, 1:end)], 2, 1000);
 
-spm = [5 4];
-nShow = prod(spm);
-ensureFigure('test', 1);
+%% plot example reversals with weibull fits, changepoints
+nShow = 4;
+% good revs include [77 3 48 74];,   3 and 74 best examples
+% mediocre,  84 and 91 and 42 are mediocre ones
+% 4 is good but gradual
+toShow = find(goodReversals);
+toShow = toShow(randperm(sum(goodReversals), nShow));
 
-revsToShow = find(goodReversals);
-revsToShow = revsToShow(randperm(length(revsToShow), min(length(revsToShow), nShow)));
-for counter = 1:length(revsToShow)
-    subplot(spm(1), spm(2), counter); hold on;
-    for thisField = 1:length(fitFields)
-%     for thisField = 1
-        plotData = [AR.csMinus.(fitFields{thisField}).before(revsToShow(counter), end - baselineTrials + 1:end) AR.csPlus.(fitFields{thisField}).after(revsToShow(counter), :)];
-        plotData = plotData(~isnan(plotData));
-        plotData = cumsum(plotData);
-        % scale between 0 and 1
-        plotData = plotData - min(plotData);
-        plotData = plotData / max(plotData);
-        plot((0:length(plotData) - 1) - baselineTrials, plotData, linecolors{thisField});
-    end
+toShow = [74 4 91 42];
+ensureFigure('reversals_pooled_Latency_examples', 1);
+
+for counter = 1:nShow   
+    thisRev = toShow(counter);
+    % weibull
+    subplot(nShow, 2, counter*2 - 1);
+    plot(weibell(thisRev).toFit, 'g.'); hold on;
+    plot(weibell(thisRev).object); legend off;
+    set(gca, 'XLim', [0 120]);
+    % changepoint
+    subplot(nShow, 2, counter * 2); hold on;
+    scatter(1:length(cp_licks.cumsum{thisRev}), cp_licks.cumsum{thisRev}, 10, cp_licks.logitAll{thisRev}); colormap jet;
+    line(repmat(cp_licks.index(thisRev), 1, 2), get(gca, 'YLim')); set(gca, 'XLim', [0 120]);
 end
-        
+
+
+
+%     for thisField = 1
+%         plotData = [AR.csMinus.(fitFields{thisField}).before(revsToShow(counter), end - baselineTrials + 1:end) AR.csPlus.(fitFields{thisField}).after(revsToShow(counter), :)];
+%         plotData = plotData(~isnan(plotData));
+%         plotData = cumsum(plotData);
+%         % scale between 0 and 1
+%         plotData = plotData - min(plotData);
+%         plotData = plotData / max(plotData);
+%         plot((0:length(plotData) - 1) - baselineTrials, plotData, linecolors{thisField});
