@@ -221,28 +221,28 @@ end
 
 % save pdf versions of allBehavior
 
-% h = waitbar(0, 'slowly writing pdfs');
-% 
-% pdfPlus = fullfile(DB.path, 'pooled', sprintf('allBehavior_csPlus_%s_%s.pdf', photometryField, fdfield));
-% for counter = 1:length(fhp)    
-%     if counter == 1
-%         export_fig(fhp(counter),pdfPlus);  % write to pdf
-%     else
-%         export_fig(fhp(counter),'-append',pdfPlus);  % write to pdf
-%     end
-%     waitbar(counter/(length(fhp)*2));
-% end
-% 
-% pdfMinus = fullfile(DB.path, 'pooled', sprintf('allBehavior_csMinus_%s_%s.pdf', photometryField, fdfield));
-% for counter = 1:length(fhm)    
-%     if counter == 1
-%         export_fig(fhm(counter),pdfMinus);  % write to pdf
-%     else
-%         export_fig(fhm(counter),'-append',pdfMinus);  % write to pdf
-%     end
-%     waitbar((counter + length(fhm))/(length(fhm) * 2));
-% end
-% close(h);
+h = waitbar(0, 'slowly writing pdfs');
+
+pdfPlus = fullfile(DB.path, 'pooled', sprintf('allBehavior_csPlus_%s_%s.pdf', photometryField, fdfield));
+for counter = 1:length(fhp)    
+    if counter == 1
+        export_fig(fhp(counter),pdfPlus);  % write to pdf
+    else
+        export_fig(fhp(counter),'-append',pdfPlus);  % write to pdf
+    end
+    waitbar(counter/(length(fhp)*2));
+end
+
+pdfMinus = fullfile(DB.path, 'pooled', sprintf('allBehavior_csMinus_%s_%s.pdf', photometryField, fdfield));
+for counter = 1:length(fhm)    
+    if counter == 1
+        export_fig(fhm(counter),pdfMinus);  % write to pdf
+    else
+        export_fig(fhm(counter),'-append',pdfMinus);  % write to pdf
+    end
+    waitbar((counter + length(fhm))/(length(fhm) * 2));
+end
+close(h);
 
 h = waitbar(0, 'slowly writing even more pdfs');
 pdfavg = fullfile(DB.path, 'pooled', sprintf('avgs_allAnimals_%s_%s.pdf', photometryField, fdField));
@@ -255,14 +255,14 @@ for counter = 1:length(fha)
     waitbar(counter/(length(fha)*2));
 end
 
-% pdfpupil = fullfile(DB.path, 'pooled', sprintf('pupil_allAnimals.pdf'));
-% for counter = 1:length(fhpupil)    
-%     if counter == 1
-%         export_fig(fhpupil(counter),pdfpupil);  % write to pdf
-%     else
-%         export_fig(fhpupil(counter),'-append',pdfpupil);  % write to pdf
-%     end
-%     waitbar(min((counter + length(fha))/(length(fha) * 2), 1));
-% end
-% close(h);
+pdfpupil = fullfile(DB.path, 'pooled', sprintf('pupil_allAnimals.pdf'));
+for counter = 1:length(fhpupil)    
+    if counter == 1
+        export_fig(fhpupil(counter),pdfpupil);  % write to pdf
+    else
+        export_fig(fhpupil(counter),'-append',pdfpupil);  % write to pdf
+    end
+    waitbar(min((counter + length(fha))/(length(fha) * 2), 1));
+end
+close(h);
     
