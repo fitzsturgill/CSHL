@@ -22,9 +22,10 @@ function formatFigurePublish(varargin)
     paperPosition = [0 0 screenPosition(3:4)];
     % in points 8.5 x 11 is 595 x 770
 
-    axs = findobj(gcf, 'Type', 'axes');  
-    set(axs, 'TickDir', 'out', 'LineWidth', 1, 'FontName', 'Calibri', 'Box', 'off', 'FontSize', fontSize);
+%     axs = findobj(gcf, 'Type', 'axes');  
+    
     set(gcf, 'PaperUnits', paperUnits, 'Units', screenUnits);
+    set(gcf, 'defaultAxesTickDir', 'out', 'defaultAxesLineWidth', 1, 'defaultAxesFontName', 'Calibri', 'defaultAxesFontSize', fontSize, 'defaultLegendBox', 'off');
     set(gcf, 'Position', screenPosition, 'PaperPosition', paperPosition, 'Color', [1 1 1]);
     
     
