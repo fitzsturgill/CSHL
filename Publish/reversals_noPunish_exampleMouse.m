@@ -74,37 +74,48 @@ success = dbLoadAnimal(DB, animal); % load TE and trial lookups
 fdField = 'ZS';
 saveName = sprintf('%s_phAvgs_%s', animal, fdField);  
 h=ensureFigure(saveName, 1); 
-mcLandscapeFigSetup(h);
 
 
 
-subplot(2, 2, 1);
-[ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, neutralTrials, uncuedReward}, 1,...
-    'FluorDataField', fdField, 'window', [-4, 7], 'linespec', {'b','k','c'}); %high value, reward
-legend(hl, {'rew', 'neutral', 'uncued rew'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-ylabel(sprintf('BF %s', fdField)); 
+subplot(1, 2, 1);
+[ha, hl] = phPlotAverageFromTE(TE, {neutralTrials & csPlusTrials & hitTrials, uncuedReward, rewardTrials & csPlusTrials & hitTrials}, 1,...
+    'FluorDataField', fdField, 'window', [-4, 7], 'linespec', {'k','b','c'}); %high value, reward
+legend(hl, {'omission', 'cued rew', 'uncued rew'}, 'Location', 'northwest'); legend('boxoff');
+ylabel(sprintf('BF %s', fdField)); xlabel('time from cue (s)'); set(gca, 'XLim', [-4 7]);
 
 
 
-subplot(2, 2, 2);
-[ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, neutralTrials, uncuedReward}, 2,...
-    'FluorDataField', fdField, 'window', [-4, 7], 'linespec', {'b','k','c'}); %high value, reward
-legend(hl, {'rew', 'neutral', 'uncued rew'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
-ylabel(sprintf('VTA %s', fdField)); xlabel('time from cue (s)'); %set(gca, 'YLim', ylim);
+subplot(1, 2, 2);
+[ha, hl] = phPlotAverageFromTE(TE, {neutralTrials & csPlusTrials & hitTrials, rewardTrials & csPlusTrials & hitTrials, uncuedReward}, 2,...
+    'FluorDataField', fdField, 'window', [-4, 7], 'linespec', {'k','b','c'}); %high value, reward
+legend(hl, {'omission', 'cued rew', 'uncued rew'}, 'Location', 'northwest'); legend('boxoff');
+ylabel(sprintf('VTA %s', fdField)); xlabel('time from cue (s)'); set(gca, 'XLim', [-4 7]);
 
+formatFigurePublish('size', [4 2]);
 
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end
+%% plot the different quintiles of csPlusReward trials conditioned on csPlus cue photometry quintile
+
+split = percentile(TE.phPeakMean_cs(1).data(csPlusTrials), 0.25);
 subplot(2, 2, 3);
-[ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 1,...
+[ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & (TE.phPeakMean_cs(1).data < split), csPlusTrials & rewardTrials & (TE.phPeakMean_cs(1).data >= split)}, 1,...
 'FluorDataField', fdField, 'window', [-3, 7], 'linespec', {'c', 'm'}); %high value, reward
 legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
 title('CS+, outcomes'); set(gca, 'XLim', [-3, 7]);%set(gca, 'YLim', ylim);
 
+split = percentile(TE.phPeakMean_cs(1).data(csPlusTrials), 0.25);
 
 subplot(2, 2, 4);
-[ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & hitTrials, csPlusTrials & rewardTrials & missTrials}, 2,...
+[ha, hl] = phPlotAverageFromTE(TE, {csPlusTrials & rewardTrials & (TE.phPeakMean_cs(2).data < split), csPlusTrials & rewardTrials & (TE.phPeakMean_cs(2).data >= split)}, 2,...
     'FluorDataField', fdField, 'window', [-3, 7], 'linespec', {'c', 'm'}); %high value, reward
 legend(hl, {'hit', 'miss'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
 xlabel('time from cue (s)');     set(gca, 'XLim', [-3, 7]);%set(gca, 'YLim', ylim);
+
+%% try conditioning on cue response in ch1 and 2
+
+
 
 %% median split and plot histograms, not super convincing
 bottom = (TE.licks_cs.rate == 0);

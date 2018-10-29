@@ -22,11 +22,19 @@ function formatFigurePublish(varargin)
     paperPosition = [0 0 screenPosition(3:4)];
     % in points 8.5 x 11 is 595 x 770
 
-%     axs = findobj(gcf, 'Type', 'axes');  
-    
-    set(gcf, 'PaperUnits', paperUnits, 'Units', screenUnits);
-    set(gcf, 'defaultAxesTickDir', 'out', 'defaultAxesLineWidth', 1, 'defaultAxesFontName', 'Calibri', 'defaultAxesFontSize', fontSize, 'defaultLegendBox', 'off');
+    axs = findobj(gcf, 'Type', 'axes');  
+    nax = length(axs);
+    ylims = cell(nax, 1); xlims = cell(nax, 1);
+    for counter = 1:nax
+        ylims{counter} = get(axs(counter), 'Ylim'); xlims{counter} = get(axs(counter), 'XLim');
+    end
+    set(gcf, 'PaperUnits', paperUnits, 'Units', screenUnits, 'ToolBar', 'none', 'MenuBar', 'none', 'DockControls', 'off');
+%     set(gcf, 'defaultAxesTickDir', 'out', 'defaultAxesLineWidth', 1, 'defaultAxesFontName', 'Calibri', 'defaultAxesFontSize', fontSize, 'defaultLegendBox', 'off');
+    set(axs, 'TickDir', 'out', 'LineWidth', 1, 'FontName', 'Calibri', 'FontSize', fontSize, 'defaultLegendBox', 'off');
     set(gcf, 'Position', screenPosition, 'PaperPosition', paperPosition, 'Color', [1 1 1]);
+    for counter = 1:nax
+        set(axs(counter), 'YLim', ylims{counter}); set(axs(counter), 'XLim', xlims{counter});
+    end
     
     
     
