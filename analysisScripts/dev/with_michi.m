@@ -1,13 +1,13 @@
 saveOn = 1;
 %%
-% sessions = bpLoadSessions([], 'DC_56_wheel_v1_Sep14_2018_Session3.mat', 'Z:\FitzRig2\Data\DC_56\wheel_v1\Session Data\'); % load sessions
+sessions = bpLoadSessions([], 'DC_56_wheel_v1_Sep14_2018_Session3.mat', 'Z:\FitzRig2\Data\DC_56\wheel_v1\Session Data\'); % load sessions
 %%
 trial = 1;
 channel = 1;
 Fs = 6100;
-rawDataPre = SessionData.NidaqData{trial,1}(:,channel);
+rawDataPre = sessions.SessionData.NidaqData{trial,1}(:,channel);
 rawDataPre = rawDataPre';
-ref = SessionData.NidaqData{trial,2}; % reference signal parameters
+ref = sessions.SessionData.NidaqData{trial,2}; % reference signal parameters
 
 t = 0:1/Fs:(30 - 1/Fs);
 refData =  sin(2*pi*ref.freq(channel) .*t + ref.phaseShift(channel));

@@ -22,7 +22,7 @@ ref1 = sin(2*pi*fmod1 * t);
 ref2 = sin(2*pi*fmod2 * t);
 
 mod = sig1 .* (ref1 * refAmp + refAmp) + sig2 .* (ref2 * refAmp + refAmp);
-    mod = mod + 0.5; % add an offset to mimic dark current/voltage of photodetector
+mod = mod + 0.5; % add an offset to mimic dark current/voltage of photodetector
 
 figure; subplot(3,1,1);   plot(t, [sig1' + 0.1, sig2' + 0.1]); set(gca, 'XLim', [0 2], 'YLim', [0 2]); legend('signal1', 'signal2'); title('raw signals');
 subplot(3,1,2); plot(t, [ref1' * refAmp + refAmp, ref2' * refAmp + refAmp]); set(gca, 'XLim', [0 0.1]); title('reference signals'); legend('ref1', 'ref2');
