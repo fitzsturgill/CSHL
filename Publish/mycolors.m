@@ -6,6 +6,6 @@ function rgb = mycolors(condition)
         'licks', [0 0 0];...
         };
     
-    row = find(strcmp(color_table(:,1), condition));
+    row = find(strcmpi(color_table(:,1), condition));
     rgb = color_table{row, 2};
     

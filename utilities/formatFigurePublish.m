@@ -29,17 +29,13 @@ function formatFigurePublish(varargin)
         ylims{counter} = get(axs(counter), 'Ylim'); xlims{counter} = get(axs(counter), 'XLim');
     end
     set(gcf, 'PaperUnits', paperUnits, 'Units', screenUnits, 'ToolBar', 'none', 'MenuBar', 'none', 'DockControls', 'off');
-%     set(gcf, 'defaultAxesTickDir', 'out', 'defaultAxesLineWidth', 1, 'defaultAxesFontName', 'Calibri', 'defaultAxesFontSize', fontSize, 'defaultLegendBox', 'off');
-    set(axs, 'TickDir', 'out', 'LineWidth', 1, 'FontName', 'Calibri', 'FontSize', fontSize, 'defaultLegendBox', 'off');
+    set(gcf, 'defaultAxesTickDir', 'out', 'defaultAxesLineWidth', 1, 'defaultAxesFontName', 'Calibri', 'defaultAxesFontSize', fontSize, 'defaultLegendBox', 'off');
+    set(axs, 'TickDir', 'out', 'LineWidth', 1, 'FontName', 'Calibri', 'FontSize', fontSize, 'defaultLegendBox', 'off', 'Box', 'off');
     set(gcf, 'Position', screenPosition, 'PaperPosition', paperPosition, 'Color', [1 1 1]);
     for counter = 1:nax
         set(axs(counter), 'YLim', ylims{counter}); set(axs(counter), 'XLim', xlims{counter});
     end
-    
-    
-    
 %     https://blogs.mathworks.com/loren/2007/12/11/making-pretty-graphs/
-
 %%
 % https://dgleich.wordpress.com/2013/06/04/creating-high-quality-graphics-in-matlab-for-papers-and-presentations/
 % % The new defaults will not take effect if there are any open figures. To

@@ -7,8 +7,8 @@ importRepositories({'Cellbase', 'CSHL'});
 
 
 % % The properties we've been using in the figures
-set(0,'defaultLineLineWidth',1.5);   % set the default line width to lw
-set(0,'defaultLineMarkerSize',8); % set the default line marker size to msz
+set(0,'defaultLineLineWidth',1);   % set the default line width to lw
+set(0,'defaultLineMarkerSize',6); % set the default line marker size to msz
 
 
 
