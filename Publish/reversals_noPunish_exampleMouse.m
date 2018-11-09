@@ -166,7 +166,8 @@ if saveOn
     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
-%% show that cue and reward responses are correlated on a trial-by-trial basis between CBF and VTA
+%% SIGNAL CORRELATIONS: show that cue and reward responses are correlated on a trial-by-trial basis between CBF and VTA
+linecolors = [1 0 0; 0 0 1; 0 1 1; 0 1 0];         
 saveName = 'CBF_VTA_correlations_reversals';
 ensureFigure(saveName, 1);
 trialSets = [neutralTrials & csPlusTrials & hitTrials, rewardTrials & csPlusTrials & hitTrials, csMinusTrials & CRTrials & rewardTrials, uncuedReward];
@@ -228,6 +229,68 @@ if saveOn
     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
+%% NOISE CORRELATIONS: show that cue and reward responses are correlated on a trial-by-trial basis between CBF and VTA
+linecolors = [1 0 0; 0 0 1; 0 1 1; 0 1 0];         
+saveName = 'CBF_VTA_NOISEcorrelations_reversals';
+ensureFigure(saveName, 1);
+trialSets = [neutralTrials & csPlusTrials & hitTrials, rewardTrials & csPlusTrials & hitTrials, csMinusTrials & CRTrials & rewardTrials, uncuedReward];
+allTrials = sum(trialSets, 2) ~= 0;
+xlims = [min(TE.phPeakMean_cs(2).data(allTrials)) max(TE.phPeakMean_cs(2).data(allTrials)); min(TE.phPeakMean_us(2).data(allTrials)) max(TE.phPeakMean_us(2).data(allTrials))];
+ylims = [min(TE.phPeakMean_cs(1).data(allTrials)) max(TE.phPeakMean_cs(1).data(allTrials)); min(TE.phPeakMean_us(1).data(allTrials)) max(TE.phPeakMean_us(1).data(allTrials))];
+
+% allTrials = true; 
+subplot(1,2,1); hold on; subplot(1,2,2); hold on;
+for counter = 1:size(trialSets, 2)
+    subplot(1,2,1); set(gca, 'XLim', xlims(1,:)); set(gca, 'YLim', ylims(1,:));
+%     allTrials = allTrials | trialSets{counter};
+    xData = TE.phPeakMean_cs(2).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_cs(2).data(trialSets(:, counter))); yData = TE.phPeakMean_cs(1).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_cs(1).data(trialSets(:, counter))); 
+%     scatter(TE.phPeakMean_cs(2).data(trialSets{counter}), TE.phPeakMean_cs(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');
+    scatter(xData, yData, 8, linecolors(counter, :), '.');
+    % fit for cs
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(xData, yData, 'poly1', fo); 
+    fph=plot(fob); legend off; %,'predfunc'); legend off;
+    set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :));
+
+    subplot(1,2,2); set(gca, 'XLim', xlims(2,:)); set(gca, 'YLim', ylims(2,:));
+    xData = TE.phPeakMean_us(2).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_us(2).data(trialSets(:, counter))); yData = TE.phPeakMean_us(1).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_us(1).data(trialSets(:, counter))); 
+%     scatter(TE.phPeakMean_us(2).data(trialSets{counter}), TE.phPeakMean_us(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');    
+    scatter(xData, yData, 8, linecolors(counter, :), '.');
+    % fit for us
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(xData, yData, 'poly1', fo); 
+    fph=plot(fob); legend off;% ,'predfunc'); legend off;
+    set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :));
+end
+% % fit for cs
+subplot(1,2,1);
+% xData = TE.phPeakMean_cs(2).data(allTrials); yData = TE.phPeakMean_cs(1).data(allTrials); 
+% fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+% fob = fit(xData, yData, 'poly1', fo); 
+% fph=plot(fob,'predfunc'); legend off;
+% set(fph, 'LineWidth', 0.5, 'Color', 'k');
+% % textBox(['R = ' num2str(corr(xData, yData), 3)],[], [0.4 0.95], 8);
+textBox('Cue', [], [0.5 0.95], 8);
+xlabel('\fontsize{8}Dop. (\fontsize{12}\sigma\fontsize{8}-baseline)');
+ylabel('\fontsize{8}Ach. (\fontsize{12}\sigma\fontsize{8}-baseline)');
+% 
+% % fit for us
+subplot(1,2,2);
+% xData = TE.phPeakMean_us(2).data(allTrials); yData = TE.phPeakMean_us(1).data(allTrials); 
+% fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+% fob = fit(xData, yData, 'poly1', fo); 
+% fph=plot(fob,'predfunc'); legend off;
+% set(fph, 'LineWidth', 0.5, 'Color', 'k');
+% % textBox(['R = ' num2str(corr(xData, yData), 3)],[], [0.4 0.95], 8);
+textBox('Reward', [], [0.5 0.95], 8);
+xlabel('\fontsize{8}Dop. (\fontsize{12}\sigma\fontsize{8}-baseline)');
+ylabel('');
+
+formatFigurePublish('size', [2.5 1.1]);
+
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end
 %% plot the different quintiles of csPlusReward trials conditioned on csPlus cue photometry quintile
 
 split = percentile(TE.phPeakMean_cs(1).data(csPlusTrials), 0.25);

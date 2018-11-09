@@ -15,8 +15,8 @@ for counter = 1:length(fieldsToCopy)
     allData.(field) = TE.(field);
 end
 [lickTimes, lickTrials] = extractEventTimesFromTE(TE, 1:length(TE.trialNumber), 'Port1In', 'zeroField', 'PreCsRecording', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
-TE.licks.lickTimes = lickTimes;
-TE.licks.lickTrials = lickTrials;
+allData.licks.lickTimes = lickTimes;
+allData.licks.lickTrials = lickTrials;
 save(fullfile(savepath, sprintf('fitzData_%s.mat', animal)), 'allData');
 
 
