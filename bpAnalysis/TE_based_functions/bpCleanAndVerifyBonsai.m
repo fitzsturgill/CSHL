@@ -11,7 +11,7 @@ function bpCleanAndVerifyBonsai(readonly)
 %     Also verifies that the number of Pupil.mat, Pupil.avi, Whisk.avi, and
 %     Whisk.diff files matches the number of trials in the Bpod session
 %     data
-    shortestITI = 8; 
+    shortestITI = 10; 
    
     sessions = bpLoadSessions; % load the session file
     if isempty(sessions)

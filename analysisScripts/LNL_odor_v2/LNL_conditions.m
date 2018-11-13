@@ -29,6 +29,5 @@
     for ttc = 1:max(TE.trialType)
         trialsByType{ttc} = filterTE(TE, 'trialType', trialTypes(ttc), 'reject', 0);
     end
-
     trialCount = [1:length(TE.filename)]';
     clear ttc;
