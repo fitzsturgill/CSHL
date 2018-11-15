@@ -2,6 +2,7 @@ DB = dbLoadExperiment('reversals_noPunish_publish');
 savepath = fullfile(DB.path, ['pooled' filesep 'figure']);
 ensureDirectory(savepath);
 saveOn = 1;
+smoothWindow = 1;
 
 %% create structure containing all reversals-  SKIPS DC_51
 AR = struct('csPlus', [], 'csMinus', [], 'csPlusReward', [], 'thirdOdor', []); % AR = all reversals
@@ -222,12 +223,12 @@ fitField = 'licks_cs';
 model = 'a * (1 - exp(-1 * (x/b)^c)) + d'; % weibull function, CDF form
 fitData = [AR.csMinus.(fitField).before(:, end - baselineTrials + 1:end) AR.csPlus.(fitField).after(:, :)];% - nanmean(AR.csMinus.licks_cs.before(goodReversals, end - baselineTrials + 1:end), 2); % zero/baseline data at start
 
-weibull = struct('object', [], 'gof', [], 'output', [], 'toFit', []);
+weibull = struct('object', [], 'gof', [], 'output', [], 'toFit', [], 'kappa', []);
 weibull = repmat(weibull, size(fitData, 1), 1);
 for counter = 1:size(fitData, 1)
     toFit = fitData(counter, ~isnan(fitData(counter, :)));
     fo = fitoptions('Method', 'NonlinearLeastSquares',...
-        'Upper', [Inf  Inf Inf Inf],...
+        'Upper', [Inf  Inf 50 Inf],...
         'Lower', [0 0 0 -Inf],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
         'StartPoint', [mean(toFit) baselineTrials baselineTrials min(toFit)]...
         );
@@ -238,6 +239,8 @@ for counter = 1:size(fitData, 1)
     weibull(counter).gof = gof;
     weibull(counter).output = output;
     weibull(counter).toFit = toFit;
+    coeffs = coeffvalues(fitobject);
+    weibull(counter).kappa = coeffs(2);
 %     weibull(counter).xData = xData - baselineTrials;
 end
 
@@ -264,7 +267,7 @@ for counter = 1:nShow
     subplot(nShow, 2, counter*2 - 1);
 
     plot(weibull(thisRev).toFit, 'g.'); hold on;
-    plot(weibull(thisRev).object); legend off;
+    plot(weibull(thisRev).object, 'predfunc'); legend off;
     set(gca, 'XLim', [0 120], 'XTick', [20 70], 'XTickLabel', {'0', '50'}); ylabel('antic. licks (1/s)'); xlabel('Cs+ trials from rev.');
     if counter == 1
         title('Weibull fit to Cs+ licking');
@@ -283,6 +286,22 @@ end
 formatFigurePublish('size', [4 4]);
 if saveOn 
     export_fig(fullfile(savepath, saveName), '-eps');
+end
+
+
+%%
+saveName = 'weibull_vs_changepoint_scatter';
+ensureFigure(saveName, 1); colormap('winter');
+line([0 20 20], [20 20 0], 'Color', 'r'); hold on;
+scatter([weibull(:).kappa], cp_licks.index(:), 10, repmat([0.7 0.7 0.7], size(fitData, 1), 1) .* repmat(~goodReversals, 1, 3));
+xlabel('Kappa (weibull)'); ylabel('change point');
+set(gca, 'YLim', [0 70], 'XLim', [0 70]);
+addUnityLine;
+legend('reversal trial');
+formatFigurePublish('size', [2 2]);
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+    export_fig(fullfile(savepath, saveName), '-jpg');
 end
 
 %% images ordered by lick changepoints
@@ -321,4 +340,79 @@ formatFigurePublish('size', imageArraySize);
 if saveOn 
     export_fig(fullfile(savepath, saveName), '-eps');
 end
+
+%%
+% averages
+common_odor3 = (-9 <= odor3_trialNumber) & (odor3_trialNumber <= 9);
+xlim = [-30 30];
+ylim = [-1 2];
+figsize = [1.7 1.5];
+% new cs plus
+common = sum(~isnan(newCsPlus.licks_cs)) > 3;
+savename = 'reversals_newCsPlus';
+fh(end + 1) = ensureFigure(savename, 1);
+hla = zeros(1,3);
+[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus.licks_cs(goodReversals, common)), nanSEM(newCsPlus.licks_cs(goodReversals, common))',...
+    'cmap', mycolors('licks'), 'nan', 'gap');
+hla(1) = hl;
+[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus.phPeakMean_cs_ch2(goodReversals, common)), nanSEM(newCsPlus.phPeakMean_cs_ch2(goodReversals, common))',...
+    'cmap', mycolors('dat'), 'nan', 'gap'); hold on
+hla(2) = hl;
+[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus.phPeakMean_cs_ch1(goodReversals, common)), nanSEM(newCsPlus.phPeakMean_cs_ch1(goodReversals, common))',...
+    'cmap', mycolors('chat'), 'nan', 'gap');
+hla(3) = hl;
+
+
+set(hla, 'LineWidth', 1);
+set(gca, 'XLim', xlim);%, 'YLim', ylim);
+h  = addOrginLines;
+set(h, 'LineWidth', 1);
+legend(hla, { '\bf\color[rgb]{0.5,0.5,0.5}Licks', '\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.'},...
+    'Location', 'northwest', 'FontSize', 6, 'Interpreter', 'tex', 'Box', 'off');
+
+title('New Cs+');
+xlabel('Odor presentations from rev.');
+ylabel('Cue response');
+
+formatFigurePublish('size', figsize);
+if saveOn 
+    export_fig(fullfile(savepath, savename), '-eps');
+end   
+
+
+% new cs minus
+common = sum(~isnan(newCsMinus.licks_cs)) > 3;
+
+savename = 'reversals_newCsMinus';
+fh(end + 1) = ensureFigure(savename, 1);
+hla = zeros(1,3);
+[hl, hp] = boundedline(newCsMinus_trialNumber(common), nanmean(newCsMinus.licks_cs(goodReversals, common)), nanSEM(newCsMinus.licks_cs(goodReversals, common))',...
+    'cmap', mycolors('licks'));
+hla(1) = hl;
+[hl, hp] = boundedline(newCsMinus_trialNumber(common), nanmean(newCsMinus.phPeakMean_cs_ch2(goodReversals, common)), nanSEM(newCsMinus.phPeakMean_cs_ch2(goodReversals, common))',...
+    'cmap', mycolors('dat')); hold on
+hla(2) = hl;
+[hl, hp] = boundedline(newCsMinus_trialNumber(common), nanmean(newCsMinus.phPeakMean_cs_ch1(goodReversals, common)), nanSEM(newCsMinus.phPeakMean_cs_ch1(goodReversals, common))',...
+    'cmap', mycolors('chat'));
+hla(3) = hl;
+
+set(hla, 'LineWidth', 1);
+set(gca, 'XLim', xlim);%, 'YLim', ylim);    
+h  = addOrginLines;
+set(h, 'LineWidth', 1);
+legend(hla, {'\bf\color[rgb]{0.5,0.5,0.5}Licks', '\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.'},...
+            'Location', 'northeast', 'FontSize', 6, 'Interpreter', 'tex', 'Box', 'off');
+title('New Cs-');
+xlabel('Odor presentations from rev.');
+ylabel('Cue response');    
+formatFigurePublish('size', figsize);
+if saveOn 
+    export_fig(fullfile(savepath, savename), '-eps');
+end   
+
+
+
+
+
+
 
