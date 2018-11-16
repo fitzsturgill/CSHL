@@ -32,7 +32,7 @@ duration = length(TE.Photometry.xData) / TE.Photometry.sampleRate;
 
 %% add pupilometry
 
-TE = addPupilometryToTE(TE, 'duration', duration, 'zeroField', 'Cue',  'frameRate', 60, 'frameRateNew', 20);
+TE = addPupilometryToTE(TE, 'duration', duration, 'zeroField', 'Cue2',  'frameRate', 60, 'frameRateNew', 20);
 
 
 %% add whisking
@@ -152,4 +152,39 @@ if saveOn
     saveas(gcf, fullfile(savepath, saveName), 'jpeg');
 end
     
+%% blink rasters
+saveName = 'Aversive_blinkRasters';
+ensureFigure(saveName, 1);
+clims = [0 1.5];
+blinkData = TE.pupil.eyeAreaNorm;
+blinkData = circshift(blinkData, 0);
+subplot(1,3,1); imagesc('XData', [ -4.0002 4.2998], 'CData', blinkData(trialsByType{1}, :), clims);
+title('cued punish');
+subplot(1,3,2); imagesc('XData', [ -4.0002 4.2998], 'CData', blinkData(trialsByType{2}, :), [0.5 2]);
+title('cued ommission');
+subplot(1,3,3); imagesc('XData', [ -4.0002 4.2998], 'CData', blinkData(trialsByType{3}, :), clims);
+title('uncued punish');
 
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+end
+
+%% blink averages
+saveName = 'Aversive_blinkAverages';
+ensureFigure(saveName, 1);
+
+xData = TE.pupil.xData;
+blinkData = TE.pupil.eyeAreaNorm;
+blinkData(isnan(blinkData)) = 0;
+axes; hold on; grid on;
+plot(xData, mean(blinkData(trialsByType{1}, :)), 'm');
+plot(xData, mean(blinkData(trialsByType{2}, :)), 'k');
+plot(xData, mean(blinkData(trialsByType{3}, :)), 'r');
+title('eye area');
+xlabel('time from cue');
+
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+end

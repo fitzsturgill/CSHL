@@ -128,7 +128,7 @@ goodWhisk = auROC.whisk_csBaselined.before > 0.2;
 %% compile data
 fieldsToCompile = {...
     'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'phPeakPercentile_cs_ch1', 'phPeakPercentile_cs_ch2', 'csLicksROC', 'licks_cs', 'pupil_cs', 'pupil_csBaselined' 'whisk_cs', 'wheel_baseline',...
-    'phPeakMean_us_ch1_deconv', 'phPeakMean_us_ch2_deconv', 'phPeakPercentile_us_ch1_deconv', 'phPeakPercentile_us_ch2_deconv'};
+    'phPeakMean_us_ch1_deconv', 'phPeakMean_us_ch2_deconv', 'phPeakPercentile_us_ch1_deconv', 'phPeakPercentile_us_ch2_deconv', 'phBaseline_ch1', 'phBaseline_ch2'};
 
 newCsPlus = struct();
 newCsMinus = struct();
@@ -598,7 +598,7 @@ weibull = repmat(weibull, size(fitData, 1), 1);
 for counter = 1:size(fitData, 1)
     toFit = fitData(counter, ~isnan(fitData(counter, :)));
     fo = fitoptions('Method', 'NonlinearLeastSquares',...
-        'Upper', [Inf  Inf Inf Inf],...
+        'Upper', [Inf  Inf 20 Inf],...
         'Lower', [0 0 0 -Inf],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
         'StartPoint', [mean(toFit) baselineTrials baselineTrials min(toFit)]...
         );
@@ -618,7 +618,7 @@ baselineTrials = 20;
 cp_licks = bpChangePoints([AR.csMinus.licks_cs.before(:, end - baselineTrials + 1:end) AR.csPlus.licks_cs.after(:, 1:end)], 2, 1000);
 
 %% plot example reversals with weibull fits, changepoints
-nShow = 8;
+nShow = 6;
 % good revs include [77 3 48 74];,   3 and 74 best examples
 % mediocre,  84 and 91 and 42 are mediocre ones
 % 4 is good but gradual
@@ -633,7 +633,7 @@ for counter = 1:nShow
     % weibull
     subplot(nShow, 2, counter*2 - 1);
     plot(weibull(thisRev).toFit, 'g.'); hold on;
-    plot(weibull(thisRev).object); legend off;
+    plot(weibull(thisRev).object, 'predfunc'); legend off;
     set(gca, 'XLim', [0 120]);
     % changepoint
     subplot(nShow, 2, counter * 2); hold on;
@@ -683,3 +683,109 @@ set(gcf, 'Position', [304   217   633   485]);
 %         plotData = plotData - min(plotData);
 %         plotData = plotData / max(plotData);
 %         plot((0:length(plotData) - 1) - baselineTrials, plotData, linecolors{thisField});
+
+
+%% cross correlations, new Cs+, 
+savename = 'xcorr_newCsPlus';
+ensureFigure(savename, 1); 
+% [R, lags] = avgXCorr(x, y, maxlag)
+    maxlag = 20;
+    allR = zeros(maxlag*2+1, sum(goodReversals), 6);
+    lags = -maxlag:maxlag;
+    chat = nanzscore(newCsPlus.phPeakMean_cs_ch1, 0, 2);
+    dat = nanzscore(newCsPlus.phPeakMean_cs_ch2, 0, 2);
+    licks = nanzscore(newCsPlus.licks_cs, 0, 2);
+    theseOnes = find(goodReversals);
+    for counter = 1:length(theseOnes)
+        thisRev = theseOnes(counter);
+        thisChat = chat(thisRev, isfinite(chat(thisRev, :)));
+        thisDat = dat(thisRev, isfinite(dat(thisRev, :)));
+        theseLicks = licks(thisRev, isfinite(licks(thisRev, :)));
+        [theseR, ~] = xcorr(thisChat, thisDat, maxlag, 'coeff');
+        allR(:,counter, 1) = theseR;
+        [theseR, ~] = xcorr(thisChat, thisChat, maxlag, 'coeff');
+        allR(:,counter, 2) = theseR;        
+        [theseR, ~] = xcorr(thisDat, thisDat, maxlag, 'coeff');
+        allR(:,counter, 3) = theseR;                
+        [theseR, ~] = xcorr(thisChat, theseLicks, maxlag, 'coeff');
+        allR(:,counter, 4) = theseR;                
+        [theseR, ~] = xcorr(thisDat, theseLicks, maxlag, 'coeff');
+        allR(:,counter, 5) = theseR;                        
+        [theseR, ~] = xcorr(theseLicks, theseLicks, maxlag, 'coeff');
+        allR(:,counter, 6) = theseR;                
+    end
+    R = squeeze(nanmean(allR, 2));
+
+subplot(3,2,1); plot(lags, R(:,1)); title('chat vs dat'); 
+subplot(3,2,2); plot(lags, R(:,2)); title('chat'); 
+subplot(3,2,3); plot(lags, R(:,3)); title('dat'); 
+subplot(3,2,4); plot(lags, R(:,4)); title('chat vs licks');
+subplot(3,2,5); plot(lags, R(:,5)); title('dat vs licks'); xlabel('new cs+ trials');
+subplot(3,2,6); plot(lags, R(:,6)); title('licks'); xlabel('new cs+ trials');
+
+
+if saveOn
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));   
+end
+
+
+%% cross correlations, new Cs-, 
+savename = 'xcorr_newCsMinus';
+ensureFigure(savename, 1); 
+% [R, lags] = avgXCorr(x, y, maxlag)
+    maxlag = 20;
+    allR = zeros(maxlag*2+1, sum(goodReversals), 6);
+    lags = -maxlag:maxlag;
+    chat = nanzscore(newCsMinus.phPeakMean_cs_ch1, 0, 2);
+    dat = nanzscore(newCsMinus.phPeakMean_cs_ch2, 0, 2);
+    licks = nanzscore(newCsMinus.licks_cs, 0, 2);
+    theseOnes = find(goodReversals);
+    for counter = 1:length(theseOnes)
+        thisRev = theseOnes(counter);
+        thisChat = chat(thisRev, isfinite(chat(thisRev, :)));
+        thisDat = dat(thisRev, isfinite(dat(thisRev, :)));
+        theseLicks = licks(thisRev, isfinite(licks(thisRev, :)));
+        [theseR, ~] = xcorr(thisChat, thisDat, maxlag, 'coeff');
+        allR(:,counter, 1) = theseR;
+        [theseR, ~] = xcorr(thisChat, thisChat, maxlag, 'coeff');
+        allR(:,counter, 2) = theseR;        
+        [theseR, ~] = xcorr(thisDat, thisDat, maxlag, 'coeff');
+        allR(:,counter, 3) = theseR;                
+        [theseR, ~] = xcorr(thisChat, theseLicks, maxlag, 'coeff');
+        allR(:,counter, 4) = theseR;                
+        [theseR, ~] = xcorr(thisDat, theseLicks, maxlag, 'coeff');
+        allR(:,counter, 5) = theseR;                        
+        [theseR, ~] = xcorr(theseLicks, theseLicks, maxlag, 'coeff');
+        allR(:,counter, 6) = theseR;                
+    end
+    R = squeeze(nanmean(allR, 2));
+
+subplot(3,2,1); plot(lags, R(:,1)); title('chat vs dat'); 
+subplot(3,2,2); plot(lags, R(:,2)); title('chat'); 
+subplot(3,2,3); plot(lags, R(:,3)); title('dat'); 
+subplot(3,2,4); plot(lags, R(:,4)); title('chat vs licks');
+subplot(3,2,5); plot(lags, R(:,5)); title('dat vs licks'); xlabel('new cs- trials');
+subplot(3,2,6); plot(lags, R(:,6)); title('licks'); xlabel('new cs- trials');
+
+
+if saveOn
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));   
+end
+
+%% test correlations
+x = linspace(0, 1, 10000);
+y1 = 1 * x + 40;
+y2 =  1 * x;
+
+figure;
+subplot(2,2,1); plot(x', [y1' y2']); title('not zscored'); xlabel('x'); ylabel('y');
+[r,lags] = xcorr(y1,y2, 20, 'unbiased');
+subplot(2,2,3); plot(lags, r); ylabel('xcorr'); xlabel('lags');
+subplot(2,2,2); plot(x ,zscore(y1), '-', 'LineWidth', 2); hold on; plot(x ,zscore(y2), '--', 'LineWidth', 4);  title('zscored'); xlabel('x'); ylabel('y (zscored)');
+[r,lags] = xcorr(y1 - mean(y1) ,y2 - mean(y2), 20, 'unbiased');
+subplot(2,2,4); plot(lags, r); ylabel('xcorr'); xlabel('lags');
+
