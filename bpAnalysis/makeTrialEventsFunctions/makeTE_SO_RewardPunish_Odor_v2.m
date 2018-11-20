@@ -14,7 +14,7 @@ function TE = makeTE_SO_RewardPunish_Odor_v2(sessions)
 
     %% initialize TE
     TE = struct(...
-        'filename', {},... 
+        'filename', [],... 
         'trialNumber', zeros(nTrials, 1),...
         'trialType', zeros(nTrials, 1),...  
         'trialOutcome', NaN(nTrials, 1),... 
@@ -22,8 +22,17 @@ function TE = makeTE_SO_RewardPunish_Odor_v2(sessions)
         'sessionIndex', NaN(nTrials, 1),...
         'sessionChange', NaN(nTrials, 1),...
         'ITI', zeros(nTrials, 1),...
-        'odorValve', zeros(nTrials, 1)...
+        'odorValve', zeros(nTrials, 1),...
+        'ReinforcementOutcome', []...
         );
+    
+    TE.sessions = struct(... % sessions fields so that you can easily reload sessions data to modify TE
+        'filename', cell(length(sessions), 1),...
+        'filepath', [],...
+        'index', [],...
+        'NeutralToneOn', [],...
+        'OmitValveCode', []...
+        );    
 
     for i = 1:length(statesToAdd)
         TE(1).(statesToAdd{i}) = bpAddStateAsTrialEvent(sessions, statesToAdd{i});
@@ -34,6 +43,21 @@ function TE = makeTE_SO_RewardPunish_Odor_v2(sessions)
     tcounter = 1;
     for sCounter = 1:length(sessions)
         session = sessions(sCounter);
+        TE.sessions(sCounter).filename = session.filename;
+        TE.sessions(sCounter).filepath = session.filepath;
+        TE.sessions(sCounter).index = sCounter;        
+        if isfield(session.SessionData.Settings, 'NeturalToneOn')
+            TE.sessions(sCounter).NeutralToneOn = session.SessionData.Settings.NeutralToneOn;
+        else
+            TE.sessions(sCounter).NeutralToneOn = 0;
+        end
+        
+        if isfield(session.SessionData.Settings, 'OmitValveCode')
+            TE.sessions(sCounter).OmitValveCode = session.SessionData.Settings.OmitValveCode;
+        else
+            TE.sessions(sCounter).OmitValveCode = 0;
+        end        
+            
         for counter = 1:session.SessionData.nTrials
             TE.filename{tcounter} = session.filename;
             TE.trialNumber(tcounter) = counter;
@@ -45,6 +69,14 @@ function TE = makeTE_SO_RewardPunish_Odor_v2(sessions)
             else
                 TE.epoch(tcounter) = 1;
             end
+            TE.sessionIndex(tcounter, 1) = sCounter;
+            if any(isfinite(TE.Reward{tcounter}))
+                TE.ReinforcementOutcome{tcounter} = 'Reward';
+            elseif any(isfinite(TE.Punish{tcounter}))
+                TE.ReinforcementOutcome{tcounter} = 'Punish';
+            else
+                TE.ReinforcementOutcome{tcounter} = 'Omit';                
+            end
             tcounter = tcounter + 1; % don't forget :)            
         end
     end
@@ -54,14 +86,10 @@ function TE = makeTE_SO_RewardPunish_Odor_v2(sessions)
         sname = sessionNames{counter};
         TE.sessionIndex(cellfun(@(x) strcmp(x, sname), TE.filename)) = counter;
     end
-    TE.sessionIndex = TE.sessionIndex';
     TE.sessionChange = [0; diff(TE.sessionIndex)];    
     
     TE.cueCondition = ismember(TE.trialType, 1:2) * 1 + ismember(TE.trialType, 3:4) * 2; % 1 = rewarded odor, 2 = punished odor
-    sessionNames = unique(TE.filename);
-    for counter = 1:length(sessionNames)
-        sname = sessionNames{counter};
-        TE.sessionIndex(cellfun(@(x) strcmp(x, sname), TE.filename)) = counter;
-    end
-    TE.sessionChange = [0; diff(TE.sessionIndex)];    
+    
+   
+
     

@@ -17,7 +17,6 @@ varargout = {};
         'linespec', [];...
         'window', [];...
         'binWidth', 0.25;... % 0.5s bins by default
-        'trialNumbering', 'global';... % 'singleSession'- by session, 'consecutive', 'global' cross session
         'cmap', [];... % for more precise control of color, supply a nTrialSets x 3 (rgb) colormap matrix
         'alpha', 1;... % 1 == transparent bounds, 0 == opaque bounds
         };    

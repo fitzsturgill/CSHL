@@ -141,9 +141,10 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         allData = NaN(nTrials, newSamples);   
 %         modData = NaN(nTrials, newSamples);  % raw data that has not been demodulated   
 
-        for fCh = s.channels
-            blMode = s.blMode{fCh};
-            dFFMode = s.dFFMode{fCh};
+        for chCounter = 1:length(s.channels)
+            fCh = s.channels(chCounter);
+            blMode = s.blMode{chCounter};
+            dFFMode = s.dFFMode{chCounter};
             for trial = 1:nTrials
                 trialData = SessionData.demod{trial, fCh}'; % convert to row vector
                 %% in case nidaq acquisition ended early for some reason, pad with NaNs, this should be fixed as of 8/2016
@@ -157,9 +158,9 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             end
 
             % baseline fluor.
-            blStartP = bpX2pnt(s.baseline{fCh}(1), sampleRate);
-            blEndP = bpX2pnt(s.baseline{fCh}(2), sampleRate); 
-            expFitStartP = bpX2pnt(s.expFitBegin{fCh}, sampleRate);
+            blStartP = bpX2pnt(s.baseline{chCounter}(1), sampleRate);
+            blEndP = bpX2pnt(s.baseline{chCounter}(2), sampleRate); 
+            expFitStartP = bpX2pnt(s.expFitBegin{chCounter}, sampleRate);
             
             
             % always perform session bleaching fit and store it for later
