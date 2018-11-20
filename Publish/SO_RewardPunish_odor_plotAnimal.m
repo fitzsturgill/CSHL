@@ -8,11 +8,17 @@ saveOn = 1;
 climfactor = 2;
 window = [-6 4];
 
-fhp = [];
-fhm = [];
+fhr = [];
 fha = [];
 for counter = 1:length(DB.animals)
     animal = DB.animals{counter};
+    
+    % kludge
+    if strcmp('DAT_5', animal)
+        channel = 2;
+    else
+        channel = 1;
+    end
     success = dbLoadAnimal(DB, animal);
     display(animal);
     TE.csLicks = countEventFromTE(TE, 'Port1In', [-2 0], TE.PostUsRecording);
@@ -32,35 +38,35 @@ for counter = 1:length(DB.animals)
     fha(end + 1) =ensureFigure(saveName, 1);
     
     subplot(2, 2, 1);
-    [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 2 5]), 1,...
-        'PhotometryField', 'Photometry', 'FluorDataField', fdField, 'zeroTimes', TE.usZeros, 'window', window, 'linespec', {'b','k','c'}); 
-    legend(hl, {'cued', 'omission', 'uncued'}, 'Location', 'best', 'FontSize', 8); legend('boxoff');
+    [ha, hl] = phPlotAverageFromTE(TE, trialsByType([7 1 2 5]), channel,...
+        'PhotometryField', 'Photometry', 'FluorDataField', fdField, 'zeroTimes', TE.usZeros, 'window', window, 'linespec', {'k', 'b','g','c'}); 
+    legend(hl, {'null', 'cued', 'omission', 'uncued'}, 'Location', 'best', 'FontSize', 8); legend('boxoff');
     title('Reward'); ylabel(sprintf('BF %s', fdField)); textBox(animal, gca, [0.25 0.95], 8);%set(gca, 'YLim', ylim);
     
     subplot(2, 2, 2);
-    [ha, hl] = phPlotAverageFromTE(TE, trialsByType([3 4 6]), 1,...
-        'PhotometryField', 'Photometry', 'FluorDataField', fdField, 'zeroTimes', TE.usZeros, 'window', window, 'linespec', {'r','k','m'}); 
-    legend(hl, {'cued', 'omission', 'uncued'}, 'Location', 'best', 'FontSize', 8); legend('boxoff');
+    [ha, hl] = phPlotAverageFromTE(TE, trialsByType([7 3 4 6]), channel,...
+        'PhotometryField', 'Photometry', 'FluorDataField', fdField, 'zeroTimes', TE.usZeros, 'window', window, 'linespec', {'k', 'r','g','m'}); 
+    legend(hl, {'null', 'cued', 'omission', 'uncued'}, 'Location', 'best', 'FontSize', 8); legend('boxoff');
     title('Punish'); ylabel(sprintf('BF %s', fdField)); textBox(animal, gca, [0.25 0.95], 8);%set(gca, 'YLim', ylim);
     
     subplot(2,2,3);
-    varargin = {'window', [-4 0], 'zeroTimes', TE.usZeros, 'window', window, 'linespec', {'b', 'k', 'c'}};
+    varargin = {'window', [-4 0], 'zeroTimes', TE.usZeros, 'window', window, 'linespec', {'k', 'b','g','c'}};
     axh = [];
-    [ha, hl] = plotEventAverageFromTE(TE, trialsByType([1 2 5]), 'Port1In', varargin{:});
-    legend(hl, {'cued', 'omission', 'uncued'}, 'Location', 'best', 'FontSize', 8); legend('boxoff');
+    [ha, hl] = plotEventAverageFromTE(TE, trialsByType([7 1 2 5]), 'Port1In', varargin{:});
+    legend(hl, {'null', 'cued', 'omission', 'uncued'}, 'Location', 'best', 'FontSize', 8); legend('boxoff');
     ylabel('licks (1/s)'); xlabel('time from reinforcement (s)'); 
     
     subplot(2,2,4);
-    varargin = {'window', [-4 0], 'zeroTimes', TE.usZeros, 'window', window, 'linespec', {'r', 'k', 'm'}};
+    varargin = {'window', [-4 0], 'zeroTimes', TE.usZeros, 'window', window, 'linespec', {'k', 'r','g','m'}};
     axh = [];
-    [ha, hl] = plotEventAverageFromTE(TE, trialsByType([3 4 6]), 'Port1In', varargin{:});
-    legend(hl, {'cued', 'omission', 'uncued'}, 'Location', 'best', 'FontSize', 8); legend('boxoff');
+    [ha, hl] = plotEventAverageFromTE(TE, trialsByType([7 3 4 6]), 'Port1In', varargin{:});
+    legend(hl, {'null', 'cued', 'omission', 'uncued'}, 'Location', 'best', 'FontSize', 8); legend('boxoff');
     ylabel('licks (1/s)'); xlabel('time from reinforcement (s)');     
     
     
     %% raster plots
     saveName = sprintf('rasters_%s', animal); 
-    fhp(end+1) = ensureFigure(saveName, 1);
+    fhr(end+1) = ensureFigure(saveName, 1);
     mcLandscapeFigSetup(gcf);            
     trialTypes = [1 2 5 3 4 6];
     titles  = {'cued rew.', 'omit rew.', 'uncued rew.', 'cued pun.', 'omit pun.', 'uncued pun.'};
@@ -68,7 +74,7 @@ for counter = 1:length(DB.animals)
         trialType = trialTypes(typeCounter);
         sessionChanges = find(diff(TE.sessionIndex(trialsByType{trialType}, :))) + 1;
         subplot(2,6,typeCounter);
-        phRasterFromTE(TE, trialsByType{trialType}, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor,...
+        phRasterFromTE(TE, trialsByType{trialType}, channel, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor,...
             'zeroTimes', TE.usZeros', 'window', window, 'FluorDataField', fdField, 'PhotometryField', photometryField); % 'CLimFactor', CLimFactor,       
         title(titles{typeCounter}); 
         
@@ -82,3 +88,28 @@ for counter = 1:length(DB.animals)
     subplot(2,6,8); xlabel('Time from Reinforcement (s)');
     subplot(2,6,1); t = textBox(animal, gca, [0.1 0.95]); set(t, 'Color', [1 0 0], 'FontSize', 10, 'FontWeight', 'bold', 'BackgroundColor', [0.8 0.8 0.8], 'HorizontalAlignment', 'left');
 end   
+
+h = waitbar(0, 'slowly writing avg pdfs');
+pdfavg = fullfile(DB.path, 'pooled', 'SO_RewardPunish_avgs_allAnimals.pdf');
+for counter = 1:length(fha)    
+    if counter == 1
+        export_fig(fha(counter),pdfavg);  % write to pdf
+    else
+        export_fig(fha(counter),'-append',pdfavg);  % write to pdf
+    end
+    waitbar(counter/(length(fha)*2));
+end
+close(h);
+
+h = waitbar(0, 'slowly writing raster pdfs');
+pdfavg = fullfile(DB.path, 'pooled', 'SO_RewardPunish_rasters_allAnimals.pdf');
+for counter = 1:length(fha)    
+    if counter == 1
+        export_fig(fha(counter),pdfavg);  % write to pdf
+    else
+        export_fig(fha(counter),'-append',pdfavg);  % write to pdf
+    end
+    waitbar(counter/(length(fha)*2));
+end
+close(h);
+
