@@ -31,7 +31,7 @@ TE.PhotometryExpFit = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFM
 duration = length(TE.Photometry.xData) / TE.Photometry.sampleRate;
 
 %% add pupilometry
-
+% duration = 8.3;
 TE = addPupilometryToTE(TE, 'duration', duration, 'zeroField', 'Cue2',  'frameRate', 60, 'frameRateNew', 20);
 
 
@@ -41,10 +41,13 @@ TE.Whisk = addWhiskingToTE(TE, 'duration', duration);
 %% add wheel
 TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', duration, 'Fs', 20, 'startField', 'Start');
 
+    sep = strfind(TE.filename{1}, '.');
+    subjectName = TE.filename{1}(1:sep(1)-1);
 %%
-basepath = uigetdir;
-sep = strfind(TE.filename{1}, '_');
-subjectName = TE.filename{1}(1:sep(2)-1);
+% basepath = uigetdir;
+basepath = 'Z:\SummaryAnalyses\Franken_LNL_aversive';
+% sep = strfind(TE.filename{1}, '_');
+subjectName = TE.filename{1}(1:end-4);
 disp(subjectName);
 savepath = fullfile(basepath, subjectName);
 ensureDirectory(savepath);
@@ -157,18 +160,25 @@ saveName = 'Aversive_blinkRasters';
 ensureFigure(saveName, 1);
 clims = [0 1.5];
 blinkData = TE.pupil.eyeAreaNorm;
-blinkData = circshift(blinkData, 0);
-subplot(1,3,1); imagesc('XData', [ -4.0002 4.2998], 'CData', blinkData(trialsByType{1}, :), clims);
+subplot(1,3,1); imagesc('XData', [ -4.000 7], 'CData', blinkData(trialsByType{1}, :), clims);
 title('cued punish');
-subplot(1,3,2); imagesc('XData', [ -4.0002 4.2998], 'CData', blinkData(trialsByType{2}, :), [0.5 2]);
+subplot(1,3,2); imagesc('XData', [ -4 7], 'CData', blinkData(trialsByType{2}, :), clims);
 title('cued ommission');
-subplot(1,3,3); imagesc('XData', [ -4.0002 4.2998], 'CData', blinkData(trialsByType{3}, :), clims);
+subplot(1,3,3); imagesc('XData', [-4 7], 'CData', blinkData(trialsByType{3}, :), clims);
 title('uncued punish');
 
 if saveOn
     saveas(gcf, fullfile(savepath, saveName), 'fig');
     saveas(gcf, fullfile(savepath, saveName), 'jpeg');
 end
+%%
+ensureFigure('test', 1);
+clims = [0 1.5];
+blinkData = TE.pupil.eyeAreaNorm;
+% blinkData(isnan(blinkData)) = 2;
+subplot(1,2,1); imagesc('XData', [ -1 1], 'CData', blinkData(:, bpX2pnt(-1, 20, -4):bpX2pnt(1, 20, -4)), clims);
+subplot(1,2,2); imagesc('XData', [ -4 7], 'CData', blinkData(:, :), clims);
+
 
 %% blink averages
 saveName = 'Aversive_blinkAverages';
@@ -178,11 +188,13 @@ xData = TE.pupil.xData;
 blinkData = TE.pupil.eyeAreaNorm;
 blinkData(isnan(blinkData)) = 0;
 axes; hold on; grid on;
-plot(xData, mean(blinkData(trialsByType{1}, :)), 'm');
+plot(xData, mean(blinkData(trialsByType{1}, :)), 'm-*');
 plot(xData, mean(blinkData(trialsByType{2}, :)), 'k');
 plot(xData, mean(blinkData(trialsByType{3}, :)), 'r');
 title('eye area');
 xlabel('time from cue');
+set(gca, 'XLim', [-1 2]);
+legend('cued', 'omit', 'uncued'); 
 
 if saveOn
     saveas(gcf, fullfile(savepath, saveName), 'fig');

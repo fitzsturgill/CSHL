@@ -1,6 +1,1 @@
-% baseline by trial
-TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL);
-% baseline expfit
-    
-    
-    
+TE = addPupilometryToTE(TE, 'duration', 11, 'zeroField', 'Cue2',  'frameRate', 60, 'frameRateNew', 20);

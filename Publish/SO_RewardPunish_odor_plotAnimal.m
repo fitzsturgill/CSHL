@@ -103,13 +103,13 @@ close(h);
 
 h = waitbar(0, 'slowly writing raster pdfs');
 pdfavg = fullfile(DB.path, 'pooled', 'SO_RewardPunish_rasters_allAnimals.pdf');
-for counter = 1:length(fha)    
+for counter = 1:length(fhr)    
     if counter == 1
-        export_fig(fha(counter),pdfavg);  % write to pdf
+        export_fig(fhr(counter),pdfavg);  % write to pdf
     else
-        export_fig(fha(counter),'-append',pdfavg);  % write to pdf
+        export_fig(fhr(counter),'-append',pdfavg);  % write to pdf
     end
-    waitbar(counter/(length(fha)*2));
+    waitbar(counter/(length(fhr)*2));
 end
 close(h);
 
