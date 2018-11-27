@@ -692,9 +692,12 @@ ensureFigure(savename, 1);
     maxlag = 20;
     allR = zeros(maxlag*2+1, sum(goodReversals), 6);
     lags = -maxlag:maxlag;
-    chat = nanzscore(newCsPlus.phPeakMean_cs_ch1, 0, 2);
-    dat = nanzscore(newCsPlus.phPeakMean_cs_ch2, 0, 2);
-    licks = nanzscore(newCsPlus.licks_cs, 0, 2);
+%     chat = nanzscore(newCsPlus.phPeakMean_cs_ch1, 0, 2);
+%     dat = nanzscore(newCsPlus.phPeakMean_cs_ch2, 0, 2);
+%     licks = nanzscore(newCsPlus.licks_cs, 0, 2);
+    chat = newCsPlus.phPeakMean_cs_ch1;
+    dat = newCsPlus.phPeakMean_cs_ch2;
+    licks = newCsPlus.licks_cs;        
     theseOnes = find(goodReversals);
     for counter = 1:length(theseOnes)
         thisRev = theseOnes(counter);
@@ -738,9 +741,12 @@ ensureFigure(savename, 1);
     maxlag = 20;
     allR = zeros(maxlag*2+1, sum(goodReversals), 6);
     lags = -maxlag:maxlag;
-    chat = nanzscore(newCsMinus.phPeakMean_cs_ch1, 0, 2);
-    dat = nanzscore(newCsMinus.phPeakMean_cs_ch2, 0, 2);
-    licks = nanzscore(newCsMinus.licks_cs, 0, 2);
+%     chat = nanzscore(newCsMinus.phPeakMean_cs_ch1, 0, 2);
+%     dat = nanzscore(newCsMinus.phPeakMean_cs_ch2, 0, 2);
+%     licks = nanzscore(newCsMinus.licks_cs, 0, 2);
+    chat = newCsMinus.phPeakMean_cs_ch1;
+    dat = newCsMinus.phPeakMean_cs_ch2;
+    licks = newCsMinus.licks_cs;    
     theseOnes = find(goodReversals);
     for counter = 1:length(theseOnes)
         thisRev = theseOnes(counter);
@@ -788,4 +794,18 @@ subplot(2,2,3); plot(lags, r); ylabel('xcorr'); xlabel('lags');
 subplot(2,2,2); plot(x ,zscore(y1), '-', 'LineWidth', 2); hold on; plot(x ,zscore(y2), '--', 'LineWidth', 4);  title('zscored'); xlabel('x'); ylabel('y (zscored)');
 [r,lags] = xcorr(y1 - mean(y1) ,y2 - mean(y2), 20, 'unbiased');
 subplot(2,2,4); plot(lags, r); ylabel('xcorr'); xlabel('lags');
+
+%% compare strength of licking correlations, ChAT-cre vs DAT-cre
+all_Licks = [reshape(newCsPlus.licks_cs(goodReversals, :), numel(newCsPlus.licks_cs(goodReversals, :)), 1); reshape(newCsMinus.licks_cs(goodReversals, :), numel(newCsMinus.licks_cs(goodReversals, :)), 1)]; 
+all_ChAT = [reshape(newCsPlus.phPeakMean_cs_ch1(goodReversals, :), numel(newCsPlus.phPeakMean_cs_ch1(goodReversals, :)), 1); reshape(newCsMinus.phPeakMean_cs_ch1(goodReversals, :), numel(newCsMinus.phPeakMean_cs_ch1(goodReversals, :)), 1)]; 
+all_DAT = [reshape(newCsPlus.phPeakMean_cs_ch2(goodReversals, :), numel(newCsPlus.phPeakMean_cs_ch2(goodReversals, :)), 1); reshape(newCsMinus.phPeakMean_cs_ch2(goodReversals, :), numel(newCsMinus.phPeakMean_cs_ch2(goodReversals, :)), 1)]; 
+keep = isfinite(all_Licks) & isfinite(all_ChAT) & isfinite(all_DAT);
+all_Licks = all_Licks(keep);
+all_ChAT = all_ChAT(keep);
+all_DAT = all_DAT(keep);
+
+ensureFigure('test_corr', 1); 
+subplot(1,2,1); scatter(all_Licks, all_ChAT, 8, '.'); ylabel('cue ChAT'); textBox(sprintf('R=%.2f', corr(all_Licks, all_ChAT)));
+subplot(1,2,2); scatter(all_Licks, all_DAT, 8, '.'); ylabel('cue DAT'); textBox(sprintf('R=%.2f', corr(all_Licks, all_DAT)));
+
 
