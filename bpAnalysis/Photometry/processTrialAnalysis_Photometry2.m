@@ -181,7 +181,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
 %                 fit((1:size(allData, 1))', blF_fit, ft, fo);
             [fitobject, gof, output] = ... % new
                 fit(x, blF_fit, ft, fo);
-            warning('check this in processTrialAnalysis_Photometry2, x should start at 0 for session bleach fit'); % old --> new
+%             warning('check this in processTrialAnalysis_Photometry2, x should start at 0 for session bleach fit'); % old --> new
             Photometry.bleachFit(si, fCh).fitobject_session = fitobject;
             Photometry.bleachFit(si, fCh).gof_session = gof;
             Photometry.bleachFit(si, fCh).output_session = output;

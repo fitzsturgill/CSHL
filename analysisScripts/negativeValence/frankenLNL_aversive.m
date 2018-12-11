@@ -32,7 +32,7 @@ duration = length(TE.Photometry.xData) / TE.Photometry.sampleRate;
 
 %% add pupilometry
 % duration = 8.3;
-TE = addPupilometryToTE(TE, 'duration', duration, 'zeroField', 'Cue2',  'frameRate', 60, 'frameRateNew', 20);
+TE = addPupilometryToTE(TE, 'duration', duration, 'zeroField', 'Cue2',  'frameRate', 60, 'frameRateNew', 20, 'normMode', 'byTrial');
 
 
 %% add whisking
@@ -46,8 +46,12 @@ TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', duration, 'Fs', 20, 
 %%
 % basepath = uigetdir;
 basepath = 'Z:\SummaryAnalyses\Franken_LNL_aversive';
-% sep = strfind(TE.filename{1}, '_');
-subjectName = TE.filename{1}(1:end-4);
+sep = strfind(TE.filename{1}, '_');
+if length(sessions) > 1
+    subjectName = TE.filename{1}(1:sep(2)-1);
+else
+    subjectName = TE.filename{1}(1:end-4);
+end
 disp(subjectName);
 savepath = fullfile(basepath, subjectName);
 ensureDirectory(savepath);
@@ -56,7 +60,7 @@ ensureDirectory(savepath);
 usZeros = cellfun(@(x,y,z,a) max(x(1), max(y(1), max(z(1), a(1)))), TE.Reward, TE.Punish, TE.WNoise, TE.Neutral); %'Reward', 'Punish', 'WNoise', 'Neutral'
 TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], usZeros);
 truncateSessionsFromTE(TE, 'init', 'usLicks', filterTE(TE, 'trialType', 1));
-
+%%
 if saveOn
     save(fullfile(savepath, 'TE.mat'), 'TE');
     disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
@@ -102,19 +106,20 @@ end
 frankenLNL_conditions;
 
 %% raster plots
+PhotometryField = 'Photometry';
 CLimFactor = 3;
 for channel = channels
     saveName = ['Aversive_phRasters_ch' num2str(channel)];
     ensureFigure(saveName, 1);
     
     subplot(1,3,1);
-    phRasterFromTE(TE, Odor2Valve1Trials & punishTrials, channel, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive', 'window', [-4 6]);
+    phRasterFromTE(TE, ~uncuedTrials & punishTrials, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive', 'window', [-4 6]);
     xlabel('time from cue (s)');  title('cued punish');
     subplot(1,3,2);
-    phRasterFromTE(TE, Odor2Valve1Trials & neutralTrials, channel, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive', 'window', [-4 6]);
+    phRasterFromTE(TE, ~uncuedTrials & neutralTrials, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive', 'window', [-4 6]);
     xlabel('time from cue (s)');  title('cued ommission');    
     subplot(1,3,3);
-    phRasterFromTE(TE, uncuedTrials & punishTrials, channel, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive', 'window', [-4 6]);
+    phRasterFromTE(TE, uncuedTrials & punishTrials, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive', 'window', [-4 6]);
     xlabel('time from cue (s)');  title('uncued punish');       
     if saveOn
         saveas(gcf, fullfile(savepath, saveName), 'fig');
@@ -125,11 +130,13 @@ end
 %% whisk rasters
 saveName = 'Aversive_whiskRasters';
 ensureFigure(saveName, 1);
-subplot(1,3,1); imagesc(TE.Whisk.whiskNorm(Odor2Valve1Trials & punishTrials, :));
+cLimFactor = 2;
+clim = [mean2(TE.Whisk.whiskNorm) - cLimFactor * std2(TE.Whisk.whiskNorm) mean2(TE.Whisk.whiskNorm) + cLimFactor * std2(TE.Whisk.whiskNorm)];
+subplot(1,3,1); imagesc(TE.Whisk.whiskNorm(~uncuedTrials & punishTrials, :), clim);
 title('cued punish');
-subplot(1,3,2); imagesc(TE.Whisk.whiskNorm(Odor2Valve1Trials & neutralTrials, :));
+subplot(1,3,2); imagesc(TE.Whisk.whiskNorm(~uncuedTrials & neutralTrials, :), clim);
 title('cued ommission');
-subplot(1,3,3); imagesc(TE.Whisk.whiskNorm(uncuedPunish, :));
+subplot(1,3,3); imagesc(TE.Whisk.whiskNorm(uncuedPunish, :), clim);
 title('uncued punish');
 
 if saveOn
@@ -137,10 +144,29 @@ if saveOn
     saveas(gcf, fullfile(savepath, saveName), 'jpeg');
 end
 
+%% wheel rasters and averages
+saveName = 'Aversive_wheelRasters';
+ensureFigure(saveName, 1);
+subplot(2,3,1); imagesc(TE.Wheel.data.V(~uncuedTrials & punishTrials, :));
+title('cued punish');
+subplot(2,3,2); imagesc(TE.Wheel.data.V(~uncuedTrials & neutralTrials, :));
+title('cued ommission');
+subplot(2,3,3); imagesc(TE.Wheel.data.V(uncuedPunish, :));
+title('uncued punish');
+subplot(2,3,4); plot(nanmean(TE.Wheel.data.V(~uncuedTrials & punishTrials, :)));
+subplot(2,3,5); plot(nanmean(TE.Wheel.data.V(~uncuedTrials & neutralTrials, :)));
+subplot(2,3,6); plot(nanmean(TE.Wheel.data.V(uncuedPunish, :)));
+
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+end
+
+
 %% averages
 saveName = 'Aversive_phAverages';
 ensureFigure(saveName, 1);
-trialSets = {uncuedTrials & punishTrials, Odor2Valve1Trials & neutralTrials, Odor2Valve1Trials & punishTrials};
+trialSets = {uncuedTrials & punishTrials, ~uncuedTrials & neutralTrials, ~uncuedTrials & punishTrials};
 titles = {'Ach.', 'Dop.'};
 legend_text = {'uncued punish', 'cued ommission', 'cued punish'};
 for channel = channels
@@ -157,15 +183,19 @@ end
     
 %% blink rasters
 saveName = 'Aversive_blinkRasters';
-ensureFigure(saveName, 1);
-clims = [0 1.5];
+ensureFigure(saveName, 1); colormap jet;
+% clims = [0 1.5];
+cLimFactor = 2;
 blinkData = TE.pupil.eyeAreaNorm;
-subplot(1,3,1); imagesc('XData', [ -4.000 7], 'CData', blinkData(trialsByType{1}, :), clims);
-title('cued punish');
-subplot(1,3,2); imagesc('XData', [ -4 7], 'CData', blinkData(trialsByType{2}, :), clims);
-title('cued ommission');
-subplot(1,3,3); imagesc('XData', [-4 7], 'CData', blinkData(trialsByType{3}, :), clims);
+blinkDataMean = mean2(blinkData);
+clims = [nanmean(blinkData(:)) - nanstd(blinkData(:)) * cLimFactor, nanmean(blinkData(:)) + nanstd(blinkData(:)) * cLimFactor];
+
+subplot(1,3,1); imagesc('XData', [ -4.000 7], 'CData', blinkData(uncuedTrials & punishTrials, :), clims);
 title('uncued punish');
+subplot(1,3,2); imagesc('XData', [ -4 7], 'CData', blinkData(~uncuedTrials & neutralTrials, :), clims);
+title('cued ommission');
+subplot(1,3,3); imagesc('XData', [-4 7], 'CData', blinkData(~uncuedTrials & punishTrials, :), clims);
+title('cued punish');
 
 if saveOn
     saveas(gcf, fullfile(savepath, saveName), 'fig');
@@ -183,18 +213,17 @@ subplot(1,2,2); imagesc('XData', [ -4 7], 'CData', blinkData(:, :), clims);
 %% blink averages
 saveName = 'Aversive_blinkAverages';
 ensureFigure(saveName, 1);
-
 xData = TE.pupil.xData;
 blinkData = TE.pupil.eyeAreaNorm;
 blinkData(isnan(blinkData)) = 0;
 axes; hold on; grid on;
-plot(xData, mean(blinkData(trialsByType{1}, :)), 'm-*');
-plot(xData, mean(blinkData(trialsByType{2}, :)), 'k');
-plot(xData, mean(blinkData(trialsByType{3}, :)), 'r');
-title('eye area');
+plot(xData, mean(blinkData(uncuedTrials & punishTrials, :)), 'r');
+plot(xData, mean(blinkData(~uncuedTrials & neutralTrials, :)), 'k');
+plot(xData, mean(blinkData(~uncuedTrials & punishTrials, :)), 'm-*');
+title('frame avg (goes up as eye closes)');
 xlabel('time from cue');
 set(gca, 'XLim', [-1 2]);
-legend('cued', 'omit', 'uncued'); 
+legend('uncued', 'omit', 'cued'); 
 
 if saveOn
     saveas(gcf, fullfile(savepath, saveName), 'fig');

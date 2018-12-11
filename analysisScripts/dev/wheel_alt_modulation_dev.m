@@ -224,7 +224,7 @@ legend('AC', 'DC');
     plot(f, S, 'r');    
     [S, f] = mtspectrumc(TE.PhotometryDC.data(2).dF(dcTrials, :)', params);
     plot(f, S, 'k');    
-    title('RCaMP channel, DAT-cre'); 
+    title('RCaMP channel, DAT-cre');
 
     xlabel('Frequency');
     ylabel('Power');

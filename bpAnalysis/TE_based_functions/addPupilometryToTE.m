@@ -45,6 +45,7 @@ function TE = addPupilometryToTE(TE, varargin)
         'pupArea', 'pupAreaNorm';...
         'pupDiameter', 'pupDiameterNorm';...
         'pupResidual', 'pupResidualNorm';...
+        'frameAvg', 'frameAvgNorm';...
         };
     pupil = struct();
     pupil.loadSettings = s; % scalar
@@ -86,7 +87,7 @@ function TE = addPupilometryToTE(TE, varargin)
             end
         end
         if ~folderFound
-            warning('*** Pupil directory does not exist ***');
+            warning('*** Pupil directory %s does not exist ***', pupilFolder{2});
             continue
         end
         cd(pupilPath);
@@ -234,6 +235,11 @@ function TE = addPupilometryToTE(TE, varargin)
             pupil.pupArea(tei, 1:newFrames) = changeRate(loaded.pupilData.pupil.area(1:framesToLoad), s, p, q);
             pupil.pupDiameter(tei, 1:newFrames) = changeRate(loaded.pupilData.pupil.diameter(1:framesToLoad), s, p, q);
             pupil.pupResidual(tei, 1:newFrames) = changeRate(loaded.pupilData.pupil.circResidual(1:framesToLoad), s, p, q);
+            if isfield(loaded.pupilData, 'frameAvg')
+                pupil.frameAvg(tei, 1:newFrames) = changeRate(loaded.pupilData.frameAvg(1:framesToLoad), s, p, q);
+            else
+                pupil.frameAvg(tei, 1:newFrames) = NaN;
+            end
             pupil.startTime(tei, 1) = TE.(s.startField){tei}(1);            
             waitbar(i/length(si));
         end

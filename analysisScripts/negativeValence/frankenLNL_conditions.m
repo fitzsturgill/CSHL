@@ -11,10 +11,12 @@
     Odor1Valve2Trials = filterTE(TE, 'Odor1ValveIndex', 2, 'reject', 0);    
     Odor1Valve3Trials = filterTE(TE, 'Odor1ValveIndex', 3, 'reject', 0);  
     Odor1Valve4Trials = filterTE(TE, 'Odor1ValveIndex', 4, 'reject', 0);      
+    Odor1Valve5Trials = filterTE(TE, 'Odor1ValveIndex', 5, 'reject', 0);       
     Odor2Valve1Trials = filterTE(TE, 'Odor2ValveIndex', 1, 'reject', 0);
     Odor2Valve2Trials = filterTE(TE, 'Odor2ValveIndex', 2, 'reject', 0);    
     Odor2Valve3Trials = filterTE(TE, 'Odor2ValveIndex', 3, 'reject', 0);  
-    Odor2Valve4Trials = filterTE(TE, 'Odor2ValveIndex', 4, 'reject', 0);     
+    Odor2Valve4Trials = filterTE(TE, 'Odor2ValveIndex', 4, 'reject', 0);   
+    Odor2Valve5Trials = filterTE(TE, 'Odor2ValveIndex', 5, 'reject', 0);   
     TinyPuffTrials = filterTE(TE, 'Odor2ValveIndex', -1, 'reject', 0);     
     uncuedTrials = filterTE(TE, 'Odor1ValveIndex', 0, 'Odor2ValveIndex', 0, 'reject', 0);
     rewardTrials = filterTE(TE, 'ReinforcementOutcome', 'Reward', 'reject', 0);
