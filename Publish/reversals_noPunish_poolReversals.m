@@ -584,17 +584,20 @@ formatFigurePoster([10 4], '', 12)
 
 
 
-%% to detect latency to learning, fit weibull function, also changepoint detection
+%% to detect latency to learning, fit weibull function, exponential, also changepoint detection
 
 % weibull doesn't work great due to overfitting and noisy data
 baselineTrials = 20;
 
 fitField = 'licks_cs';
-model = 'a * (1 - exp(-1 * (x/b)^c)) + d'; % weibull function, CDF form
-fitData = [AR.csMinus.(fitField).before(:, end - baselineTrials + 1:end) AR.csPlus.(fitField).after(:, :)];% - nanmean(AR.csMinus.licks_cs.before(goodReversals, end - baselineTrials + 1:end), 2); % zero/baseline data at start
 
+fitData = [AR.csMinus.(fitField).before(:, end - baselineTrials + 1:end) AR.csPlus.(fitField).after(:, :)];% - nanmean(AR.csMinus.licks_cs.before(goodReversals, end - baselineTrials + 1:end), 2); % zero/baseline data at start
+model = 'a * (1 - exp(-1 * (x/b)^c)) + d'; % weibull function, CDF form
 weibull = struct('object', [], 'gof', [], 'output', [], 'toFit', []);
 weibull = repmat(weibull, size(fitData, 1), 1);
+
+
+
 for counter = 1:size(fitData, 1)
     toFit = fitData(counter, ~isnan(fitData(counter, :)));
     fo = fitoptions('Method', 'NonlinearLeastSquares', 'Robust','On',... 
@@ -602,6 +605,7 @@ for counter = 1:size(fitData, 1)
         'Lower', [0 0 0 -Inf],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
         'StartPoint', [mean(toFit) baselineTrials baselineTrials min(toFit)]...
         );
+    
     ft = fittype(model, 'options', fo);
 %     xData = (0:length(toFit) - 1)';
     [fitobject, gof, output] = fit((0:length(toFit) - 1)', toFit', ft, fo);
@@ -609,8 +613,59 @@ for counter = 1:size(fitData, 1)
     weibull(counter).gof = gof;
     weibull(counter).output = output;
     weibull(counter).toFit = toFit;
+    
 %     weibull(counter).xData = xData - baselineTrials;
 end
+
+%% fit exponentials to post-reversal data for both acquisition and extinction
+% ss = struct('object', zeros(sum(goodReversals), 1), 'gof', zeros(sum(goodReversals), 1), 'output', zeros(sum(goodReversals), 1), 'toFit', zeros(sum(goodReversals), 1));
+
+compFields = {'csPlus', 'csMinus'};
+fitFields = {'licks_cs', 'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2'};
+outputFields = {'object', 'gof', 'output', 'toFit', 'a', 'b', 'c'};
+expFit = struct();
+for counter = 1:length(compFields)
+    for counter2 = 1:length(fitFields)
+        for counter3 = 1:length(outputFields)
+            if ~ismember(outputFields{counter3}, {'a', 'b', 'c'})
+                expFit.(compFields{counter}).(fitFields{counter2}).(outputFields{counter3}) = cell(sum(goodReversals), 1);
+            else
+                expFit.(compFields{counter}).(fitFields{counter2}).(outputFields{counter3}) = NaN(sum(goodReversals), 1);
+            end
+        end
+    end
+end
+
+expModel = 'a + b * exp(-x/c)';
+% these options should work for newCsPlus and newCsMinus (up or down and
+% for z scored and lick rate data (both should fall within interval of -100
+% to 100
+fo = fitoptions('Method', 'NonlinearLeastSquares',...
+    'Upper', [100  100 1000],...
+    'Lower', [-100 -100 0],...    
+    'StartPoint', [0 1 10]...
+    );
+for compCounter = 1:length(compFields)
+    for fieldCounter = 1:length(fitFields)
+        expFitData = AR.(compFields{compCounter}).(fitFields{fieldCounter}).after(goodReversals, :);
+        for counter = 1:size(expFitData, 1)        
+            toFit = expFitData(counter, ~isnan(expFitData(counter, :)));
+            ft = fittype(expModel, 'options', fo);
+            expFit.(compFields{compCounter}).(fitFields{fieldCounter}).toFit{counter} = toFit;
+            try
+                [fitobject, gof, output] = fit((0:length(toFit) - 1)', toFit', ft, fo);
+                expFit.(compFields{compCounter}).(fitFields{fieldCounter}).object{counter} = fitobject;
+                expFit.(compFields{compCounter}).(fitFields{fieldCounter}).a(counter) = fitobject.a;
+                expFit.(compFields{compCounter}).(fitFields{fieldCounter}).b(counter) = fitobject.b;
+                expFit.(compFields{compCounter}).(fitFields{fieldCounter}).c(counter) = fitobject.c;
+            catch
+                continue
+            end
+
+        end
+    end
+end
+
 
 %% plot cumsum and do changepoint detection
 
@@ -623,23 +678,33 @@ nShow = 6;
 % mediocre,  84 and 91 and 42 are mediocre ones
 % 4 is good but gradual
 toShow = find(goodReversals);
-toShow = toShow(randperm(sum(goodReversals), nShow));
+
+ordering = randperm(sum(goodReversals), nShow);
+toShow = toShow(ordering);
+toShow2 = 1:sum(goodReversals);
+toShow2 = toShow2(ordering);
 
 % nShow = 4;  toShow = [74 4 91 42];
 ensureFigure('reversals_pooled_Latency_examples', 1);
 
 for counter = 1:nShow   
     thisRev = toShow(counter);
+    thisRev2 = toShow2(counter);
     % weibull
-    subplot(nShow, 2, counter*2 - 1);
+    subplot(nShow, 3, counter*3 - 2);
     plot(weibull(thisRev).toFit, 'g.'); hold on;
     plot(weibull(thisRev).object, 'predfunc'); legend off;
     set(gca, 'XLim', [0 120]);
     % changepoint
-    subplot(nShow, 2, counter * 2); hold on;
+    subplot(nShow, 3, counter*3 - 1); hold on;
     scatter(1:length(cp_licks.cumsum{thisRev}), cp_licks.cumsum{thisRev}, 10, cp_licks.logitAll{thisRev}); colormap jet;
     line(repmat(cp_licks.index(thisRev), 1, 2), get(gca, 'YLim')); set(gca, 'XLim', [0 120]);
     textBox(sprintf('Logit=%.2f', cp_licks.logit(thisRev)));
+    % exponential
+    subplot(nShow, 3, counter*3); hold on;    
+    plot(expFit.csPlus.licks_cs.toFit{thisRev2}, 'g.'); hold on;
+    plot(expFit.csPlus.licks_cs.object{thisRev2}, 'predfunc'); legend off;
+    set(gca, 'XLim', [0 120]);
 end
 
 %% images ordered by lick changepoints
@@ -675,14 +740,16 @@ subplot(2,3,5); xlabel('Odor presentations from reversal');
 subplot(2,3,2); title('New Cs+');
 set(gcf, 'Position', [304   217   633   485]);
 
-%     for thisField = 1
-%         plotData = [AR.csMinus.(fitFields{thisField}).before(revsToShow(counter), end - baselineTrials + 1:end) AR.csPlus.(fitFields{thisField}).after(revsToShow(counter), :)];
-%         plotData = plotData(~isnan(plotData));
-%         plotData = cumsum(plotData);
-%         % scale between 0 and 1
-%         plotData = plotData - min(plotData);
-%         plotData = plotData / max(plotData);
-%         plot((0:length(plotData) - 1) - baselineTrials, plotData, linecolors{thisField});
+%% data and images aligned to lick changepoint
+fieldsToShow = {'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'licks_cs', 'whisk_cs'};
+titles = {'ACh', 'Dop.', 'Licks', 'Whisk'};
+clim = [-5 5];
+fh=[];
+
+for fcounter = 1:length(fieldsToShow)
+    sfield = fieldsToShow{fcounter};
+    subplot(2,2,fcounter);
+    
 
 
 %% cross correlations, new Cs+, 

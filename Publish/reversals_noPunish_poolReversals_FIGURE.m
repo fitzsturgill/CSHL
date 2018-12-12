@@ -15,7 +15,7 @@ for si = 1:length(DB.animals)
     for group = fieldnames(AR)'
         sgroup = group{:};
         for field = fieldnames(RE.(sgroup))'
-            sfield = field{:};          
+            sfield = field{:};
             if any(strcmp(sfield, {'trialsBefore', 'trialsAfter'})) % these are special fields that don't contain before and after data
                 continue
             end
