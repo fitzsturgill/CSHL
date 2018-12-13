@@ -8,10 +8,10 @@ function varargout = phPlotAverageFromTE(TE, trials, ch, varargin)
         'PhotometryField', 'Photometry';...
         'FluorDataField', 'dFF';...
         'linespec', [];... % {'k', 'r'}
-        'window', [];... % window to plot with respect to zero time that is already calculated by processTrialAnalysis_Photometry2 (I think !!!!)
-        'zeroTimes', [];... % not fully implemented, see usage below
+        'window', [];... 
+        'zeroTimes', [];... 
         'cmap', [];...
-        'alpha', 1;...  % you can
+        'alpha', 1;...  % 1 == transparent bounds, 0 == opaque bounds
         'referenceFromEnd', 0;... % relevent when zeroTimes are supplied as a cell array (e.g. if you want to align to the beginning or end of a bpod state)
         };    
     [s, ~] = parse_args(defaults, varargin{:});
@@ -38,49 +38,20 @@ function varargout = phPlotAverageFromTE(TE, trials, ch, varargin)
         alpha = {};
     end
     
+    assert(isfield(TE, s.PhotometryField), [s.PhotometryField ' field does not exist']);
+    Photometry = TE.(s.PhotometryField);
     
-    if ~iscell(trials)
-        trials = {trials};
-    end
-    
-    if ~isfield(TE, s.PhotometryField)
-        error([Photometry ' field does not exist']);
-    else
-        Photometry = TE.(s.PhotometryField);
-    end
-    
-
-    xData = Photometry.xData;
-    if ~isempty(s.window) && ~isempty(s.zeroTimes)
-        allTrialsZero = zeroTimes2(1) - Photometry.startTime(1); % Kludge adapted from bpCalcPeak_dFF
-        startP = bpX2pnt(s.window(1) + allTrialsZero, Photometry.sampleRate);
-        endP = bpX2pnt(s.window(2) + allTrialsZero, Photometry.sampleRate);
-    elseif ~isempty(s.window) % use Photometry xData to infer zero point (really using first x value in Photometry xData)
-        startP = max(1, bpX2pnt(s.window(1), Photometry.sampleRate, xData(1)));
-        endP = min(length(xData), bpX2pnt(s.window(2), Photometry.sampleRate, xData(1)));        
-    else
-        startP = 1;
-        endP = length(xData);
-        s.window = [xData(1) xData(end)];
-    end
-%     xData = xData(startP:endP);
-%% rewrite xData, Kludge, because it doesn't fully implement zeroTimes as above
-    xData = linspace(s.window(1), s.window(2), endP - startP + 1);  % rewrite xData
-%%
-    
+    avgData = phAverageFromTE(TE, trials, ch, varargin{:}); % compile averages
 
     ax = s.ax;
-    for counter = 1:length(trials)
+    nLines = size(avgData.Avg, 1);
+    xData = avgData.xData(1,:);    % fixed across trial subsets, see phAverageFromTE
+    for counter = 1:nLines
         thisLinespec = s.linespec{rem(counter - 1, length(s.linespec)) + 1}; % cycle through linespec if it isn't long enough        
-        currentTrials = trials{counter};
-        currentData = Photometry.data(ch).(s.FluorDataField)(currentTrials, startP:endP);
-        avg = nanmean(currentData);
-        avgSEM = std(currentData, 'omitnan') ./ sqrt(sum(~isnan(currentData), 1));
-
         if isempty(s.cmap)
-            [thisHl, thisHp] = boundedline(xData, avg, avgSEM, thisLinespec, ax, alpha{:});       
+            [thisHl, thisHp] = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :), thisLinespec, ax, alpha{:}, 'nan', 'gap');       
         else
-            [thisHl, thisHp] = boundedline(xData, avg, avgSEM, ax, alpha{:}, 'cmap', s.cmap(counter,:));    
+            [thisHl, thisHp] = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :), ax, alpha{:}, 'cmap', s.cmap(counter,:), 'nan', 'gap');    
         end
         lh(counter) = thisHl; % return handles of the solid lines in the bounded plots
         ph(counter) = thisHp;

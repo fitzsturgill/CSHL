@@ -5,23 +5,21 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
 
 % zeroTimes- can be cell array of state times (see also referenceFromEnd)
 % or vector (although this option hasn't yet been tested, see
-% bpCalcPeak_Pupil)
-% zeroTimes- if left blank zero is defined as beginning of photometry
+% bpCalcPeak_Pupil), must be in "photometry time" - time from photometry
+% acquisition start
+% zeroTimes- if omitted or empty zero is defined as beginning of photometry
 % recording
-
-
-% I could just have the window calculated
-% This is a bare bones initial version, in future either:
-% 1) have a flexible wrrapper function OR
-% 2) do some of the following within this function:
-% implement flexible windows (window calculation function handle?), state name(s) instead of a
-% window, triggering event?
-% different "peak" methods, e.g. average, max, smoothed max, fitted peak,
-% etc.,  integral?
 
     if nargin < 4
         zeroTimes = [];
     end
+    % kludge to emulate zeroTimes as behaving like an optional parameter
+    % (see defaults below where I chose to leave it out of varargin)
+    if ischar(zeroTimes)
+        varargin = horzcat({zeroTimes}, varargin);
+        zeroTimes = [];
+    end
+
     defaults = {...
         'method', 'mean';... % 'mean' or 'max', 'min', or 'percentile'
         'percentile', 0.9;... % only used with percentile calculation, default = 0.9, for 90th%
@@ -82,3 +80,13 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
                 error('*** incorrect peak determination method ***');
         end
     end
+    
+    
+% I could just have the window calculated
+% This is a bare bones initial version, in future either:
+% 1) have a flexible wrrapper function OR
+% 2) do some of the following within this function:
+% implement flexible windows (window calculation function handle?), state name(s) instead of a
+% window, triggering event?
+% different "peak" methods, e.g. average, max, smoothed max, fitted peak,
+% etc.,  integral?    

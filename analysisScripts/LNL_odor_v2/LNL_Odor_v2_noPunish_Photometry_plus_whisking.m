@@ -89,7 +89,7 @@ TE.pupilBaseline = mean(TE.pupil.pupDiameterNorm(:,bpX2pnt(-3, 20, -4):bpX2pnt(0
 TE.pupil_cs = mean(TE.pupil.pupDiameterNorm(:,bpX2pnt(ch1CsWindow(1) + pupLag, 20, -4):bpX2pnt(ch1CsWindow(2) + pupLag, 20, -4)), 2);
 %% add whisking
 
-TE.Whisk = addWhiskingToTE(TE, 'folderPrefix', 'WhiskDiff_');
+TE.Whisk = addWhiskingToTE(TE, 'folderPrefix', 'Combined_');
 
 
 %% add wheel
@@ -164,17 +164,17 @@ LNL_conditions;
     % - 6 0 4
     if ismember(1, channels)
         subplot(pm(1), pm(2), 1, 'FontSize', 12, 'LineWidth', 1); 
-        [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials, uncuedReward, uncuedPunish}, 1,...
-            'FluorDataField', 'ZS', 'window', [1, 7], 'linespec', {'b', 'r', 'k', 'c', 'm'}); %high value, reward
-        legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+        [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, neutralTrials, uncuedReward}, 1,...
+            'FluorDataField', 'ZS', 'window', [1, 7], 'linespec', {'b','k','c'}); %high value, reward
+        legend(hl, {'rew', 'neutral', 'uncued rew'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
         title('Reinforcement'); ylabel('BF dF/F Zscored'); textBox(subjectName);%set(gca, 'YLim', ylim);
     end
     
     if ismember(2, channels)    
         subplot(pm(1), pm(2), 3, 'FontSize', 12, 'LineWidth', 1); 
-        [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials, neutralTrials, uncuedReward, uncuedPunish}, 2,...
-            'FluorDataField', 'ZS', 'window', [1, 7], 'linespec', {'b', 'r', 'k', 'c', 'm'}); %high value, reward
-        legend(hl, {'rew', 'pun', 'neu'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
+        [ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, neutralTrials, uncuedReward}, 2,...
+            'FluorDataField', 'ZS', 'window', [1, 7], 'linespec', {'b','k','c'}); %high value, reward
+        legend(hl, {'rew', 'neutral', 'uncued rew'}, 'Location', 'southwest', 'FontSize', 12); legend('boxoff');
         ylabel('VTA dF/F Zscored'); xlabel('time from cue (s)'); %set(gca, 'YLim', ylim);
     end
     

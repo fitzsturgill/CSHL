@@ -1,17 +1,25 @@
 function varargout = plotEventAverageFromTE(TE, trials, event, varargin)
 % varargout- first output is axis handle, second is vector of solid line handles to bounded plots
-% trials- may be cell array of trials for different conditions
+% trials- may be cell array of trials for different conditions/trial subsets or vector of
+% trials
 
 % remember to include varargin-supplied parameters to
-% extractEventTimesFromTE, e.g. 'zeroField', 'startField', 'endField'  
-    varargout = {};
+% extractEventTimesFromTE, e.g. 'zeroField' || 'zeroTimes', 'window' || 'startField' & 'endField'
+% 7/2018, updated to optionally utilize zeroTime. Also updated to utilize
+% window exclusive to (rather than in addition to) startField and endField
+% option to use startField, endField and zeroField maintained for backward
+% compatibility
+
+varargout = {};
     defaults = {...
         'ax', gca;...
         'fig', gcf;...
         'linespec', [];...
         'window', [];...
         'binWidth', 0.25;... % 0.5s bins by default
-        'trialNumbering', 'global';... % 'singleSession'- by session, 'consecutive', 'global' cross session        };    
+        'trialNumbering', 'global';... % 'singleSession'- by session, 'consecutive', 'global' cross session
+        'cmap', [];... % for more precise control of color, supply a nTrialSets x 3 (rgb) colormap matrix
+        'alpha', 1;... % 1 == transparent bounds, 0 == opaque bounds
         };    
     [s, ~] = parse_args(defaults, varargin{:});
 
@@ -30,27 +38,26 @@ function varargout = plotEventAverageFromTE(TE, trials, event, varargin)
         trials = {trials};
     end
     
+    if s.alpha
+        alpha = {'alpha'};
+    else
+        alpha = {};
+    end    
+    
 
-    
-    binEdges = linspace(s.window(1), s.window(2), round((s.window(2) - s.window(1))/s.binWidth)); % if interval isn't divisible by width then adjust number of bins
-    s.binWidth = binEdges(2) - binEdges(1); % and adjust width if necessary
-    % initialize 
-    lickRates = zeros(length(trials), length(binEdges) - 1);
-    lickRatesN = zeros(1, length(binEdges) - 1);
-    binCenters = binEdges(1:end-1) + s.binWidth;
-    
+    maxWindow = [min(s.window(:,1)) max(s.window(:,2))];
+
+    avgData = eventAverageFromTE(TE, trials, event, varargin{:});
 
     ax = s.ax;
+    xData = avgData.xData(1,:); % fixed across trial subsets, see eventAverageFromTE
     for counter = 1:length(trials)
-        thisLinespec = s.linespec{rem(counter - 1, length(s.linespec)) + 1}; % cycle through linespec if it isn't long enough        
-        currentTrials = trials{counter};        
-        nTrials = length(find(currentTrials));        
-        [eventTimes, eventTrials] = extractEventTimesFromTE(TE, currentTrials, event, varargin{:}); 
-        counts = histCountsByTrial(eventTimes, eventTrials, binEdges);
-        eventRates = counts /s.binWidth;
-        eventRatesMean = mean(eventRates, 1);
-        eventRatesSEM = std(eventRates, 1) ./ sqrt(nTrials);
-        thisHl = boundedline(binCenters, eventRatesMean, eventRatesSEM, thisLinespec, ax, 'alpha');       
+        thisLinespec = s.linespec{rem(counter - 1, length(s.linespec)) + 1}; % cycle through linespec if it isn't long enough     
+        if isempty(s.cmap)        
+            thisHl = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :), thisLinespec, ax, alpha{:}, 'nan', 'gap');       
+        else
+            thisHl = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :),  ax, alpha{:}, 'cmap', s.cmap(counter, :), 'nan', 'gap');       
+        end
         lh(counter) = thisHl; % return handles of the solid lines in the bounded plots
     end
     if nargout >=1

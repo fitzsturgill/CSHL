@@ -1,6 +1,6 @@
 function avgData = phAverageFromTE(TE, trials, ch, varargin)
 % see also phAlignedWindow...
-% output - avgData with fields phMean, phSTD, phSEM, and N
+% output - avgData with fields phMean, phSTD, phSEM, N, and xData
 % !!!!!! trials- may be cell array of trial subsets or a logical or linear
 % index of a single trial subset
     defaults = {...
@@ -21,8 +21,7 @@ function avgData = phAverageFromTE(TE, trials, ch, varargin)
 
     Photometry = TE.(s.PhotometryField);
     if isempty(s.zeroTimes)
-        s.zeroTimes = valuecrossing(1:length(Photometry.xData), Photometry.xData, 0); % inferred from xData, historical usage...
-        s.zeroTimes = s.zeroTimes + Photometry.startTime; % convert to Bpod time
+        s.zeroTimes = Photometry.startTime - Photometry.xData(1);
         if isempty(s.window)
             s.window = Photometry.xData([1 end]);
         end
@@ -57,11 +56,11 @@ function avgData = phAverageFromTE(TE, trials, ch, varargin)
             N = NaN(length(trials), length(xData));    
             XData = NaN(length(trials), length(xData));
         end
-        Avg(counter,:) = nanmean(data);
-        STD(counter,:) = std(data, 'omitnan');
-        SEM(counter,:) = std(data, 'omitnan') ./ sqrt(sum(~isnan(data), 1));
+        Avg(counter,:) = nanmean(data, 1);
+        STD(counter,:) = std(data, 0, 1, 'omitnan');
+        SEM(counter,:) = std(data, 0, 1, 'omitnan') ./ sqrt(sum(~isnan(data), 1));
         N(counter, :) = sum(~isnan(data), 1);
-        XData(counter, :) = xData;
+        XData(counter, :) = xData; % xData is always the same so why do I duplicate it?
     end
     
     avgData = struct(...
@@ -69,7 +68,7 @@ function avgData = phAverageFromTE(TE, trials, ch, varargin)
         'STD', STD,...
         'SEM', SEM,...
         'N', N,...
-        'xData', XData...
+        'xData', XData... % xData is always the same so why do I duplicate it? (can't go back now...)
         );
 
     
