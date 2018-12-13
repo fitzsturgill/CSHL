@@ -1,5 +1,5 @@
 
-saveOn = 1;
+saveOn = 0;
 
 %%
 % EmailEvernote = 0;
@@ -78,7 +78,7 @@ switch thiscomputer
     case 'PCWIN64'
         basepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_Pavlovian_Block1';
     case 'MACI64'
-           %basepath ='/Volumes/homes/fitz/SummaryAnalyses/LickNoLick_odor_v2_Pavlovian_Block1';
+%            basepath ='/Volumes/homes/fitz/SummaryAnalyses/LickNoLick_odor_v2_Pavlovian_Block1';
            basepath = '/Volumes/homes/fitz/Aubrey'; 
 end
 % basepath = uigetdir;
