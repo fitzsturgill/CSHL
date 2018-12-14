@@ -92,19 +92,21 @@ frankenLNL_conditions;
 %% raster plots
 PhotometryField = 'Photometry';
 CLimFactor = 3;
+
+window = [-2 6];
 for channel = channels
     saveName = ['Crossover_phRasters_ch' num2str(channel)];
     ensureFigure(saveName, 1);
     
     subplot(1,3,1);
-    phRasterFromTE(TE, trialsByType{1}, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive', 'window', [-4 7], 'zeroTimes', TE.Cue1);
+    phRasterFromTE(TE, trialsByType{1}, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive', 'window', window, 'zeroTimes', TE.Cue1);
     xlabel('time from cue (s)');  title('A->B');
     subplot(1,3,2);
-    phRasterFromTE(TE, trialsByType{2}, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive', 'window', [-4 7], 'zeroTimes', TE.Cue1);
+    phRasterFromTE(TE, trialsByType{2}, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive', 'window', window, 'zeroTimes', TE.Cue1);
     xlabel('time from cue (s)');  title('C->D');    
     subplot(1,3,3);
-    phRasterFromTE(TE, trialsByType{3} & rewardTrials, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive', 'window', [-4 7], 'zeroTimes', TE.Cue1);
-    xlabel('time from cue (s)');  title('uncued reward?');       
+    phRasterFromTE(TE, trialsByType{3} & rewardTrials, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive', 'window', window, 'zeroTimes', TE.Cue1);
+    xlabel('time from cue (s)');  title('uncued reward');       
     if saveOn
         saveas(gcf, fullfile(savepath, saveName), 'fig');
         saveas(gcf, fullfile(savepath, saveName), 'jpeg');
@@ -123,7 +125,7 @@ end
 %         eventRasterFromTE(TE, csPlusTrials, 'Port1In', 'trialNumbering', 'global',...
 %         'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
     
-    window = [-4 7];
+    
     eventRasterFromTE(TE, trialsByType{1}, 'Port1In', 'trialNumbering', 'consecutive', 'window', window, 'zeroTimes', TE.Cue1);
     xlabel('time from cue (s)');  title('A->B'); set(gca, 'XLim', window);
     subplot(1,3,2);
@@ -136,3 +138,30 @@ end
         saveas(gcf, fullfile(savepath, saveName), 'fig');
         saveas(gcf, fullfile(savepath, saveName), 'jpeg');
     end
+
+    %% averages
+    saveName = 'Crossover_averages';
+    ensureFigure(saveName, 1);
+        
+    varargin = {'trialNumbering', 'consecutive',...
+    'window', window, 'zeroTimes', TE.Cue1,'linespec', {'g','b'}};
+    axh = [];
+    axh(end + 1) = subplot(3, 1, 1, 'FontSize', 12, 'LineWidth', 1);
+    [ha, hl] = plotEventAverageFromTE(TE, trialsByType(1:2), 'Port1In', varargin{:});
+    ylabel('licks (s)'); xlabel('time from cue #1 (s)'); 
+    
+    
+        
+    axh(end + 1) = subplot(3, 1, 2, 'FontSize', 12, 'LineWidth', 1); 
+    [ha, hl] = phPlotAverageFromTE(TE, trialsByType(1:2), 1,...
+        'FluorDataField', 'ZS', 'window', window, 'linespec', {'g','b'}, 'zeroTimes', TE.Cue1); %high value, reward
+    ylabel('BF dF/F Zscored'); xlabel('time from cue #1 (s)'); %textBox(subjectName);%set(gca, 'YLim', ylim); 
+    
+    axh(end + 1) = subplot(3, 1, 3, 'FontSize', 12, 'LineWidth', 1); 
+    [ha, hl] = phPlotAverageFromTE(TE, trialsByType(1:2), 2,...
+        'FluorDataField', 'ZS', 'window', window, 'linespec', {'g','b'}, 'zeroTimes', TE.Cue1); %high value, reward
+    ylabel('VTA dF/F Zscored'); xlabel('time from cue #1 (s)'); %textBox(subjectName);%set(gca, 'YLim', ylim);     
+    
+    addStimulusPatch(axh, [0 1], '', [1 1 0])
+    addStimulusPatch(axh, [1 2], '', [0 1 1])
+    addStimulusPatch(axh, [1.9 2.1], '', [0.2 0.2 0.2])

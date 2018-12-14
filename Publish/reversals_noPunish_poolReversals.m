@@ -128,7 +128,7 @@ goodWhisk = auROC.whisk_csBaselined.before > 0.2;
 %% compile data
 fieldsToCompile = {...
     'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'phPeakPercentile_cs_ch1', 'phPeakPercentile_cs_ch2', 'csLicksROC', 'licks_cs', 'pupil_cs', 'pupil_csBaselined' 'whisk_cs', 'wheel_baseline',...
-    'phPeakMean_us_ch1_deconv', 'phPeakMean_us_ch2_deconv', 'phPeakPercentile_us_ch1_deconv', 'phPeakPercentile_us_ch2_deconv', 'phBaseline_ch1', 'phBaseline_ch2'};
+    'phPeakMean_us_ch1_deconv', 'phPeakMean_us_ch2_deconv', 'phPeakPercentile_us_ch1_deconv', 'phPeakPercentile_us_ch2_deconv', 'phBaseline_ch1', 'phBaseline_ch2', 'phPeakMean_us_ch1', 'phPeakMean_us_ch2'};
 
 newCsPlus = struct();
 newCsMinus = struct();
@@ -600,7 +600,7 @@ weibull = repmat(weibull, size(fitData, 1), 1);
 
 for counter = 1:size(fitData, 1)
     toFit = fitData(counter, ~isnan(fitData(counter, :)));
-    fo = fitoptions('Method', 'NonlinearLeastSquares', 'Robust','On',... 
+    fo = fitoptions('Method', 'NonlinearLeastSquares',... 
         'Upper', [Inf  Inf 20 Inf],...
         'Lower', [0 0 0 -Inf],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
         'StartPoint', [mean(toFit) baselineTrials baselineTrials min(toFit)]...
@@ -740,15 +740,15 @@ subplot(2,3,5); xlabel('Odor presentations from reversal');
 subplot(2,3,2); title('New Cs+');
 set(gcf, 'Position', [304   217   633   485]);
 
-%% data and images aligned to lick changepoint
-fieldsToShow = {'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'licks_cs', 'whisk_cs'};
-titles = {'ACh', 'Dop.', 'Licks', 'Whisk'};
-clim = [-5 5];
-fh=[];
-
-for fcounter = 1:length(fieldsToShow)
-    sfield = fieldsToShow{fcounter};
-    subplot(2,2,fcounter);
+% %% data and images aligned to lick changepoint
+% fieldsToShow = {'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'licks_cs', 'whisk_cs'};
+% titles = {'ACh', 'Dop.', 'Licks', 'Whisk'};
+% clim = [-5 5];
+% fh=[];
+% 
+% for fcounter = 1:length(fieldsToShow)
+%     sfield = fieldsToShow{fcounter};
+%     subplot(2,2,fcounter);
     
 
 
@@ -866,6 +866,9 @@ subplot(2,2,4); plot(lags, r); ylabel('xcorr'); xlabel('lags');
 all_Licks = [reshape(newCsPlus.licks_cs(goodReversals, :), numel(newCsPlus.licks_cs(goodReversals, :)), 1); reshape(newCsMinus.licks_cs(goodReversals, :), numel(newCsMinus.licks_cs(goodReversals, :)), 1)]; 
 all_ChAT = [reshape(newCsPlus.phPeakMean_cs_ch1(goodReversals, :), numel(newCsPlus.phPeakMean_cs_ch1(goodReversals, :)), 1); reshape(newCsMinus.phPeakMean_cs_ch1(goodReversals, :), numel(newCsMinus.phPeakMean_cs_ch1(goodReversals, :)), 1)]; 
 all_DAT = [reshape(newCsPlus.phPeakMean_cs_ch2(goodReversals, :), numel(newCsPlus.phPeakMean_cs_ch2(goodReversals, :)), 1); reshape(newCsMinus.phPeakMean_cs_ch2(goodReversals, :), numel(newCsMinus.phPeakMean_cs_ch2(goodReversals, :)), 1)]; 
+all_ChAT_us = [reshape(newCsPlus.phPeakMean_us_ch1(goodReversals, :), numel(newCsPlus.phPeakMean_us_ch1(goodReversals, :)), 1); reshape(newCsMinus.phPeakMean_us_ch1(goodReversals, :), numel(newCsMinus.phPeakMean_us_ch1(goodReversals, :)), 1)]; 
+all_DAT_us = [reshape(newCsPlus.phPeakMean_us_ch2(goodReversals, :), numel(newCsPlus.phPeakMean_us_ch2(goodReversals, :)), 1); reshape(newCsMinus.phPeakMean_us_ch2(goodReversals, :), numel(newCsMinus.phPeakMean_us_ch2(goodReversals, :)), 1)]; 
+
 keep = isfinite(all_Licks) & isfinite(all_ChAT) & isfinite(all_DAT);
 all_Licks = all_Licks(keep);
 all_ChAT = all_ChAT(keep);
