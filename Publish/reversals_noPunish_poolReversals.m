@@ -863,19 +863,68 @@ subplot(2,2,2); plot(x ,zscore(y1), '-', 'LineWidth', 2); hold on; plot(x ,zscor
 subplot(2,2,4); plot(lags, r); ylabel('xcorr'); xlabel('lags');
 
 %% compare strength of licking correlations, ChAT-cre vs DAT-cre
+mouseNumber_newCsPlus = repmat(mouseNumber, 1, size(newCsPlus.licks_cs, 2));
+mouseNumber_newCsMinus = repmat(mouseNumber, 1, size(newCsMinus.licks_cs, 2));
 all_Licks = [reshape(newCsPlus.licks_cs(goodReversals, :), numel(newCsPlus.licks_cs(goodReversals, :)), 1); reshape(newCsMinus.licks_cs(goodReversals, :), numel(newCsMinus.licks_cs(goodReversals, :)), 1)]; 
 all_ChAT = [reshape(newCsPlus.phPeakMean_cs_ch1(goodReversals, :), numel(newCsPlus.phPeakMean_cs_ch1(goodReversals, :)), 1); reshape(newCsMinus.phPeakMean_cs_ch1(goodReversals, :), numel(newCsMinus.phPeakMean_cs_ch1(goodReversals, :)), 1)]; 
 all_DAT = [reshape(newCsPlus.phPeakMean_cs_ch2(goodReversals, :), numel(newCsPlus.phPeakMean_cs_ch2(goodReversals, :)), 1); reshape(newCsMinus.phPeakMean_cs_ch2(goodReversals, :), numel(newCsMinus.phPeakMean_cs_ch2(goodReversals, :)), 1)]; 
 all_ChAT_us = [reshape(newCsPlus.phPeakMean_us_ch1(goodReversals, :), numel(newCsPlus.phPeakMean_us_ch1(goodReversals, :)), 1); reshape(newCsMinus.phPeakMean_us_ch1(goodReversals, :), numel(newCsMinus.phPeakMean_us_ch1(goodReversals, :)), 1)]; 
 all_DAT_us = [reshape(newCsPlus.phPeakMean_us_ch2(goodReversals, :), numel(newCsPlus.phPeakMean_us_ch2(goodReversals, :)), 1); reshape(newCsMinus.phPeakMean_us_ch2(goodReversals, :), numel(newCsMinus.phPeakMean_us_ch2(goodReversals, :)), 1)]; 
-
+all_mouseNumber = [reshape(mouseNumber_newCsPlus(goodReversals, :), numel(mouseNumber_newCsPlus(goodReversals, :)), 1); reshape(mouseNumber_newCsMinus(goodReversals, :), numel(mouseNumber_newCsMinus(goodReversals, :)), 1)]; 
 keep = isfinite(all_Licks) & isfinite(all_ChAT) & isfinite(all_DAT);
 all_Licks = all_Licks(keep);
 all_ChAT = all_ChAT(keep);
 all_DAT = all_DAT(keep);
 
+all_ChAT_us = all_ChAT_us(keep);
+all_DAT_us = all_DAT_us(keep);
+all_mouseNumber = all_mouseNumber(keep);
+
 ensureFigure('test_corr', 1); 
 subplot(1,2,1); scatter(all_Licks, all_ChAT, 8, '.'); ylabel('cue ChAT'); textBox(sprintf('R=%.2f', corr(all_Licks, all_ChAT)));
 subplot(1,2,2); scatter(all_Licks, all_DAT, 8, '.'); ylabel('cue DAT'); textBox(sprintf('R=%.2f', corr(all_Licks, all_DAT)));
 
+%% make 
+
+
+linecolors = [1 0 0; 0 0 1; 0 1 1; 0 1 0; 1 1 0; 1 0 1];     
+
+keepers = [6];
+
+nMice = max(mouseNumber);
+savename = 'reversal_trial_correlations';
+ensureFigure(savename, 1);
+% allTrials = true; 
+ll = [];
+subplot(1,2,1); hold on; subplot(1,2,2); hold on;
+for counter = 1:nMice
+    if ~ismember(counter, keepers)
+        continue;
+    end
+    thisMouse = all_mouseNumber == counter;
+    subplot(1,2,1); %set(gca, 'XLim', xlims(1,:));
+%     allTrials = allTrials | trialSets{counter};
+    xData = all_ChAT(thisMouse); yData = all_DAT(thisMouse); 
+%     scatter(TE.phPeakMean_cs(2).data(trialSets{counter}), TE.phPeakMean_cs(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');
+    scatter(xData, yData, 12, linecolors(counter, :), '.');
+    % fit for cs
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(xData, yData, 'poly1', fo); 
+    fph=plot(fob, 'predfunc'); legend off; %,'predfunc'); legend off;
+    set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :));
+    ll(end + 1) = fph(1);
+    
+    subplot(1,2,2); %set(gca, 'XLim', xlims(1,:));
+%     allTrials = allTrials | trialSets{counter};
+    xData = all_ChAT_us(thisMouse); yData = all_DAT_us(thisMouse); 
+%     scatter(TE.phPeakMean_cs(2).data(trialSets{counter}), TE.phPeakMean_cs(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');
+    scatter(xData, yData, 8, linecolors(counter, :), '.');
+    % fit for cs
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(xData, yData, 'poly1', fo); 
+    fph=plot(fob, 'predfunc'); legend off; %,'predfunc'); legend off;
+    set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :));    
+end
+
+subplot(1,2,1); legend(ll, DB.animals(keepers));
 

@@ -291,6 +291,10 @@ formatFigurePublish('size', [2.5 1.1]);
 if saveOn 
     export_fig(fullfile(savepath, saveName), '-eps');
 end
+
+%% trial correlations of cs and us resonses across learning
+
+
 %% plot the different quintiles of csPlusReward trials conditioned on csPlus cue photometry quintile
 
 split = percentile(TE.phPeakMean_cs(1).data(csPlusTrials), 0.25);
@@ -578,3 +582,5 @@ end
 %         saveas(gcf, fullfile(savepath, [saveName '.fig']));
 %         saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
 %     end
+
+
