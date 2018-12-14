@@ -292,7 +292,6 @@ if saveOn
     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
-%% trial correlations of cs and us resonses across learning
 
 
 %% plot the different quintiles of csPlusReward trials conditioned on csPlus cue photometry quintile
