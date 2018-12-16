@@ -120,7 +120,7 @@ data_dat = TE.(Photometry).data(2).ZS';
 params.Fs = Fs;
 params.trialave = 1;
 params.err = [2 0.05];
-params.tapers = [3 5];
+params.tapers = [8 15];
 params.pad = 1;
 params.fpass = [0 20];
 
@@ -143,10 +143,10 @@ set(gca, 'YLim', [-2 2], 'XScale', 'log', 'XLim', [0.01 10]);
 % scramble trial labels
 si = randperm(size(data_dat, 2));
 
-[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat(:,si), data_dat, params);
-f(1) = eps;
+[C_shuff,phi_shuff,S12_shuff,S1_shuff,S2_shuff,f_shuff,confC_shuff, phistd_shuff, Cerr_shuff] = coherencyc(data_chat(:,si), data_dat, params);
+f_shuff(1) = eps;
 subplot(1,2,1); %plot(f,C, 'k'); hold on;
-boundedline(f, C, Cerr(1,:)' - C, 'alpha', 'k');
+boundedline(f_shuff, C_shuff, Cerr_shuff(1,:)' - C_shuff, 'alpha', 'k');
 set(gca, 'XScale', 'log', 'XLim', [0.01 10]);
 xlabel('Frequency');
 ylabel('Coherence');
@@ -158,6 +158,29 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'coherence.jpg'));
 %     saveas(gcf, fullfile(savepath, 'coherence.epsc'));
 end
+
+
+%% something for burbach poster
+saveName = 'burbach_coherence';
+ensureFigure(saveName, 1); axes('FontSize', 12); hold on;
+
+f(1) = eps;
+subplot(1,1,1); hold on;
+hl = [];
+[th, ~] = boundedline(f, C, Cerr(1,:)' - C, 'b');
+hl(end + 1) = th;
+[th, ~] = boundedline(f_shuff, C_shuff, Cerr_shuff(1,:)' - C_shuff, 'k');
+hl(end + 1) = th;
+set(gca, 'XScale', 'log', 'XLim', [0.01 10]);
+xlabel('Frequency');
+ylabel('Cross coherence');
+legend(hl, {'matched', 'shuffled'}, 'Box', 'Off');
+
+formatFigurePublish('size', [3 2.4], 'fontSize', 12);
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end
+
 %% cross coherence and phase
 crossField = 'C';
 % crossField = 'S12';
@@ -368,6 +391,26 @@ end
 % 
 % TE = addPupilometryToTE(TE, 'duration', 30, 'zeroField', 'Baseline', 'startField', 'Baseline', 'frameRate', 60, 'frameRateNew', 20);
 
+%% for Burbach poster, cross correlation
+
+saveName = 'burbach_xcorr';
+ensureFigure(saveName, 1); axes('FontSize', 12); hold on;
+
+maxLagInSeconds = 10;
+maxLag = round(maxLagInSeconds * Fs);
+% [r, lags] = xcorr(data_chat(:,trial), data_dat(:,trial), maxLag);
+[r, shiftR, rawR, lags] = correctedXCorr(data_chat, data_dat, maxLag);
+ensureFigure('xcorr', 1);
+plot(lags * 1/Fs, r, 'b'); hold on;
+plot(lags * 1/Fs, rawR, 'r');
+plot(lags * 1/Fs, shiftR, 'k');
+xlabel('Time (s)'); ylabel('Ach. vs. Dop. XCorr'); 
+legend({'corrected', 'raw', 'shift predictor'}, 'Box', 'off', 'FontSize', 10, 'Location', 'northeast');
+
+formatFigurePublish('size', [4 2.4], 'fontSize', 12);
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end
 %%
 
 maxLagInSeconds = 10;

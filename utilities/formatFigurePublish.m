@@ -2,13 +2,13 @@ function formatFigurePublish(varargin)
     defaults = {...
         'aspect', [2 1];... % aspect ratio w x h (i believe)
         'scaleFactor', 1;...
-        'size', []
+        'size', [];...
+        'fontSize', 8;...
         };
 
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
     
     
-    fontSize = 8;
 
     paperUnits = 'inches';
     screenUnits = 'inches';
@@ -29,8 +29,8 @@ function formatFigurePublish(varargin)
         ylims{counter} = get(axs(counter), 'Ylim'); xlims{counter} = get(axs(counter), 'XLim');
     end
     set(gcf, 'PaperUnits', paperUnits, 'Units', screenUnits, 'ToolBar', 'none', 'MenuBar', 'none', 'DockControls', 'off');
-    set(gcf, 'defaultAxesTickDir', 'out', 'defaultAxesLineWidth', 1, 'defaultAxesFontName', 'Calibri', 'defaultAxesFontSize', fontSize, 'defaultLegendBox', 'off');
-    set(axs, 'TickDir', 'out', 'LineWidth', 1, 'FontName', 'Calibri', 'FontSize', fontSize, 'defaultLegendBox', 'off', 'Box', 'off');
+    set(gcf, 'defaultAxesTickDir', 'out', 'defaultAxesLineWidth', 1, 'defaultAxesFontName', 'Calibri', 'defaultAxesFontSize', s.fontSize, 'defaultLegendBox', 'off');
+    set(axs, 'TickDir', 'out', 'LineWidth', 1, 'FontName', 'Calibri', 'FontSize', s.fontSize, 'defaultLegendBox', 'off', 'Box', 'off');
     set(gcf, 'Position', screenPosition, 'PaperPosition', paperPosition, 'Color', [1 1 1]);
     for counter = 1:nax
         set(axs(counter), 'YLim', ylims{counter}); set(axs(counter), 'XLim', xlims{counter});

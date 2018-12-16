@@ -667,10 +667,93 @@ for compCounter = 1:length(compFields)
 end
 
 
-%% plot cumsum and do changepoint detection
+
+%% Changepoints to post-reversal data for both acquisition and extinction
+% ss = struct('object', zeros(sum(goodReversals), 1), 'gof', zeros(sum(goodReversals), 1), 'output', zeros(sum(goodReversals), 1), 'toFit', zeros(sum(goodReversals), 1));
+
+compFields = {'csPlus', 'csMinus'};
+fitFields = {'licks_cs', 'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2'};
+outputFields = {'object', 'gof', 'output', 'toFit', 'a', 'b', 'c'};
+expFit = struct();
+for counter = 1:length(compFields)
+    for counter2 = 1:length(fitFields)
+        for counter3 = 1:length(outputFields)
+            if ~ismember(outputFields{counter3}, {'a', 'b', 'c'})
+                expFit.(compFields{counter}).(fitFields{counter2}).(outputFields{counter3}) = cell(sum(goodReversals), 1);
+            else
+                expFit.(compFields{counter}).(fitFields{counter2}).(outputFields{counter3}) = NaN(sum(goodReversals), 1);
+            end
+        end
+    end
+end
+
+expModel = 'a + b * exp(-x/c)';
+% these options should work for newCsPlus and newCsMinus (up or down and
+% for z scored and lick rate data (both should fall within interval of -100
+% to 100
+fo = fitoptions('Method', 'NonlinearLeastSquares',...
+    'Upper', [100  100 1000],...
+    'Lower', [-100 -100 0],...    
+    'StartPoint', [0 1 10]...
+    );
+for compCounter = 1:length(compFields)
+    for fieldCounter = 1:length(fitFields)
+        expFitData = AR.(compFields{compCounter}).(fitFields{fieldCounter}).after(goodReversals, :);
+        for counter = 1:size(expFitData, 1)        
+            toFit = expFitData(counter, ~isnan(expFitData(counter, :)));
+            ft = fittype(expModel, 'options', fo);
+            expFit.(compFields{compCounter}).(fitFields{fieldCounter}).toFit{counter} = toFit;
+            try
+                [fitobject, gof, output] = fit((0:length(toFit) - 1)', toFit', ft, fo);
+                expFit.(compFields{compCounter}).(fitFields{fieldCounter}).object{counter} = fitobject;
+                expFit.(compFields{compCounter}).(fitFields{fieldCounter}).a(counter) = fitobject.a;
+                expFit.(compFields{compCounter}).(fitFields{fieldCounter}).b(counter) = fitobject.b;
+                expFit.(compFields{compCounter}).(fitFields{fieldCounter}).c(counter) = fitobject.c;
+            catch
+                continue
+            end
+
+        end
+    end
+end
+
+
+
+%% plot cumsum and do changepoint detection for acquisition (acq) and extinction (ext)
 
 baselineTrials = 20;
 cp_licks = bpChangePoints([AR.csMinus.licks_cs.before(:, end - baselineTrials + 1:end) AR.csPlus.licks_cs.after(:, 1:end)], 2, 1000);
+cp.licks_acq = bpChangePoints([AR.csMinus.licks_cs.before(:, end - baselineTrials + 1:end) AR.csPlus.licks_cs.after(:, 1:end)], 2, 1000);
+cp.chat_acq = bpChangePoints([AR.csMinus.phPeakMean_cs_ch1.before(:, end - baselineTrials + 1:end) AR.csPlus.phPeakMean_cs_ch1.after(:, 1:end)], 2, 1000);
+cp.dat_acq = bpChangePoints([AR.csMinus.phPeakMean_cs_ch2.before(:, end - baselineTrials + 1:end) AR.csPlus.phPeakMean_cs_ch2.after(:, 1:end)], 2, 1000);
+cp.licks_ext = bpChangePoints([AR.csPlus.licks_cs.before(:, end - baselineTrials + 1:end) AR.csMinus.licks_cs.after(:, 1:end)], 2, 1000);
+cp.chat_ext = bpChangePoints([AR.csPlus.phPeakMean_cs_ch1.before(:, end - baselineTrials + 1:end) AR.csMinus.phPeakMean_cs_ch1.after(:, 1:end)], 2, 1000);
+cp.dat_ext = bpChangePoints([AR.csPlus.phPeakMean_cs_ch2.before(:, end - baselineTrials + 1:end) AR.csMinus.phPeakMean_cs_ch2.after(:, 1:end)], 2, 1000);
+
+%% make a bar graph or box plot of changepoints
+    
+saveName = 'changepoints_all';
+ensureFigure(savename, 1); axes('FontSize', 12); hold on;
+fields = {'licks_acq', 'chat_acq', 'dat_acq', 'licks_ext', 'chat_ext', 'dat_ext'};
+colors = {mycolors('licks') mycolors('chat') mycolors('dat') mycolors('licks') mycolors('chat') mycolors('dat')};
+
+all_cps = [];
+for counter = 1:length(fields)
+    ydata = cp.(fields{counter}).index(goodReversals) - baselineTrials;   
+    kstest(ydata)
+    all_cps = [all_cps ydata];
+    scatter(repmat(counter, numel(ydata), 1), ydata, 8, colors{counter}, '.');
+    errorbar(counter, mean(ydata), std(ydata)/sqrt(numel(ydata)), 'Color', colors{counter}, 'LineWidth', 2)
+end
+
+set(gca, 'XLim', [0.5 6.5], 'Ylim', [-20 40], 'XTick', 1:6, 'XTickLabel', {'licks', 'Ach.', 'Dop.', 'licks', 'Ach.', 'Dop.'}, 'FontSize', 12); ylabel('trials from rev.', 'FontSize', 12);
+
+
+formatFigurePublish('size', [3.5 2], 'fontSize', 12);
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end
+
 
 %% plot example reversals with weibull fits, changepoints
 nShow = 6;
@@ -693,7 +776,7 @@ for counter = 1:nShow
     % weibull
     subplot(nShow, 3, counter*3 - 2);
     plot(weibull(thisRev).toFit, 'g.'); hold on;
-    plot(weibull(thisRev).object, 'predfunc'); legend off;
+    plot(weibull(thisRev).object); legend off;
     set(gca, 'XLim', [0 120]);
     % changepoint
     subplot(nShow, 3, counter*3 - 1); hold on;
@@ -703,7 +786,7 @@ for counter = 1:nShow
     % exponential
     subplot(nShow, 3, counter*3); hold on;    
     plot(expFit.csPlus.licks_cs.toFit{thisRev2}, 'g.'); hold on;
-    plot(expFit.csPlus.licks_cs.object{thisRev2}, 'predfunc'); legend off;
+    plot(expFit.csPlus.licks_cs.object{thisRev2}); legend off;
     set(gca, 'XLim', [0 120]);
 end
 

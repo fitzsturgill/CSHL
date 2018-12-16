@@ -59,7 +59,7 @@ end
     
 function [val, ix] = changepoint(data, nochange)
 test = cumsum(data);
-difference = nochange - test;
+difference = abs(nochange - test);
 [~, ix] = max(difference);
 val = difference(ix);
 
