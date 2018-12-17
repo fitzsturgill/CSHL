@@ -1,4 +1,9 @@
 function spikeTimes = probePSTH(varargin)
+
+    % generate probe laser PSTH from each lead, also compute transformation matrix for ZCA
+    % whitening
+    % for laser PSTH- subtract mean of signal across all the other leads
+    % prior to spike detection
     
     defaults = {...
         'direction', 'up';...
@@ -23,7 +28,7 @@ function spikeTimes = probePSTH(varargin)
             inv = 1;
     end
 % testing probe site screening for light effect....
-nlxcsc2mat2(s.filepath,'Channels','Events')
+nlxcsc2mat2(s.filepath,'Channels','Events');
 load(fullfile(s.filepath, 'Events.mat'));
 
 % % event timestamps are in seconds, CSC timestamps are in microseconds
@@ -56,10 +61,17 @@ for channel = 1:s.nChannels
     spikes = ss_default_params(s.Fs, {'display', 'trial_spacing'}, 0); % don't pad time between chunks/trials, see ss_detect
     for counter = 1:nChunks
         theseSamples = [(sampleRange(counter) + 1) min(sampleRange(counter + 1), nValidSamples)];
+
+          
     %     sampleCheck.range(counter, :) = theseSamples;
             cfilename = sprintf('CSC%d.ncs', channel);
             [Timestamps, Samples, header] = Nlx2MatCSC(fullfile(s.filepath, cfilename),[1 0 0 0 1],1,2, theseSamples); %, [startRecording TrialStart_nlx(1)]);        
-%             display(['loaded ' cfilename]);
+            %         find the time offset for the current chunk
+            offset = TimeStamps(1);
+            
+            
+            
+            %             display(['loaded ' cfilename]);
             % get length of data chunk (last chunk is shorter), bitVolts
             % conversion factor, initialize data array for spike detection
             Samples = reshape(Samples, numel(Samples), 1);        
@@ -67,21 +79,16 @@ for channel = 1:s.nChannels
                 ADBitVolts = sscanf(header{16}, '-ADBitVolts %f');                            
             end
 
-
             Samples = Samples * ADBitVolts * 1e6 * inv;
-
-
-
-
-
             Samples = filtfilt(sos,g,Samples);            
-            spikes = ss_detect({Samples}, spikes);       
+            spikes = ss_detect({Samples}, spikes);            
+            spikeTimes{channel,1} = double(spikes.spiketimes(:)) + double(offset);
+           
     end
 
-    spikeTimes{channel,1} = double(spikes.spiketimes(:));
+
     sprintf('processed channel %d\n', channel)
     waitbar(channel/s.nChannels);
-    return
 end
 
 close(h);
@@ -89,25 +96,25 @@ close(h);
 
 
 
-
+return;
 % %% scrapbook for converting into t files for cellbase
 %% for each channel, calculate laser PSTH
-% nChannels = 32;
-% PortID = eventPortFromEventStrings(Events_EventStrings);
-% Pulses = PortID == 0 & Events_Nttls == 128;
-% PulseTimes = Events_TimeStamps(Pulses);
-% 
-% % 10Hz stimulation, 10ms bins
-% edges  = -0.05:.01:0.05;
-% histCountsByChannel = zeros(length(edges) - 1, nChannels);
-% 
-% for counter = 1:length(PulseTimes)
-%     pulseTime = PulseTimes(counter);
-%     for channel = 1:nChannels
-%         spikesZeroed = spikeTimes{channel} - pulseTime;
-%         histCountsByChannel(:,channel) = histCountsByChannel(:,channel) + histcounts(spikesZeroed, edges)';        
-%     end
-% end
-% 
-% histCountsByChannel_norm = (histCountsByChannel - mean(histCountsByChannel(1:3, :), 1)) ./ mean(histCountsByChannel(1:3, :), 1);
+nChannels = 32;
+PortID = eventPortFromEventStrings(Events_EventStrings);
+Pulses = PortID == 0 & Events_Nttls == 128;
+PulseTimes = Events_TimeStamps(Pulses);
+
+% 10Hz stimulation, 10ms bins
+edges  = -0.05:.01:0.05;
+histCountsByChannel = zeros(length(edges) - 1, nChannels);
+
+for counter = 1:length(PulseTimes)
+    pulseTime = PulseTimes(counter);
+    for channel = 1:nChannels
+        spikesZeroed = spikeTimes{channel} - pulseTime;
+        histCountsByChannel(:,channel) = histCountsByChannel(:,channel) + histcounts(spikesZeroed, edges)';        
+    end
+end
+
+histCountsByChannel_norm = (histCountsByChannel - mean(histCountsByChannel(1:3, :), 1)) ./ mean(histCountsByChannel(1:3, :), 1);
 

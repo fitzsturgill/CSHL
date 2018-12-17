@@ -58,7 +58,7 @@ spikes = ss_default_params(Fs, {'display', 'trial_spacing'}, 0); % don't pad tim
 %%
 
 for counter = 1:nChunks
-    theseSamples = [(sampleRange(counter) + 1) min(sampleRange(counter + 1), nValidSamples)]
+    theseSamples = [(sampleRange(counter) + 1) min(sampleRange(counter + 1), nValidSamples)];
     sampleCheck.range(counter, :) = theseSamples;
     for ttcounter = 1:4
         cfilename = sprintf('CSC%d.ncs', ttch1 + ttcounter - 1);
