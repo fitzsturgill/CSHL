@@ -97,39 +97,52 @@ passBand = [300 8000]; % Hz
 
 stimData = struct(...
     'spikeTimes', [],...
+    'spikeTimes_nlx', [],...
     'spikeAmplitudes', [],...
     'snippet', []... % try downsampling 10x and storing for every channel
     );
 stimData = repmat(stimData, 32, 1);
 
 nSegments = size(segments, 1);
-subTimeStamps = 0:1/s.Fs:(1/s.Fs * 511);
-subTimeStamps = subTimeStamps(:);
+% subTimeStamps = 0:1/s.Fs:(1/s.Fs * 511);
+% subTimeStamps = subTimeStamps(:);
 
 % for P-2 probe using neurolynx adapter
 channelOrder = [16 5 12 4 10 2 9 1 7 3 8 6 14 13 15 11 17 28 21 29 23 31 24 32 26 30 25 27 19 20 18 22];
 
 % for E-2 probe:
 channelOrder = [16 12 10 9 7 5 4 2 15 11 14 13 8 6 3 1 17 21 23 24 26 28 29 31 18 22 19 20 25 27 30 32];
+
+% for tetrodes 
+% channelOrder = 1:32;
+
+trialStarts = zeros(nSegments, 1);
 for channel = 1:s.nChannels
     tic
-    cfilename = sprintf('CSC%d.ncs', channelOrder(channel)); 
+    cfilename = sprintf('CSC%d.ncs', channelOrder(channel));
     cscData = cell(nSegments, 2); % first dimension is voltage (Samples), second dimension is time (Timesteps)
     downData = []; % downsampled for making averages later
-    trialStarts = zeros(nSegments, 1);
+
     spikes = ss_default_params(s.Fs, {'display', 'trial_spacing'}, 0); % don't pad time between chunks/trials, see ss_detect
     for counter = 1:nSegments
         [Timestamps, Samples, header] = Nlx2MatCSC(fullfile(s.filepath, cfilename),[1 0 0 0 1],1,4, segments(counter,1:2) * 1e6); % convert event timestamps to microseconds 
         downData = expandVertCat(downData, decimate(Samples(:) * ADBitVolts * 1e6 * inv, 10)');
         Samples = filtfilt(sos,g,Samples(:) * ADBitVolts * 1e6 * inv);
         cscData{counter, 1} = Samples;
-        Timestamps_full = repmat(Timestamps, 512, 1) + repmat(subTimeStamps, 1, numel(Timestamps));
-        cscData{counter, 2} = Timestamps_full(:);
-        trialStarts(counter) = Timestamps(1);
+%         Timestamps_full = repmat(Timestamps, 512, 1) + repmat(subTimeStamps, 1, numel(Timestamps));
+%         cscData{counter, 2} = Timestamps_full(:);
+        trialStarts(counter) = Timestamps(1); % gets overwritten for each channel, but doesn't really matter...
     end
     spikes = ss_detect(cscData(:,1), spikes);
     toc
+    % add trial start offsets to spike times
+    spikeTimes_nlx = spikes.spiketimes;
+    for counter = 1:nSegments
+        spikeTimes_nlx(spikes.trials == counter) = spikeTimes_nlx(spikes.trials == counter) + trialStarts(counter);
+    end
+        
     stimData(channel).spikeTimes = spikes.spiketimes;
+    stimData(channel).spikeTimes_nlx = spikeTimes_nlx;
     stimData(channel).spikeAmplitudes = range(spikes.waveforms');
     stimData(channel).snippet = downData;
     sprintf('processed channel %d\n', channelOrder(channel))
@@ -144,7 +157,7 @@ for channel = 1:s.nChannels
 % end
 end
 % stuff.segments = segments;
-% stuff.spikes = spikes;
+stuff.spikes = spikes;
 % stuff.cscData = cscData;
 % stuff.trialStarts = trialStarts;
 % stuff.PulseTimes = PulseTimes;
