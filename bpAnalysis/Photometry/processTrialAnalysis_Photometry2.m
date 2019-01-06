@@ -154,7 +154,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                 elseif length(downData) > newSamples
                     downData = downData(1:newSamples);
                 end
-                allData(trial, :) = downData;                                 
+                allData(trial, :) = downData;
             end
 
             % baseline fluor.

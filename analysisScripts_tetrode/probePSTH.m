@@ -4,12 +4,14 @@ function spikeTimes = probePSTH(varargin)
     % whitening
     % for laser PSTH- subtract mean of signal across all the other leads
     % prior to spike detection
+    % also make average CSC for all the laser pulses....
     
     defaults = {...
         'direction', 'up';...
         'nChannels', 32;...
         'Fs', 32000;...
         'filepath', '';...
+        'avg_window', [-0.1 0.1];...  % 100msec snippet after laser pulse start to generate CSC avg per lead.
         };
     
     [s, ~] = parse_args(defaults, varargin{:});
@@ -27,6 +29,7 @@ function spikeTimes = probePSTH(varargin)
         case 'down'
             inv = 1;
     end
+    
 % testing probe site screening for light effect....
 nlxcsc2mat2(s.filepath,'Channels','Events');
 load(fullfile(s.filepath, 'Events.mat'));
@@ -36,17 +39,15 @@ startRecording = find(strcmp(Events_EventStrings, 'Starting Recording'), 1, 'fir
 startRecording = Events_TimeStamps(startRecording);
 TrialStart_nlx = getBehaviorStartTimes(Events_Nttls, Events_EventStrings, Events_TimeStamps);
 
-
-
+PortID = eventPortFromEventStrings(Events_EventStrings);
+Pulses = PortID == 0 & Events_Nttls == 128;
+PulseTimes = Events_TimeStamps(Pulses);
 
 h = waitbar(0, 'Detecting Spikes');   
-
-
-
 nValidSamples = Nlx2MatCSC(fullfile(s.filepath, 'CSC1.ncs'),[0 0 0 1 0],0,1);% get # total sample pieces (output is nSamplePieces x 512)
 % sampleCheck.nlx = sum(nValidSamples);
 nValidSamples = numel(nValidSamples);
-chunkSize = 1e7; % 1e5
+chunkSize = 1e12; % 1e5
 nChunks = ceil(nValidSamples / chunkSize);
 sampleRange = ((0:nChunks) * chunkSize);
 
@@ -60,17 +61,12 @@ first = 1;
 for channel = 1:s.nChannels
     spikes = ss_default_params(s.Fs, {'display', 'trial_spacing'}, 0); % don't pad time between chunks/trials, see ss_detect
     for counter = 1:nChunks
-        theseSamples = [(sampleRange(counter) + 1) min(sampleRange(counter + 1), nValidSamples)];
-
-          
+        theseSamples = [(sampleRange(counter) + 1) min(sampleRange(counter + 1), nValidSamples)];          
     %     sampleCheck.range(counter, :) = theseSamples;
             cfilename = sprintf('CSC%d.ncs', channel);
             [Timestamps, Samples, header] = Nlx2MatCSC(fullfile(s.filepath, cfilename),[1 0 0 0 1],1,2, theseSamples); %, [startRecording TrialStart_nlx(1)]);        
             %         find the time offset for the current chunk
-            offset = TimeStamps(1);
-            
-            
-            
+%             offset = TimeStamps(1);                        
             %             display(['loaded ' cfilename]);
             % get length of data chunk (last chunk is shorter), bitVolts
             % conversion factor, initialize data array for spike detection
@@ -78,17 +74,20 @@ for channel = 1:s.nChannels
             if first                
                 ADBitVolts = sscanf(header{16}, '-ADBitVolts %f');                            
             end
-
             Samples = Samples * ADBitVolts * 1e6 * inv;
             Samples = filtfilt(sos,g,Samples);            
             spikes = ss_detect({Samples}, spikes);            
-            spikeTimes{channel,1} = double(spikes.spiketimes(:)) + double(offset);
-           
     end
-
+%         select = get_spike_indices(spikes, show );     
+%     memberwaves = spikes.waveforms(select,:);
+%     spiketimes  = sort( spikes.unwrapped_times( select ) );
+%     % get amplitudes over time
+%     amp = range(    memberwaves' );
+    spikeTimes{channel,1} = double(spikes.spiketimes(:)) + double(startRecording);           
 
     sprintf('processed channel %d\n', channel)
     waitbar(channel/s.nChannels);
+    break;
 end
 
 close(h);
