@@ -51,17 +51,12 @@ function [data, xData] = phAlignedWindow(TE, trials, ch, varargin)
     
 
 %% initalize data array padded to maximum window size
-    if Photometry.settings.uniformOutput
-        samplesPerWindow = ceil((max(s.window(:,2)) - min(s.window(:,1))) * Fs); 
-        % NOTE! zeroPoint can be negative or > nSamples if window is DOESN'T contain zero.
-        % for example, you might want a window that extends from 1-3
-        % seconds after or before a zero point.
-        zeroPoint = localX2pnt(0, Fs, min(s.window(:,1))); 
-        xData = (0:(samplesPerWindow - 1))/Fs + min(s.window(:,1));
-    else
-        % FINISH CODING!!!!
-        error('finish coding to allow different sized photometry acquisitions');
-    end
+    samplesPerWindow = ceil((max(s.window(:,2)) - min(s.window(:,1))) * Fs); 
+    % NOTE! zeroPoint can be negative or > nSamples if window is DOESN'T contain zero.
+    % for example, you might want a window that extends from 1-3
+    % seconds after or before a zero point.
+    zeroPoint = localX2pnt(0, Fs, min(s.window(:,1))); 
+    xData = (0:(samplesPerWindow - 1))/Fs + min(s.window(:,1));
     
     data = NaN(nTrials, samplesPerWindow); % intialize
     
@@ -72,8 +67,7 @@ function [data, xData] = phAlignedWindow(TE, trials, ch, varargin)
         if Photometry.settings.uniformOutput
             trialData = Photometry.data(ch).(s.FluorDataField)(trial, :);
         else
-            % FINISH CODING!!!!
-            % trialData = Photometry.data(ch).(s.FluorDataField){trial};???
+            trialData = Photometry.data(ch).(s.FluorDataField){trial};
         end
         nSamples = length(trialData);
         acqDuration = nSamples / Fs;
