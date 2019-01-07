@@ -6,8 +6,8 @@
 
 saveOn = 1;
 %%
-rat = 'CP9';
-session = '180731a';
+rat = 'CD21';
+session = '181221a';
 loadcb; % % loads ANALYSES, CELLIDLIST, PREFERENCES, and TheMatrix
 pref = getcbpref; % torben's new way
 fullpath = [pref.datapath '\' rat '\' session '\'];

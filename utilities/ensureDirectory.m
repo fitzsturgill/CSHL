@@ -1,4 +1,4 @@
-function ensureDirectory(fullpath)
+function fullpath = ensureDirectory(fullpath)
 % Fitz Sturgill 2016
 % recursively creates folders along a directory path
 % fullpath = fully specified directory path

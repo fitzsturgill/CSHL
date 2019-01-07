@@ -1,19 +1,42 @@
 %% Combine the scripts generating the files you need for further analysis
 %% Add into cellbase, create waveform, etc
-function AddSessionTagging_simple(Directory)
+function AddSessionTagging_simple(varargin)
 
-if nargin < 1
-    Directory = uigetdir();
+%% optional parameters, first set defaults
+defaults = {...
+    'msdir', '';... % directory of mountainsort results (containing NT1,2,3.... subdirectories for each trode)
+    'cbdir', '';... % cellbase session directory, i.e. \animal\session\  containing Events.nev file
+    };
+[s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
+
+if isempty(s.msdir)
+    [~, msdir] = uiputfile('path', 'choose mountainsort directory, containing NT1,2,3... subdiretcories for each trode');
+    if msdir == 0
+        return
+    else
+        s.msdir = msdir;
+    end
 end
-Directory = fullfile([Directory filesep]); % make sure it has a single trailing filesep
 
-cd(Directory);
+if isempty(s.cbdir)
+    [~, cbdir] = uiputfile('path', 'choose cellbase session directory containing Events.nev file');
+    if cbdir == 0
+        return
+    else
+        s.cbdir = cbdir;
+    end
+end    
+
+
+parts = strsplit(s.cbdir, filesep);
+animal = parts{end - 1};
+session = parts{end};
 
 %% get start of recording time
-nlxcsc2mat2(Directory,'Channels','Events')
-load(fullfile(Directory, 'Events.mat'));
-% 
-% % event timestamps are in seconds, CSC timestamps are in microseconds
+nlxcsc2mat2(s.cbdir,'Channels','Events')
+load(fullfile(s.cbdir, 'Events.mat'));
+
+% event timestamps are in seconds, CSC timestamps are in microseconds
 startRecording = find(strcmp(Events_EventStrings, 'Starting Recording'), 1, 'first');
 startRecording = Events_TimeStamps(startRecording);
 
@@ -40,25 +63,31 @@ startRecording = Events_TimeStamps(startRecording);
 % save('EventTTL_task.mat','EventTTL');
 % save('Events.mat','EventTimestamps','EventTTL');
 
-%% Creates and TT files
+%% Creates TT files in cellbase directory
 disp('Creating Waveform and TT files');
-% Files=getDir(Directory,'file','clusters');
-listing = dir;
-Files = {};
-for counter = 1:length(listing)
-    if ~listing(counter).isdir && startsWith(listing(counter).name, 'clusters')
-        Files{end + 1} = listing(counter).name;
+
+
+cd(s.msdir);
+trodeFolders = dir(['**' filesep 'NT*']); % dir('**\NT*')-  find NT1,2,3.... folders for each trode
+
+
+for counter=1:length(trodeFolders)
+    if ~trodeFolders(counter).isdir
+        continue % this should never happen
     end
-end
-for f=1:length(Files)
     
-    tetnum=sscanf(Files{f}, 'clusters%d.mat');
+    tetnum=sscanf(trodeFolders(counter).name, 'NT%d');
     
-    ClusterFileName=strcat('clusters',num2str(tetnum),'.mat');
-    CuratedFiringFile=strcat('firings',num2str(tetnum),'.curated.mda');
+%     ClusterFileName=strcat('clusters',num2str(tetnum),'.mat');
+%     CuratedFiringFile=strcat('firings',num2str(tetnum),'.curated.mda');
     
-    load(ClusterFileName);
-    MDAfile=readmda(CuratedFiringFile);
+    load(fullfile(trodeFolders(counter).folder, trodeFolders(counter).name, filesep, 'clusters.mat'));
+    try
+        MDAfile=readmda(fullfile(trodeFolders(counter).folder, trodeFolders(counter).name, filesep, 'firings.curated.mda'));
+    catch
+        continue;
+    end
+    
     if ~isempty(MDAfile)
         cells=unique(MDAfile(3,:));
         numcells=length(cells);
@@ -75,7 +104,7 @@ for f=1:length(Files)
             TetrodeName = sprintf('%s%d_%02d.mat','TT',tetnum,nc);
             
             
-            save(TetrodeName,'tSpikes');
+            save(fullfile(s.cbdir, TetrodeName),'tSpikes');
             
         end
     end
