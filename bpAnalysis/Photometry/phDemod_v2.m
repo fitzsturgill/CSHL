@@ -44,7 +44,7 @@ function demod = phDemod_v2(rawData, refData, refChannel, sampleRate, varargin)
             demod_90 = demodDataFilt_90(length(paddedData_90)+1:end, 1);        
             demod = (demod_0 .^2 + demod_90.^2) .^(1/2); % quadrature decoding
         else
-            paddedData = rawData(1:sampleRate, 1);
+            paddedData = rawData(1:min(sampleRate, size(rawData, 1)), 1);
             demod = filtfilt(sos, g, [paddedData; rawData]);
             demod = demod(length(paddedData) + 1:end, 1);
             return

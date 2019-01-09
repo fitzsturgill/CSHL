@@ -90,7 +90,9 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
                 line(repmat(s.window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks            
             end
     end    
-    set(gca, 'YLim', [1 size(cData, 1)], 'XLim', [xData(1) xData(end)], 'CLim', s.CLim);    
+    if size(cData, 1) > 0
+        set(gca, 'YLim', [1 size(cData, 1)], 'XLim', [xData(1) xData(end)], 'CLim', s.CLim);    
+    end
 end
 
 function out = MEDFILT(cdata, window)
