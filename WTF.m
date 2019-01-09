@@ -1,3 +1,13 @@
+
+cd('Z:\MountainSort\Sorted\CD_21\181221a\ms4\NT1\');
+
+templates =readmda('templates.mda');
+
+firings_curated = readmda('firings.curated.mda');
+    
+
+%%
+return;
 basepath = 'C:\Users\Fitz\Documents\Data_Local\iChR2_test\';
 
 folders = dir(basepath);
