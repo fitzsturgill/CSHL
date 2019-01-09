@@ -64,7 +64,7 @@ function peak = bpCalcPeak_dFF(Photometry, ch, window, zeroTimes, varargin)
         trialZero = zeroTimes2(trial) - Photometry.startTime(trial);        
         p1 = localX2pnt(s.window(trial,1) + trialZero, Photometry.sampleRate);
         p2 = localX2pnt(s.window(trial,2) + trialZero, Photometry.sampleRate);
-        if p1 < 1 || p2 > size(Photometry.data(ch).(s.phField), 2) % skip this trial if points don't occur during photometry data
+        if any(isnan([p1 p2])) || p1 < 1 || p2 > size(Photometry.data(ch).(s.phField), 2) % skip this trial if points don't occur during photometry data
             continue
         end
         trialData = Photometry.data(ch).(s.phField)(trial, p1:p2);

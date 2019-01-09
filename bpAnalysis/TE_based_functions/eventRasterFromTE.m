@@ -29,9 +29,9 @@ function [ax, lh] = eventRasterFromTE(TE, trials, event, varargin)
     [eventTimes, eventTrials] = extractEventTimesFromTE(TE, trials, event, varargin{:});
     lh = linecustommarker(eventTimes, eventTrials, [], [], s.ax);
     ax = s.ax;
-    if islogical(trials)
+    if islogical(trials) && (sum(trials) > 0)
         set(s.ax, 'YLim', [0 sum(trials)]);
-    else
+    elseif ~isempty(trials)
         set(s.ax, 'YLim', [0 length(trials)]);
     end
     
