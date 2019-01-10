@@ -53,10 +53,18 @@ varargout = {};
     xData = avgData.xData(1,:); % fixed across trial subsets, see eventAverageFromTE
     for counter = 1:length(trials)
         thisLinespec = s.linespec{rem(counter - 1, length(s.linespec)) + 1}; % cycle through linespec if it isn't long enough     
-        if isempty(s.cmap)        
-            thisHl = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :), thisLinespec, ax, alpha{:}, 'nan', 'gap');       
+        if isempty(s.cmap) 
+            try
+            thisHl = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :), thisLinespec, ax, alpha{:}, 'nan', 'gap'); 
+            catch
+                thisHl = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :), thisLinespec, ax, alpha{:}, 'nan', 'fill'); 
+            end
         else
-            thisHl = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :),  ax, alpha{:}, 'cmap', s.cmap(counter, :), 'nan', 'gap');       
+            try
+            thisHl = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :),  ax, alpha{:}, 'cmap', s.cmap(counter, :), 'nan', 'gap');
+            catch
+                thisHl = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :),  ax, alpha{:}, 'cmap', s.cmap(counter, :), 'nan', 'fill');       
+            end
         end
         lh(counter) = thisHl; % return handles of the solid lines in the bounded plots
     end

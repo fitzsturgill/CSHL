@@ -49,9 +49,18 @@ function varargout = phPlotAverageFromTE(TE, trials, ch, varargin)
     for counter = 1:nLines
         thisLinespec = s.linespec{rem(counter - 1, length(s.linespec)) + 1}; % cycle through linespec if it isn't long enough        
         if isempty(s.cmap)
-            [thisHl, thisHp] = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :), thisLinespec, ax, alpha{:}, 'nan', 'gap');       
+            try
+                [thisHl, thisHp] = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :), thisLinespec, ax, alpha{:}, 'nan', 'gap');       
+            catch
+                [thisHl, thisHp] = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :), thisLinespec, ax, alpha{:}, 'nan', 'fill');
+            end
         else
-            [thisHl, thisHp] = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :), ax, alpha{:}, 'cmap', s.cmap(counter,:), 'nan', 'gap');    
+            try
+                [thisHl, thisHp] = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :), ax, alpha{:}, 'cmap', s.cmap(counter,:), 'nan', 'gap');   
+            catch
+                [thisHl, thisHp] = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :), ax, alpha{:}, 'cmap', s.cmap(counter,:), 'nan', 'fill');
+            end
+                
         end
         lh(counter) = thisHl; % return handles of the solid lines in the bounded plots
         ph(counter) = thisHp;

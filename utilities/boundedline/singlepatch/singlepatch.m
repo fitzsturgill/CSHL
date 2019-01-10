@@ -32,21 +32,21 @@ vars = varargin;
 sz = cellfun(@size, vars{1}(:), 'uni', 0);
 sz = cat(1, sz{:});
 
-if all(sz(:,1) == 1)
-    for ii = 1:nv
-        vars{ii} = catuneven(1, NaN, vars{ii}{:})';
+    if all(sz(:,1) == 1)
+        for ii = 1:nv
+            vars{ii} = catuneven(1, NaN, vars{ii}{:})';
+        end
+    %     x = catuneven(1, NaN, x{:})';
+    %     y = catuneven(1, NaN, y{:})';
+    elseif all(sz(:,2) == 1)
+        for ii = 1:nv
+            vars{ii} = catuneven(2, NaN, vars{ii}{:});
+        end
+    %     x = catuneven(2, NaN, x{:});
+    %     y = catuneven(2, NaN, y{:});
+    else
+        error('Inputs must be cell arrays of vectors');
     end
-%     x = catuneven(1, NaN, x{:})';
-%     y = catuneven(1, NaN, y{:})';
-elseif all(sz(:,2) == 1)
-    for ii = 1:nv
-        vars{ii} = catuneven(2, NaN, vars{ii}{:});
-    end
-%     x = catuneven(2, NaN, x{:});
-%     y = catuneven(2, NaN, y{:});
-else
-    error('Inputs must be cell arrays of vectors');
-end
 
 [ii,jj] = find(isnan(vars{1}));
 
