@@ -1,4 +1,19 @@
 
+
+    
+    ensureFigure('test', 1);
+    
+    subplot(2,1,1);    
+    phPlotAverageFromTE(TE, trialsByType([1 2 5]), 1, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue2, 'window', [-3 5], 'linespec', {'b', 'k', 'c'});   
+    
+    subplot(2,1,2);    
+    phPlotAverageFromTE(TE, trialsByType([3 4 6]), 1, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue2, 'window', [-3 5], 'linespec', {'r', 'k', 'm'});       
+    
+    
+
+
+return;
+%%
 cd('Z:\MountainSort\Sorted\CD_21\181221a\ms4\NT1\');
 
 templates =readmda('templates.mda');

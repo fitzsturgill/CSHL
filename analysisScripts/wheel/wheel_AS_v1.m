@@ -39,9 +39,11 @@ TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', acqdur, 'Fs', 20, 's
 
 %% pupil data
 %  [wheelY_new, wheelTimes_new] = resample(wheelY, wheelTimes, 20, 'linear');
-folderSuffix = 'b'; % or enter folder suffix on command line
+folderSuffix = ''; % or enter folder suffix on command line
 %%
 TE = addPupilometryToTE(TE, 'duration', acqdur, 'zeroField', 'Baseline', 'startField', 'Baseline', 'frameRate', 60, 'frameRateNew', 20, 'folderSuffix', folderSuffix);
+%%
+TE.Whisk = addWhiskingToTE(TE, 'duration', acqdur, 'zeroField', 'Baseline', 'startField', 'Baseline', 'sampleRate', 60, 'sampleRateNew', 20, 'folderSuffix', folderSuffix);
 %% Now saved in directory according to first session filename
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SummaryAnalyses\CuedOutcome_Odor_Complete';
 % savepath = 'Z:\SummaryAnalyses\CuedOutcome_Odor_Complete';
@@ -66,14 +68,14 @@ if saveOn
     disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
 end
 %% plot raw and smoothed scatter plots of all the data (excepting the first few trials)
-nPoints = numel(TE.Photometry.data(2).ZS(1:end,:)); 
+nPoints = numel(TE.Photometry.data(1).ZS(1:end,:)); 
 ensureFigure('scatter', 1); 
 ChAT_raw = TE.Photometry.data(1).ZS(:);
 DAT_raw = TE.Photometry.data(2).ZS(:);
 a=zeros(2,1);
 smoothfactor = 100;
-a(1) = subplot(1,2,1); scatter(DAT_raw, ChAT_raw, '.'); xlabel('DAT fluor (Zscored)'); ylabel('ChAT fluor (Zscored)'); title('raw');
-a(2) = subplot(1,2,2); scatter(smooth(DAT_raw, smoothfactor), smooth(ChAT_raw, smoothfactor), '.'); xlabel('DAT fluor (Zscored)'); ylabel('ChAT fluor (Zscored)'); title('smoothed');
+a(1) = subplot(1,2,1); scatter(DAT_raw, ChAT_raw, 8, 1:length(DAT_raw), '.'); xlabel('DAT fluor (Zscored)'); ylabel('ChAT fluor (Zscored)'); title('raw');
+a(2) = subplot(1,2,2); scatter(smooth(DAT_raw, smoothfactor), smooth(ChAT_raw, smoothfactor),8, 1:length(DAT_raw),'.'); xlabel('DAT fluor (Zscored)'); ylabel('ChAT fluor (Zscored)'); title('smoothed');
 sameXYScale(a); %sameXScale(a);sameYScale(a);
 % setXYsameLimit(a(1), 0);setXYsameLimit(a(2), 0);
 
@@ -85,18 +87,25 @@ end
 window = [-2 2];
 fs = 20; % sample rate
 blSamples = (0 - window(1)) * fs;
-[rewards_dat, ts, tn] = extractDataByTimeStamps(TE.Photometry.data(2).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2]);
-rewards_chat = extractDataByTimeStamps(TE.Photometry.data(1).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2]);
+    
+
 
 % local dFF
-bl_dat = nanmean(rewards_dat(:,1:blSamples), 2);
-rewards_dat = bsxfun(@minus, rewards_dat, bl_dat);
-rewards_dat = bsxfun(@rdivide, rewards_dat, bl_dat);
-sd_dat = nanmean(nanstd(rewards_dat(:,1:blSamples)));
-bl_chat = nanmean(rewards_chat(:,1:blSamples), 2);
-rewards_chat = bsxfun(@minus, rewards_chat, bl_chat);
-rewards_chat = bsxfun(@rdivide, rewards_chat, bl_chat);
-sd_chat = nanmean(nanstd(rewards_chat(:,1:blSamples)));
+if ismember(2, channels)
+    [rewards_dat, ts, tn] = extractDataByTimeStamps(TE.Photometry.data(2).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2]);
+    bl_dat = nanmean(rewards_dat(:,1:blSamples), 2);
+    rewards_dat = bsxfun(@minus, rewards_dat, bl_dat);
+    rewards_dat = bsxfun(@rdivide, rewards_dat, bl_dat);
+    sd_dat = nanmean(nanstd(rewards_dat(:,1:blSamples)));
+end
+
+if ismember(1, channels)
+    [rewards_chat, ts, tn] = extractDataByTimeStamps(TE.Photometry.data(1).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2]);
+    bl_chat = nanmean(rewards_chat(:,1:blSamples), 2);
+    rewards_chat = bsxfun(@minus, rewards_chat, bl_chat);
+    rewards_chat = bsxfun(@rdivide, rewards_chat, bl_chat);
+    sd_chat = nanmean(nanstd(rewards_chat(:,1:blSamples)));
+end
 nTrials = length(TE.filename);
 ts_abs = zeros(size(ts));
 for counter = 1:length(ts)
@@ -108,21 +117,28 @@ iri_post = [diff(ts_abs); Inf];
 
 [~, I] = sort(iri_pre);
 iri_pre_sorted = iri_pre(I);
-rewards_dat_sorted = rewards_dat(I, :);
-rewards_chat_sorted = rewards_chat(I, :);
-climFactor = 8;
-clim_chat = [-climFactor * sd_chat, climFactor * sd_chat];% + 0.003;
-clim_dat = [-climFactor * sd_dat, climFactor * sd_dat];% + 0.03;
+climFactor = 6;
 ensureFigure('random_rewards', 1); 
-    % subplot(3,2,1); image(rewards_chat, 'XData', window, 'CDataMapping', 'Scaled'); set(gca, 'CLim', [min(min(rewards_chat_sorted)), max(max(rewards_chat_sorted))]); colormap('jet');  title('ChAT');
-% subplot(3,2,2); image(rewards_dat, 'XData', window,  'CDataMapping', 'Scaled'); set(gca, 'CLim', [min(min(rewards_dat_sorted)), max(max(rewards_dat_sorted))]); colormap('jet');    title('DAT');
-subplot(3,2,1); image(rewards_chat, 'XData', window, 'CDataMapping', 'Scaled'); set(gca, 'CLim', clim_chat); colormap('jet');  title('ChAT');
-subplot(3,2,2); image(rewards_dat, 'XData', window,  'CDataMapping', 'Scaled'); set(gca, 'CLim', clim_dat); colormap('jet');    title('DAT');
-xdata = linspace(window(1), window(2), size(rewards_chat, 2));
-subplot(3,2,3); plot(xdata, nanmean(rewards_chat));
-subplot(3,2,4); plot(xdata, nanmean(rewards_dat));
+if ismember(2, channels)
+    rewards_dat_sorted = rewards_dat(I, :);
+    clim_dat = [-climFactor * sd_dat, climFactor * sd_dat];% + 0.03;
+    subplot(3,2,2); image(rewards_dat, 'XData', window,  'CDataMapping', 'Scaled'); set(gca, 'CLim', clim_dat); colormap('jet');    title('Ch2');
+    xdata = linspace(window(1), window(2), size(rewards_dat, 2));
+    subplot(3,2,4); plot(xdata, nanmean(rewards_dat));
+    nRewards = size(rewards_dat, 1);
+end
+
+if ismember(1, channels)
+    rewards_chat_sorted = rewards_chat(I, :);
+    clim_chat = [-climFactor * sd_chat, climFactor * sd_chat];% + 0.003;
+    subplot(3,2,1); image(rewards_chat, 'XData', window, 'CDataMapping', 'Scaled'); set(gca, 'CLim', clim_chat); colormap('jet');  title('Ch1');
+    xdata = linspace(window(1), window(2), size(rewards_chat, 2));
+    subplot(3,2,3); plot(xdata, nanmean(rewards_chat));
+    nRewards = size(rewards_chat, 1);
+end
+
 subplot(3,2,5); triggeredEventRasterFromTE(TE, 'Port1In', TE.Reward);
-set(gca, 'YLim', [0 size(rewards_chat, 1)]);
+set(gca, 'YLim', [0 nRewards]);
 
 % % reward licks vs. trial number to truncate
 % rl = extractTriggeredEvents(TE, 'Port1In', TE.Reward);
@@ -148,27 +164,35 @@ end
 % and ChAT correlations with reward and without but doesn't have nice pupil
 % diameter
 % good trials with pupil traces that needed gap filling: 12
-trial = 1; % 7;
+trial = 6; % 7;
 ensureFigure('examples', 1);
-subplot(4,1,1);
+subplot(5,1,1);
 ydata = TE.Photometry.data(1).raw(trial, :);    
 plot(TE.Photometry.xData, ydata, 'k'); hold on;
 tsx = repmat(TE.Reward{trial}(:,1), 1, 2)';
 tsy = [repmat(min(min(ydata)), 1, size(tsx, 2)); repmat(max(max(ydata)), 1, size(tsx, 2))];    
 plot(tsx, tsy, 'r'); ylabel('ChAT');
-subplot(4,1,2);
-ydata = TE.Photometry.data(2).raw(trial, :);    
-plot(TE.Photometry.xData, ydata, 'k'); hold on;
-tsx = repmat(TE.Reward{trial}(:,1), 1, 2)';
-tsy = [repmat(min(min(ydata)), 1, size(tsx, 2)); repmat(max(max(ydata)), 1, size(tsx, 2))];    
-plot(tsx, tsy, 'r'); ylabel('DAT');
+try
+    subplot(5,1,2);
+    ydata = TE.Photometry.data(2).raw(trial, :);    
+    plot(TE.Photometry.xData, ydata, 'k'); hold on;
+    tsx = repmat(TE.Reward{trial}(:,1), 1, 2)';
+    tsy = [repmat(min(min(ydata)), 1, size(tsx, 2)); repmat(max(max(ydata)), 1, size(tsx, 2))];    
+    plot(tsx, tsy, 'r'); ylabel('DAT');
+catch
+end
 pupField = 'pupDiameter';
 try
-    subplot(4,1,3); plot(TE.pupil.xData, TE.pupil.(pupField)(trial, :)); ylabel('Pupil Diameter');
+    subplot(5,1,3); plot(TE.pupil.xData, TE.pupil.(pupField)(trial, :)); ylabel('Pupil Diameter');
     set(gca, 'YLim', [percentile(TE.pupil.(pupField)(trial, :), 0.03), percentile(TE.pupil.(pupField)(trial, :), 0.97)]);
 catch
 end
-subplot(4,1,4); plot(TE.Wheel.xData, TE.Wheel.data.V(trial, :)); ylabel('Velocity');
+try
+    subplot(5,1,4); plot(TE.Whisk.xData, TE.Whisk.whiskNorm(trial, :)); ylabel('Whisking');
+    set(gca, 'YLim', [percentile(TE.Whisk.whiskNorm(trial, :), 0.03), percentile(TE.Whisk.whiskNorm(trial, :), 0.97)]);
+catch
+end
+subplot(5,1,5); plot(TE.Wheel.xData, TE.Wheel.data.V(trial, :)); ylabel('Velocity');
 
 if saveOn
     saveas(gcf, fullfile(savepath, 'examples.fig'));

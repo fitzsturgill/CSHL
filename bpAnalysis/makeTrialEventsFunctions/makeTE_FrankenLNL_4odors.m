@@ -37,7 +37,20 @@ function TE = makeTE_FrankenLNL_4odors(sessions)
         'index', []...
         );
     
-
+    %% updated for new version of FrankenLNL with tone and light options in blocks           
+    additionalFields = {'CS1_tone', 'CS2_tone', 'CS1_light', 'CS2_light'}; 
+    counter = 1;
+    while length(additionalFields) >= counter
+        if isfield(sessions(1).SessionData, additionalFields{counter})
+            TE.(additionalFields{counter}) = zeros(nTrials, 1);
+            counter = counter + 1;
+        else
+            keep = true(length(additionalFields), 1);
+            keep(counter) = false;
+            additionalFields = additionalFields(keep);
+        end
+    end
+    %%
     for i = 1:length(statesToAdd)
         TE(1).(statesToAdd{i}) = bpAddStateAsTrialEvent(sessions, statesToAdd{i});
     end
@@ -65,6 +78,9 @@ function TE = makeTE_FrankenLNL_4odors(sessions)
             TE.sessionIndex(tcounter, 1) = sCounter;
             usTimes = [TE.Reward{tcounter}; TE.Punish{tcounter}; TE.WNoise{tcounter}; TE.Neutral{tcounter}];
             TE.Us{tcounter, 1} = [max(usTimes(:,1)) max(usTimes(:,2))];
+            for afCounter = 1:length(additionalFields)
+                TE.(additionalFields{afCounter})(tcounter, 1) = session.SessionData.(additionalFields{afCounter})(counter);
+            end
             tcounter = tcounter + 1; % don't forget :)            
         end
     end

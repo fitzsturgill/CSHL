@@ -8,8 +8,8 @@ function counts = histCountsByTrial(times, trials, binEdges)
     
     for counter = 1:nValidTrials
         timesThisTrial = times(trials == validTrials(counter));
-        if any(isnan(timesThisTrial))
-            disp('weird');
-        end
+%         if any(isnan(timesThisTrial))
+%             disp('weird');
+%         end
         counts(counter, :) = histcounts(timesThisTrial, binEdges);
     end
