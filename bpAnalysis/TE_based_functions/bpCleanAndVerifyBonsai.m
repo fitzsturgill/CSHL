@@ -26,6 +26,7 @@ function bpCleanAndVerifyBonsai(readonly)
         fileTypes = {'Pupil_', '*upil_*.avi';... 
                     'Whisk_', '*hisk_*.avi';...
                     'WhiskDiff_', '*hiskDiff_*.csv';...
+                    'EyeAvg_', '*yeAvg_*.csv';...
                     };
         remainingFiles = zeros(size(fileTypes, 1), 1);
         remainingMatFiles = 0;
@@ -40,12 +41,14 @@ function bpCleanAndVerifyBonsai(readonly)
             end
 
             if combined
+                combined = 0; % reset for next file type
                 targetFolder = parseFileName(sname, 'Combined_');
                 targetFolder = fullfile(spath, targetFolder);
                 if ~exist(targetFolder, 'dir') % it's a folder    
-                    disp('*** target folders are not found ***');
-                    return                
-                end            
+                    warning('*** target folder %s not found *** for file type %s', targetFolder, fileTypes{counter, 1});
+%                     return
+                    continue
+                end
             end
 
             cd(targetFolder);

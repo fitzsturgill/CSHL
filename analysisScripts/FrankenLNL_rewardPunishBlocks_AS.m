@@ -38,11 +38,14 @@ duration = length(TE.Photometry.xData) / TE.Photometry.sampleRate;
 %% add wheel
 TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', duration, 'Fs', 20, 'startField', 'Start');
 
+%% add eye avg if desired/present
+TE.eyeAvg = addCSVToTE(TE, 'duration', duration, 'zeroField', 'Outcome', 'folderPrefix', 'EyeAvg_', 'filePrefix', 'EyeAvg_');%, 'normMode', 'byTrial');
+
 %%
 % basepath = uigetdir;
 basepath = 'Z:\SummaryAnalyses\Franken_LNL_aversive';
 sep = strfind(TE.filename{1}, '_');
-if length(sessions) > 1
+if length(unique(TE.filename)) > 1
     subjectName = TE.filename{1}(1:sep(2)-1);
 else
     subjectName = TE.filename{1}(1:end-4);
@@ -147,12 +150,32 @@ for channel = channels
     end    
 end
 
+%% blink rasters
+saveName = 'Aversive_blinkRasters';
+ensureFigure(saveName, 1); colormap jet;
+% clims = [0 1.5];
+cLimFactor = 4;
+blinkData = TE.eyeAvg.EyeAvgNorm;
+blinkDataMean = mean2(blinkData);
+clims = [nanmean(blinkData(:)) - nanstd(blinkData(:)) * cLimFactor, nanmean(blinkData(:)) + nanstd(blinkData(:)) * cLimFactor];
+xData = [TE.eyeAvg.xData(1) TE.eyeAvg.xData(end)];
+subplot(1,3,1); imagesc('XData', xData, 'CData', blinkData(trialsByType{3}, :), clims); set(gca, 'XLim', xData);
+title('cued punish');
+subplot(1,3,2); imagesc('XData', xData, 'CData', blinkData(trialsByType{4}, :), clims); set(gca, 'XLim', xData);
+title('cued ommission');
+subplot(1,3,3); imagesc('XData', xData, 'CData', blinkData(trialsByType{6}, :), clims); set(gca, 'XLim', xData);
+title('uncued punish');
+
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+end
 
 
 
 %% averages
-
-window = [-3 6];
+% -3 6
+window = [-1 4];
 for channel = channels
     saveName = ['Averages_ch' num2str(channel)];
     ensureFigure(saveName, 1);
@@ -160,30 +183,118 @@ for channel = channels
     subplot(2,2,1);
     [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 2 5]), channel, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'b', 'k', 'c'}); %high value, reward
 %     legend(hl, {'pRhigh', 'pRmedium', 'pRlow'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
-    set(gca, 'XLim', window); title(titles{channel}); legend(hl, {'cued reward', 'cued ommission', 'uncued reward'}, 'Box', 'off', 'Location', 'best'); ylabel('Fluor ZS');
+    set(gca, 'XLim', window); title('rewarding'); ylabel('Fluor ZS');
     
-    subplot(2,2,2);
-    [ha, hl] = phPlotAverageFromTE(TE, trialsByType([3 4 6]), channel, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'r', 'k', 'm'}); %high value, reward
-%     legend(hl, {'pRhigh', 'pRmedium', 'pRlow'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
-    set(gca, 'XLim', window); title(titles{channel}); legend(hl, {'cued punish', 'cued ommission', 'uncued punish'}, 'Box', 'off', 'Location', 'best');    ylabel('Fluor ZS');
+    try
+        subplot(2,2,2);
+        [ha, hl] = phPlotAverageFromTE(TE, trialsByType([3 4 6]), channel, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'r', 'k', 'm'}); %high value, reward
+    %     legend(hl, {'pRhigh', 'pRmedium', 'pRlow'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
+        set(gca, 'XLim', window); title('aversive'); ylabel('Fluor ZS');
+    catch
+    end
     
-    subplot(2,2,3);
-    varargin = {'window', window, 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'b', 'k','c'}};
-    axh = [];
-    [ha, hl] = plotEventAverageFromTE(TE, trialsByType([1 2 5]), 'Port1In', varargin{:});  
-    ylabel('licks (1/s)'); xlabel('time from cue(s)');  set(gca, 'XLim', window);
+    try
+        subplot(2,2,3);
+        varargin = {'window', window, 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'b', 'k','c'}};
+        axh = [];
+        [ha, hl] = plotEventAverageFromTE(TE, trialsByType([1 2 5]), 'Port1In', varargin{:});  
+        ylabel('licks (1/s)'); xlabel('time from cue(s)');  set(gca, 'XLim', window);
+        legend(hl, {'cued reward', 'cued ommission', 'uncued reward'}, 'Box', 'off', 'Location', 'best'); 
+    catch
+    end
     
-    subplot(2,2,4);
-    varargin = {'window', window, 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'r', 'k','m'}};
-    axh = [];
-    [ha, hl] = plotEventAverageFromTE(TE, trialsByType([3 4 6]), 'Port1In', varargin{:});  
-    ylabel('licks (1/s)'); xlabel('time from cue(s)');  set(gca, 'XLim', window);   
-    
+    try
+        subplot(2,2,4);
+        varargin = {'window', window, 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'r', 'k','m'}};
+        axh = [];
+        [ha, hl] = plotEventAverageFromTE(TE, trialsByType([3 4 6]), 'Port1In', varargin{:});  
+        ylabel('licks (1/s)'); xlabel('time from cue(s)');  set(gca, 'XLim', window); legend(hl, {'cued punish', 'cued ommission', 'uncued punish'}, 'Box', 'off', 'Location', 'best');      
+    catch
+    end
     if saveOn
         saveas(gcf, fullfile(savepath, saveName), 'fig');
         saveas(gcf, fullfile(savepath, saveName), 'jpeg');
     end    
 end
 
+%% blink averages
+saveName = 'Aversive_blinkAverages';
+ensureFigure(saveName, 1);
+xData = TE.eyeAvg.xData;
+blinkData = TE.eyeAvg.EyeAvgNorm;
+blinkData(isnan(blinkData)) = 0;
+axes; hold on; grid on;
+boundedline(xData(:), [mean(blinkData(trialsByType{3}, :)); mean(blinkData(trialsByType{4}, :)); mean(blinkData(trialsByType{6}, :))]',...
+    permute([std(blinkData(trialsByType{3}, :)) ./ sqrt(sum(trialsByType{3})); std(blinkData(trialsByType{4}, :)) ./ sqrt(sum(trialsByType{3})); std(blinkData(trialsByType{6}, :)) ./ sqrt(sum(trialsByType{3}))], [2 3 1]),...
+    'cmap', [1 0 0; 0 0 0; 1 0 1]);
+% plot(xData, mean(blinkData(trialsByType{3}, :)), 'r');
+% plot(xData, mean(blinkData(trialsByType{4}, :)), 'k');
+% plot(xData, mean(blinkData(trialsByType{6}, :)), 'm-*');
+title('frame avg (goes up as eye closes)');
+xlabel('time from punishment');
+set(gca, 'XLim', [-4 3]);
+legend('cued', 'omit', 'uncued'); 
+
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+end
+
+%% wheel averages
+saveName = 'Aversive_wheelAverages';
+ensureFigure(saveName, 1);
+xData = TE.eyeAvg.xData;
+wheelData = TE.Wheel.data.V;
+wheelData(isnan(wheelData)) = 0;
+axes; hold on; grid on;
+boundedline(xData(:), [mean(wheelData(trialsByType{3}, :)); mean(wheelData(trialsByType{4}, :)); mean(wheelData(trialsByType{6}, :))]',...
+    permute([std(wheelData(trialsByType{3}, :)) ./ sqrt(sum(trialsByType{3})); std(wheelData(trialsByType{4}, :)) ./ sqrt(sum(trialsByType{3})); std(wheelData(trialsByType{6}, :)) ./ sqrt(sum(trialsByType{3}))], [2 3 1]),...
+    'cmap', [1 0 0; 0 0 0; 1 0 1]);
+
+title('wheel avg');
+xlabel('time from punishment'); ylabel('Velocity');
+set(gca, 'XLim', [-4 3]);
+legend('cued', 'omit', 'uncued'); 
+
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+end
+
+
+
+
+%%
+saveName = 'examples_cuedReward_ch1';
+showThese = find(Odor2Valve1Trials & rewardTrials);
+ensureFigure(saveName);
+plot(TE.Photometry.xData, TE.Photometry.data(1).ZS(showThese(1:20), :)', 'k', 'LineWidth', 0.25); set(gca, 'XLim', [-2 4]);
+figure; plot(TE.Photometry.xData, TE.Photometry.data(1).ZS(showThese(1:20), :)', 'k', 'LineWidth', 0.25); set(gca, 'XLim', [-2 4]);
+
+addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [1.9 2.1]);
+xlabel('Time from odor (s)'); ylabel('Fluor. (ZS)'); title('ACh. sensor in BLA');
+    if saveOn
+        saveas(gcf, fullfile(savepath, saveName), 'fig');
+        saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+    end    
+    
+    
+%% synchrony between left and right BLA
+saveName = 'examples_synchrony_leftRightBLA';
+showThese = find(Odor2Valve1Trials & rewardTrials);
+ensureFigure(saveName, 1); 
+whichOne = 3;
+hl = zeros(2,1);
+hl(1) = plot(TE.Photometry.xData, TE.Photometry.data(1).ZS(showThese(whichOne), :)', 'g', 'LineWidth', 1); set(gca, 'XLim', [-2 4]); hold on;
+hl(2) = plot(TE.Photometry.xData, TE.Photometry.data(2).ZS(showThese(whichOne), :)', 'r', 'LineWidth', 1); set(gca, 'XLim', [-2 4]);
+addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [1.9 2.1]);
+legend(hl, {'Flat', 'Tapered'}, 'Box', 'off', 'Location', 'northwest');
+xlabel('time from cue (s)'); ylabel('Fluor. (ZS)');
+
+
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+end    
 
     

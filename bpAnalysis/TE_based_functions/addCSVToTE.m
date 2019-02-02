@@ -1,24 +1,25 @@
-function whisk = addWhiskingToTE(TE, varargin)
+function data = addCSVToTE(TE, varargin)
 
-% Adds whisking data to TE.  Pupil data for every session loaded into TE
-% assumed to to be saved in a folder (e.g. \Whisking_160814\). Whisking data .csv
-% files (e.g. Whisking_0.csv) are zero indexed
+% Adds CSV data (e.g. from Bonsai) to TE.  CSV data for every session loaded into TE
+% assumed to to be saved in a folder (e.g. \EyeAvg_160814\). csv data .csv
+% files (e.g. EyeAvg_0.csv) are zero indexed
  
 % TE: Trial Event structure containing fields trialNumber and filename
-% rootPath: path containing session data and Whisking session folders
+% rootPath: path containing session data and CSV session folders
 
     %% optional parameters, first set defaults
     defaults = {...
         'sampleRate', 60;... % integer
         'sampleRateNew', 20;... 
         'duration', 11;...  % assumes constant trial duration across TE
-        'zeroField', 'Us';... 
+        'zeroField', 'Outcome';... 
         'startField', 'PreCsRecording';... % extract time stamp w.r.t. start of Bpod trial
         'rootPath', [];...
         'normMode', 'bySession';...  % [bySession, byTrial]
-        'folderPrefix', 'Combined_';...
+        'folderPrefix', 'EyeAvg_';...
         'folderSuffix', '';...
-        'filePrefix', 'WhiskDiff_';...
+        'filePrefix', 'EyeAvg_';...
+        'dataFieldName', '';... % if empty, inferred from filePrefix
         };
     
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings    
@@ -27,7 +28,7 @@ function whisk = addWhiskingToTE(TE, varargin)
     end        
     
     if isempty(s.rootPath)
-        [~, rootPath] = uiputfile('path', 'Choose data folder containing pupil subdirectories...');
+        [~, rootPath] = uiputfile('path', 'Choose data folder containing CSV subdirectories...');
         if rootPath == 0
             return
         else
@@ -38,61 +39,70 @@ function whisk = addWhiskingToTE(TE, varargin)
     end
     cd(rootPath);    
     
+    if isempty(s.dataFieldName)
+        if s.filePrefix(end) == '_'
+            s.dataFieldName = s.filePrefix(1:end-1);
+        else
+            s.dataFieldName = s.filePrefix;
+        end
+    end
+        
     
-    %% initialize whisk structure
+    
+    %% initialize CSV structure
     dX = 1/s.sampleRateNew;
     startX = []; % to be determined
     nSamples = s.sampleRate * s.duration; 
     normFields = {...
-        'whisk', 'whiskNorm';...
+        s.dataFieldName, [s.dataFieldName 'Norm'];...
         };
-    whisk = struct();
-    whisk.loadSettings = s; % scalar
+    data = struct();
+    data.loadSettings = s; % scalar
 
 
-    whisk.xData = linspace(0, s.duration - dX, s.duration * s.sampleRateNew);
-    nsamplesNew = length(whisk.xData);
-    whisk.startTime = NaN(length(TE.filename), 1);
-    whisk.sampleRate = NaN(length(TE.filename), 1);
+    data.xData = linspace(0, s.duration - dX, s.duration * s.sampleRateNew);
+    nsamplesNew = length(data.xData);
+    data.startTime = NaN(length(TE.filename), 1);
+    data.sampleRate = NaN(length(TE.filename), 1);
     
     for counter = 1:numel(normFields)
-        whisk.(normFields{counter}) = NaN(length(TE.filename), nsamplesNew); % fill with NaNs
+        data.(normFields{counter}) = NaN(length(TE.filename), nsamplesNew); % fill with NaNs
     end
     
     
-    %% extract session dates in TE and generate matching whisk folder names
+    %% extract session dates in TE and generate matching CSV folder names
     sessionnames = unique(TE.filename);
     if ischar(s.folderSuffix)
         s.folderSuffix = repmat({s.folderSuffix}, length(sessionnames));
     end
-    h = waitbar(0, 'Processing Whisking'); 
+    h = waitbar(0, 'Processing CSV data'); 
     
     %% assuming consistent trial durations and alignment
     startX = TE.(s.startField){1}(1) - TE.(s.zeroField){1}(1);
-    whisk.xData = whisk.xData + startX;
+    data.xData = data.xData + startX;
     blStartP = 1; % just start at beginning of video for baseline
     blEndP = bpX2pnt(0, s.sampleRateNew, startX); % go to zero point        
     [p, q] = rat(s.sampleRateNew/s.sampleRate);
     for counter = 1:length(sessionnames)
         sessionname = sessionnames{counter};
-        % try Whisk_ and Combined_ as prefixes
-        whiskFolder = {parseFileName(sessionname, s.folderPrefix), parseFileName(sessionname, 'WhiskDiff_'), parseFileName(sessionname, 'Combined_')}; % see subfunction
+        % additionally try Combined_ as a prefix 
+        dataFolder = {parseFileName(sessionname, s.folderPrefix), parseFileName(sessionname, 'Combined_')}; % see subfunction
         folderFound = 0;
-        for j = 1:length(whiskFolder)
-            whiskPath = fullfile(rootPath, [whiskFolder{j} s.folderSuffix{counter}], filesep); % filesep returns system file separator character
-            if isdir(whiskPath)
-                folderFound = 1; % whiskPath is correct....
+        for j = 1:length(dataFolder)
+            dataPath = fullfile(rootPath, [dataFolder{j} s.folderSuffix{counter}], filesep); % filesep returns system file separator character
+            if isdir(dataPath)
+                folderFound = 1; % dataPath is correct....
                 break
             end
         end
         if ~folderFound
-            warning('*** Whisk directory %s does not exist ***', whiskPath);
+            warning('*** CSV data directory %s does not exist ***', dataPath);
             continue
         end
-        cd(whiskPath);
+        cd(dataPath);
         fs = dir([s.filePrefix '*.csv']);
         if length(fs) == 0
-            warning(sprintf('*** No %s files found in %s or %s ***', s.filePrefix ,whiskFolder{1} ,whiskFolder{2})); 
+            warning(sprintf('*** No %s files found in %s or %s ***', s.filePrefix ,dataFolder{1} ,dataFolder{2})); 
             continue
         end
         fileList = {};
@@ -181,11 +191,11 @@ function whisk = addWhiskingToTE(TE, varargin)
         correctedIx_dm = [1 correctedIx_dm + 1];
 
         if abs(numFileDifference) > maxDifference            
-            error('*** spurious or missing WhiskDiff.csv files detected, difference of %d files for %s you may need to run  bpCleanAndVerifyBonsai ***', numFileDifference, sessionname);
+            error('*** spurious or missing .csv files detected, difference of %d files for %s you may need to run  bpCleanAndVerifyBonsai ***', numFileDifference, sessionname);
         end        
         
         if any(dmDelta < 2)
-            error('there are short ITI WhiskDiff.csv files that you need to delete or deal with possibly using bpCleanAndVerifyBonsai');
+            error('there are short ITI .csv files that you need to delete or deal with possibly using bpCleanAndVerifyBonsai');
         end 
         
         if maxRsq < 0.9
@@ -196,7 +206,7 @@ function whisk = addWhiskingToTE(TE, varargin)
         for i = 1:length(correctedIx_dm)
             icorrected = correctedIx_dm(i);
             if isnan(icorrected)
-                continue % continue if it is an extra pupil file
+                continue % continue if it is an extra csv file
             end                               
             tei = si(icorrected); % TE index number 
             try
@@ -209,20 +219,20 @@ function whisk = addWhiskingToTE(TE, varargin)
             samplesAvailable = size(loaded, 1);            
             currentSamples = ceil(samplesAvailable * p/q);
             resampled = resample(loaded, p, q);
-            whisk.sampleRate(tei, 1) = s.sampleRateNew;
-            whisk.whisk(tei,1:min(nsamplesNew, currentSamples)) = resampled(1:min(nsamplesNew, currentSamples))';   
-            whisk.startTime(tei, 1) = TE.(s.startField){tei}(1);     
+            data.sampleRate(tei, 1) = s.sampleRateNew;
+            data.(s.dataFieldName)(tei,1:min(nsamplesNew, currentSamples)) = resampled(1:min(nsamplesNew, currentSamples))';   
+            data.startTime(tei, 1) = TE.(s.startField){tei}(1);     
         end
             %% baseline subtract
         for i = 1:size(normFields, 1)
             rawField = normFields{i, 1};
             normField = normFields{i, 2};
-            rawData = whisk.(rawField)(si, :);
+            rawData = data.(rawField)(si, :);
             switch s.normMode
                 case 'byTrial'
-                    whisk.(normField)(si, :) = bsxfun(@rdivide, rawData, nanmean(rawData(:, blStartP:blEndP), 2));
+                    data.(normField)(si, :) = bsxfun(@rdivide, rawData, nanmean(rawData(:, blStartP:blEndP), 2));
                 case 'bySession'
-                    whisk.(normField)(si, :) = rawData / nanmean(nanmean(rawData(:, blStartP:blEndP), 2), 1); % divide by scalar
+                    data.(normField)(si, :) = rawData / nanmean(nanmean(rawData(:, blStartP:blEndP), 2), 1); % divide by scalar
             end
         end
         waitbar(counter/length(sessionnames));
@@ -230,7 +240,7 @@ function whisk = addWhiskingToTE(TE, varargin)
     close(h);
 end
 
-function whiskFolder = parseFileName(filename, folderPrefix)
+function dataFolder = parseFileName(filename, folderPrefix)
     % extract date and generate file name matching
     % Pupil_[year][month][day] Pupil_161020 for example (october 20th)
     parts = strsplit(filename, '_');
@@ -246,5 +256,5 @@ function whiskFolder = parseFileName(filename, folderPrefix)
     if length(d) == 1
         d = ['0' d];
     end
-    whiskFolder = [folderPrefix y m2 d];
+    dataFolder = [folderPrefix y m2 d];
 end
