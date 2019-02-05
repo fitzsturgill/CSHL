@@ -18,6 +18,7 @@ function TE = addPupilometryToTE(TE, varargin)
         'normMode', 'bySession';...  % [bySession, byTrial]
         'folderSuffix', '';...
         'fillNaNs', 0;...
+        'numberingOffset', -1;... 
         };
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings    
     if isempty(s.frameRateNew)
@@ -108,7 +109,7 @@ function TE = addPupilometryToTE(TE, varargin)
         si = find(filterTE(TE, 'filename', sessionname));
         teDelta = diff(TE.TrialStartTimestamp(si));
         teDelta = teDelta(:);
-        teDelta = circshift(teDelta, -1); % shift backward because Bonsai apparently time-stamps the files upon the second trigger rather the end of the 1st trigger's window (e.g. 11sec post-first trigger for reversal experiment)
+        teDelta = circshift(teDelta, s.numberingOffset); % shift backward because Bonsai apparently time-stamps the files upon the second trigger rather the end of the 1st trigger's window (e.g. 11sec post-first trigger for reversal experiment)
 
 
         numFileDifference = length(dmDelta) - length(teDelta);
@@ -118,7 +119,7 @@ function TE = addPupilometryToTE(TE, varargin)
         
         % ith element of correctedIx_dm contains trial index matching the ith
         % pupil.mat file
-        outlierITI = 24;
+        outlierITI = 14 + s.duration;
         correctedIx_dm = 1:length(dmDelta);
         if numFileDifference < 0 % there are missing pupil files            
             startingIndex = 1; 

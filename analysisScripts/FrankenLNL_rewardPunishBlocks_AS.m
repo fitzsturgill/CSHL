@@ -19,7 +19,7 @@ end
 
 if sessions(1).SessionData.Settings.GUI.LED2_amp > 0
     channels(end+1) = 2;
-    dFFMode{end+1} = 'simple';
+    dFFMode{end+1} = 'expFit';
     BL{end + 1} = [1 4];    
 end
 
@@ -67,8 +67,8 @@ end
 for channel = channels
     figname = ['sessionBleach_Correction_ch' num2str(channel)];
     ensureFigure(figname, 1);
-    plot(TE.Photometry.data(channel).blF_raw, 'k'); hold on;
-    plot(TE.Photometry.data(channel).blF, 'r');
+    plot(TE.PhotometryExpFit.data(channel).blF_raw, 'k'); hold on;
+    plot(TE.PhotometryExpFit.data(channel).blF, 'r');
     if saveOn
         saveas(gcf, fullfile(savepath, [figname '.fig']));
         saveas(gcf, fullfile(savepath, [figname '.jpg']));

@@ -19,6 +19,7 @@ function whisk = addWhiskingToTE(TE, varargin)
         'folderPrefix', 'Combined_';...
         'folderSuffix', '';...
         'filePrefix', 'WhiskDiff_';...
+        'numberingOffset', -1;...         
         };
     
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings    
@@ -106,7 +107,7 @@ function whisk = addWhiskingToTE(TE, varargin)
         si = find(filterTE(TE, 'filename', sessionname));
         teDelta = diff(TE.TrialStartTimestamp(si));
         teDelta = teDelta(:);
-        teDelta = circshift(teDelta, -1); % shift backward to account for Bonsai's tendency to skip the first time difference (perhaps due to Bonsai 'closing' the first movie file upon the 2nd trigger occurance rather than the end of the 11 sec duration triggeredWindow)
+        teDelta = circshift(teDelta, s.numberingOffset); % shift backward to account for Bonsai's tendency to skip the first time difference (perhaps due to Bonsai 'closing' the first movie file upon the 2nd trigger occurance rather than the end of the 11 sec duration triggeredWindow)
 
 
         numFileDifference = length(dmDelta) - length(teDelta);
@@ -116,7 +117,7 @@ function whisk = addWhiskingToTE(TE, varargin)
         
         % ith element of correctedIx_dm contains trial index matching the ith
         % pupil.mat file
-        outlierITI = 24;        
+        outlierITI = 14 + s.duration;        
         correctedIx_dm = 1:length(dmDelta);
         if numFileDifference < 0 % there are missing pupil files            
             startingIndex = 1; 

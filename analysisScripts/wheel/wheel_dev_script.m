@@ -447,7 +447,7 @@ xlabel('Time (s)'); ylabel('ChAT AutoCorr');
 legend({'corrected', 'raw', 'shift predictor', 'Location', 'northwest'});
 
 subplot(3,2,3);
-[r, shiftR, rawR, lags] = correctedXCorr(data_chat, data_chat, maxLag);
+[r, shiftR, rawR, lags] = correctedXCorr(data_dat, data_dat, maxLag);
 plot(lags * 1/Fs, r, 'k'); hold on;
 plot(lags * 1/Fs, rawR, 'r');
 plot(lags * 1/Fs, shiftR, 'b');
@@ -555,13 +555,15 @@ if saveOn
 end
 
 %% scatter
-ensureFigure('scatter_pupil', 1); 
+ensureFigure('scatter_allTheThings', 1); 
 subplot(2,2,1); scatter(reshape(data_chat, numel(data_chat), 1), reshape(data_pupil, numel(data_pupil), 1), '.');
 ylabel('pupil'); xlabel('chat');
 subplot(2,2,2); scatter(reshape(data_dat, numel(data_dat), 1), reshape(data_pupil, numel(data_pupil), 1), '.');
 ylabel('pupil'); xlabel('dat');
 subplot(2,2,3); scatter(reshape(TE.Wheel.data.V, numel(data_dat), 1), reshape(data_pupil, numel(data_pupil), 1), '.');
 ylabel('pupil'); xlabel('velocity');
+subplot(2,2,4); scatter(reshape(TE.Wheel.data.V, numel(data_dat), 1), reshape(data_chat, numel(data_pupil), 1), '.');
+ylabel('chat'); xlabel('velocity');
 
 if saveOn
     saveas(gcf, fullfile(savepath, ['coherence_pupil.fig']));
