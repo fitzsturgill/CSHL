@@ -12,8 +12,8 @@ TE = makeTE_FrankenLNL_4odors(sessions);
 channels=[]; dFFMode = {}; BL = {}; 
 if sessions(1).SessionData.Settings.GUI.LED1_amp > 0
     channels(end+1) = 1;
-%     dFFMode{end+1} = 'expFit';
-    dFFMode{end+1} = 'simple';    
+    dFFMode{end+1} = 'expFit';
+%     dFFMode{end+1} = 'simple';    
     BL{end + 1} = [1 4];
 end
 
@@ -41,6 +41,8 @@ TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', duration, 'Fs', 20, 
 %% add eye avg if desired/present
 TE.eyeAvg = addCSVToTE(TE, 'duration', duration, 'zeroField', 'Outcome', 'folderPrefix', 'EyeAvg_', 'filePrefix', 'EyeAvg_');%, 'normMode', 'byTrial');
 
+%% add pupil if desired/present
+TE = addPupilometryToTE(TE, 'duration', duration, 'zeroField', 'Outcome', 'frameRate', 60, 'frameRateNew', 20);
 %%
 % basepath = uigetdir;
 basepath = 'Z:\SummaryAnalyses\Franken_LNL_aversive';
@@ -104,7 +106,8 @@ end
 frankenLNL_conditions;
 
 %% raster plots
-PhotometryField = 'Photometry';
+PhotometryField = 'PhotometryExpFit';
+trialNumbering = 'global';
 CLimFactor = 3;
 window = [-4 6];
 for channel = channels
@@ -114,18 +117,19 @@ for channel = channels
     subplot(1,5,1);
     eventRasterFromTE(TE, trialsByType{1}, 'Port1In', 'trialNumbering', 'consecutive',...
         'zeroTimes', TE.Cue2, 'window', window); set(gca, 'XLim', window);         xlabel('time from cue (s)');  title('cued reward');         
+    addStimulusPatch(gca, 
     subplot(1,5,2);
-    phRasterFromTE(TE, trialsByType{1}, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive', 'window', window, 'zeroTimes', TE.Cue2);
+    phRasterFromTE(TE, trialsByType{1}, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', trialNumbering, 'window', window, 'zeroTimes', TE.Cue2);
     title('cued reward'); set(gca, 'XLim', window);
     subplot(1,5,3);
-    phRasterFromTE(TE, trialsByType{2}, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive', 'window', window, 'zeroTimes', TE.Cue2);
+    phRasterFromTE(TE, trialsByType{2}, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', trialNumbering, 'window', window, 'zeroTimes', TE.Cue2);
     title('cued omit');    set(gca, 'XLim', window);
     subplot(1,5,4);
-    phRasterFromTE(TE, trialsByType{5}, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive', 'window', window, 'zeroTimes', TE.Cue2);
+    phRasterFromTE(TE, trialsByType{5}, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', trialNumbering, 'window', window, 'zeroTimes', TE.Cue2);
     title('uncued reward');       set(gca, 'XLim', window);
     
     subplot(1,5,5);
-    eventRasterFromTE(TE, trialsByType{5}, 'Port1In', 'trialNumbering', 'consecutive',...
+    eventRasterFromTE(TE, trialsByType{5}, 'Port1In', 'trialNumbering', trialNumbering,...
         'zeroTimes', TE.Cue2, 'window', window); set(gca, 'XLim', window);         title('uncued reward');     
     if saveOn
         saveas(gcf, fullfile(savepath, saveName), 'fig');
@@ -136,13 +140,13 @@ for channel = channels
     ensureFigure(saveName, 1);
     
     subplot(1,3,1);
-    phRasterFromTE(TE, trialsByType{3}, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive', 'window', window);
+    phRasterFromTE(TE, trialsByType{3}, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', trialNumbering, 'window', window);
     xlabel('time from cue (s)');  title('cued punish');
     subplot(1,3,2);
-    phRasterFromTE(TE, trialsByType{4}, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive', 'window', window);
+    phRasterFromTE(TE, trialsByType{4}, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', trialNumbering, 'window', window);
     xlabel('time from cue (s)');  title('cued ommission');    
     subplot(1,3,3);
-    phRasterFromTE(TE, trialsByType{6}, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', 'consecutive', 'window', window);
+    phRasterFromTE(TE, trialsByType{6}, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', trialNumbering, 'window', window);
     xlabel('time from cue (s)');  title('uncued punish');       
     if saveOn
         saveas(gcf, fullfile(savepath, saveName), 'fig');
@@ -171,7 +175,39 @@ if saveOn
     saveas(gcf, fullfile(savepath, saveName), 'jpeg');
 end
 
+%% pupil rasters
+window = [-4 6];
+saveName = 'Aversive_pupilRasters';
+ensureFigure(saveName, 1); colormap jet;
+% first just get all the data
+nTrials = length(TE.filename);
+[data, XData] = alignedDataWindow(TE, TE.pupil.pupDiameterNorm, true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window);
+% determine the clims
+cmean = nanmean(nanmean(data(:, 1:20*4), 2), 1);
+cstd = nanmean(nanstd(data(:, 1:20*4), 0, 2), 1);
+cLimFactor = 4;
+clims = [cmean - cLimFactor * cstd cmean + cLimFactor * cstd];
+dummy = NaN(size(data));
+subplot(1,3,1);
+thisData = dummy;
+thisData(trialsByType{3}, :) = data(trialsByType{3}, :);
+imagesc(window, [1 nTrials], thisData, clims);
+title('cued shock'); ylabel('trial #');
+subplot(1,3,2);
+thisData = dummy;
+thisData(trialsByType{4}, :) = data(trialsByType{4}, :);
+imagesc(window, [1 nTrials], thisData, clims);
+title('omission'); xlabel('time from odor (s)');
+subplot(1,3,3);
+thisData = dummy;
+thisData(trialsByType{6}, :) = data(trialsByType{6}, :);
+imagesc(window, [1 nTrials], thisData, clims);
+title('uncued shock');
 
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+end
 
 %% averages
 % -3 6

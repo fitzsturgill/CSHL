@@ -9,7 +9,7 @@ function TE = makeTE_FrankenLNL_4odors(sessions)
         sTally(i) = sessions(i).SessionData.nTrials;
     end
     nTrials = sum(sTally);
-    statesToAdd= {'ITI', 'PreCsRecording', 'Cue1', 'Trace1', 'Cue2', 'Trace2', 'Outcome', 'Reward', 'Punish', 'WNoise', 'Neutral', 'PostUsRecording'};
+    statesToAdd= {'ITI', 'PreCsRecording', 'Cue1', 'Trace1', 'Cue2', 'Trace2', 'Outcome', 'Reward', 'Punish', 'WNoise', 'Neutral', 'PostUsRecording', 'Shock'};
 
     %% initialize TE
     TE = struct(...

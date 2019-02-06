@@ -1,30 +1,32 @@
-function [data, xData] = phAlignedWindow(TE, trials, ch, varargin)
-% Fitz Sturgill, 2018
+function [data, xData] = alignedDataWindow(TE, inputData, trials, varargin)
+% Fitz Sturgill 2018,  "generic" version of phAlignedWindow
+
 % returns a photometry data array aligned to zero of size nTotalTrials x
 % maxWindowSamples. Zeros for each and every trial are defined relative to Bpod trial start and may
 % be supplied as vectors or cell arrays of length nTotalTrials (in which case you can select first
 % or last element to which to align)
 % totalTrials -> length of TE.filename not count of subset of trials passed
 % via 'trials' argument
-% Photometry.settings.uniformOutput is a flag that indicates whether
-% photometry data is stored in matrix or cell array
     defaults = {...
-        'PhotometryField', 'Photometry';...
-        'FluorDataField', 'dFF';...
         'zeroTimes', [];... % scalar or length TE-nTrials cell array or vector containing zero times relative to Bpod trial start        
         'window', [];... % averaging window relative to zero time/ alignment point, e.g. [-3 2] or [cellfun(@(x) x(1), TE.stateBefore) cellfun(@(x) x(end), TE.stateAfter)
-        'referenceFromEnd', 0;... % relevent ONLY when zeroTimes are supplied as a cell array (e.g. if you want to align to the beginning or end of a bpod state)        
+        'referenceFromEnd', 0;... % relevent ONLY when zeroTimes are supplied as a cell array (e.g. if you want to align to the beginning or end of a bpod state)
+        'Fs', 20;...
+        'startTimes', [];...
         };
     [s, ~] = parse_args(defaults, varargin{:});
 
 %% argument checking    
     assert(~isempty(s.window), 'window is required parameter');
     assert(~isempty(s.zeroTimes), 'zeroTimes is required parameter');
-    assert(isfield(TE, s.PhotometryField), [s.PhotometryField ' field does not exist']);
-    
+    assert(~isempty(s.startTimes), 'data start times (in Bpod time) is a required parameter');
 %% local variables    
-    Photometry = TE.(s.PhotometryField);   
-    Fs = Photometry.sampleRate;
+    if iscell(inputData)
+        uniformOutput = 0;
+    else
+        uniformOutput = 1;
+    end
+    Fs = s.Fs;
 
     if islogical(trials)
         trials = find(trials);
@@ -45,14 +47,13 @@ function [data, xData] = phAlignedWindow(TE, trials, ch, varargin)
     
     zeroTimes = zeroTimes(:); 
     assert(length(zeroTimes) == totalTrials, 'zeroTimes for entire TE (not just the subset of trials) must be supplied');
-        
+    
     if size(s.window, 1) == 1
         s.window = repmat(s.window, totalTrials, 1);
     end
     
-    zeroTimes = zeroTimes - TE.Photometry.startTime; % redefine zero times relative to photometry start
+    zeroTimes = zeroTimes - s.startTimes; % redefine zero times relative to photometry start
     
-
 %% initalize data array padded to maximum window size
     samplesPerWindow = ceil((max(s.window(:,2)) - min(s.window(:,1))) * Fs); 
     % NOTE! zeroPoint can be negative or > nSamples if window is DOESN'T contain zero.
@@ -67,10 +68,10 @@ function [data, xData] = phAlignedWindow(TE, trials, ch, varargin)
     for counter = 1:nTrials
         trial = trials(counter);
         zeroTime = zeroTimes(trial);
-        if Photometry.settings.uniformOutput
-            trialData = Photometry.data(ch).(s.FluorDataField)(trial, :);
+        if uniformOutput
+            trialData = inputData(trial, :);
         else
-            trialData = Photometry.data(ch).(s.FluorDataField){trial};
+            trialData = inputData{trial};
         end
         nSamples = length(trialData);
         acqDuration = nSamples / Fs;
