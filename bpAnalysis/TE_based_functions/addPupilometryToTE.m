@@ -188,9 +188,9 @@ function TE = addPupilometryToTE(TE, varargin)
             error('*** spurious or missing pupil.mat files detected, difference of %d files for %s you may need to run  bpCleanAndVerifyBonsai ***', numFileDifference, sessionname);
         end        
         
-        if any(dmDelta < 2)
-            error('there are short ITI pupil files for %s that you need to delete or deal with possibly using bpCleanAndVerifyBonsai', sessionname);
-        end 
+%         if any(dmDelta < 2)
+%             error('there are short ITI pupil files for %s that you need to delete or deal with possibly using bpCleanAndVerifyBonsai', sessionname);
+%         end 
         
         if maxRsq < 0.9
             warning('*** low max Rsq = %.2f for session %s  *** \n', maxRsq, sessionname);

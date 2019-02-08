@@ -41,7 +41,9 @@ for trial = 1:SessionData.nTrials
 %% Determine demodulation mode:    
 %% case 1: reference data saved (prior to 6/2017)
         if trial == 1
+            chIx = []; % figure out channel index below
             if ~isstruct(SessionData.NidaqData{1,2}) % figure this out from the first channel
+                chIx = fCh; % for old style, you couldn't just acquire channel 2 (channel 1 was acquired too I believe, just didn't have useful data)
                 if isfield(SessionData.TrialSettings(1,1), 'nidaq') % new style data acq parameters in nidaq field 
                     modF = SessionData.TrialSettings(1,1).nidaq.(['LED' num2str(fCh) '_f']); % this could change (I should store modF in settings not trialsettings)        
                 else % old style
@@ -50,6 +52,9 @@ for trial = 1:SessionData.nTrials
                 demodMode = 1;
             else
 %% case 2: reference data parameters saved as structure for each trial (introduced ~6/2017)
+                refSettings = SessionData.NidaqData{trial, 2};
+                % figure out channel index
+                chIx = find(refSettings.channelsOn == fCh);
                 modF = [];
                 demodMode = 2;
                 % find maximum LED amplitude on a given reference channel for force mode (where even if
@@ -65,7 +70,8 @@ for trial = 1:SessionData.nTrials
         end
 %% if data acq hiccupped and somehow didn't acquire during trial, replace with NaNs
         try
-            rawData = SessionData.NidaqData{trial,1}(:,fCh);
+            assert(length(chIx) == 1); % channel should be present, otherwise throw error to fill with NaNs
+            rawData = SessionData.NidaqData{trial,1}(:,chIx);
         catch 
             SessionData.demod{trial,fCh} = NaN(size(rawData)); % rawData from previous loop iteration
             SessionData.NidaqData{trial, 1}(:,fCh) = NaN(size(rawData));

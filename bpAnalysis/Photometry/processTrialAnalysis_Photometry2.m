@@ -40,14 +40,22 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         s.refChannels = s.channels; % use same reference by default
     end   
     
-    % find total number of trials across selected sessions and size of
-    % nidaq data
-    scounter = zeros(size(sessions));
+    % find total number of trials across selected sessions and maximum size of
+    % nidaq data per session
+    scounter = zeros(size(sessions));    
+    maxSamplesPerSession = zeros(size(sessions));
     for i = 1:length(sessions)
         scounter(i) = sessions(i).SessionData.nTrials;
+        maxSamplesPerSession(i) = ceil(max(cellfun(@(x) size(x, 1), sessions(i).SessionData.NidaqData(:,1))) / s.downsample);
     end
+
     totalTrials = sum(scounter);    
-    
+
+    try
+        sampleRate = sessions(1).SessionData.TrialSettings(1).nidaq.sample_rate;
+    catch
+        sampleRate = 6100; % very early sessions don't have sample rate in settings
+    end
     if s.uniformOutput % different sized trials are padded with NaNs, aligned to photometry start
         % determine maximum number of samples
         maxDuration = 0;
@@ -56,13 +64,9 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                 maxDuration = max(maxDuration, sessions(scounter).SessionData.TrialSettings(counter).nidaq.duration);
             end
         end
-        try
-            sampleRate = sessions(1).SessionData.TrialSettings(1).nidaq.sample_rate;
-        catch
-            sampleRate = 6100; % very early sessions don't have sample rate in settings
-        end
+
         originalSamples = maxDuration * sessions(1).SessionData.TrialSettings(1).nidaq.sample_rate;                            
-        newSamples = ceil(originalSamples/s.downsample);
+        expectedSamples = ceil(originalSamples/s.downsample);
         if rem(sampleRate, s.downsample)
             error('downsample must be a factor of sampleRate');
         end
@@ -70,10 +74,13 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         sampleRate = sampleRate / s.downsample; % downsample must be a factor of sampleRate      
         zeroTime = sessions(1).SessionData.RawEvents.Trial{1}.States.(s.zeroField)(1) - ...
             sessions(1).SessionData.RawEvents.Trial{1}.States.(s.startField)(1);
-        xData = linspace(-zeroTime, ((newSamples - 1) / sampleRate) - zeroTime, newSamples);    
-    else % unfinished, different sized trials are stored in cell arrays
+        xData = linspace(-zeroTime, ((expectedSamples - 1) / sampleRate) - zeroTime, expectedSamples);    
+    else % unfinished, different sized trials are stored in cell arrays, no padding occurs
         originalSamples = [];
-        newSamples = [];
+        expectedSamples = [];
+        sampleRate = sampleRate / s.downsample; % downsample must be a factor of sampleRate      
+
+        xData = [];
     end
      
 
@@ -88,10 +95,10 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     );
     if s.uniformOutput % different sized trials are padded with NaNs, aligned to photometry start
         data = struct(...
-            'dFF', NaN(totalTrials, newSamples),... % deltaF/F
-            'dF', NaN(totalTrials, newSamples),... % deltaF            
-            'ZS', NaN(totalTrials, newSamples),... % deltaF/F            
-            'raw', NaN(totalTrials, newSamples),... %
+            'dFF', NaN(totalTrials, expectedSamples),... % deltaF/F
+            'dF', NaN(totalTrials, expectedSamples),... % deltaF            
+            'ZS', NaN(totalTrials, expectedSamples),... % deltaF/F            
+            'raw', NaN(totalTrials, expectedSamples),... %
             'blF', NaN(totalTrials, 1),...
             'blF_raw', NaN(totalTrials, 1),...
             'blF_fit', NaN(totalTrials, 1),...
@@ -138,34 +145,60 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         end
         startTimes = cellfun(@(x) x.States.(s.startField)(1), sessions(si).SessionData.RawEvents.Trial); % take the beginning time stamp for the startField-specified Bpod state
         nTrials = SessionData.nTrials;
-        allData = NaN(nTrials, newSamples);   
-%         modData = NaN(nTrials, newSamples);  % raw data that has not been demodulated   
+        if s.uniformOutput
+            allData = NaN(nTrials, expectedSamples);   
+        else
+            allData = NaN(nTrials, maxSamplesPerSession(si));
+            sampleCount = zeros(nTrials, 1);
+        end
+
 
         for chCounter = 1:length(s.channels)
             fCh = s.channels(chCounter);
             blMode = s.blMode{chCounter};
             dFFMode = s.dFFMode{chCounter};
+%             blF_fit = NaN(nTrials, 1);
+%             blF_raw = NaN(nTrials, 1);
+
+
+            
             for trial = 1:nTrials
                 trialData = SessionData.demod{trial, fCh}'; % convert to row vector
-                %% in case nidaq acquisition ended early for some reason, pad with NaNs, this should be fixed as of 8/2016
-                downData = decimate(trialData, s.downsample);
-                if length(downData) < newSamples
-                    downData = [downData NaN(1, newSamples - length(downData))];
-                elseif length(downData) > newSamples
-                    downData = downData(1:newSamples);
+
+                if isempty(trialData)
+                    warning('do something for empty trials here, maybe continue?');
                 end
-                allData(trial, :) = downData;
+               
+                downData = decimate(trialData, s.downsample);
+                downSamples = length(downData); % replace nSamples
+                
+                % baseline fluor.
+                blStartP = min(bpX2pnt(s.baseline{chCounter}(1), sampleRate), downSamples);
+                blEndP = min(bpX2pnt(s.baseline{chCounter}(2), sampleRate), downSamples); 
+                expFitStartP = min(bpX2pnt(s.expFitBegin{chCounter}, sampleRate), downSamples);
+                
+                if s.uniformOutput
+                % in case nidaq acquisition ended early for some reason, pad with NaNs, this should be fixed as of 8/2016                
+                    if downSamples < expectedSamples
+                        downData = [downData NaN(1, expectedSamples - downSamples)];
+                    elseif downSamples > expectedSamples
+                        downData = downData(1:expectedSamples);
+                    end               
+                    allData(trial, :) = downData;
+                else
+                    allData(trial, 1:downSamples) = downData;
+                    sampleCount(trial) = length(downData);
+                end
             end
 
-            % baseline fluor.
-            blStartP = bpX2pnt(s.baseline{chCounter}(1), sampleRate);
-            blEndP = bpX2pnt(s.baseline{chCounter}(2), sampleRate); 
-            expFitStartP = bpX2pnt(s.expFitBegin{chCounter}, sampleRate);
+
             
             
             % always perform session bleaching fit and store it for later
             % use
+
             blF_fit = nanmean(allData(:, expFitStartP:blEndP), 2); % take mean across time, not trials                   
+
             fo = fitoptions('Method', 'NonlinearLeastSquares',...
                 'Upper', [Inf range(blF_fit) 0 range(blF_fit) 0],...
                 'Lower', [0 0 -1 0 -1],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
@@ -189,6 +222,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             blF_fit = fitobject.a + fitobject.b * exp(fitobject.c * x) + fitobject.d * exp(fitobject.e * x);   
             
             % apply the selected baseline mode
+
             switch blMode
                 case 'byTrial'
                     blF = nanmean(allData(:, blStartP:blEndP), 2); % take mean across time, not trials
@@ -203,6 +237,8 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                     blF_raw = nanmean(allData(:, blStartP:blEndP), 2);
                 otherwise
             end
+
+                
 %%        commented code below is snippet to show what different coefficients do to an exponential
 % note! c in the example below is the inverse of the time constant, a is
 % the asymptote at x = Inf, a + b is the y intercept
@@ -254,13 +290,28 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                     blF = bsxfun(@plus, blF, trialFit);
                     dF = allData - blF;
                 otherwise
-            end            
-            Photometry.data(fCh).dFF(tcounter:tcounter+nTrials - 1, :) = dF ./ blF; 
-            Photometry.data(fCh).dF(tcounter:tcounter+nTrials - 1, :) = dF;
-            sd = nanmean(nanstd(dF(:,blStartP:blEndP), 0, 2));
-            Photometry.data(fCh).ZS(tcounter:tcounter+nTrials - 1, :) = dF / sd; % z-scored
-            Photometry.data(fCh).raw(tcounter:tcounter+nTrials - 1, :) = allData;                  
-            Photometry.data(fCh).blF(tcounter:tcounter+nTrials - 1, 1) = mean(blF, 2); 
+            end
+            if s.uniformOutput
+                Photometry.data(fCh).dFF(tcounter:tcounter+nTrials - 1, :) = dF ./ blF; 
+                Photometry.data(fCh).dF(tcounter:tcounter+nTrials - 1, :) = dF;
+                sd = nanmean(nanstd(dF(:,blStartP:blEndP), 0, 2));
+                Photometry.data(fCh).ZS(tcounter:tcounter+nTrials - 1, :) = dF / sd; % z-scored
+                Photometry.data(fCh).raw(tcounter:tcounter+nTrials - 1, :) = allData;                  
+                Photometry.data(fCh).blF(tcounter:tcounter+nTrials - 1, 1) = mean(blF, 2); 
+
+            else
+                dFF = dF ./ blF;
+                sd = nanmean(nanstd(dF(:,blStartP:blEndP), 0, 2));
+                ZS = dF / sd;
+                blF_vector = nanmean(blF, 2);
+                for trial = 1:nTrials
+                    Photometry.data(fCh).dFF{tcounter + trial - 1} = dFF(trial, 1:sampleCount(trial)); 
+                    Photometry.data(fCh).dF{tcounter + trial - 1} = dF(trial, 1:sampleCount(trial));
+                    Photometry.data(fCh).ZS{tcounter + trial - 1} = ZS(trial, 1:sampleCount(trial)); % z-scored
+                    Photometry.data(fCh).raw{tcounter + trial - 1} = allData(trial, 1:sampleCount(trial));                  
+                end
+            end
+            Photometry.data(fCh).blF(tcounter:tcounter+nTrials - 1, 1) = nanmean(blF, 2);                 
             Photometry.data(fCh).blF_raw(tcounter:tcounter+nTrials - 1, 1) = blF_raw;         
             Photometry.data(fCh).blF_fit(tcounter:tcounter+nTrials - 1, 1) = blF_fit;
             Photometry.data(fCh).ch = fCh;

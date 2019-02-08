@@ -45,7 +45,9 @@ TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', acqdur, 'Fs', 20, 's
 %  [wheelY_new, wheelTimes_new] = resample(wheelY, wheelTimes, 20, 'linear');
 folderSuffix = ''; % or enter folder suffix on command line
 %%
-TE = addPupilometryToTE(TE, 'duration', acqdur, 'zeroField', 'Baseline', 'startField', 'Baseline', 'frameRate', 60, 'frameRateNew', 20, 'folderSuffix', folderSuffix, 'numberingOffset', 0);
+folderSuffix = '';
+acqdur = ceil(range(TE.Photometry.xData));
+TE = addPupilometryToTE(TE, 'duration', acqdur, 'zeroField', 'Baseline', 'startField', 'Baseline', 'frameRate', 60, 'frameRateNew', 20, 'folderSuffix', folderSuffix, 'numberingOffset', -1);
 %%
 TE.Whisk = addWhiskingToTE(TE, 'duration', acqdur, 'zeroField', 'Baseline', 'startField', 'Baseline', 'sampleRate', 60, 'sampleRateNew', 20, 'folderSuffix', folderSuffix, 'numberingOffset', 0);
 %% Now saved in directory according to first session filename

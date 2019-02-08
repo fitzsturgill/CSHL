@@ -11,7 +11,7 @@ function bpCleanAndVerifyBonsai(readonly)
 %     Also verifies that the number of Pupil.mat, Pupil.avi, Whisk.avi, and
 %     Whisk.diff files matches the number of trials in the Bpod session
 %     data
-    shortestITI = 10; 
+%     shortestITI = 10; 
    
     sessions = bpLoadSessions; % load the session file
     if isempty(sessions)
@@ -22,8 +22,10 @@ function bpCleanAndVerifyBonsai(readonly)
         spath = sessions(scounter).filepath;
         sname = sessions(scounter).filename;
         nTrials = sessions(scounter).SessionData.nTrials;
+        shortestITI = min(cellfun(@(x) x.duration(1), sessions.SessionData.NidaqData(:,2)));
         teDelta = diff(sessions(scounter).SessionData.TrialStartTimestamp);
-        fileTypes = {'Pupil_', '*upil_*.avi';... 
+        fileTypes = {'Pupil_', '*upil_*.avi';...
+                    'Pupil_', '*upil_*.mat';...
                     'Whisk_', '*hisk_*.avi';...
                     'WhiskDiff_', '*hiskDiff_*.csv';...
                     'EyeAvg_', '*yeAvg_*.csv';...

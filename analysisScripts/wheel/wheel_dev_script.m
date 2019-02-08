@@ -57,7 +57,7 @@ iri_post = [diff(ts_abs); Inf];
 
 [~, I] = sort(iri_pre);
 iri_pre_sorted = iri_pre(I);
-if ismember(TE.Photometry.settings.channels, 2)
+if ismember(2, TE.Photometry.settings.channels)
     rewards_dat_sorted = rewards_dat(I, :);
 end
 rewards_chat_sorted = rewards_chat(I, :);
@@ -66,12 +66,12 @@ ensureFigure('random_rewards', 1);
 % subplot(3,2,1); imshow(rewards_chat_sorted, [min(min(rewards_chat_sorted)), max(max(rewards_chat_sorted))]); colormap('jet'); title('chat'); ylabel('sorted');
 % subplot(3,2,2); imshow(rewards_dat_sorted, [min(min(rewards_dat_sorted)), max(max(rewards_dat_sorted))]); colormap('jet'); title('dat');
 subplot(3,2,1); image(rewards_chat, 'XData', window, 'CDataMapping', 'Scaled'); set(gca, 'CLim', [min(min(rewards_chat_sorted)), max(max(rewards_chat_sorted))]); colormap('jet');  title('ChAT');
-if ismember(TE.Photometry.settings.channels, 2)
+if ismember(2, TE.Photometry.settings.channels)
     subplot(3,2,2); image(rewards_dat, 'XData', window,  'CDataMapping', 'Scaled'); set(gca, 'CLim', [min(min(rewards_dat_sorted)), max(max(rewards_dat_sorted))]); colormap('jet');    title('DAT');
 end
 xdata = linspace(window(1), window(2), size(rewards_chat, 2));
 subplot(3,2,3); plot(xdata, nanmean(rewards_chat));
-if ismember(TE.Photometry.settings.channels, 2)
+if ismember(2, TE.Photometry.settings.channels)
     subplot(3,2,4); plot(xdata, nanmean(rewards_dat));
 end
 subplot(3,2,5); triggeredEventRasterFromTE(TE, 'Port1In', TE.Reward);
@@ -366,7 +366,7 @@ end
 
 channel = 1;
 ensureFigure(['annotated_' num2str(channel)], 1);
-for trial = 1:12
+for trial = 1:10
 
     subplot(6,3,trial);
     trial = trial + 18 * 0;

@@ -42,7 +42,7 @@ TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', duration, 'Fs', 20, 
 TE.eyeAvg = addCSVToTE(TE, 'duration', duration, 'zeroField', 'Outcome', 'folderPrefix', 'EyeAvg_', 'filePrefix', 'EyeAvg_');%, 'normMode', 'byTrial');
 
 %% add pupil if desired/present
-TE = addPupilometryToTE(TE, 'duration', duration, 'zeroField', 'Outcome', 'frameRate', 60, 'frameRateNew', 20);
+TE = addPupilometryToTE(TE, 'duration', duration, 'zeroField', 'Outcome', 'frameRate', 60, 'frameRateNew', 20, 'normMode', 'byTrial');
 %%
 % basepath = uigetdir;
 basepath = 'Z:\SummaryAnalyses\Franken_LNL_aversive';
@@ -106,7 +106,7 @@ end
 frankenLNL_conditions;
 
 %% raster plots
-PhotometryField = 'PhotometryExpFit';
+PhotometryField = 'Photometry';
 trialNumbering = 'global';
 CLimFactor = 3;
 window = [-4 6];
@@ -117,7 +117,7 @@ for channel = channels
     subplot(1,5,1);
     eventRasterFromTE(TE, trialsByType{1}, 'Port1In', 'trialNumbering', 'consecutive',...
         'zeroTimes', TE.Cue2, 'window', window); set(gca, 'XLim', window);         xlabel('time from cue (s)');  title('cued reward');         
-    addStimulusPatch(gca, 
+    addStimulusPatch(gca, [0 1]);
     subplot(1,5,2);
     phRasterFromTE(TE, trialsByType{1}, channel, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', trialNumbering, 'window', window, 'zeroTimes', TE.Cue2);
     title('cued reward'); set(gca, 'XLim', window);
@@ -297,6 +297,26 @@ if saveOn
     saveas(gcf, fullfile(savepath, saveName), 'jpeg');
 end
 
+%% pupil averages
+saveName = 'Aversive_pupilAverages';
+ensureFigure(saveName, 1);
+xData = TE.pupil.xData;
+pupData = TE.pupil.pupAreaNorm;
+pupData(isnan(pupData)) = 0;
+axes; hold on; grid on;
+boundedline(xData(:), [mean(pupData(trialsByType{3}, :)); mean(pupData(trialsByType{4}, :)); mean(pupData(trialsByType{6}, :))]',...
+    permute([std(pupData(trialsByType{3}, :)) ./ sqrt(sum(trialsByType{3})); std(pupData(trialsByType{4}, :)) ./ sqrt(sum(trialsByType{3})); std(pupData(trialsByType{6}, :)) ./ sqrt(sum(trialsByType{3}))], [2 3 1]),...
+    'cmap', [1 0 0; 0 0 0; 1 0 1]);
+
+title('pupil avg');
+xlabel('time from punishment'); ylabel('Velocity');
+set(gca, 'XLim', [-4 3]);
+legend('cued', 'omit', 'uncued'); 
+
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+end
 
 
 
