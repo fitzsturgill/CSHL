@@ -38,7 +38,7 @@ function TE = makeTE_FrankenLNL_4odors(sessions)
         );
     
     %% updated for new version of FrankenLNL with tone and light options in blocks           
-    additionalFields = {'CS1_tone', 'CS2_tone', 'CS1_light', 'CS2_light'}; 
+    additionalFields = {'CS1_tone', 'CS2_tone', 'CS1_light', 'CS2_light', 'ShockCurrent'}; 
     counter = 1;
     while length(additionalFields) >= counter
         if isfield(sessions(1).SessionData, additionalFields{counter})

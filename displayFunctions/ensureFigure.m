@@ -1,8 +1,8 @@
 function h = ensureFigure(figName, erase)
-
-    % by default, don't erase existing figure
+    % from Alex...
+    % by default, do erase existing figure
     if nargin < 2
-        erase = 0;
+        erase = 1;
     end
     
     figs = findobj('Type', 'figure');

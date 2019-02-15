@@ -35,8 +35,9 @@ end
 SessionData.demod = cell(SessionData.nTrials, 2);
 
 
-for trial = 1:SessionData.nTrials
-    for counter = 1:length(s.channels)
+
+for counter = 1:length(s.channels)
+    for trial = 1:SessionData.nTrials
         fCh = s.channels(counter);
 %% Determine demodulation mode:    
 %% case 1: reference data saved (prior to 6/2017)

@@ -1,6 +1,6 @@
-window = [-4 6];
-saveName = 'Aversive_pupilRasters';
-ensureFigure(saveName, 1); colormap jet;
-subplot(1,3,1);
-[CData, XData] = alignedDataWindow(TE, TE.pupil.pupDiameterNorm, true(length(TE.filename), 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Shock, 'window', [-6 4]);
-imagesc(CData);
+
+ensureFigure('test', 1);
+
+for counter = 1:6
+    subplot(3,2,counter); plot(TE.Photometry.xData', [TE.Photometry.data(1).raw(counter,:)'  TE.Photometry.data(2).raw(counter,:)']);
+end

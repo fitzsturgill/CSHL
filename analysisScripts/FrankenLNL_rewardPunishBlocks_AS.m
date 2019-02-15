@@ -36,12 +36,15 @@ duration = length(TE.Photometry.xData) / TE.Photometry.sampleRate;
 
 
 %% add wheel
-TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', duration, 'Fs', 20, 'startField', 'Start');
+duration = length(TE.Photometry.xData) / TE.Photometry.sampleRate;
+TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', duration, 'Fs', 20, 'startField', 'PreCsRecording', 'zeroField', 'Cue2');
 
 %% add eye avg if desired/present
+duration = length(TE.Photometry.xData) / TE.Photometry.sampleRate;
 TE.eyeAvg = addCSVToTE(TE, 'duration', duration, 'zeroField', 'Outcome', 'folderPrefix', 'EyeAvg_', 'filePrefix', 'EyeAvg_');%, 'normMode', 'byTrial');
 
 %% add pupil if desired/present
+duration = length(TE.Photometry.xData) / TE.Photometry.sampleRate;
 TE = addPupilometryToTE(TE, 'duration', duration, 'zeroField', 'Outcome', 'frameRate', 60, 'frameRateNew', 20, 'normMode', 'byTrial');
 %%
 % basepath = uigetdir;
@@ -60,6 +63,11 @@ ensureDirectory(savepath);
 usZeros = cellfun(@(x,y,z,a) max(x(1), max(y(1), max(z(1), a(1)))), TE.Reward, TE.Punish, TE.WNoise, TE.Neutral); %'Reward', 'Punish', 'WNoise', 'Neutral'
 TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], usZeros);
 truncateSessionsFromTE(TE, 'init', 'usLicks', filterTE(TE, 'trialType', 1));
+
+%% also reject shocks under 200uAmps if present
+if isfield(TE, 'ShockCurrent')
+    TE.reject = TE.reject | ((abs(TE.ShockCurrent) < 200) & (strcmp(TE.ReinforcementOutcome, 'Shock')));
+end
 %%
 if saveOn
     save(fullfile(savepath, 'TE.mat'), 'TE');
@@ -107,7 +115,7 @@ frankenLNL_conditions;
 
 %% raster plots
 PhotometryField = 'Photometry';
-trialNumbering = 'global';
+trialNumbering = 'consecutive';
 CLimFactor = 3;
 window = [-4 6];
 for channel = channels
@@ -209,6 +217,184 @@ if saveOn
     saveas(gcf, fullfile(savepath, saveName), 'jpeg');
 end
 
+
+saveName = 'Appetitive_pupilRasters';
+ensureFigure(saveName, 1); colormap jet;
+% first just get all the data
+nTrials = length(TE.filename);
+[data, XData] = alignedDataWindow(TE, TE.pupil.pupDiameterNorm, true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window);
+% determine the clims
+cmean = nanmean(nanmean(data(:, 1:20*4), 2), 1);
+cstd = nanmean(nanstd(data(:, 1:20*4), 0, 2), 1);
+cLimFactor = 4;
+clims = [cmean - cLimFactor * cstd cmean + cLimFactor * cstd];
+dummy = NaN(size(data));
+subplot(1,3,1);
+thisData = dummy;
+thisData(trialsByType{1}, :) = data(trialsByType{1}, :);
+imagesc(window, [1 nTrials], thisData, clims);
+title('cued reward'); ylabel('trial #');
+subplot(1,3,2);
+thisData = dummy;
+thisData(trialsByType{2}, :) = data(trialsByType{2}, :);
+imagesc(window, [1 nTrials], thisData, clims);
+title('omission'); xlabel('time from odor (s)');
+subplot(1,3,3);
+thisData = dummy;
+thisData(trialsByType{5}, :) = data(trialsByType{5}, :);
+imagesc(window, [1 nTrials], thisData, clims);
+title('uncued reward');
+
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+end
+
+%% pupil rasters, consecutive numbering
+window = [-4 6];
+saveName = 'Aversive_pupilRasters';
+ensureFigure(saveName, 1); colormap parula;
+% dataField = 'pupDiameterNorm';
+dataField = 'frameAvgNorm';
+% first just get all the data
+nTrials = length(TE.filename);
+[data, XData] = alignedDataWindow(TE, TE.pupil.(dataField), true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window);
+% determine the clims
+cmean = nanmean(nanmean(data(:, 1:20*4), 2), 1);
+cstd = nanmean(nanstd(data(:, 1:20*4), 0, 2), 1);
+cLimFactor = 4;
+clims = [cmean - cLimFactor * cstd cmean + cLimFactor * cstd];
+
+subplot(1,3,1);
+
+thisData = data(trialsByType{3}, :);
+imagesc(window, [1 sum(trialsByType{3})], thisData, clims);
+sessionBreaks = find(diff(TE.sessionIndex(trialsByType{3})))';            
+line(repmat(window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
+title('cued shock'); ylabel('trial #');
+subplot(1,3,2);
+thisData = data(trialsByType{4}, :);
+imagesc(window, [1 sum(trialsByType{4})], thisData, clims);
+sessionBreaks = find(diff(TE.sessionIndex(trialsByType{4})))';            
+line(repmat(window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
+title('omission'); xlabel('time from odor (s)');
+subplot(1,3,3);
+
+thisData = data(trialsByType{6}, :);
+imagesc(window, [1 sum(trialsByType{6})], thisData, clims);
+sessionBreaks = find(diff(TE.sessionIndex(trialsByType{6})))';            
+line(repmat(window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
+title('uncued shock');
+
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+end
+
+
+saveName = 'Appetitive_pupilRasters';
+ensureFigure(saveName, 1); colormap jet;
+% first just get all the data
+
+
+subplot(1,3,1);
+thisData = data(trialsByType{1}, :);
+imagesc(window, [1 nTrials], thisData, clims);
+title('cued reward'); ylabel('trial #');
+subplot(1,3,2);
+thisData = data(trialsByType{2}, :);
+imagesc(window, [1 nTrials], thisData, clims);
+title('omission'); xlabel('time from odor (s)');
+subplot(1,3,3);
+thisData = data(trialsByType{5}, :);
+imagesc(window, [1 nTrials], thisData, clims);
+title('uncued reward');
+
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+end
+
+%% aversive wheel raster
+
+window = [-4 6];
+saveName = 'Aversive_wheelRaster';
+ensureFigure(saveName, 1); colormap parula;
+% first just get all the data
+nTrials = length(TE.filename);
+[data, XData] = alignedDataWindow(TE, TE.Wheel.data.V, true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window);
+% determine the clims
+cmean = nanmean(nanmean(data(:, 1:20*4), 2), 1);
+cstd = nanmean(nanstd(data(:, 1:20*4), 0, 2), 1);
+cLimFactor = 20;
+clims = [cmean - cLimFactor * cstd cmean + cLimFactor * cstd];
+clims = [0 20];
+
+subplot(1,3,1);
+thisData = data(trialsByType{3}, :);
+imagesc(window, [1 sum(trialsByType{3})], thisData, clims);
+sessionBreaks = find(diff(TE.sessionIndex(trialsByType{3})))';            
+line(repmat(window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
+title('cued shock'); ylabel('trial #');
+
+subplot(1,3,2);
+thisData = data(trialsByType{4}, :);
+imagesc(window, [1 sum(trialsByType{4})], thisData, clims);
+sessionBreaks = find(diff(TE.sessionIndex(trialsByType{4})))';            
+line(repmat(window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
+title('omission'); xlabel('time from odor (s)');
+
+subplot(1,3,3);
+thisData = data(trialsByType{6}, :);
+imagesc(window, [1 sum(trialsByType{6})], thisData, clims);
+sessionBreaks = find(diff(TE.sessionIndex(trialsByType{6})))';            
+line(repmat(window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
+title('uncued shock');
+
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+end
+
+%% pupil rasters, consecutive numbering
+window = [-4 6];
+saveName = 'Aversive_pupilRasters';
+ensureFigure(saveName, 1); colormap parula;
+% first just get all the data
+nTrials = length(TE.filename);
+[data, XData] = alignedDataWindow(TE, TE.pupil.pupDiameterNorm, true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window);
+% determine the clims
+cmean = nanmean(nanmean(data(:, 1:20*4), 2), 1);
+cstd = nanmean(nanstd(data(:, 1:20*4), 0, 2), 1);
+cLimFactor = 4;
+clims = [cmean - cLimFactor * cstd cmean + cLimFactor * cstd];
+
+subplot(1,3,1);
+thisData = data(trialsByType{3}, :);
+imagesc(window, [1 sum(trialsByType{3})], thisData, clims);
+sessionBreaks = find(diff(TE.sessionIndex(trialsByType{3})))';            
+line(repmat(window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
+title('cued shock'); ylabel('trial #');
+
+subplot(1,3,2);
+thisData = data(trialsByType{4}, :);
+imagesc(window, [1 sum(trialsByType{4})], thisData, clims);
+sessionBreaks = find(diff(TE.sessionIndex(trialsByType{4})))';            
+line(repmat(window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
+title('omission'); xlabel('time from odor (s)');
+
+subplot(1,3,3);
+thisData = data(trialsByType{6}, :);
+imagesc(window, [1 sum(trialsByType{6})], thisData, clims);
+sessionBreaks = find(diff(TE.sessionIndex(trialsByType{6})))';            
+line(repmat(window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
+title('uncued shock');
+
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+end
+
 %% averages
 % -3 6
 window = [-1 4];
@@ -279,12 +465,14 @@ end
 %% wheel averages
 saveName = 'Aversive_wheelAverages';
 ensureFigure(saveName, 1);
-xData = TE.eyeAvg.xData;
+xData = TE.Wheel.xData;
 wheelData = TE.Wheel.data.V;
 wheelData(isnan(wheelData)) = 0;
 axes; hold on; grid on;
-boundedline(xData(:), [mean(wheelData(trialsByType{3}, :)); mean(wheelData(trialsByType{4}, :)); mean(wheelData(trialsByType{6}, :))]',...
-    permute([std(wheelData(trialsByType{3}, :)) ./ sqrt(sum(trialsByType{3})); std(wheelData(trialsByType{4}, :)) ./ sqrt(sum(trialsByType{3})); std(wheelData(trialsByType{6}, :)) ./ sqrt(sum(trialsByType{3}))], [2 3 1]),...
+boundedline(xData(:), [nanmean(wheelData(trialsByType{3}, :)); nanmean(wheelData(trialsByType{4}, :)); nanmean(wheelData(trialsByType{6}, :))]',...
+    permute([nanstd(wheelData(trialsByType{3}, :)) ./ sqrt(sum(isfinite(wheelData(trialsByType{3},:)), 1));...
+    nanstd(wheelData(trialsByType{4}, :)) ./ sqrt(sum(isfinite(wheelData(trialsByType{4},:)), 1));...
+    nanstd(wheelData(trialsByType{6}, :)) ./ sqrt(sum(isfinite(wheelData(trialsByType{6},:)), 1))], [2 3 1]),...
     'cmap', [1 0 0; 0 0 0; 1 0 1]);
 
 title('wheel avg');
@@ -301,15 +489,42 @@ end
 saveName = 'Aversive_pupilAverages';
 ensureFigure(saveName, 1);
 xData = TE.pupil.xData;
-pupData = TE.pupil.pupAreaNorm;
-pupData(isnan(pupData)) = 0;
+pupData = TE.pupil.pupDiameterNorm;
 axes; hold on; grid on;
-boundedline(xData(:), [mean(pupData(trialsByType{3}, :)); mean(pupData(trialsByType{4}, :)); mean(pupData(trialsByType{6}, :))]',...
-    permute([std(pupData(trialsByType{3}, :)) ./ sqrt(sum(trialsByType{3})); std(pupData(trialsByType{4}, :)) ./ sqrt(sum(trialsByType{3})); std(pupData(trialsByType{6}, :)) ./ sqrt(sum(trialsByType{3}))], [2 3 1]),...
+% boundedline(xData(:), [mean(pupData(trialsByType{3}, :)); mean(pupData(trialsByType{4}, :)); mean(pupData(trialsByType{6}, :))]',...
+%     permute([std(pupData(trialsByType{3}, :)) ./ sqrt(sum(trialsByType{3})); std(pupData(trialsByType{4}, :)) ./ sqrt(sum(trialsByType{4})); std(pupData(trialsByType{6}, :)) ./ sqrt(sum(trialsByType{6}))], [2 3 1]),...
+%     'cmap', [1 0 0; 0 0 0; 1 0 1]);
+
+boundedline(xData(:), [nanmean(pupData(trialsByType{3}, :)); nanmean(pupData(trialsByType{4}, :)); nanmean(pupData(trialsByType{6}, :))]',...
+    permute([nanstd(pupData(trialsByType{3}, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{3},:)), 1));...
+    nanstd(pupData(trialsByType{4}, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{4},:)), 1));...
+    nanstd(pupData(trialsByType{6}, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{6},:)), 1))], [2 3 1]),...
     'cmap', [1 0 0; 0 0 0; 1 0 1]);
 
 title('pupil avg');
-xlabel('time from punishment'); ylabel('Velocity');
+xlabel('time from punishment'); ylabel('Pup diameter norm');
+set(gca, 'XLim', [-4 3]);
+legend('cued', 'omit', 'uncued'); 
+
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+end
+
+saveName = 'Appetitive_pupilAverages';
+ensureFigure(saveName, 1);
+xData = TE.pupil.xData;
+pupData = TE.pupil.pupDiameterNorm;
+axes; hold on; grid on;
+
+boundedline(xData(:), [nanmean(pupData(trialsByType{1}, :)); nanmean(pupData(trialsByType{2}, :)); nanmean(pupData(trialsByType{5}, :))]',...
+    permute([nanstd(pupData(trialsByType{1}, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{1},:)), 1));...
+    nanstd(pupData(trialsByType{2}, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{2},:)), 1));...
+    nanstd(pupData(trialsByType{5}, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{5},:)), 1))], [2 3 1]),...
+    'cmap', [0 0 1; 0 0 0; 0 1 1]);
+
+title('pupil avg');
+xlabel('time from reward'); ylabel('Pup diameter norm');
 set(gca, 'XLim', [-4 3]);
 legend('cued', 'omit', 'uncued'); 
 
