@@ -1,18 +1,16 @@
-function [data, xData] = alignedDataWindow(TE, inputData, trials, varargin)
+function [data, xData] = alignedDataWindow(inputData, trials, varargin)
 % Fitz Sturgill 2018,  "generic" version of phAlignedWindow
+% see phAlignedWindow
 
-% returns a photometry data array aligned to zero of size nTotalTrials x
-% maxWindowSamples. Zeros for each and every trial are defined relative to Bpod trial start and may
-% be supplied as vectors or cell arrays of length nTotalTrials (in which case you can select first
-% or last element to which to align)
-% totalTrials -> length of TE.filename not count of subset of trials passed
-% via 'trials' argument
+% returns a data array aligned to zero of size nTotalTrials x
+% maxWindowSamples. 
+
     defaults = {...
         'zeroTimes', [];... % scalar or length TE-nTrials cell array or vector containing zero times relative to Bpod trial start        
         'window', [];... % averaging window relative to zero time/ alignment point, e.g. [-3 2] or [cellfun(@(x) x(1), TE.stateBefore) cellfun(@(x) x(end), TE.stateAfter)
         'referenceFromEnd', 0;... % relevent ONLY when zeroTimes are supplied as a cell array (e.g. if you want to align to the beginning or end of a bpod state)
-        'Fs', 20;...
-        'startTimes', [];...
+        'Fs', [];...
+        'startTimes', [];... % data start time relative to Bpod trial start
         };
     [s, ~] = parse_args(defaults, varargin{:});
 
@@ -20,6 +18,7 @@ function [data, xData] = alignedDataWindow(TE, inputData, trials, varargin)
     assert(~isempty(s.window), 'window is required parameter');
     assert(~isempty(s.zeroTimes), 'zeroTimes is required parameter');
     assert(~isempty(s.startTimes), 'data start times (in Bpod time) is a required parameter');
+    assert(~isempty(s.Fs), 'Fs (sample rate) is a required parameter');
 %% local variables    
     if iscell(inputData)
         uniformOutput = 0;
@@ -32,7 +31,7 @@ function [data, xData] = alignedDataWindow(TE, inputData, trials, varargin)
         trials = find(trials);
     end
     nTrials = length(trials);
-    totalTrials = length(TE.filename);
+    totalTrials = size(inputData, 1);
     
 %% process zeroTimes and windows
     if iscell(s.zeroTimes)
@@ -46,7 +45,7 @@ function [data, xData] = alignedDataWindow(TE, inputData, trials, varargin)
     end
     
     zeroTimes = zeroTimes(:); 
-    assert(length(zeroTimes) == totalTrials, 'zeroTimes for entire TE (not just the subset of trials) must be supplied');
+    assert(length(zeroTimes) == totalTrials, 'zeroTimes for all trials (typically length TE), not just the subset of trials, must be supplied');
     
     if size(s.window, 1) == 1
         s.window = repmat(s.window, totalTrials, 1);

@@ -1,4 +1,6 @@
 function [avg, avgX, avgSEM] = phSessionAverage(SessionData, type, outcome, fCh, zeroField)
+    %   TO BE DEPRECATED!  (FS NOTE 2/2019)
+
     %% assumes consistent timing of events relative to photometry acquisition
 
     if nargin < 5

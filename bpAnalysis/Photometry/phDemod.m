@@ -1,4 +1,6 @@
 function demod = phDemod(rawData, refData, sampleRate, modRate, lowCutoff)
+% DON'T DEPRECATE FOR BACKWARDS COMPATIBILITY- SEE demodulateSession  FS
+% NOTE 2/2019
 % DEMODULATE AM-MODULATED INPUT IN QUADRATURE GIVEN A REFERENCE
 % tBaseline-  baseline period, in seconds
 % lowCutoff corner frequency for 5-pole butterworth filter (lowpass),

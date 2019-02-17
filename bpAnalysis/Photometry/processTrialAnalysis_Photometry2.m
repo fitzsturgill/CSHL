@@ -1,5 +1,7 @@
 function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
 % exemplar for new trial analysis functions
+
+
     
 
     %% optional parameters, first set defaults
@@ -13,7 +15,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         'zeroField', 'Us';...
         'startField', 'PreCsRecording';... % TO DO: PROVIDE AUTOMATICALLY BY BPOD NIDAQ CODE 
         'downsample', 305;...
-        'uniformOutput', 1;...            % not currently implemented, idea is to set to 0 if acqs are going to be variable in length (store data in cell array)
+        'uniformOutput', 1;...            % set to 0 if acqs are variable in length (store data in cell array)
 %         'tau', [];... % tau option currently deprecated, now tau is a
 %         free parameter
         'forceAmp', 0;... % % force demodulation even if the refChannel LED is off (i.e. it's amplitude = 0)

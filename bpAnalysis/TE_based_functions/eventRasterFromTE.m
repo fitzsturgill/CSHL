@@ -29,9 +29,14 @@ function [ax, lh] = eventRasterFromTE(TE, trials, event, varargin)
     [eventTimes, eventTrials] = extractEventTimesFromTE(TE, trials, event, varargin{:});
     lh = linecustommarker(eventTimes, eventTrials, [], [], s.ax);
     ax = s.ax;
-    if islogical(trials) && (sum(trials) > 0)
-        set(s.ax, 'YLim', [0 sum(trials)]);
-    elseif ~isempty(trials)
-        set(s.ax, 'YLim', [0 length(trials)]);
+    switch s.trialNumbering
+        case 'consecutive'
+            if islogical(trials) && (sum(trials) > 0)
+                set(s.ax, 'YLim', [0 sum(trials)]);
+            elseif ~isempty(trials)
+                set(s.ax, 'YLim', [0 length(trials)]);
+            end
+        case 'global'
+            set(s.ax, 'YLim', [0 length(TE.filename)]);
     end
     

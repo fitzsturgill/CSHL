@@ -71,7 +71,7 @@ function [eventTimes, eventTrials] = extractEventTimesFromTE(TE, trials, event, 
                 eventTrials = [eventTrials; repmat(trial, length(trialEventTimesZeroed), 1)];
             case 'consecutive'
                 eventTrials = [eventTrials; repmat(counter, length(trialEventTimesZeroed), 1)];
-            case 'singleSession'
+            case 'singleSession'                
                 eventTrials = [eventTrials; repmat(TE.trialNumber(trial), length(trialEventTimesZeroed), 1)];
         end
     end

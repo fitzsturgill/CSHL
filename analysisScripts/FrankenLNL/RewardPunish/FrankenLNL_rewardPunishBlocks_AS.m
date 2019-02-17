@@ -115,7 +115,7 @@ frankenLNL_conditions;
 
 %% raster plots
 PhotometryField = 'Photometry';
-trialNumbering = 'consecutive';
+trialNumbering = 'global';
 CLimFactor = 3;
 window = [-4 6];
 for channel = channels
@@ -123,7 +123,7 @@ for channel = channels
     ensureFigure(saveName, 1);
     
     subplot(1,5,1);
-    eventRasterFromTE(TE, trialsByType{1}, 'Port1In', 'trialNumbering', 'consecutive',...
+    eventRasterFromTE(TE, trialsByType{1}, 'Port1In', 'trialNumbering', trialNumbering,...
         'zeroTimes', TE.Cue2, 'window', window); set(gca, 'XLim', window);         xlabel('time from cue (s)');  title('cued reward');         
     addStimulusPatch(gca, [0 1]);
     subplot(1,5,2);
@@ -254,8 +254,8 @@ end
 window = [-4 6];
 saveName = 'Aversive_pupilRasters';
 ensureFigure(saveName, 1); colormap parula;
-% dataField = 'pupDiameterNorm';
-dataField = 'frameAvgNorm';
+dataField = 'pupDiameterNorm';
+% dataField = 'frameAvgNorm';
 % first just get all the data
 nTrials = length(TE.filename);
 [data, XData] = alignedDataWindow(TE, TE.pupil.(dataField), true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window);
@@ -293,7 +293,7 @@ end
 
 
 saveName = 'Appetitive_pupilRasters';
-ensureFigure(saveName, 1); colormap jet;
+ensureFigure(saveName, 1); colormap parula;
 % first just get all the data
 
 
@@ -476,8 +476,8 @@ boundedline(xData(:), [nanmean(wheelData(trialsByType{3}, :)); nanmean(wheelData
     'cmap', [1 0 0; 0 0 0; 1 0 1]);
 
 title('wheel avg');
-xlabel('time from punishment'); ylabel('Velocity');
-set(gca, 'XLim', [-4 3]);
+xlabel('time from cue'); ylabel('Velocity');
+set(gca, 'XLim', [-4 7]);
 legend('cued', 'omit', 'uncued'); 
 
 if saveOn
