@@ -1,1 +1,2 @@
-landscapeFigSetup(fig);
+        [ha, hl] = phPlotAverageFromTE(TE, 1:length(TE.filename), channel,...
+    'FluorDataField', 'ZS', 'window', [0.1, max(TE.Photometry.xData) - min(TE.Photometry.xData)], 'zeroTimes', TE.Photometry.startTime); %high value, reward
