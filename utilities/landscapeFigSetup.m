@@ -13,7 +13,7 @@ else
 end
 
 if ~isempty(hFig)
-    hFig = figure(hFig,'Visible','off');
+    hFig = set(hFig,'Visible','off');
 else
     hFig = figure('Visible','off');
 end
