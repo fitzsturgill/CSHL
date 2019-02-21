@@ -118,6 +118,7 @@ h = waitbar(0, 'Processing Photometry');
 tcounter = 1;
 for si = 1:length(sessions)
     SessionData = sessions(si).SessionData;
+
     if ~isfield(SessionData, 'demod')
         SessionData = demodulateSession(SessionData, 'channels', s.channels, 'refChannels', s.refChannels, 'forceAmp', s.forceAmp, 'ACfilter', s.ACfilter); % don't necessarily want to save these back to sessions because that'd eat up memory
     end
@@ -126,13 +127,18 @@ for si = 1:length(sessions)
     if s.uniformOutput
         allData = NaN(nTrials, expectedSamples);
     else
-        allData = NaN(nTrials, maxSamplesPerSession(si));
+        allData = NaN(nTrials, max(maxSamplesPerSession));
+        allDataCell = cell(nTrials,1);
         sampleCount = zeros(nTrials, 1);
     end
     for chCounter = 1:length(s.channels)
         fCh = s.channels(chCounter);
         for trial = 1:nTrials
             trialData = SessionData.demod{trial, fCh}'; % convert to row vector
+            if ismember(trial,sessions(si).excludeTrials)
+                trialData(:)=nan;
+            end
+
             if isempty(trialData)
                 warning('Empty trial %d, think about it!',trial);
             end
@@ -163,33 +169,41 @@ for si = 1:length(sessions)
             blF_data = allData';
             blF_data = blF_data(:);
         else
-            blF_data = cell2mat(allDataCell)';
+            blF_data = cell2mat(allDataCell')';
         end
+      	excludePoints=isnan(blF_data);
         fo = fitoptions('Method', 'NonlinearLeastSquares',...
-            'Upper', [Inf range(blF_data) 0 range(blF_data) 0],...
+            'Upper', [Inf range(blF_data(~excludePoints)) 0 range(blF_data(~excludePoints)) 0],...
             'Lower', [0 0 -2 0 -2],...    % 'Lower', [0 0 -1/5 0 -1/5],...
-            'StartPoint', [min(blF_data) range(blF_data)/2 -1 range(blF_data)/2 -1]...
-            );
+            'StartPoint', [min(blF_data(~excludePoints)) range(blF_data(~excludePoints))/2 -1 range(blF_data(~excludePoints))/2 -1]);
         model = 'a + b*exp(c*x) + d*exp(e*x)';
         ft = fittype(model, 'options', fo);
-        if any(isnan(blF_data))
-            blF_data = inpaint_nans(blF_data);
-        end
         x = (0:length(blF_data)-1)';
         [fitobject, gof, output] = ...
-            fit(x, blF_data, ft, fo);
+            fit(x(~excludePoints)-min(x(~excludePoints)), blF_data(~excludePoints), ft,fo);
+        
         Photometry.bleachFit(si, fCh).fitobject_session = fitobject;
         Photometry.bleachFit(si, fCh).gof_session = gof;
         Photometry.bleachFit(si, fCh).output_session = output;
-        
-        blF_fit = fitobject.a + fitobject.b * exp(fitobject.c * x) + fitobject.d * exp(fitobject.e * x);
+        blF_fit = nan(size(blF_data));
+        blF_fit(~excludePoints) = feval(fitobject,x(~excludePoints)-min(x(~excludePoints)));
+%         blF_fit=smoothdata(blF_data,'gaussian',1E4);
         
         if s.plot
             figure;
             plot(blF_data);
             hold on;
+            %             blF_data_filter=(medfilt1(blF_data,3));
+            %             plot([nan(3,1);blF_data_filter(4:end-4)]);
+            blF_data_smooth=nan(size(blF_data));
+            blF_data_smooth(~excludePoints)=smoothdata(blF_data(~excludePoints),'gaussian',1E4);
+            plot(blF_data_smooth,'LineWidth',1.5);
             plot(blF_fit,'k','LineWidth',1.5);
             xlims=xlim;ylims=ylim;
+            xtick=cumsum(sampleCount);
+            xticklabel=1:length(sampleCount);
+            xtickindex=1:1:length(xtick);
+            set(gca,'XTick',xtick(xtickindex),'XTickLabel',xticklabel(xtickindex))
             text(xlims(1)+.1*diff(xlims),ylims(1)+.1*diff(ylims),sprintf('rsquare=%2.2f',gof.rsquare))
             title(sessions(si).filename,'Interpreter','none');
         end
@@ -207,13 +221,27 @@ for si = 1:length(sessions)
             blF_fit = blF_fit_reshaped;
             dF= allData - blF_fit;
         end
-        Photometry.data(fCh).dFF(tcounter:tcounter+nTrials - 1, :) = dF ./ blF_fit;
-        Photometry.data(fCh).dF(tcounter:tcounter+nTrials - 1, :) = dF;
-        sd = nanmean(nanstd(dF(:,blStartP:blEndP), 0, 2));
-        Photometry.data(fCh).ZS(tcounter:tcounter+nTrials - 1, :) = dF / sd; % z-scored
-        Photometry.data(fCh).raw(tcounter:tcounter+nTrials - 1, :) = allData;
-        Photometry.data(fCh).blF_fit(tcounter:tcounter+nTrials - 1, :) = blF_fit;
-        Photometry.data(fCh).ch = fCh;
+        if s.uniformOutput
+            Photometry.data(fCh).dFF(tcounter:tcounter+nTrials - 1, :) = dF ./ blF_fit;
+            Photometry.data(fCh).dF(tcounter:tcounter+nTrials - 1, :) = dF;
+            sd = nanmean(nanstd(dF(:,blStartP:blEndP), 0, 2));
+            Photometry.data(fCh).ZS(tcounter:tcounter+nTrials - 1, :) = dF / sd; % z-scored
+            Photometry.data(fCh).raw(tcounter:tcounter+nTrials - 1, :) = allData;
+            Photometry.data(fCh).blF_fit(tcounter:tcounter+nTrials - 1, :) = blF_fit;
+            Photometry.data(fCh).ch = fCh;
+        else
+            dFF = dF ./ blF_fit;
+            sd = nanmean(nanstd(dF(:,blStartP:blEndP), 0, 2));
+            ZS = dF / sd;
+            for trial = 1:nTrials
+                Photometry.data(fCh).dFF{tcounter + trial - 1} = dFF(trial, 1:sampleCount(trial));
+                Photometry.data(fCh).dF{tcounter + trial - 1} = dF(trial, 1:sampleCount(trial));
+                Photometry.data(fCh).ZS{tcounter + trial - 1} = ZS(trial, 1:sampleCount(trial)); % z-scored
+                Photometry.data(fCh).raw{tcounter + trial - 1} = allData(trial, 1:sampleCount(trial));
+                Photometry.data(fCh).blF_fit{tcounter + trial - 1} = blF_fit(trial, 1:sampleCount(trial));
+            end
+    end
+
     end
     Photometry.startTime(tcounter:tcounter+nTrials - 1) = startTimes';
     tcounter = tcounter + nTrials;
