@@ -21,7 +21,7 @@ params.matpos = matpos_title_2;
 setaxesOnaxesmatrix(ax, 1, 1, 1, params, fig);
 set(txt, 'HorizontalAlignment', 'left', 'Position', [0 .5]);    
 
-%% cued Reward, cued Shock, all behavior, consecutive
+%% cued Reward, cued Shock, all behavior, global numbering
 PhotometryField = 'Photometry';
 trialNumbering = 'global';
 CLimFactor = 3;
@@ -53,6 +53,10 @@ if ismember(2, TE.(PhotometryField).settings.channels)
     axes(hax(3)); hold on;
     phRasterFromTE(TE, trialsByType{1}, 2, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', trialNumbering, 'window', window, 'zeroTimes', TE.Cue2);
     title('VTA/DAT'); set(gca, 'XLim', window, 'YTick', []);
+else
+    axes(hax(3)); hold on;
+    alignedDataRaster(TE.pupil.frameAvgNorm, trialsByType{1}, 'zeroTimes', TE.Cue2, 'window', window, 'startTimes', TE.pupil.startTime, 'trialNumbering', trialNumbering, 'Fs', TE.pupil.frameRate(1));
+    title('Eye closure'); set(gca, 'XLim', window, 'YTick', []);
 end
 
 

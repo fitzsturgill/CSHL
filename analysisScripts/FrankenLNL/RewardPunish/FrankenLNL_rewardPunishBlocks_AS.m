@@ -115,7 +115,7 @@ frankenLNL_conditions;
 
 %% raster plots
 PhotometryField = 'Photometry';
-trialNumbering = 'global';
+trialNumbering = 'consecutive';
 CLimFactor = 3;
 window = [-4 6];
 for channel = channels
@@ -322,7 +322,7 @@ saveName = 'Aversive_wheelRaster';
 ensureFigure(saveName, 1); colormap parula;
 % first just get all the data
 nTrials = length(TE.filename);
-[data, XData] = alignedDataWindow(TE, TE.Wheel.data.V, true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window);
+[data, XData] = alignedDataWindow(TE.Wheel.data.V, true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window, 'Fs', 20);
 % determine the clims
 cmean = nanmean(nanmean(data(:, 1:20*4), 2), 1);
 cstd = nanmean(nanstd(data(:, 1:20*4), 0, 2), 1);
