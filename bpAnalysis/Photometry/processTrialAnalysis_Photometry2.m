@@ -77,7 +77,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         zeroTime = sessions(1).SessionData.RawEvents.Trial{1}.States.(s.zeroField)(1) - ...
             sessions(1).SessionData.RawEvents.Trial{1}.States.(s.startField)(1);
         xData = linspace(-zeroTime, ((expectedSamples - 1) / sampleRate) - zeroTime, expectedSamples);    
-    else % unfinished, different sized trials are stored in cell arrays, no padding occurs
+    else % different sized trials are stored in cell arrays, no padding occurs
         originalSamples = [];
         expectedSamples = [];
         sampleRate = sampleRate / s.downsample; % downsample must be a factor of sampleRate      

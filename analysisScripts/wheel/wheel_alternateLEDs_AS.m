@@ -73,7 +73,7 @@ window = [-2 2];
 fs = 20; % sample rate
 blSamples = (0 - window(1)) * fs;
 
-% LED 1 and 1
+% LED 1 and 2
 [rewards_dat_12, ts, tn] = extractDataByTimeStamps(TE.Photometry.data(2).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2], LED12trials);
 rewards_chat_12 = extractDataByTimeStamps(TE.Photometry.data(1).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2], LED12trials);
 bl_dat_12 = nanmean(rewards_dat_12(:,1:blSamples), 2);
