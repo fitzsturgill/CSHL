@@ -37,7 +37,7 @@ duration = length(TE.Photometry.xData) / TE.Photometry.sampleRate;
 
 %% add wheel
 duration = length(TE.Photometry.xData) / TE.Photometry.sampleRate;
-TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', duration, 'Fs', 20, 'startField', 'PreCsRecording', 'zeroField', 'Cue2');
+TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', duration, 'Fs', 20, 'startField', 'PreCsRecording', 'zeroField', 'Cue2', 'smoothWindow', 0.2);
 
 %% add eye avg if desired/present
 duration = length(TE.Photometry.xData) / TE.Photometry.sampleRate;
@@ -45,7 +45,7 @@ TE.eyeAvg = addCSVToTE(TE, 'duration', duration, 'zeroField', 'Outcome', 'folder
 
 %% add pupil if desired/present
 duration = length(TE.Photometry.xData) / TE.Photometry.sampleRate;
-TE = addPupilometryToTE(TE, 'duration', duration, 'zeroField', 'Outcome', 'frameRate', 60, 'frameRateNew', 20, 'normMode', 'byTrial');
+TE = addPupilometryToTE(TE, 'duration', duration, 'zeroField', 'Outcome', 'frameRate', 60, 'frameRateNew', 20, 'normMode', 'bySession');
 %%
 % basepath = uigetdir;
 basepath = 'Z:\SummaryAnalyses\Franken_LNL_shock';
@@ -167,13 +167,13 @@ saveName = 'Aversive_blinkRasters';
 ensureFigure(saveName, 1); colormap jet;
 % clims = [0 1.5];
 cLimFactor = 4;
-blinkData = TE.eyeAvg.EyeAvgNorm;
+blinkData = TE.pupil.frameAvgNorm;
 blinkDataMean = mean2(blinkData);
 clims = [nanmean(blinkData(:)) - nanstd(blinkData(:)) * cLimFactor, nanmean(blinkData(:)) + nanstd(blinkData(:)) * cLimFactor];
-xData = [TE.eyeAvg.xData(1) TE.eyeAvg.xData(end)];
+xData = [TE.pupil.xData(1) TE.pupil.xData(end)];
 subplot(1,3,1); imagesc('XData', xData, 'CData', blinkData(trialsByType{3}, :), clims); set(gca, 'XLim', xData);
 title('cued punish');
-subplot(1,3,2); imagesc('XData', xData, 'CData', blinkData(trialsByType{4}, :), clims); set(gca, 'XLim', xData);
+subplot(1,3,2); imagesc('XData', xData, 'CData', blinkData(trialsByType{4} & TE.BlockNumber == 4, :), clims); set(gca, 'XLim', xData);
 title('cued ommission');
 subplot(1,3,3); imagesc('XData', xData, 'CData', blinkData(trialsByType{6}, :), clims); set(gca, 'XLim', xData);
 title('uncued punish');
@@ -273,9 +273,9 @@ sessionBreaks = find(diff(TE.sessionIndex(trialsByType{3})))';
 line(repmat(window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
 title('cued shock'); ylabel('trial #');
 subplot(1,3,2);
-thisData = data(trialsByType{4}, :);
-imagesc(window, [1 sum(trialsByType{4})], thisData, clims);
-sessionBreaks = find(diff(TE.sessionIndex(trialsByType{4})))';            
+thisData = data(trialsByType{4} & TE.BlockNumber == 4, :);
+imagesc(window, [1 sum(trialsByType{4} & TE.BlockNumber == 4)], thisData, clims);
+sessionBreaks = find(diff(TE.sessionIndex(trialsByType{4} & TE.BlockNumber == 4)))';            
 line(repmat(window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
 title('omission'); xlabel('time from odor (s)');
 subplot(1,3,3);
@@ -338,9 +338,9 @@ line(repmat(window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 
 title('cued shock'); ylabel('trial #');
 
 subplot(1,3,2);
-thisData = data(trialsByType{4}, :);
-imagesc(window, [1 sum(trialsByType{4})], thisData, clims);
-sessionBreaks = find(diff(TE.sessionIndex(trialsByType{4})))';            
+thisData = data(trialsByType{4} & TE.BlockNumber == 4, :);
+imagesc(window, [1 sum(trialsByType{4} & TE.BlockNumber == 4)], thisData, clims);
+sessionBreaks = find(diff(TE.sessionIndex(trialsByType{4} & TE.BlockNumber == 4)))';            
 line(repmat(window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
 title('omission'); xlabel('time from odor (s)');
 
@@ -360,9 +360,10 @@ end
 window = [-4 6];
 saveName = 'Aversive_pupilRasters';
 ensureFigure(saveName, 1); colormap parula;
+pupField = 'pupDiameter';
 % first just get all the data
 nTrials = length(TE.filename);
-[data, XData] = alignedDataWindow(TE.pupil.pupDiameterNorm, true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window, 'Fs', 20);
+[data, XData] = alignedDataWindow(TE.pupil.(pupField), true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window, 'Fs', 20);
 % determine the clims
 cmean = nanmean(nanmean(data(:, 1:20*4), 2), 1);
 cstd = nanmean(nanstd(data(:, 1:20*4), 0, 2), 1);
@@ -377,9 +378,9 @@ line(repmat(window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 
 title('cued shock'); ylabel('trial #');
 
 subplot(1,3,2);
-thisData = data(trialsByType{4}, :);
-imagesc(window, [1 sum(trialsByType{4})], thisData, clims);
-sessionBreaks = find(diff(TE.sessionIndex(trialsByType{4})))';            
+thisData = data(trialsByType{4} & TE.BlockNumber == 4, :);
+imagesc(window, [1 sum(trialsByType{4} & TE.BlockNumber == 4)], thisData, clims);
+sessionBreaks = find(diff(TE.sessionIndex(trialsByType{4} & TE.BlockNumber == 4)))';            
 line(repmat(window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
 title('omission'); xlabel('time from odor (s)');
 
@@ -440,17 +441,18 @@ for channel = channels
 end
 
 %% blink averages
-saveName = 'Aversive_blinkAverages';
+saveName = sprintf('BlinkAverages_%s', subjectName);
 ensureFigure(saveName, 1);
-xData = TE.eyeAvg.xData;
-blinkData = TE.eyeAvg.EyeAvgNorm;
+% > TE.pupil.frameAvgNorm
+xData = TE.pupil.xData;
+blinkData = TE.pupil.frameAvgNorm;
 blinkData(isnan(blinkData)) = 0;
 axes; hold on; grid on;
-boundedline(xData(:), [mean(blinkData(trialsByType{3}, :)); mean(blinkData(trialsByType{4}, :)); mean(blinkData(trialsByType{6}, :))]',...
-    permute([std(blinkData(trialsByType{3}, :)) ./ sqrt(sum(trialsByType{3})); std(blinkData(trialsByType{4}, :)) ./ sqrt(sum(trialsByType{3})); std(blinkData(trialsByType{6}, :)) ./ sqrt(sum(trialsByType{3}))], [2 3 1]),...
+boundedline(xData(:), [mean(blinkData(trialsByType{3}, :)); mean(blinkData(trialsByType{4} & TE.BlockNumber == 4, :)); mean(blinkData(trialsByType{6}, :))]',...
+    permute([std(blinkData(trialsByType{3}, :)) ./ sqrt(sum(trialsByType{3})); std(blinkData(trialsByType{4} & TE.BlockNumber == 4, :)) ./ sqrt(sum(trialsByType{4} & TE.BlockNumber == 4)); std(blinkData(trialsByType{6}, :)) ./ sqrt(sum(trialsByType{6}))], [2 3 1]),...
     'cmap', [1 0 0; 0 0 0; 1 0 1]);
 % plot(xData, mean(blinkData(trialsByType{3}, :)), 'r');
-% plot(xData, mean(blinkData(trialsByType{4}, :)), 'k');
+% plot(xData, mean(blinkData(trialsByType{4} & TE.BlockNumber == 4, :)), 'k');
 % plot(xData, mean(blinkData(trialsByType{6}, :)), 'm-*');
 title('frame avg (goes up as eye closes)');
 xlabel('time from punishment');
@@ -469,9 +471,9 @@ xData = TE.Wheel.xData;
 wheelData = TE.Wheel.data.V;
 wheelData(isnan(wheelData)) = 0;
 axes; hold on; grid on;
-boundedline(xData(:), [nanmean(wheelData(trialsByType{3}, :)); nanmean(wheelData(trialsByType{4}, :)); nanmean(wheelData(trialsByType{6}, :))]',...
+boundedline(xData(:), [nanmean(wheelData(trialsByType{3}, :)); nanmean(wheelData(trialsByType{4} & TE.BlockNumber == 4, :)); nanmean(wheelData(trialsByType{6}, :))]',...
     permute([nanstd(wheelData(trialsByType{3}, :)) ./ sqrt(sum(isfinite(wheelData(trialsByType{3},:)), 1));...
-    nanstd(wheelData(trialsByType{4}, :)) ./ sqrt(sum(isfinite(wheelData(trialsByType{4},:)), 1));...
+    nanstd(wheelData(trialsByType{4} & TE.BlockNumber == 4, :)) ./ sqrt(sum(isfinite(wheelData(trialsByType{4} & TE.BlockNumber == 4,:)), 1));...
     nanstd(wheelData(trialsByType{6}, :)) ./ sqrt(sum(isfinite(wheelData(trialsByType{6},:)), 1))], [2 3 1]),...
     'cmap', [1 0 0; 0 0 0; 1 0 1]);
 
@@ -491,13 +493,13 @@ ensureFigure(saveName, 1);
 xData = TE.pupil.xData;
 pupData = TE.pupil.pupDiameterNorm;
 axes; hold on; grid on;
-% boundedline(xData(:), [mean(pupData(trialsByType{3}, :)); mean(pupData(trialsByType{4}, :)); mean(pupData(trialsByType{6}, :))]',...
-%     permute([std(pupData(trialsByType{3}, :)) ./ sqrt(sum(trialsByType{3})); std(pupData(trialsByType{4}, :)) ./ sqrt(sum(trialsByType{4})); std(pupData(trialsByType{6}, :)) ./ sqrt(sum(trialsByType{6}))], [2 3 1]),...
+% boundedline(xData(:), [mean(pupData(trialsByType{3}, :)); mean(pupData(trialsByType{4} & TE.BlockNumber == 4, :)); mean(pupData(trialsByType{6}, :))]',...
+%     permute([std(pupData(trialsByType{3}, :)) ./ sqrt(sum(trialsByType{3})); std(pupData(trialsByType{4} & TE.BlockNumber == 4, :)) ./ sqrt(sum(trialsByType{4} & TE.BlockNumber == 4)); std(pupData(trialsByType{6}, :)) ./ sqrt(sum(trialsByType{6}))], [2 3 1]),...
 %     'cmap', [1 0 0; 0 0 0; 1 0 1]);
 
-boundedline(xData(:), [nanmean(pupData(trialsByType{3}, :)); nanmean(pupData(trialsByType{4}, :)); nanmean(pupData(trialsByType{6}, :))]',...
+boundedline(xData(:), [nanmean(pupData(trialsByType{3}, :)); nanmean(pupData(trialsByType{4} & TE.BlockNumber == 4, :)); nanmean(pupData(trialsByType{6}, :))]',...
     permute([nanstd(pupData(trialsByType{3}, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{3},:)), 1));...
-    nanstd(pupData(trialsByType{4}, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{4},:)), 1));...
+    nanstd(pupData(trialsByType{4} & TE.BlockNumber == 4, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{4} & TE.BlockNumber == 4,:)), 1));...
     nanstd(pupData(trialsByType{6}, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{6},:)), 1))], [2 3 1]),...
     'cmap', [1 0 0; 0 0 0; 1 0 1]);
 
