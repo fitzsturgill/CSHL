@@ -314,13 +314,13 @@ hax = axesmatrix(nRows, nColumns, 1:nAxes, params, fig);
 
 % ch1, aversive
 axes(hax(1)); hold on;
-[ha, hl] = phPlotAverageFromTE(TE, {trialsByType{[3 6]} trialsByType{4} & TE.BlockNumber == 4}, 1, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'r', 'k', 'm'}); %high value, reward
+[ha, hl] = phPlotAverageFromTE(TE, {trialsByType{[3 6]} trialsByType{4} & TE.BlockNumber == 4}, 1, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'r', 'm', 'k'}); %high value, reward
 set(gca, 'XLim', window);  ylabel('Ch 1 Fluor. (ZS)'); xlabel('time from cue (s)');
 addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1]);
 % ch2, aversive
 axes(hax(2)); hold on;
 try
-    [ha, hl] = phPlotAverageFromTE(TE, {trialsByType{[3 6]} trialsByType{4} & TE.BlockNumber == 4}, 2, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'r', 'k', 'm'}); %high value, reward
+    [ha, hl] = phPlotAverageFromTE(TE, {trialsByType{[3 6]} trialsByType{4} & TE.BlockNumber == 4}, 2, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'r', 'm', 'k'}); %high value, reward
 %     legend(hl, {'pRhigh', 'pRmedium', 'pRlow'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
     set(gca, 'XLim', window);  ylabel('Ch 2 Fluor. (ZS)');
     addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1]);

@@ -777,4 +777,17 @@ if saveOn
 end
 
 
+%% lets quantify the size of the outcome response, the size of the cue response, also the center of mass and skew of the cvue response
+totalDelay = TE.Trace2{1}(2) - TE.Cue2{1}(1);
+csWindow = [0 totalDelay];
+usWindow = [0 1];
+for channel = channels
+    TE.phPeakMean_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, csWindow, TE.Trace2, 'method', 'mean', 'phField', 'ZS');
+    TE.phPeakMean_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, usWindow, TE.Us, 'method', 'mean', 'phField', 'ZS');
+    TE.phPeakCenter_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, csWindow, TE.Trace2, 'method', 'center', 'phField', 'ZS');
+end
+
+
+
+
     
