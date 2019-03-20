@@ -50,7 +50,7 @@ function [data, xData] = phAlignedWindow(TE, trials, ch, varargin)
         s.window = repmat(s.window, totalTrials, 1);
     end
     
-    zeroTimes = zeroTimes - TE.Photometry.startTime; % redefine zero times relative to photometry start
+    zeroTimes = zeroTimes - Photometry.startTime; % redefine zero times relative to photometry start
     
 
 %% initalize data array padded to maximum window size

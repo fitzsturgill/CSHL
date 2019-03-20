@@ -55,7 +55,7 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
     % across conditions or sets of trials (so you can compare rasters by
     % eye)
     if isempty(s.CLim)
-        if TE.Photometry.settings.uniformOutput
+        if Photometry.settings.uniformOutput
             imavg = nanmean(nanmean(Photometry.data(ch).(s.FluorDataField), 2), 1); % FS MOD 10/2018, measure within trials and then across trials, right?
             imstd = nanmean(nanstd(Photometry.data(ch).(s.FluorDataField), 0, 2), 1);            
         else
