@@ -17,40 +17,80 @@ sessionName = 'ACh_7_FrankenLNL_4odors_Feb27_2019_Session1.mat';
 matches = strcmp(TE.filename, sessionName);
 sessionIndex = unique(TE.sessionIndex(matches));
 
+
+%% example traces
+% rewarding subset
+window = [-4 7];
+showTheseR = find(Odor2Valve1Trials & rewardTrials & TE.sessionIndex == sessionIndex);
+[~, rixR] = sort(rand(size(showTheseR)));
+
+
+
+saveName = 'PE_BLA_exampleMouse_traces';  
+fig = ensureFigure(saveName, 1);    
+
+
+ax = subplot(1,1,1);
+plot(TE.Photometry.xData, TE.Photometry.data(1).dFF(showTheseR(rixR(1:10)), :)', 'k', 'LineWidth', 0.15); set(gca, 'XLim', window);
+addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [2.9 3.1]);
+% set(gca, 'YTickLabel', {}); set(gca, 'XTickLabel', {}); 
+set(gca, 'Visible', 'off');
+% title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Left']);
+
+
+% 
+% ax(2) = subplot(1,2,2);
+% plot(TE.Photometry.xData, TE.Photometry.data(2).dFF(showTheseR(rixR(1:10)), :)', 'k', 'LineWidth', 0.15); set(gca, 'XLim', window);
+% addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [2.9 3.1]);
+% % title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Left']);
+% % set(gca, 'YTickLabel', {}); set(gca, 'XTickLabel', {}); 
+% set(gca, 'Visible', 'off');
+
+
+% aversive subset
+showTheseA = find(Odor2Valve2Trials & punishTrials & TE.sessionIndex == sessionIndex);
+[~, rixA] = sort(rand(size(showTheseA)));
+
+formatFigurePublish('size', [1.6 1.1]);
+
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end
+
         
 %% averages
 
 fdField = 'ZS';
-saveName = sprintf('%s_phAvgs_%s', animal, fdField);  
+saveName = 'PE_BLA_exampleMouse_avgs';  
 h=ensureFigure(saveName, 1); 
 
 
-linecolors = [1 0 0; 0 0 1; 0 1 1; 0 1 0];            
+linecolors = [0 0 1; 0 0 0; 0 1 1];            
 
-subplot(1, 2, 1);
+subplot(2, 1, 1);
 set(gca, 'YLim', [-2 10]);
 tcolor = mycolors('chat');
-title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Ach.']);
+title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Left']);
 addStimulusPatch(gca, [0 1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [2.9 3.1], '', [0.7 0.7 0.7], 0.4);
-[ha, hl] = phPlotAverageFromTE(TE, {neutralTrials & csPlusTrials & hitTrials, rewardTrials & csPlusTrials & hitTrials, csMinusTrials & CRTrials & rewardTrials, uncuedReward}, 1,...
+[ha, hl] = phPlotAverageFromTE(TE, {trialsByType{1} & TE.sessionIndex == sessionIndex, trialsByType{2} & TE.sessionIndex == sessionIndex, trialsByType{5} & TE.sessionIndex == sessionIndex,}, 1,...
     'FluorDataField', fdField, 'window', [-4, 7], 'cmap', linecolors); %high value, reward
 
 % legend(hl, {'omit', 'cued', 'uncued'}, 'Location', 'northwest'); legend('boxoff');
-ylabel('\fontsize{8}Fluor. (\fontsize{12}\sigma\fontsize{8}-baseline)'); xlabel('time from cue (s)'); set(gca, 'XLim', [-4 7]);
+ylabel('(\fontsize{12}\sigma\fontsize{8}-baseline)');  set(gca, 'XLim', [-4 7]);
 
-
-
-subplot(1, 2, 2);
+subplot(2, 1, 2);
 set(gca, 'YLim', [-2 10]);
-tcolor = mycolors('dat');
-title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Dop.']);
+tcolor = mycolors('chat');
+title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Right']);
 addStimulusPatch(gca, [0 1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [2.9 3.1], '', [0.7 0.7 0.7], 0.4);
-[ha, hl] = phPlotAverageFromTE(TE, {neutralTrials & csPlusTrials & hitTrials, rewardTrials & csPlusTrials & hitTrials, csMinusTrials & CRTrials & rewardTrials, uncuedReward}, 2,...
+[ha, hl] = phPlotAverageFromTE(TE, {trialsByType{1} & TE.sessionIndex == sessionIndex, trialsByType{2} & TE.sessionIndex == sessionIndex, trialsByType{5} & TE.sessionIndex == sessionIndex,}, 2,...
     'FluorDataField', fdField, 'window', [-4, 7], 'cmap', linecolors); %high value, reward
-% legend(hl, {'omit', 'cued', 'uncued'}, 'Location', 'northoutside'); legend('boxoff');
-ylabel('\fontsize{8}Fluor. (\fontsize{12}\sigma\fontsize{8}-baseline)'); xlabel('time from cue (s)'); set(gca, 'XLim', [-4 7]);
 
-formatFigurePublish('size', [3 1.1]);
+% legend(hl, {'omit', 'cued', 'uncued'}, 'Location', 'northwest'); legend('boxoff');
+ylabel('\fontsize{8}Fluor. '); xlabel('time from cue (s)'); set(gca, 'XLim', [-4 7]);
+
+
+formatFigurePublish('size', [1.5 2]);
 
 if saveOn 
     export_fig(fullfile(savepath, saveName), '-eps');
