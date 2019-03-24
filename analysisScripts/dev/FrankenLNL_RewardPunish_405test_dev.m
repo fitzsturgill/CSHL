@@ -149,7 +149,7 @@ end
 %%
 FluorDataField = 'dF';
 
-trialSets = [1 2 5 7];
+trialSets = [1 2 5 7]; % cued reward, omission, uncued reward, dummy photometry trial
 setLabels = {'cuedReward', 'omission', 'uncuedReward', 'control'};
 labels = {'post', 'cue', 'outcome'};
 windows = [4 6.9; 0 3; 3 4];
@@ -201,16 +201,16 @@ set(fph, 'LineWidth', 0.5, 'Color', [1 0 0]);
 data405 = TE.Photometry_ch2.data(1).dF;
 data470 = TE.Photometry_ch1.data(1).dF;
 estimated470 = data405 .* fob.p1 + fob.p2;
-TE.Photometry_ch1.data(1).dF_corrected = (data470 - estimated470);% ./ estimated470; 
+TE.Photometry_ch1.data(1).dF_corrected = (data470 - estimated470);
 
-%% redo rasters and averages using corrected dFF
+%% redo rasters and averages using corrected dF
 trialNumbering = 'consecutive';
 FluorDataField = 'dFF_corrected';
 CLimFactor = 3;
 window = [-4 6];
 
 
-    saveName = ['Reward_phRasters_dFF_corrected'];
+    saveName = ['Reward_phRasters_dF_corrected'];
     ensureFigure(saveName, 1);
     
     subplot(1,3,1);
