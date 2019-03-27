@@ -29,8 +29,13 @@ for counter = 1:length(DB.animals)
         continue
     end    
     
-    savepath = fullfile(DB.path, 'animals', animal, filesep);
     
+    savepath = fullfile(DB.path, 'animals', animal, filesep);
+    % you added stuff to TE so save it (3/26/19)
+    if saveOn
+        save(fullfile(savepath, 'TE.mat'), 'TE');
+        disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
+    end
 %% photometry averages, zscored
 %     ylim = [-2 8];
 
@@ -50,7 +55,7 @@ for counter = 1:length(DB.animals)
     title('Punish'); ylabel(sprintf('BF %s', fdField)); textBox(animal, gca, [0.25 0.95], 8);%set(gca, 'YLim', ylim);
     
     subplot(2,2,3);
-    varargin = {'window', [-4 0], 'zeroTimes', TE.usZeros, 'window', window, 'linespec', {'k', 'b','g','c'}};
+    varargin = {'window', [-4 0], 'zeroTimes', TE.usZeros, 'window', window, 'linespec', {'k', 'b','g', 'c'}};
     axh = [];
     [ha, hl] = plotEventAverageFromTE(TE, trialsByType([7 1 2 5]), 'Port1In', varargin{:});
     legend(hl, {'null', 'cued', 'omission', 'uncued'}, 'Location', 'best', 'FontSize', 8); legend('boxoff');

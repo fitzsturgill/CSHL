@@ -87,7 +87,7 @@ addStimulusPatch(gca, [0 1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [2.
     'FluorDataField', fdField, 'window', [-4, 7], 'cmap', linecolors); %high value, reward
 
 % legend(hl, {'omit', 'cued', 'uncued'}, 'Location', 'northwest'); legend('boxoff');
-ylabel('\fontsize{8}Fluor. '); xlabel('time from cue (s)'); set(gca, 'XLim', [-4 7]);
+ylabel('\fontsize{8}Fluor.'); xlabel('Time from cue (s)'); set(gca, 'XLim', [-4 7]);
 
 
 formatFigurePublish('size', [1.5 2]);

@@ -1,13 +1,13 @@
 function Photometry = processTrialAnalysis_Photometry_expFitConcat(sessions, varargin)
 % Fitz Sturgill 2018
-% This function subtracts away a dual exponential bleaching trend by
+% This function subtracts away an exponential bleaching trend by
 % concatenating all trials together.  Assumes that bleaching occurs approximately without
 % replenishment of unbleached fluorophore from a pool outside the
 % photometry "field of view".  This assumtion is supported by the
 % observation that fluorecense tends not to recover across successive days
 % of photometry sessions.
 
-% unlike other processTrialAnalysis_Photometry2, this function cuts away
+% unlike processTrialAnalysis_Photometry2, this function cuts away
 % the options for other types of bleaching correction and baselining for simplicity    
 
     %% optional parameters, first set defaults

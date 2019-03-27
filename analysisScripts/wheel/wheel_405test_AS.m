@@ -22,10 +22,6 @@ disp(subjectName);
 savepath = fullfile(basepath, subjectName);
 ensureDirectory(savepath);
 
-if saveOn
-    save(fullfile(savepath, 'TE.mat'), 'TE');
-    disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
-end
 
 %%
 
@@ -44,6 +40,7 @@ TE.Photometry_ch1 = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMod
 TE.Photometry_ch2 = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial',...
     'zeroField', 'Baseline', 'channels', 1, 'baseline', bl, 'startField', 'Baseline', 'downsample', 305, 'refChannels', 2, 'forceAmp', 1);
 
+
 if saveOn
     save(fullfile(savepath, 'TE.mat'), 'TE');
     disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
@@ -54,7 +51,88 @@ LED1trials = TE.LED1_amp > 0 & TE.LED2_amp == 0;
 LED2trials = TE.LED2_amp > 0 & TE.LED1_amp == 0;
 LED12trials = TE.LED1_amp > 0 & TE.LED2_amp > 0;
 
+%% do bleach fit manually on a trial by trial basis
+nTrials = length(TE.filename);
+nPoints = size(TE.Photometry_ch1.data(1).raw, 2);
+TE.Photometry_ch1.data(1).bleach_fit = zeros(nTrials, nPoints);
+TE.Photometry_ch2.data(1).bleach_fit = zeros(nTrials, nPoints);
+TE.Photometry_ch1.data(1).bleach_dF = zeros(nTrials, nPoints);
+TE.Photometry_ch2.data(1).bleach_dF = zeros(nTrials, nPoints);
+
+x = (0:nPoints - 1);
+startFitTime = 1; % start bleach fit n seconds into each trial
+Fs = TE.Photometry_ch1.sampleRate;
+for counter = 1:nTrials
+    if TE.LED1_amp(counter)
+        trialData = TE.Photometry_ch1.data(1).raw(counter, :);
+        if any(isnan(trialData))
+            trialData = inpaint_nans(trialData);
+        end
+        fo = fitoptions('Method', 'NonlinearLeastSquares',...
+            'Upper', [Inf Inf 0],...
+            'Lower', [0 -Inf -1],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
+            'StartPoint', [min(trialData) range(trialData)/2 -5]...
+            );
+        model = 'a + b*exp(c*x)';
+        ft = fittype(model, 'options', fo);        
+        [fitobject, gof, output] = ... % new
+            fit(x(bpX2pnt(startFitTime, Fs):end)', trialData(bpX2pnt(startFitTime, Fs):end)', ft, fo);        
+        trialFit = fitobject.a + fitobject.b * exp(fitobject.c * x);
+        TE.Photometry_ch1.data(1).bleach_fit(counter,:) = trialFit;
+        TE.Photometry_ch1.data(1).bleach_dF(counter,:) = trialData - trialFit;
+    end
+    
+    if TE.LED2_amp(counter)
+        trialData = TE.Photometry_ch2.data(1).raw(counter, :);
+        if any(isnan(trialData))
+            trialData = inpaint_nans(trialData);
+        end        
+        fo = fitoptions('Method', 'NonlinearLeastSquares',...
+            'Upper', [Inf Inf 0],...
+            'Lower', [0 -Inf -1],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
+            'StartPoint', [min(trialData) range(trialData)/2 -5]...
+            );
+        model = 'a + b*exp(c*x)';
+        ft = fittype(model, 'options', fo);                
+        [fitobject, gof, output] = ... % new
+            fit(x(bpX2pnt(startFitTime, Fs):end)', trialData(bpX2pnt(startFitTime, Fs):end)', ft, fo);        
+        trialFit = fitobject.a + fitobject.b * exp(fitobject.c * x);
+        TE.Photometry_ch2.data(1).bleach_fit(counter,:) = trialFit;
+        TE.Photometry_ch2.data(1).bleach_dF(counter,:) = trialData - trialFit;
+    end    
+end
+
 %%
+% nPoints = numel(TE.Photometry_ch1.data(1).raw);
+% x = 0:nPoints-1;
+% fo = TE.Photometry_ch1.bleachFit.fitobject_session;
+% ch1_blFit = fo.a + fo.b * exp(fo.c * x);% + fo.d * exp(fo.e * x);
+% fo = TE.Photometry_ch2.bleachFit.fitobject_session;
+% ch2_blFit = fo.a + fo.b * exp(fo.c * x);% + fo.d * exp(fo.e * x);
+% 
+% saveName = 'expFitConcat_bleachFit';
+% ensureFigure(saveName, 1);
+% subplot(1,1,1); 
+% ch1data = TE.Photometry_ch1.data(1).raw';
+% ch1data = ch1data(:);
+% plot(ch1data, 'b'); hold on;
+% plot(ch1_blFit, 'c', 'LineWidth', 2);
+% title('470nm');
+% % subplot(1,2,2); 
+% yyaxis right;
+% ch2data = TE.Photometry_ch2.data(1).raw';
+% ch2data = ch2data(:);
+% plot(ch2data, 'm'); hold on;
+% plot(ch2_blFit, 'r', 'LineWidth', 2);
+% % title('405nm');
+% legend('470', '470fit', '405', '405fit'); legend('boxoff');
+% 
+%     if saveOn
+%         saveas(gcf, fullfile(savepath, saveName), 'fig');
+%         saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+%     end
+    
+%%    
 
 window = [-2 2];
 fs = 20; % sample rate
@@ -178,3 +256,5 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'baseline_fluor.fig'));
     saveas(gcf, fullfile(savepath, 'baseline_fluor.jpg'));
 end
+
+%% given that you've used 

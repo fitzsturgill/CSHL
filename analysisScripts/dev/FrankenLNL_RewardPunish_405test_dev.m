@@ -131,12 +131,12 @@ totalDelay = TE.Trace2{1}(2) - TE.Cue2{1}(1);
 
 
     axes; hold on;    
-    [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 5]), 1, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'b', 'r'}, 'PhotometryField', 'Photometry_ch1'); %high value, reward
+    [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1]), 1, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'b', 'r'}, 'PhotometryField', 'Photometry_ch1'); %high value, reward
 %     legend(hl, {'pRhigh', 'pRmedium', 'pRlow'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
 
     
 
-        [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 5]), 1, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'c', 'm'}, 'PhotometryField', 'Photometry_ch2'); %high value, reward
+        [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1]), 1, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'c', 'm'}, 'PhotometryField', 'Photometry_ch2'); %high value, reward
     %     legend(hl, {'pRhigh', 'pRmedium', 'pRlow'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
         addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1]);
         set(gca, 'XLim', window); ylabel('Fluor ZS');
@@ -148,18 +148,43 @@ end
         
 %%
 FluorDataField = 'dF';
-
-trialSets = [1 2 5 7]; % cued reward, omission, uncued reward, dummy photometry trial
+trialSets = [1 2 5 7];
 setLabels = {'cuedReward', 'omission', 'uncuedReward', 'control'};
-labels = {'post', 'cue', 'outcome'};
-windows = [4 6.9; 0 3; 3 4];
-colors = [1 0 0; 0 1 0; 0 0 1];
+labels = {'baseline', 'cue', 'outcome'};
+windows = [-2 0; 0 3; 3 4];
+colors = [0 0 1; 0 1 0; 1 0 0];
 
-saveName = 'test_scatter';
-ensureFigure(saveName, 1); colormap jet;
+
+saveName = 'distributions_trial_epochs';
+h = ensureFigure(saveName, 1); colormap jet;
+mcLandscapeFigSetup(h);
+subplot(2,3,1);
+mylines = [];
+[ha, hl] = phPlotAverageFromTE(TE, trialsByType{1}, 1, 'FluorDataField', FluorDataField, 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'b'}, 'PhotometryField', 'Photometry_ch1'); %high value, reward
+mylines(end + 1) = hl;
+[ha, hl] = phPlotAverageFromTE(TE, trialsByType{1}, 1, 'FluorDataField', FluorDataField, 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'m'}, 'PhotometryField', 'Photometry_ch2'); %high value, reward
+mylines(end + 1) = hl;
+addStimulusPatch(gca, [0 1 0 0.8], 'odor'); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1 0 0.8], 'reinforcement');
+title('cued Reward'); ylabel('dF');
+legend(mylines, {'470', '405'}, 'Location', 'northwest'); legend('boxoff');
+
+subplot(2,3,2); hold on;
+[ha, hl] = phPlotAverageFromTE(TE, ~TE.reject, 1, 'FluorDataField', FluorDataField, 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'b'}, 'PhotometryField', 'Photometry_ch1'); %high value, reward
+[ha, hl] = phPlotAverageFromTE(TE, ~TE.reject, 1, 'FluorDataField', FluorDataField, 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'m'}, 'PhotometryField', 'Photometry_ch2'); %high value, reward
+addStimulusPatch(gca, [windows(1,:) 0 0.8], labels{1}, colors(1,:)); 
+addStimulusPatch(gca, [windows(2,:) 0 0.8], labels{2}, colors(2,:));
+addStimulusPatch(gca, [windows(3,:) 0 0.8], labels{3}, colors(3,:));
+
+title('all trials');
+
+        
+        
+
+
+
 ax=[];
 for counter = 1:length(trialSets)
-    ax(counter) = subplot(2,2,counter); hold on;
+    ax(counter) = subplot(2,3,counter + 2); hold on;
     trials = trialsByType{trialSets(counter)};
     for counter2 = 1:length(labels)
         pointRange = [bpX2pnt(windows(counter2, 1), 20, -4) bpX2pnt(windows(counter2, 2), 20, -4)];
@@ -167,9 +192,9 @@ for counter = 1:length(trialSets)
         data_470 = data_470(:);
         data_405 = TE.Photometry_ch2.data(1).(FluorDataField)(trials,pointRange(1):pointRange(2));        
         data_405 = data_405(:);
-        scatter(data_405, data_470, 15, colors(counter2, :), '.'); 
+        scatter(data_405, data_470, 20, colors(counter2, :), '.'); 
     end
-    legend(labels);
+    legend(labels); legend('boxoff');
     xlabel('405'); ylabel('470');
     title(setLabels(counter))
 end
@@ -191,21 +216,28 @@ yData = yData(:);
 
 saveName = 'linearFit';
 ensureFigure(saveName, 1);
-scatter(xData, yData, 14, [0 0 0], '.'); hold on;
+scatter(xData, yData, 14, [0 0 1], '.'); hold on;
 fo = fitoptions('poly1', 'Robust', 'on');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
 fob = fit(xData, yData, 'poly1', fo); 
 fph=plot(fob); legend off; %,'predfunc'); legend off;
 set(fph, 'LineWidth', 0.5, 'Color', [1 0 0]);
+textBox(sprintf('470estimated = %.2g  *  405measured + %.2g', fob.p1, fob.p2));
+xlabel('405nm'); ylabel('470nm');
+title('linear regression using baseline period');
 
 % generate deltaF/F
 data405 = TE.Photometry_ch2.data(1).dF;
 data470 = TE.Photometry_ch1.data(1).dF;
 estimated470 = data405 .* fob.p1 + fob.p2;
-TE.Photometry_ch1.data(1).dF_corrected = (data470 - estimated470);
+TE.Photometry_ch1.data(1).dF_corrected = (data470 - estimated470);% ./ estimated470; 
+
+    if saveOn
+        saveas(gcf, fullfile(savepath, saveName), 'fig');
+        saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+    end
 
 %% redo rasters and averages using corrected dF
 trialNumbering = 'consecutive';
-FluorDataField = 'dFF_corrected';
 CLimFactor = 3;
 window = [-4 6];
 
@@ -230,7 +262,6 @@ window = [-4 6];
 
     % -3 6
 window = [-4 7];
-PhotometryField = 'Photometry';
 totalDelay = TE.Trace2{1}(2) - TE.Cue2{1}(1);
 
 
@@ -242,23 +273,24 @@ totalDelay = TE.Trace2{1}(2) - TE.Cue2{1}(1);
     
     ax = subplot(1,2,1);    
     [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 2 5 7]), 1, 'FluorDataField', 'dF_corrected', 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'b', 'r', 'c', 'k'}, 'PhotometryField', 'Photometry_ch1'); %high value, reward
-%     legend(hl, {'pRhigh', 'pRmedium', 'pRlow'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
-    addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1]);
+%     legend(hl, {'pRhigh', 'pRmedium', 'pRlow'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');    
     set(gca, 'XLim', window); ylabel('Fluor (deltaF)'); xlabel('time from cue (s)');
-    title('corrected');
+    title('corrected'); 
     
     ax(2) = subplot(1,2,2);
         [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 2 5 7]), 1, 'FluorDataField', 'dF', 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'b', 'r', 'c', 'k'}, 'PhotometryField', 'Photometry_ch1'); %high value, reward
     %     legend(hl, {'pRhigh', 'pRmedium', 'pRlow'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
-    addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1]);
+    
     set(gca, 'XLim', window); ylabel('Fluor (deltaF)'); xlabel('time from cue (s)');
     title('raw');
-    sameYScale(ax);
+    sameYScale(ax); 
+    subplot(1,2,1); addStimulusPatch(gca, [0 1], '', [0.8 0.8 0.8]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1], '', [0.8 0.8 0.8]);addOrginLines(gca, [0 0 0]);
+    subplot(1,2,2); addStimulusPatch(gca, [0 1], '', [0.8 0.8 0.8]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1], '', [0.8 0.8 0.8]);addOrginLines(gca, [0 0 0]); 
 if saveOn
     saveas(gcf, fullfile(savepath, saveName), 'fig');
     saveas(gcf, fullfile(savepath, saveName), 'jpeg');
 end
-%% synchrony between left and right BLA
+%% compare 470 and 405
 saveName = 'examples_470_vs_405';
 showThese = find(Odor2Valve1Trials & rewardTrials);
 ensureFigure(saveName, 1); 
@@ -281,3 +313,22 @@ if saveOn
 end    
 
 
+% compare corrected and uncorrected
+saveName = 'examples_corrected_raw';
+ensureFigure(saveName, 1); 
+for counter = 1:4
+    whichOne = counter + 10;
+    subplot(2,2,counter); hold on;
+    hl = zeros(2,1);
+    hl(1) = plot(TE.Photometry_ch1.xData, TE.Photometry_ch1.data(1).dF_corrected(showThese(whichOne), :)', 'b', 'LineWidth', 1); set(gca, 'XLim', [-2 4]); 
+    hl(2) = plot(TE.Photometry_ch1.xData, TE.Photometry_ch1.data(1).dF(showThese(whichOne), :)', 'm', 'LineWidth', 1); set(gca, 'XLim', [-2 4]);
+    addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [1.9 2.1]);
+    legend(hl, {'corrected', 'raw'}, 'Box', 'off', 'Location', 'northwest');
+    xlabel('time from cue (s)'); ylabel('Fluor. (dF)');
+end
+
+
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+end    
