@@ -22,8 +22,14 @@
     rewardTrials = filterTE(TE, 'ReinforcementOutcome', 'Reward', 'reject', 0);
     punishTrials = filterTE(TE, 'ReinforcementOutcome', 'Punish', 'reject', 0);    
     neutralTrials = filterTE(TE, 'ReinforcementOutcome', 'Neutral', 'reject', 0);
+    if isfield(TE, 'ShockCurrent')
+        shockTrials = filterTE(TE, 'ReinforcementOutcome', 'Shock', 'reject', 0) & (abs(TE.ShockCurrent) > 200);
+    else
+        shockTrials = filterTE(TE, 'ReinforcementOutcome', 'Shock', 'reject', 0);
+    end
     uncuedReward = uncuedTrials & rewardTrials;
     uncuedPunish = uncuedTrials & punishTrials;
+    uncuedShock = uncuedTrials & shockTrials;
     trialTypes = 1:max(TE.trialType);
     trialsByType = cell(size(trialTypes));
     for ttc = 1:max(TE.trialType)

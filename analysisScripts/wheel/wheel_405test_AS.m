@@ -69,9 +69,9 @@ for counter = 1:nTrials
             trialData = inpaint_nans(trialData);
         end
         fo = fitoptions('Method', 'NonlinearLeastSquares',...
-            'Upper', [Inf Inf 0],...
-            'Lower', [0 -Inf -1],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
-            'StartPoint', [min(trialData) range(trialData)/2 -5]...
+            'Upper', [Inf Inf 1/bpX2pnt(1,20)],...
+            'Lower', [0 -Inf -1/bpX2pnt(1,20)],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
+            'StartPoint', [min(trialData) range(trialData)/2 -1/bpX2pnt(10,20)]...
             );
         model = 'a + b*exp(c*x)';
         ft = fittype(model, 'options', fo);        
@@ -88,9 +88,9 @@ for counter = 1:nTrials
             trialData = inpaint_nans(trialData);
         end        
         fo = fitoptions('Method', 'NonlinearLeastSquares',...
-            'Upper', [Inf Inf 0],...
-            'Lower', [0 -Inf -1],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
-            'StartPoint', [min(trialData) range(trialData)/2 -5]...
+            'Upper', [Inf Inf 1/bpX2pnt(1,20)],...
+            'Lower', [0 -Inf -1/bpX2pnt(1,20)],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
+            'StartPoint', [min(trialData) range(trialData)/2 -1/bpX2pnt(10,20)]...
             );
         model = 'a + b*exp(c*x)';
         ft = fittype(model, 'options', fo);                
@@ -101,62 +101,107 @@ for counter = 1:nTrials
         TE.Photometry_ch2.data(1).bleach_dF(counter,:) = trialData - trialFit;
     end    
 end
+%% some checks of bleach fits
+saveName = 'bleach_check';
+ensureFigure(saveName, 1);
+subplot(3,4,1); imagesc(TE.Photometry_ch1.data(1).bleach_fit(LED12trials, :)); ylabel('bleach fit'); title('470, both LEDs');
+subplot(3,4,5); imagesc(TE.Photometry_ch1.data(1).bleach_dF(LED12trials, :)); ylabel('bleach corrected');
+subplot(3,4,9); imagesc(TE.Photometry_ch1.data(1).raw(LED12trials, :)); ylabel('raw');
+subplot(3,4,2); imagesc(TE.Photometry_ch1.data(1).bleach_fit(LED1trials, :)); title('470 only');
+subplot(3,4,6); imagesc(TE.Photometry_ch1.data(1).bleach_dF(LED1trials, :)); colorbar;
+subplot(3,4,10); imagesc(TE.Photometry_ch1.data(1).raw(LED1trials, :)); colorbar;
+subplot(3,4,3); imagesc(TE.Photometry_ch2.data(1).bleach_fit(LED12trials, :)); title('405, both LEDs');
+subplot(3,4,7); imagesc(TE.Photometry_ch2.data(1).bleach_dF(LED12trials, :));
+subplot(3,4,11); imagesc(TE.Photometry_ch2.data(1).raw(LED12trials, :));%, [-1 1]);
+subplot(3,4,4); imagesc(TE.Photometry_ch2.data(1).bleach_fit(LED2trials, :)); title('405 only');
+subplot(3,4,8); imagesc(TE.Photometry_ch2.data(1).bleach_dF(LED2trials, :));
+subplot(3,4,12); imagesc(TE.Photometry_ch2.data(1).raw(LED2trials, :));%, [-1 1]);
+
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));
+end
+
+%% do 405 correction 
+
+% optoin A: use pre-reward period
+% preWindow = [-2 0];
+% [pre_ch1, ts, tn] = extractDataByTimeStamps(TE.Photometry_ch1.data(1).bleach_dF, TE.Photometry_ch1.startTime, 20, TE.Reward, preWindow, LED12trials);
+% [pre_ch2, ts, tn] = extractDataByTimeStamps(TE.Photometry_ch2.data(1).bleach_dF, TE.Photometry_ch2.startTime, 20, TE.Reward, preWindow, LED12trials);
+% xData = pre_ch2(find(isfinite(pre_ch2)));
+% yData = pre_ch1(find(isfinite(pre_ch1)));
+
+% option B: using entire data set minus the first 2 seconds of each acquisition
+xData = TE.Photometry_ch2.data(1).bleach_dF(LED12trials,40:end); xData = xData(:);
+yData = TE.Photometry_ch1.data(1).bleach_dF(LED12trials,40:end); yData = yData(:);
+saveName = 'linearFit';
+ensureFigure(saveName, 1);
+scatter(xData, yData, 14, [0 0 1], '.'); hold on;
+fo = fitoptions('poly1', 'Robust', 'Bisquare');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+fob = fit(xData, yData, 'poly1', fo); 
+fph=plot(fob, 'predfunc'); legend off;
+set(fph, 'LineWidth', 0.5, 'Color', [1 0 0]);
+textBox(sprintf('470estimated = %.2g  *  405measured + %.2g', fob.p1, fob.p2));
+xlabel('405nm'); ylabel('470nm');
+title('linear regression using baseline period');
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));
+end
+TE.Photometry_ch1.data(1).dF_corrected = NaN(size(TE.Photometry_ch1.data(1).raw)); % initialize
+TE.Photometry_ch1.data(1).dF_estimated = NaN(size(TE.Photometry_ch1.data(1).raw)); % initialize
+TE.Photometry_ch1.data(1).dF_estimated(LED12trials, :) = TE.Photometry_ch2.data(1).bleach_dF(LED12trials, :) .* fob.p1 + fob.p2;
+TE.Photometry_ch1.data(1).dF_corrected(LED12trials, :) = TE.Photometry_ch1.data(1).bleach_dF(LED12trials, :) - TE.Photometry_ch1.data(1).dF_estimated(LED12trials, :);
+
+if saveOn
+    save(fullfile(savepath, 'TE.mat'), 'TE');
+    disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
+end
+%% plot some example trials
+
+saveName = 'examples_correction';
+ensureFigure(saveName, 1);
+trials = find(LED12trials, 4);
+for counter = 1:4
+    trial = trials(counter);
+    subplot(2,2,counter);
+    plot(TE.Photometry_ch1.xData, TE.Photometry_ch1.data.bleach_dF(trial, :)', 'r'); hold on;
+    plot(TE.Photometry_ch1.xData, TE.Photometry_ch1.data.dF_estimated(trial, :)', 'b');
+    plot(TE.Photometry_ch1.xData, TE.Photometry_ch1.data.dF_corrected(trial, :)', 'g');
+    legend({'raw', 'estimated', 'corrected'});
+end
+
+
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));
+end
 
 %%
-% nPoints = numel(TE.Photometry_ch1.data(1).raw);
-% x = 0:nPoints-1;
-% fo = TE.Photometry_ch1.bleachFit.fitobject_session;
-% ch1_blFit = fo.a + fo.b * exp(fo.c * x);% + fo.d * exp(fo.e * x);
-% fo = TE.Photometry_ch2.bleachFit.fitobject_session;
-% ch2_blFit = fo.a + fo.b * exp(fo.c * x);% + fo.d * exp(fo.e * x);
-% 
-% saveName = 'expFitConcat_bleachFit';
-% ensureFigure(saveName, 1);
-% subplot(1,1,1); 
-% ch1data = TE.Photometry_ch1.data(1).raw';
-% ch1data = ch1data(:);
-% plot(ch1data, 'b'); hold on;
-% plot(ch1_blFit, 'c', 'LineWidth', 2);
-% title('470nm');
-% % subplot(1,2,2); 
-% yyaxis right;
-% ch2data = TE.Photometry_ch2.data(1).raw';
-% ch2data = ch2data(:);
-% plot(ch2data, 'm'); hold on;
-% plot(ch2_blFit, 'r', 'LineWidth', 2);
-% % title('405nm');
-% legend('470', '470fit', '405', '405fit'); legend('boxoff');
-% 
-%     if saveOn
-%         saveas(gcf, fullfile(savepath, saveName), 'fig');
-%         saveas(gcf, fullfile(savepath, saveName), 'jpeg');
-%     end
-    
-%%    
-
-window = [-2 2];
+window = [-4 4];
 fs = 20; % sample rate
 blSamples = (0 - window(1)) * fs;
+fluorField = 'bleach_dF';
 
-% LED 470 and 405
-[rewards_ch1_both, ts, tn] = extractDataByTimeStamps(TE.Photometry_ch1.data(1).raw, TE.Photometry_ch1.startTime, 20, TE.Reward, [-2 2], LED12trials);
-rewards_ch2_both = extractDataByTimeStamps(TE.Photometry_ch2.data(1).raw, TE.Photometry_ch1.startTime, 20, TE.Reward, [-2 2], LED12trials);
+% LED 470 and 404
+[rewards_ch1_both, ts, tn] = extractDataByTimeStamps(TE.Photometry_ch1.data(1).dF_corrected, TE.Photometry_ch1.startTime, 20, TE.Reward, window, LED12trials);
+rewards_ch2_both = extractDataByTimeStamps(TE.Photometry_ch2.data(1).(fluorField), TE.Photometry_ch1.startTime, 20, TE.Reward, window, LED12trials);
 bl_ch1_both = nanmean(rewards_ch1_both(:,1:blSamples), 2);
 rewards_ch1_both = bsxfun(@minus, rewards_ch1_both, bl_ch1_both);
 bl_ch2_both = nanmean(rewards_ch2_both(:,1:blSamples), 2);
 rewards_ch2_both = bsxfun(@minus, rewards_ch2_both, bl_ch2_both);
 
 % LED 470 only
-[rewards_ch1_470, ts, tn] = extractDataByTimeStamps(TE.Photometry_ch1.data(1).raw, TE.Photometry_ch2.startTime, 20, TE.Reward, [-2 2], LED1trials);
-rewards_ch2_470 = extractDataByTimeStamps(TE.Photometry_ch2.data(1).raw, TE.Photometry_ch2.startTime, 20, TE.Reward, [-2 2], LED1trials);
+[rewards_ch1_470, ts, tn] = extractDataByTimeStamps(TE.Photometry_ch1.data(1).(fluorField), TE.Photometry_ch2.startTime, 20, TE.Reward, window, LED1trials);
+rewards_ch2_470 = extractDataByTimeStamps(TE.Photometry_ch2.data(1).raw, TE.Photometry_ch2.startTime, 20, TE.Reward, window, LED1trials);
 bl_ch1_470 = nanmean(rewards_ch1_470(:,1:blSamples), 2);
 rewards_ch1_470 = bsxfun(@minus, rewards_ch1_470, bl_ch1_470);
 bl_ch2_470 = nanmean(rewards_ch2_470(:,1:blSamples), 2);
 rewards_ch2_470 = bsxfun(@minus, rewards_ch2_470, bl_ch2_470);
 
 % LED 405 only
-[rewards_ch1_405, ts, tn] = extractDataByTimeStamps(TE.Photometry_ch1.data(1).raw, TE.Photometry_ch1.startTime, 20, TE.Reward, [-2 2], LED2trials);
-rewards_ch2_405 = extractDataByTimeStamps(TE.Photometry_ch2.data(1).raw, TE.Photometry_ch2.startTime, 20, TE.Reward, [-2 2], LED2trials);
+[rewards_ch1_405, ts, tn] = extractDataByTimeStamps(TE.Photometry_ch1.data(1).(fluorField), TE.Photometry_ch1.startTime, 20, TE.Reward, window, LED2trials);
+rewards_ch2_405 = extractDataByTimeStamps(TE.Photometry_ch2.data(1).(fluorField), TE.Photometry_ch2.startTime, 20, TE.Reward, window, LED2trials);
 bl_ch1_405 = nanmean(rewards_ch1_405(:,1:blSamples), 2);
 rewards_ch1_405 = bsxfun(@minus, rewards_ch1_405, bl_ch1_405);
 bl_ch2_405 = nanmean(rewards_ch2_405(:,1:blSamples), 2);
@@ -214,6 +259,7 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'random_rewards_alternateLEDs.fig'));
     saveas(gcf, fullfile(savepath, 'random_rewards_alternateLEDs.jpg'));
 end
+
 
 %% save plot of baseline fluorecense values across conditions
 fbl = zeros(1,6);

@@ -790,4 +790,41 @@ end
 
 
 
-    
+%% cued reward rasters sorted by first lick
+
+% computer latency to first lick
+sessionIndex = 5;
+fdField = 'ZS';
+tcolor = mycolors('chat');
+window = [-7 4]; % relative to Us
+TE.firstLick = calcEventLatency(TE, 'Port1In', TE.Cue2, TE.Us); % my calcEventLatency functions computes the latency between Bpod time stamps and events (e.g. licks and the start of a bpod state)
+saveName = 'cuedReward_rasters_sorted';  
+ensureFigure(saveName, 1);
+
+subplot(1,3,1);
+[~, lh] = eventRasterFromTE(TE, trialsByType{1}, 'Port1In', 'trialNumbering', 'consecutive',...
+    'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording', 'sortValues', TE.firstLick);
+set(gca, 'XLim', window);
+% set(lh, 'LineWidth', 0.3, 'Color', [0 0 0]);
+title('licking');
+%     xlabel('Time from odor (s)');
+climfactor = 3;  
+
+lickOnsets = TE.firstLick(trialsByType{1}) - 3;
+lickOnsets = sort(lickOnsets);
+subplot(1,3,2); phRasterFromTE(TE, trialsByType{1}, 1, 'trialNumbering', 'consecutive',...
+    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry', 'sortValues', TE.firstLick, 'zeroTimes', TE.Us, 'window', window); % 'CLimFactor', CLimFactor,
+line(lickOnsets, (1:sum(trialsByType{1}))', 'Parent', gca, 'Color', 'r', 'LineWidth', 2);
+title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Left']);
+if ismember(2, TE.Photometry.settings.channels)
+    subplot(1,3,3); phRasterFromTE(TE, trialsByType{1}, 2, 'trialNumbering', 'consecutive',...
+        'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry', 'sortValues', TE.firstLick, 'zeroTimes', TE.Us, 'window', window); % 'CLimFactor', CLimFactor,
+    line(lickOnsets, (1:sum(trialsByType{1}))', 'Parent', gca, 'Color', 'r', 'LineWidth', 2);
+    title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Right']);
+end
+
+
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+end

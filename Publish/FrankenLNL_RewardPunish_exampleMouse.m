@@ -57,41 +57,117 @@ if saveOn
     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
+%% cued reward rasters, sorted by first lick
+% computer latency to first lick
+
+
+fdField = 'ZS';
+tcolor = mycolors('chat');
+window = [-4 7]; % relative to Us
+TE.firstLick = calcEventLatency(TE, 'Port1In', TE.Cue2, TE.Us); % my calcEventLatency functions computes the latency between Bpod time stamps and events (e.g. licks and the start of a bpod state)
+saveName = 'PE_BLA_exampleMouse_cuedReward_Rasters_sorted';  
+ensureFigure(saveName, 1);
+
+subplot(1,3,1);
+[~, lh] = eventRasterFromTE(TE, trialsByType{1}, 'Port1In', 'trialNumbering', 'consecutive',...
+    'zeroField', 'Cue2', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording', 'sortValues', TE.firstLick);
+set(gca, 'XLim', window);
+% set(lh, 'LineWidth', 0.3, 'Color', [0 0 0]);
+title('licking');
+%     xlabel('Time from odor (s)');
+climfactor = 3;  
+
+lickOnsets = TE.firstLick(trialsByType{1});
+lickOnsets = sort(lickOnsets);
+subplot(1,3,2); phRasterFromTE(TE, trialsByType{1}, 1, 'trialNumbering', 'consecutive',...
+    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry', 'sortValues', TE.firstLick, 'zeroTimes', TE.Cue2, 'window', window); % 'CLimFactor', CLimFactor,
+line(lickOnsets, (1:sum(trialsByType{1}))', 'Parent', gca, 'Color', 'r', 'LineWidth', 2);
+title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Left']);
+subplot(1,3,3); phRasterFromTE(TE, trialsByType{1}, 2, 'trialNumbering', 'consecutive',...
+    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry', 'sortValues', TE.firstLick, 'zeroTimes', TE.Cue2, 'window', window); % 'CLimFactor', CLimFactor,
+line(lickOnsets, (1:sum(trialsByType{1}))', 'Parent', gca, 'Color', 'r', 'LineWidth', 2);
+title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Right']);
+
+
         
-%% averages
+%% averages, appetitive
 
 fdField = 'ZS';
 saveName = 'PE_BLA_exampleMouse_avgs';  
 h=ensureFigure(saveName, 1); 
-
-
+sessionIndexList = 5; % just the 1 session because early sessions surprise modulation hasn't developed whereas later sessions I shorten the delay (surprise modulation is consistent) but it messes up the graph having 2 different delays
+window = [-7 4];
 linecolors = [0 0 1; 0 0 0; 0 1 1];            
 
-subplot(2, 1, 1);
+subplot(1, 2, 1);
 set(gca, 'YLim', [-2 10]);
 tcolor = mycolors('chat');
 title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Left']);
-addStimulusPatch(gca, [0 1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [2.9 3.1], '', [0.7 0.7 0.7], 0.4);
-[ha, hl] = phPlotAverageFromTE(TE, {trialsByType{1} & TE.sessionIndex == sessionIndex, trialsByType{2} & TE.sessionIndex == sessionIndex, trialsByType{5} & TE.sessionIndex == sessionIndex,}, 1,...
-    'FluorDataField', fdField, 'window', [-4, 7], 'cmap', linecolors); %high value, reward
+addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
+[ha, hl] = phPlotAverageFromTE(TE, {trialsByType{1} & ismember(TE.sessionIndex, sessionIndexList), trialsByType{2} & ismember(TE.sessionIndex, sessionIndexList), trialsByType{5} & ismember(TE.sessionIndex, sessionIndexList)}, 1,...
+    'zeroTimes', TE.Us, 'FluorDataField', fdField, 'window', window, 'cmap', linecolors); %high value, reward
 
 % legend(hl, {'omit', 'cued', 'uncued'}, 'Location', 'northwest'); legend('boxoff');
-ylabel('(\fontsize{12}\sigma\fontsize{8}-baseline)');  set(gca, 'XLim', [-4 7]);
+ylabel('F(\fontsize{12}\sigma\fontsize{8}-baseline)');  set(gca, 'XLim', window);
 
-subplot(2, 1, 2);
+subplot(1, 2, 2);
 set(gca, 'YLim', [-2 10]);
 tcolor = mycolors('chat');
 title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Right']);
-addStimulusPatch(gca, [0 1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [2.9 3.1], '', [0.7 0.7 0.7], 0.4);
-[ha, hl] = phPlotAverageFromTE(TE, {trialsByType{1} & TE.sessionIndex == sessionIndex, trialsByType{2} & TE.sessionIndex == sessionIndex, trialsByType{5} & TE.sessionIndex == sessionIndex,}, 2,...
-    'FluorDataField', fdField, 'window', [-4, 7], 'cmap', linecolors); %high value, reward
+addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
+[ha, hl] = phPlotAverageFromTE(TE, {trialsByType{1} & ismember(TE.sessionIndex, sessionIndexList), trialsByType{2} & ismember(TE.sessionIndex, sessionIndexList), trialsByType{5} & ismember(TE.sessionIndex, sessionIndexList)}, 2,...
+    'zeroTimes', TE.Us, 'FluorDataField', fdField, 'window', window, 'cmap', linecolors); %high value, reward
 
 % legend(hl, {'omit', 'cued', 'uncued'}, 'Location', 'northwest'); legend('boxoff');
-ylabel('\fontsize{8}Fluor.'); xlabel('Time from cue (s)'); set(gca, 'XLim', [-4 7]);
+set(gca, 'XLim', window);
 
 
-formatFigurePublish('size', [1.5 2]);
+formatFigurePublish('size', [3 1]);
 
 if saveOn 
     export_fig(fullfile(savepath, saveName), '-eps');
 end
+
+%% averages, aversive, airpuff, also add uncued shock
+fdField = 'ZS';
+saveName = 'PE_BLA_exampleMouse_aversive_avgs';  
+h=ensureFigure(saveName, 1); 
+sessionIndexList = 5;
+
+
+linecolors = [1 0 0; 0 0 0; 1 0 1];            
+window = [-7 4];
+subplot(1, 2, 1);
+set(gca, 'YLim', [-2 10]);
+tcolor = mycolors('chat');
+addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
+[ha, hl] = phPlotAverageFromTE(TE, {trialsByType{3} & ismember(TE.sessionIndex, sessionIndexList), trialsByType{4} & ismember(TE.sessionIndex, sessionIndexList), trialsByType{6} & ismember(TE.sessionIndex, sessionIndexList)}, 1,...
+    'zeroTimes', TE.Us, 'FluorDataField', fdField, 'window', window, 'cmap', linecolors); hold on; %high value, reward
+% add uncued shock
+[ha, hl] = phPlotAverageFromTE(TE, uncuedShock, 1,...
+    'zeroTimes', TE.Us, 'FluorDataField', fdField, 'window', [-5 4], 'cmap', mycolors('shock')); 
+
+% legend(hl, {'omit', 'cued', 'uncued'}, 'Location', 'northwest'); legend('boxoff');
+ylabel('F(\fontsize{12}\sigma\fontsize{8}-baseline)'); xlabel('Time from');  set(gca, 'XLim', window);
+
+subplot(1, 2, 2);
+set(gca, 'YLim', [-2 10]);
+tcolor = mycolors('chat');
+addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
+[ha, hl] = phPlotAverageFromTE(TE, {trialsByType{3} & ismember(TE.sessionIndex, sessionIndexList), trialsByType{4} & ismember(TE.sessionIndex, sessionIndexList), trialsByType{6} & ismember(TE.sessionIndex, sessionIndexList)}, 2,...
+    'zeroTimes', TE.Us, 'FluorDataField', fdField, 'window', window, 'cmap', linecolors); hold on; %high value, reward
+% add uncued shock
+[ha, hl] = phPlotAverageFromTE(TE, uncuedShock, 2,...
+    'zeroTimes', TE.Us, 'FluorDataField', fdField, 'window', [-5 4], 'cmap', mycolors('shock')); 
+
+% legend(hl, {'omit', 'cued', 'uncued'}, 'Location', 'northwest'); legend('boxoff');
+xlabel('reinforcement (s)'); set(gca, 'XLim', window);
+
+
+formatFigurePublish('size', [3 1]);
+
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end
+
+%% SIGNAL CORRELATIONS: show that cue and reward responses are correlated on a trial-by-trial basis between CBF and VTA

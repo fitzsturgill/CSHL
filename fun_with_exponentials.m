@@ -6,7 +6,7 @@ x = 1:1000;
 
 a = 100;
 b = 1;
-c = -0.01;
+c = -.01;
 
 ensureFigure('test', 1);
 subplot(2,2,1);
