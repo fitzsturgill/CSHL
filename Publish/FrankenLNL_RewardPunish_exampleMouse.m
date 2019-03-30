@@ -170,4 +170,34 @@ if saveOn
     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
-%% SIGNAL CORRELATIONS: show that cue and reward responses are correlated on a trial-by-trial basis between CBF and VTA
+%% SIGNAL CORRELATIONS: show that cue and reward responses are correlated on a trial-by-trial basis between let and right BLA
+linecolors = [1 0 0; 0 0 1; 0 1 1; 0 1 0];         
+saveName = 'BLA_Ach_correlations_LvsR';
+ensureFigure(saveName, 1);
+trialSets = [Odor2Valve1Trials];
+allTrials = sum(trialSets, 2) ~= 0;
+% xlims = [min(TE.phPeakMean_cs(2).data(allTrials)) max(TE.phPeakMean_cs(2).data(allTrials)); min(TE.phPeakMean_us(2).data(allTrials)) max(TE.phPeakMean_us(2).data(allTrials))];
+
+% subplot(1,2,1); hold on; subplot(1,2,2); hold on;
+for counter = 1:size(trialSets, 2)
+    subplot(1,2,1); set(gca, 'XLim', xlims(1,:));
+%     allTrials = allTrials | trialSets{counter};
+    xData = TE.phPeakMean_cs(2).data(trialSets(:, counter)); yData = TE.phPeakMean_cs(1).data(trialSets(:, counter)); 
+%     scatter(TE.phPeakMean_cs(2).data(trialSets{counter}), TE.phPeakMean_cs(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');
+    scatter(xData, yData, 8, linecolors(counter, :), '.');
+    % fit for cs
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(xData, yData, 'poly1', fo); 
+    fph=plot(fob); legend off; %,'predfunc'); legend off;
+    set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :));
+
+    subplot(1,2,2); set(gca, 'XLim', xlims(2,:));
+    xData = TE.phPeakMean_us(2).data(trialSets(:, counter)); yData = TE.phPeakMean_us(1).data(trialSets(:, counter)); 
+%     scatter(TE.phPeakMean_us(2).data(trialSets{counter}), TE.phPeakMean_us(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');    
+    scatter(xData, yData, 8, linecolors(counter, :), '.');
+    % fit for us
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(xData, yData, 'poly1', fo); 
+    fph=plot(fob); legend off;% ,'predfunc'); legend off;
+    set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :));
+end
