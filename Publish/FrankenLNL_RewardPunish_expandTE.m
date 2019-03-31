@@ -1,9 +1,6 @@
 
 DB = dbLoadExperiment('FrankenLNL_RewardPunish');
 
- 
-
-
 
 for counter = 1:length(DB.animals)
     animal = DB.animals{counter};

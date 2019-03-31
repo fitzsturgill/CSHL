@@ -172,9 +172,9 @@ end
 
 %% SIGNAL CORRELATIONS: show that cue and reward responses are correlated on a trial-by-trial basis between let and right BLA
 linecolors = [1 0 0; 0 0 1; 0 1 1; 0 1 0];         
-saveName = 'BLA_Ach_correlations_LvsR';
+saveName = 'LeftRight_BLA_correlations';
 ensureFigure(saveName, 1);
-trialSets = [Odor2Valve1Trials];
+trialSets = [Odor2Valve1Trials & ];
 allTrials = sum(trialSets, 2) ~= 0;
 % xlims = [min(TE.phPeakMean_cs(2).data(allTrials)) max(TE.phPeakMean_cs(2).data(allTrials)); min(TE.phPeakMean_us(2).data(allTrials)) max(TE.phPeakMean_us(2).data(allTrials))];
 
