@@ -65,11 +65,12 @@ fdField = 'ZS';
 tcolor = mycolors('chat');
 window = [-4 7]; % relative to Us
 TE.firstLick = calcEventLatency(TE, 'Port1In', TE.Cue2, TE.Us); % my calcEventLatency functions computes the latency between Bpod time stamps and events (e.g. licks and the start of a bpod state)
+hitTrials = TE.licks_cs.rate > 0;
 saveName = 'PE_BLA_exampleMouse_cuedReward_Rasters_sorted';  
 ensureFigure(saveName, 1);
 
 subplot(1,3,1);
-[~, lh] = eventRasterFromTE(TE, trialsByType{1}, 'Port1In', 'trialNumbering', 'consecutive',...
+[~, lh] = eventRasterFromTE(TE, trialsByType{1} & hitTrials, 'Port1In', 'trialNumbering', 'consecutive',...
     'zeroField', 'Cue2', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording', 'sortValues', TE.firstLick);
 set(gca, 'XLim', window);
 % set(lh, 'LineWidth', 0.3, 'Color', [0 0 0]);
@@ -79,11 +80,11 @@ climfactor = 3;
 
 lickOnsets = TE.firstLick(trialsByType{1});
 lickOnsets = sort(lickOnsets);
-subplot(1,3,2); phRasterFromTE(TE, trialsByType{1}, 1, 'trialNumbering', 'consecutive',...
+subplot(1,3,2); phRasterFromTE(TE, trialsByType{1} & hitTrials, 1, 'trialNumbering', 'consecutive',...
     'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry', 'sortValues', TE.firstLick, 'zeroTimes', TE.Cue2, 'window', window); % 'CLimFactor', CLimFactor,
 line(lickOnsets, (1:sum(trialsByType{1}))', 'Parent', gca, 'Color', 'r', 'LineWidth', 2);
 title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Left']);
-subplot(1,3,3); phRasterFromTE(TE, trialsByType{1}, 2, 'trialNumbering', 'consecutive',...
+subplot(1,3,3); phRasterFromTE(TE, trialsByType{1} & hitTrials, 2, 'trialNumbering', 'consecutive',...
     'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry', 'sortValues', TE.firstLick, 'zeroTimes', TE.Cue2, 'window', window); % 'CLimFactor', CLimFactor,
 line(lickOnsets, (1:sum(trialsByType{1}))', 'Parent', gca, 'Color', 'r', 'LineWidth', 2);
 title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Right']);
@@ -170,19 +171,22 @@ if saveOn
     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
-%% SIGNAL CORRELATIONS: show that cue and reward responses are correlated on a trial-by-trial basis between let and right BLA
-linecolors = [1 0 0; 0 0 1; 0 1 1; 0 1 0];         
-saveName = 'LeftRight_BLA_correlations';
+%% SIGNAL CORRELATIONS: show that cue and  and reward responses are correlated on a trial-by-trial basis between let and right BLA
+
+saveName = 'LeftRight_BLA_SIGNAL_correlations';
 ensureFigure(saveName, 1);
-trialSets = [Odor2Valve1Trials & ];
+hitTrials = TE.licks_cs.rate > 0;
+linecolors = [0 0 1; 0 1 1; 1 0 0; 0 1 0; mycolors('shock')];         
+trialSets = [Odor2Valve1Trials & hitTrials & rewardTrials, uncuedReward, Odor2Valve2Trials & punishTrials, Odor2Valve2Trials & shockTrials];
 allTrials = sum(trialSets, 2) ~= 0;
 % xlims = [min(TE.phPeakMean_cs(2).data(allTrials)) max(TE.phPeakMean_cs(2).data(allTrials)); min(TE.phPeakMean_us(2).data(allTrials)) max(TE.phPeakMean_us(2).data(allTrials))];
 
-% subplot(1,2,1); hold on; subplot(1,2,2); hold on;
+subplot(1,2,1); hold on; subplot(1,2,2); hold on;
 for counter = 1:size(trialSets, 2)
-    subplot(1,2,1); set(gca, 'XLim', xlims(1,:));
+    h=[];
+    h(1) = subplot(1,2,1); %set(gca, 'XLim', xlims(1,:));
 %     allTrials = allTrials | trialSets{counter};
-    xData = TE.phPeakMean_cs(2).data(trialSets(:, counter)); yData = TE.phPeakMean_cs(1).data(trialSets(:, counter)); 
+    xData = TE.phPeakMean_cs(1).data(trialSets(:, counter)); yData = TE.phPeakMean_cs(2).data(trialSets(:, counter)); 
 %     scatter(TE.phPeakMean_cs(2).data(trialSets{counter}), TE.phPeakMean_cs(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');
     scatter(xData, yData, 8, linecolors(counter, :), '.');
     % fit for cs
@@ -191,8 +195,8 @@ for counter = 1:size(trialSets, 2)
     fph=plot(fob); legend off; %,'predfunc'); legend off;
     set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :));
 
-    subplot(1,2,2); set(gca, 'XLim', xlims(2,:));
-    xData = TE.phPeakMean_us(2).data(trialSets(:, counter)); yData = TE.phPeakMean_us(1).data(trialSets(:, counter)); 
+    h(2) = subplot(1,2,2); %set(gca, 'XLim', xlims(2,:));
+    xData = TE.phPeakMean_us(1).data(trialSets(:, counter)); yData = TE.phPeakMean_us(2).data(trialSets(:, counter)); 
 %     scatter(TE.phPeakMean_us(2).data(trialSets{counter}), TE.phPeakMean_us(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');    
     scatter(xData, yData, 8, linecolors(counter, :), '.');
     % fit for us
@@ -200,4 +204,71 @@ for counter = 1:size(trialSets, 2)
     fob = fit(xData, yData, 'poly1', fo); 
     fph=plot(fob); legend off;% ,'predfunc'); legend off;
     set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :));
+    sameXYScale(h);
+end
+subplot(1,2,1);
+textBox('Cue', [], [0.5 0.95], 8);
+xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
+ylabel('\fontsize{8}Right (\fontsize{12}\sigma\fontsize{8}-baseline)');
+subplot(1,2,2);
+textBox('Outcome', [], [0.5 0.95], 8);
+xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
+ylabel('');
+
+formatFigurePublish('size', [2.5 1.1]);
+
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end
+
+%% NOISE CORRELATIONS: show that cue and reward responses are correlated on a trial-by-trial basis between let and right BLA
+
+saveName = 'LeftRight_BLA_NOISE_correlations';
+ensureFigure(saveName, 1);
+hitTrials = TE.licks_cs.rate > 0;
+linecolors = [0 0 1; 0 1 1; 1 0 0; 0 1 0; mycolors('shock')];         
+trialSets = [Odor2Valve1Trials & hitTrials & rewardTrials, uncuedReward, Odor2Valve2Trials & punishTrials, Odor2Valve2Trials & shockTrials];
+allTrials = sum(trialSets, 2) ~= 0;
+% xlims = [min(TE.phPeakMean_cs(2).data(allTrials)) max(TE.phPeakMean_cs(2).data(allTrials)); min(TE.phPeakMean_us(2).data(allTrials)) max(TE.phPeakMean_us(2).data(allTrials))];
+
+subplot(1,2,1); hold on; subplot(1,2,2); hold on;
+for counter = 1:size(trialSets, 2)
+    h=[];
+    h(1) = subplot(1,2,1); %set(gca, 'XLim', xlims(1,:));
+%     allTrials = allTrials | trialSets{counter};
+    xData = TE.phPeakMean_cs(1).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_cs(1).data(trialSets(:, counter))); 
+    yData = TE.phPeakMean_cs(2).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_cs(2).data(trialSets(:, counter))); 
+%     scatter(TE.phPeakMean_cs(2).data(trialSets{counter}), TE.phPeakMean_cs(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');
+    scatter(xData, yData, 8, linecolors(counter, :), '.');
+    % fit for cs
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(xData, yData, 'poly1', fo); 
+    fph=plot(fob); legend off; %,'predfunc'); legend off;
+    set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :));
+
+    h(2) = subplot(1,2,2); %set(gca, 'XLim', xlims(2,:));
+    xData = TE.phPeakMean_us(1).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_us(1).data(trialSets(:, counter))); 
+    yData = TE.phPeakMean_us(2).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_us(2).data(trialSets(:, counter))); 
+%     scatter(TE.phPeakMean_us(2).data(trialSets{counter}), TE.phPeakMean_us(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');    
+    scatter(xData, yData, 8, linecolors(counter, :), '.');
+    % fit for us
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(xData, yData, 'poly1', fo); 
+    fph=plot(fob); legend off;% ,'predfunc'); legend off;
+    set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :));
+    sameXYScale(h);
+end
+subplot(1,2,1);
+textBox('Cue', [], [0.5 0.95], 8);
+xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
+ylabel('\fontsize{8}Right (\fontsize{12}\sigma\fontsize{8}-baseline)');
+subplot(1,2,2);
+textBox('Outcome', [], [0.5 0.95], 8);
+xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
+ylabel('');
+
+formatFigurePublish('size', [2.5 1.1]);
+
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
 end
