@@ -31,3 +31,39 @@ success = dbLoadAnimal(DB, animal); % load TE and trial lookups
         export_fig(fullfile(savepath, saveName), '-eps');
     end    
     
+    
+%% combined licking and photometry averages from ChAT_42
+
+
+    load('Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\ChAT_42\TE.mat');
+    cuedOutcome_Conditions;
+    saveName = 'CuedOutcome_example_averages_combined_ChAT_42';
+    window = [-2.5 5];
+    ensureFigure(saveName, 1); 
+        varargin = {'window', [window(1) 3], 'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording',...
+        'linespec', {'b', 'r', 'g'}};
+    lickAvg = eventAverageFromTE(TE, {highValueTrials & rewardTrials, lowValueTrials & rewardTrials, uncuedTrials & rewardTrials}, 'Port1In', varargin{:});
+    ax = axes; hold on; yyaxis right
+    ll = plot(lickAvg.xData, lickAvg.Avg(1,:), '--k', 'LineWidth', 2);
+    plot(lickAvg.xData, lickAvg.Avg(1,:), '--b', lickAvg.xData, lickAvg.Avg(2,:), '--r', lickAvg.xData, lickAvg.Avg(3,:), '--g', 'LineWidth', 2);
+    ax.YColor = [0 0 0]; ylabel('Lick rate (Hz)');
+    set(gca, 'YLim', [-1 5]);
+    yyaxis left; ax.YColor = [0 0 0]; 
+    [ha, hl] = phPlotAverageFromTE(TE, {highValueTrials & rewardTrials, lowValueTrials & rewardTrials, uncuedTrials & rewardTrials}, 1,...
+        'window', window, 'linespec', {'b', 'r', 'g'}, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue, 'alpha', 0);
+    set(hl, 'LineWidth', 2);    
+    set(gca, 'XLim', window, 'YLim', [-1 2]);
+    addStimulusPatch(gca, [0 1], '', [0.8 0.8 0.8], 0.5) 
+    addStimulusPatch(gca, [2.9 3.1], '', [0.8 0.8 0.8], 0.5) 
+    legend([hl ll(1)], {'\color{blue} high value', '\color{red} low value', '\color{green} uncued', ...
+        'licking'}, 'Location', 'northwest', 'FontSize', 20, 'Interpreter', 'tex'); legend('boxoff');
+    ylabel('Fluor. (\sigma-baseline)'); xlabel('Time from cue (s)');
+    formatFigurePoster([6 4], '', 24);    
+
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    saveas(gcf, fullfile(savepath, [saveName '.epsc']));   
+end    
+
+    
