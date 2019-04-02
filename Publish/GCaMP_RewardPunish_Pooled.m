@@ -67,3 +67,14 @@ end
 %% save the data
     save(fullfile(savepath, 'RewardPunish_data.mat'), 'RewardPunish_data');
     disp(['*** Saved: ' fullfile(savepath, 'RewardPunish_data.mat')]);
+    
+    
+%% scatter plot of reward vs punishment responses per animal with error bars
+
+ensureFigure('RewardPunish_scatter_pooled', 1);
+
+% compute mean and SEM for each animal, reward and punishment
+clear counter;
+for counter = 1:length(RewardPunish_data
+
+
