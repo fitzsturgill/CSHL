@@ -52,7 +52,7 @@ function stateEvent = bpAddStateAsTrialEvent(sessions, state, stateEvent, matchM
         nTrials = session.SessionData.nTrials;
         rawEvents = session.SessionData.RawEvents.Trial; % cell array
         if strcmp(whichTimeStamps, 'all')
-            theseStates = repmat({NaN}, nTrials, 1); % initialize for each session, NaNs by default
+            theseStates = repmat({[NaN NaN]}, nTrials, 1); % initialize for each session, NaNs by default
         else
             theseStates = NaN(nTrials, 1);
         end

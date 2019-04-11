@@ -20,7 +20,7 @@ ylim = get(hax,'YLim');
 all = [xlim ylim];
 minL = min(all);
 maxL = max(all);
-if includeOrgin
+if includeOrgin && (minL > 0)
     lim = [0 maxL];
 else
     lim = [minL maxL];

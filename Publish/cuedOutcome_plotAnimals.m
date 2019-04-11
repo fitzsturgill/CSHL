@@ -67,10 +67,17 @@ for counter = 1:length(DB.animals)
     subplot(1,4,4);
     phRasterFromTE(TE, lowValueTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'sortValues', TE.lickLatency_cs, 'zeroTimes', TE.Cue, 'window', xwindow); % 'CLimFactor', CLimFactor,             
     line(lickOnsets, (1:sum(lowValueTrials))', 'Parent', gca, 'Color', 'r', 'LineWidth', 1);
-end
     axs = findobj(gcf, 'Type', 'axes');
     set(axs, 'FontSize', 12);
     set(axs(2:end), 'YTick', []);
+
+    if saveOn
+        export_fig(fullfile(savepath, saveName), '-eps');
+        saveas(gcf, fullfile(savepath, [saveName '.fig']));
+        saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    end  
+end
+
 
 h = waitbar(0, 'slowly writing pdfs');
 

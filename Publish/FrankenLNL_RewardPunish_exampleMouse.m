@@ -210,16 +210,19 @@ subplot(1,2,1);
 textBox('Cue', [], [0.5 0.95], 8);
 xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
 ylabel('\fontsize{8}Right (\fontsize{12}\sigma\fontsize{8}-baseline)');
+addOrginLines;
 subplot(1,2,2);
 textBox('Outcome', [], [0.5 0.95], 8);
 xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
 ylabel('');
+addOrginLines;
 
 formatFigurePublish('size', [2.5 1.1]);
 
 if saveOn 
     export_fig(fullfile(savepath, saveName), '-eps');
 end
+
 
 %% NOISE CORRELATIONS: show that cue and reward responses are correlated on a trial-by-trial basis between let and right BLA
 
@@ -272,3 +275,154 @@ formatFigurePublish('size', [2.5 1.1]);
 if saveOn 
     export_fig(fullfile(savepath, saveName), '-eps');
 end
+
+
+return
+%% Development code below:
+%% normalize responses to punishment by those to reward and compare between left and right BLA
+
+saveName = 'LeftRight_PunNorm_dev';
+ensureFigure(saveName, 1);
+
+
+% reward is first in the trialSets list, use it to normalize
+linecolors = [0 0 1; 1 0 0; mycolors('shock')];         
+trialSets = [uncuedReward, uncuedPunish, uncuedShock];
+allTrials = sum(trialSets, 2) ~= 0;
+% xlims = [min(TE.phPeakMean_cs(2).data(allTrials)) max(TE.phPeakMean_cs(2).data(allTrials)); min(TE.phPeakMean_us(2).data(allTrials)) max(TE.phPeakMean_us(2).data(allTrials))];
+
+subplot(1,1,1); hold on; 
+for counter = 1:size(trialSets, 2)
+    h=[];   
+%     allTrials = allTrials | trialSets{counter};
+    xData = TE.phPeakMean_us(1).data(trialSets(:, counter)); yData = TE.phPeakMean_us(2).data(trialSets(:, counter)); 
+    xData = xData(:); yData = yData(:);
+    if counter == 1
+        xDenom = nanmean(xData);
+        yDenom = nanmean(yData);
+    end
+    xData = xData ./ xDenom;
+    yData = yData ./ xDenom;
+    scatter(xData, yData, 20, linecolors(counter, :), '.', 'MarkerFaceColor', 'flat');
+
+    xMean = nanmean(xData);
+    xSEM = nanstd(xData) / sqrt(sum(isfinite(xData)));
+    yMean = nanmean(yData);
+    ySEM = nanstd(yData) / sqrt(sum(isfinite(yData)));
+
+    errorbar(xMean, yMean, -ySEM, ySEM,...
+        -xSEM, xSEM, 'Color', linecolors(counter, :), 'LineWidth', 2);
+%     errorbar(xMean, yMean, -0.5, 0.5,...
+%         -0.5, 0.5, 'o', 'Color', linecolors(counter, :));
+
+
+    
+    % fit for us
+%     fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+%     fob = fit(xData, yData, 'poly1', fo); 
+%     fph=plot(fob, 'predfunc'); legend off;
+%     set(fph, 'LineWidth', 1, 'Color', linecolors(counter, :));
+
+%     h(2) = subplot(1,2,2); %set(gca, 'XLim', xlims(2,:));
+%     xData = TE.phPeakMean_us(1).data(trialSets(:, counter)); yData = TE.phPeakMean_us(2).data(trialSets(:, counter)); 
+% %     scatter(TE.phPeakMean_us(2).data(trialSets{counter}), TE.phPeakMean_us(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');    
+%     scatter(xData, yData, 8, linecolors(counter, :), '.');
+%     % fit for us
+%     fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+%     fob = fit(xData, yData, 'poly1', fo); 
+%     fph=plot(fob); legend off;% ,'predfunc'); legend off;
+%     set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :));
+
+end
+    sameXYScale(gca);
+    addOrginLines(gca);
+% subplot(1,2,1);
+% textBox('Cue', [], [0.5 0.95], 8);
+% xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
+ylabel('\fontsize{8}Right (\fontsize{12}\sigma\fontsize{8}-baseline)');
+% subplot(1,2,2);
+% textBox('Outcome', [], [0.5 0.95], 8);
+xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
+% ylabel('');
+
+formatFigurePublish('size', [2 2]);
+
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end
+
+
+
+%% scrap:
+
+% %% SIGNAL CORRELATIONS II: ACTUAL signal correlations (doesn't really look good)
+% 
+% saveName = 'LeftRight_BLA_SIGNAL_correlations_II';
+% ensureFigure(saveName, 1);
+% hitTrials = TE.licks_cs.rate > 0;
+% linecolors = [0 0 1; 0 1 1; 1 0 0; 0 1 0;];%mycolors('shock')];
+% trialSets = [Odor2Valve1Trials & hitTrials & rewardTrials, uncuedReward, Odor2Valve2Trials & punishTrials, Odor2Valve2Trials & shockTrials];
+% allTrials = sum(trialSets, 2) ~= 0;
+% % xlims = [min(TE.phPeakMean_cs(2).data(allTrials)) max(TE.phPeakMean_cs(2).data(allTrials)); min(TE.phPeakMean_us(2).data(allTrials)) max(TE.phPeakMean_us(2).data(allTrials))];
+% 
+% 
+% % gather the data
+% nConditions = size(trialSets, 2); 
+% 
+% xCue = struct(...
+%     'avg', zeros(nConditions, 1),...
+%     'sem', zeros(nConditions, 1)...
+%     );
+% yCue = xCue;
+% xUs = xCue;
+% yUs = yCue;
+% 
+% for counter = 1:size(trialSets, 2)
+%     h=[];    
+% %     allTrials = allTrials | trialSets{counter};
+%     xCue.avg(counter) = nanmean(TE.phPeakMean_cs(1).data(trialSets(:, counter)));
+%     yCue.avg(counter) = nanmean(TE.phPeakMean_cs(2).data(trialSets(:, counter)));
+% 
+%     xUs.avg(counter) = nanmean(TE.phPeakMean_us(1).data(trialSets(:, counter)));
+%     yUs.avg(counter) = nanmean(TE.phPeakMean_us(2).data(trialSets(:, counter)));
+% 
+% % %     scatter(TE.phPeakMean_cs(2).data(trialSets{counter}), TE.phPeakMean_cs(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');
+% %     scatter(xData, yData, 8, linecolors(counter, :), '.');
+% %     % fit for cs
+% %     fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+% %     fob = fit(xData, yData, 'poly1', fo); 
+% %     fph=plot(fob); legend off; %,'predfunc'); legend off;
+% %     set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :));
+% % 
+% %     h(2) = subplot(1,2,2); %set(gca, 'XLim', xlims(2,:));
+% %     xData = TE.phPeakMean_us(1).data(trialSets(:, counter)); yData = TE.phPeakMean_us(2).data(trialSets(:, counter)); 
+% % %     scatter(TE.phPeakMean_us(2).data(trialSets{counter}), TE.phPeakMean_us(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');    
+% %     scatter(xData, yData, 8, linecolors(counter, :), '.');
+% %     % fit for us
+% %     fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+% %     fob = fit(xData, yData, 'poly1', fo); 
+% %     fph=plot(fob); legend off;% ,'predfunc'); legend off;
+% %     set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :));
+% %     sameXYScale(h);
+% end
+% 
+% subplot(1,2,1); hold on; 
+% scatter(xCue.avg, yCue.avg, 30, linecolors, 'o', 'MarkerFaceColor', 'flat');
+% subplot(1,2,2); hold on;
+% scatter(xUs.avg, yUs.avg, 30, linecolors, 'o', 'MarkerFaceColor', 'flat');
+% 
+% 
+% % subplot(1,2,1);
+% % textBox('Cue', [], [0.5 0.95], 8);
+% % xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
+% % ylabel('\fontsize{8}Right (\fontsize{12}\sigma\fontsize{8}-baseline)');
+% % subplot(1,2,2);
+% % textBox('Outcome', [], [0.5 0.95], 8);
+% % xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
+% % ylabel('');
+% % 
+% % formatFigurePublish('size', [2.5 1.1]);
+% % 
+% % if saveOn 
+% %     export_fig(fullfile(savepath, saveName), '-eps');
+% % end

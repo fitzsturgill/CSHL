@@ -67,4 +67,62 @@ if saveOn
 %     saveas(gcf, fullfile(savepath, [saveName '.epsc']));   
 end    
 
-    
+
+%% lick-aligned rasters from ChAT_42
+
+animal = 'ChAT_42';
+success = dbLoadAnimal(DB, animal); % load TE and trial lookups
+
+photometryField = 'Photometry';
+fdField = 'ZS';
+saveOn = 1;
+channels = [1];
+climfactor = 2;
+lickTickLineWidth = 0.3; % 0.3 works well when printed out given current sizing
+
+fontsize = 8;
+
+savepath = fullfile(DB.path, 'figure', filesep);
+ensureDirectory(savepath);
+
+xwindow = [-2 5];
+
+saveName = sprintf('%s_lickAligned_rasters_%s_%s', animal, photometryField, fdField);  
+fh(end + 1) =ensureFigure(saveName, 1); 
+
+lickOnsets = TE.lickLatency_cs(highValueTrials & rewardTrials);
+lickOnsets = sort(lickOnsets);    
+subplot(1,4,1);
+eventRasterFromTE(TE, highValueTrials & rewardTrials, 'Port1In', 'trialNumbering', 'consecutive',...
+    'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording', 'sortValues', TE.lickLatency_cs, 'LineWidth', lickTickLineWidth);
+set(gca, 'XLim', xwindow);
+% title('high value'); 
+ylabel('trial # (sorted)');
+
+subplot(1,4,2);
+phRasterFromTE(TE, highValueTrials & rewardTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'sortValues', TE.lickLatency_cs, 'zeroTimes', TE.Cue, 'window', xwindow); % 'CLimFactor', CLimFactor,
+line(lickOnsets, (1:sum(highValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'r', 'LineWidth', 1);    
+xlabel('Time frome odor (s)');
+
+lickOnsets = TE.lickLatency_cs(lowValueTrials & rewardTrials);
+lickOnsets = sort(lickOnsets);        
+subplot(1,4,3);
+eventRasterFromTE(TE, lowValueTrials & rewardTrials, 'Port1In', 'trialNumbering', 'consecutive',...
+    'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording', 'sortValues', TE.lickLatency_cs, 'LineWidth', lickTickLineWidth);
+set(gca, 'XLim', xwindow);
+% title('low value');
+
+subplot(1,4,4);
+phRasterFromTE(TE, lowValueTrials & rewardTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'sortValues', TE.lickLatency_cs, 'zeroTimes', TE.Cue, 'window', xwindow); % 'CLimFactor', CLimFactor,             
+line(lickOnsets, (1:sum(lowValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'r', 'LineWidth', 1);
+axs = findobj(gcf, 'Type', 'axes');
+set(axs, 'FontSize', fontsize);
+set(axs([1 3]), 'YTick', []);
+
+formatFigurePublish('size', [4 2]);
+
+if saveOn
+    export_fig(fullfile(savepath, saveName), '-eps');
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+end  

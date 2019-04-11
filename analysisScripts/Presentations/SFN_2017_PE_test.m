@@ -2,7 +2,8 @@
 % testing of unsigned prediction error hypothesis
 
 %% desktop
-savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SFN_2017\PE_Hypothesis';
+% savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\Meetings\SFN_2017\PE_Hypothesis';
+savepath = 'C:\Users\Fitz\Dropbox\KepecsLab\_Fitz\Meetings\SFN_2017\PE_Hypothesis\';
 saveOn = 1;
 
 %% Snippet to make lick histogram for graded value task from  DC_26
@@ -82,7 +83,7 @@ end
 if saveOn
     saveas(gcf, fullfile(savepath, [saveName '.fig']));
     saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
-    saveas(gcf, fullfile(savepath, [saveNamse '.epsc']));   
+    saveas(gcf, fullfile(savepath, [saveName '.epsc']));   
 end    
     saveName = ['Punish_DAT'];
     ensureFigure(saveName, 1); 
@@ -136,7 +137,10 @@ ensureFigure(saveName, 1);
 
 % {0.9258, 0.4883, 0.1914} % orange
 % {0.6680, 0.2148, 0.8359} % purple
-scatter(sumData.phReward_mean_bl.avg,sumData.phPunish_mean_bl.avg, 42, [0.6680, 0.2148, 0.8359], 'filled');
+% scatter(sumData.phReward_mean_bl.avg,sumData.phPunish_mean_bl.avg, 42, [0.6680, 0.2148, 0.8359], 'filled');
+errorbar(sumData.phReward_mean.avg,sumData.phPunish_mean.avg, -sumData.phPunish_mean.sem, sumData.phPunish_mean.sem,...
+    -sumData.phReward_mean.sem, sumData.phReward_mean.sem, '.', 'Color', mycolors('chat'));
+
 % xlabel('Reward (\fontsize{20}\sigma\fontsize{16}-baseline)'); ylabel('Punish (\fontsize{20}\sigma\fontsize{16}-baseline)'); 
 % xlabel('Reward (\sigma-baseline)'); ylabel('Punish (\sigma-baseline)'); 
 setXYsymmetric; addOrginLines(gca, [0 0 0]);
@@ -153,6 +157,8 @@ saveName = 'CuedOutcome_Cs_scatterPlot_Final';
 ensureFigure(saveName, 1); 
 
 scatter(sumData.phCue_phasic_low.avg,sumData.phCue_phasic_high.avg, 36, [0.6680, 0.2148, 0.8359], 'filled');
+errorbar(sumData.phCue_phasic_low.avg,sumData.phCue_phasic_high.avg, -sumData.phCue_phasic_high.sem, sumData.phCue_phasic_high.sem,...
+    -sumData.phCue_phasic_low.sem, sumData.phCue_phasic_low.sem, '.', 'Color', mycolors('chat'));
 % xlabel('Low Value (\fontsize{20}\sigma\fontsize{16}-baseline)'); ylabel('High Value (\fontsize{20}\sigma\fontsize{16}-baseline)');
 
 set(gca, 'YLim', [0 1.2]); set(gca, 'XLim', [0 1.2]);
@@ -261,6 +267,5 @@ if saveOn
 end    
 
 %% acquisition- from McKnight Poster
-load('C:\Users\Adam\Dropbox\KepecsLab\_Fitz\McKnight\Poster\McKnight.mat');
-
+% load('C:\Users\Adam\Dropbox\KepecsLab\_Fitz\McKnight\Poster\McKnight.mat');
 

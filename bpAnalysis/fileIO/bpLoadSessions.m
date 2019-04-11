@@ -20,10 +20,13 @@ function sessions = bpLoadSessions(sessions, filenames, filepaths)
     if nargin == 0 || isempty(sessions)% create a new sessions struct for output
         sessions = struct();
         alreadyLoaded = 0;
+%         Nargin = nargin;
     else
         alreadyLoaded = length(sessions);
-    end
+%         Nargin = nargin - length(sessions) + 1; % fix stupid thing where structure length gets added to nargin, is this a new matlab thing???  WTF!!!
+    end   
         
+%     if Nargin < 2 % interactive loading
     if nargin < 2 % interactive loading
         [filenames, filepaths, ind] = uigetfile('*Session*.mat', 'select Session files to load', 'MultiSelect', 'on');
         if ~ind

@@ -176,14 +176,16 @@ ensureFigure(saveName, 1);
 % compute mean and SEM for each animal, reward and punishment
 
 axes;
-scatter(pooled.reward_mean, pooled.punish_mean, 10, mycolors('chat'));
+% scatter(pooled.reward_mean, pooled.punish_mean, 10, mycolors('chat'), '.');
+errorbar(pooled.reward_mean, pooled.punish_mean, -pooled.punish_sem, pooled.punish_sem,...
+    -pooled.reward_sem, pooled.reward_sem, '.', 'Color', mycolors('chat'));
 setXYsameLimit;
-ylims = get(gca, 'YLim');
-xlims = get(gca, 'XLim');
-set(gca, 'XLim', [-xlims(2) xlims(2)], 'YLim', [-ylims(2) ylims(2)]);
+% ylims = get(gca, 'YLim');
+% xlims = get(gca, 'XLim');
+% set(gca, 'XLim', [-xlims(2) xlims(2)], 'YLim', [-ylims(2) ylims(2)]);
 xlabel('Reward (ZS)'); ylabel('Punish (ZS)');
 addOrginLines;
-formatFigurePublish('size', [1.5 1.5]);
+formatFigurePublish('size', [2 2]);
 if saveOn
     saveas(gcf, fullfile(savepath, [saveName '.fig']));
     saveas(gcf, fullfile(savepath, [saveName '.jpg']));   

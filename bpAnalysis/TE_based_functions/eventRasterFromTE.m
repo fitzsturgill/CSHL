@@ -7,6 +7,7 @@ function [ax, lh] = eventRasterFromTE(TE, trials, event, varargin)
         'fig', gcf;...
         'trialNumbering', 'global';... % 'singleSession'- by sesssion, 'consecutive', 'global' cross session        };
         'sortValues', [];... % overrides trial numbering to 'consecutive'
+        'LineWidth', 0.75;...
         };
     [s, ~] = parse_args(defaults, varargin{:});
     if isempty(s.fig)
@@ -28,6 +29,7 @@ function [ax, lh] = eventRasterFromTE(TE, trials, event, varargin)
 
     [eventTimes, eventTrials] = extractEventTimesFromTE(TE, trials, event, varargin{:});
     lh = linecustommarker(eventTimes, eventTrials, [], [], s.ax);
+    set(lh, 'LineWidth', s.LineWidth);
     ax = s.ax;
     switch s.trialNumbering
         case 'consecutive'
