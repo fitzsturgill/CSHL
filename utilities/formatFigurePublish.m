@@ -29,7 +29,7 @@ function formatFigurePublish(varargin)
         ylims{counter} = get(axs(counter), 'Ylim'); xlims{counter} = get(axs(counter), 'XLim');
     end
     set(gcf, 'PaperUnits', paperUnits, 'Units', screenUnits, 'ToolBar', 'none', 'MenuBar', 'none', 'DockControls', 'off');
-    set(gcf, 'defaultAxesTickDir', 'out', 'defaultAxesLineWidth', 1, 'defaultAxesFontName', 'Calibri', 'defaultAxesFontSize', s.fontSize, 'defaultLegendBox', 'off');
+    set(gcf, 'defaultAxesTickDir', 'out', 'defaultAxesLineWidth', 1, 'defaultAxesFontName', 'Calibri', 'defaultAxesFontSize', s.fontSize, 'defaultLegendBox', 'off');    
     set(axs, 'TickDir', 'out', 'LineWidth', 1, 'FontName', 'Calibri', 'FontSize', s.fontSize, 'defaultLegendBox', 'off', 'Box', 'off');
     set(gcf, 'Position', screenPosition, 'PaperPosition', paperPosition, 'Color', [1 1 1]);
     for counter = 1:nax

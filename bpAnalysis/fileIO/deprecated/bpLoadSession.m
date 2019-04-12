@@ -23,7 +23,7 @@ function sessions = bpLoadSession(filename, filepath)
     sessions = bpLoadSessions([], filename, filepath); % load the session
     [~, filename, ~] = fileparts(filename);
     newFolder = [filepath filename];
-    if ~isdir(newFolder);
+    if ~isdir(newFolder)
         mkdir([newFolder '\']);
     end
     cd(newFolder);

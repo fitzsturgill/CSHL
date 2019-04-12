@@ -21,7 +21,7 @@ sessionIndex = unique(TE.sessionIndex(matches));
 %% example traces
 % rewarding subset
 window = [-4 7];
-showTheseR = find(Odor2Valve1Trials & rewardTrials & TE.sessionIndex == sessionIndex);
+showTheseR = find(Odor2Valve1Trials & rewardTrials & ismember(TE.sessionIndex, sessionIndex));
 [~, rixR] = sort(rand(size(showTheseR)));
 
 
@@ -48,7 +48,7 @@ set(gca, 'Visible', 'off');
 
 
 % aversive subset
-showTheseA = find(Odor2Valve2Trials & punishTrials & TE.sessionIndex == sessionIndex);
+showTheseA = find(Odor2Valve2Trials & punishTrials & ismember(TE.sessionIndex, sessionIndex));
 [~, rixA] = sort(rand(size(showTheseA)));
 
 formatFigurePublish('size', [1.6 1.1]);
@@ -283,69 +283,66 @@ return
 
 saveName = 'LeftRight_PunNorm_dev';
 ensureFigure(saveName, 1);
+formatFigurePublish('size', [4 2], 'fontSize', 8);
+animals = {'ACh_7', 'ACh_3'};
 
 
-% reward is first in the trialSets list, use it to normalize
-linecolors = [0 0 1; 1 0 0; mycolors('shock')];         
-trialSets = [uncuedReward, uncuedPunish, uncuedShock];
-allTrials = sum(trialSets, 2) ~= 0;
 % xlims = [min(TE.phPeakMean_cs(2).data(allTrials)) max(TE.phPeakMean_cs(2).data(allTrials)); min(TE.phPeakMean_us(2).data(allTrials)) max(TE.phPeakMean_us(2).data(allTrials))];
 
-subplot(1,1,1); hold on; 
-for counter = 1:size(trialSets, 2)
+for acounter = 1:length(animals)
+    subplot(1,2,acounter); hold on;
+    success = dbLoadAnimal(DB, animals{acounter}); % load TE and trial lookups
+    title(animals{acounter}, 'Interpreter', 'none');
+    % reward is first in the trialSets list, use it to normalize
+    linecolors = [0 0 1; 1 0 0; mycolors('shock')];         
+    trialSets = [uncuedReward, uncuedPunish, uncuedShock];
+    trialSetNames = {'Reward', 'Air Puff', 'Shock'};
+    allTrials = sum(trialSets, 2) ~= 0;    
+    xDataStruct = struct('Mean', cell(size(trialSets, 2), 1), 'SEM', cell(size(trialSets, 2), 1));
+    yDataStruct = struct('Mean', cell(size(trialSets, 2), 1), 'SEM', cell(size(trialSets, 2), 1));
     h=[];   
-%     allTrials = allTrials | trialSets{counter};
-    xData = TE.phPeakMean_us(1).data(trialSets(:, counter)); yData = TE.phPeakMean_us(2).data(trialSets(:, counter)); 
-    xData = xData(:); yData = yData(:);
-    if counter == 1
-        xDenom = nanmean(xData);
-        yDenom = nanmean(yData);
+    for counter = 1:size(trialSets, 2)        
+    %     allTrials = allTrials | trialSets{counter};
+        xData = TE.phPeakMean_us(1).data(trialSets(:, counter)); yData = TE.phPeakMean_us(2).data(trialSets(:, counter)); 
+        xData = xData(:); yData = yData(:);
+        if counter == 1
+            xDenom = nanmean(xData);
+            yDenom = nanmean(yData);
+        end
+        xData = xData ./ xDenom;
+        yData = yData ./ xDenom;
+
+        h(end + 1) = scatter(xData, yData, 20, linecolors(counter, :), '.', 'MarkerFaceColor', 'flat', 'MarkerFaceAlpha', 0.3, 'MarkerEdgeAlpha', 0.3);
+
+        xDataStruct(counter).Mean  = nanmean(xData);
+        xDataStruct(counter).SEM = nanstd(xData) / sqrt(sum(isfinite(xData)));
+        yDataStruct(counter).Mean = nanmean(yData);
+        yDataStruct(counter).SEM = nanstd(yData) / sqrt(sum(isfinite(yData)));
+
     end
-    xData = xData ./ xDenom;
-    yData = yData ./ xDenom;
-    scatter(xData, yData, 20, linecolors(counter, :), '.', 'MarkerFaceColor', 'flat');
-
-    xMean = nanmean(xData);
-    xSEM = nanstd(xData) / sqrt(sum(isfinite(xData)));
-    yMean = nanmean(yData);
-    ySEM = nanstd(yData) / sqrt(sum(isfinite(yData)));
-
-    errorbar(xMean, yMean, -ySEM, ySEM,...
-        -xSEM, xSEM, 'Color', linecolors(counter, :), 'LineWidth', 2);
-%     errorbar(xMean, yMean, -0.5, 0.5,...
-%         -0.5, 0.5, 'o', 'Color', linecolors(counter, :));
-
-
+    h = [];
+    for counter = 1:size(trialSets, 2)
+        errorbar(xDataStruct(counter).Mean, yDataStruct(counter).Mean, -yDataStruct(counter).SEM, yDataStruct(counter).SEM,-xDataStruct(counter).SEM, xDataStruct(counter).SEM, 'Color', linecolors(counter, :), 'LineWidth', 1, 'CapSize', 2, 'Marker', 'none');
+        h(end + 1) = plot(xDataStruct(counter).Mean, yDataStruct(counter).Mean, '-', 'Color', linecolors(counter, :));
+    end    
     
-    % fit for us
-%     fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
-%     fob = fit(xData, yData, 'poly1', fo); 
-%     fph=plot(fob, 'predfunc'); legend off;
-%     set(fph, 'LineWidth', 1, 'Color', linecolors(counter, :));
-
-%     h(2) = subplot(1,2,2); %set(gca, 'XLim', xlims(2,:));
-%     xData = TE.phPeakMean_us(1).data(trialSets(:, counter)); yData = TE.phPeakMean_us(2).data(trialSets(:, counter)); 
-% %     scatter(TE.phPeakMean_us(2).data(trialSets{counter}), TE.phPeakMean_us(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');    
-%     scatter(xData, yData, 8, linecolors(counter, :), '.');
-%     % fit for us
-%     fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
-%     fob = fit(xData, yData, 'poly1', fo); 
-%     fph=plot(fob); legend off;% ,'predfunc'); legend off;
-%     set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :));
-
+        sameXYScale(gca);
+        addOrginLines(gca);
+        legend(h, trialSetNames, 'Location', 'Best'); 
+    % subplot(1,2,1);
+    % textBox('Cue', [], [0.5 0.95], 8);
+    % xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
+%     ylabel('\fontsize{8}Right (\fontsize{12}\sigma\fontsize{8}-baseline)');
+    ylabel('Right (\sigma-baseline)');
+    % subplot(1,2,2);
+    % textBox('Outcome', [], [0.5 0.95], 8);
+%     xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
+    xlabel('Left (\sigma-baseline)');
+    % ylabel('');   
 end
-    sameXYScale(gca);
-    addOrginLines(gca);
-% subplot(1,2,1);
-% textBox('Cue', [], [0.5 0.95], 8);
-% xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
-ylabel('\fontsize{8}Right (\fontsize{12}\sigma\fontsize{8}-baseline)');
-% subplot(1,2,2);
-% textBox('Outcome', [], [0.5 0.95], 8);
-xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
-% ylabel('');
 
-formatFigurePublish('size', [2 2]);
+
+
 
 if saveOn 
     export_fig(fullfile(savepath, saveName), '-eps');
