@@ -112,6 +112,8 @@ goodReversals = ...
     ~isnan(trialsToCriterion) &...
     auROC.phPeakMean_cs_ch1.acq > 0 &...
     auROC.phPeakMean_cs_ch2.acq > 0;
+
+
 sortVariable = trialsToCriterion;
 sortVariable(~goodReversals) = NaN;
 
@@ -157,6 +159,11 @@ odor3_trialNumber = (1:size(odor3.licks_cs, 2)) - size(AR.thirdOdor.licks_cs.bef
 
 oldCsPlus_trialNumber = -(size(AR.csPlus.licks_cs.before, 2) - 1) : 0;
 oldCsMinus_trialNumber = -(size(AR.csMinus.licks_cs.before, 2) - 1) : 0;
+
+%% take advantage of paired recordings, subtract dopamine cue response from Ach. cue response, etc.
+newCsPlus.phPeakMean_cs_AchMinusDop = newCsPlus.phPeakMean_cs_ch1 - newCsPlus.phPeakMean_cs_ch2;
+newCsMinus.phPeakMean_cs_AchMinusDop = newCsMinus.phPeakMean_cs_ch1 - newCsMinus.phPeakMean_cs_ch2;
+alwaysCsPlus.phPeakMean_cs_AchMinusDop = alwaysCsPlus.phPeakMean_cs_ch1 - alwaysCsPlus.phPeakMean_cs_ch2;
 
 %% plot quality control metrics
 colorVar = revNumber;
@@ -408,6 +415,20 @@ if saveOn
     saveas(gcf, fullfile(savepath, [savename '.epsc']));   
 end
 
+%% test subtraction approach to take advantage of paired recordings
+ensureFigure('test', 1);
+subplot(2,2,1);
+[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus.phPeakMean_cs_AchMinusDop(goodReversals, common)), nanSEM(newCsPlus.phPeakMean_cs_AchMinusDop(goodReversals, common))',...
+    'cmap', [0 1 0], 'nan', 'gap'); hold on
+set(gca, 'XLim', [-10 10]);%, 'YLim', [-1 2]);
+subplot(2,2,2);
+[hl, hp] = boundedline(newCsMinus_trialNumber(common), nanmean(newCsMinus.phPeakMean_cs_AchMinusDop(goodReversals, common)), nanSEM(newCsMinus.phPeakMean_cs_AchMinusDop(goodReversals, common))',...
+    'cmap', [0 1 0], 'nan', 'gap'); hold on
+set(gca, 'XLim', [-10 10]);%, 'YLim', [-1 2]);
+subplot(2,2,3);
+[hl, hp] = boundedline(alwaysCsPlus_trialNumber(common), nanmean(alwaysCsPlus.phPeakMean_cs_AchMinusDop(goodReversals, common)), nanSEM(alwaysCsPlus.phPeakMean_cs_AchMinusDop(goodReversals, common))',...
+    'cmap', [0 1 0], 'nan', 'gap'); hold on
+set(gca, 'XLim', [-10 10]);%, 'YLim', [-1 2]);
 
 %% reversal averages for whisk and pupil
 common_odor3 = (-9 <= odor3_trialNumber) & (odor3_trialNumber <= 9);
@@ -754,6 +775,87 @@ if saveOn
     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
+%% despite paired measurements, weak correlations between detected changepoints
+ensureFigure('ChangePoint_correlations_scatter');
+subplot(3,2,1); hold on; title('new Cs+'); set(gca, 'XLim', [-20 50], 'YLim', [-20 50]); addUnityLine;
+xData = all_cps(:,1); yData = all_cps(:,2);
+scatter(xData, yData);
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(xData, yData, 'poly1', fo); 
+    fph=plot(fob,'predfunc'); legend off;
+    set(fph, 'LineWidth', 0.5);    
+     xlabel('licks'); ylabel('ACh.');
+subplot(3,2,2); hold on; title('new Cs-'); set(gca, 'XLim', [-20 50], 'YLim', [-20 50]); addUnityLine;
+xData = all_cps(:,4); yData = all_cps(:,5);
+scatter(xData, yData); 
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(xData, yData, 'poly1', fo); 
+    fph=plot(fob,'predfunc'); legend off;
+    set(fph, 'LineWidth', 0.5);
+    xlabel('licks'); ylabel('ACh.');
+subplot(3,2,3); hold on; set(gca, 'XLim', [-20 50], 'YLim', [-20 50]); addUnityLine;
+xData = all_cps(:,1); yData = all_cps(:,3);
+scatter(xData, yData); 
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(xData, yData, 'poly1', fo); 
+    fph=plot(fob,'predfunc'); legend off;
+    set(fph, 'LineWidth', 0.5);
+    xlabel('licks'); ylabel('Dop.');
+subplot(3,2,4); hold on; set(gca, 'XLim', [-20 50], 'YLim', [-20 50]); addUnityLine;
+xData = all_cps(:,4); yData = all_cps(:,6);
+scatter(xData, yData); 
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(xData, yData, 'poly1', fo); 
+    fph=plot(fob,'predfunc'); legend off;
+    set(fph, 'LineWidth', 0.5);
+    xlabel('licks'); ylabel('Dop.');
+subplot(3,2,5); hold on; set(gca, 'XLim', [-20 50], 'YLim', [-20 50]); addUnityLine;
+xData = all_cps(:,2); yData = all_cps(:,3);
+scatter(xData, yData); 
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(xData, yData, 'poly1', fo); 
+    fph=plot(fob,'predfunc'); legend off;
+    set(fph, 'LineWidth', 0.5);
+    xlabel('Ach.'); ylabel('Dop.');
+subplot(3,2,6); hold on; set(gca, 'XLim', [-20 50], 'YLim', [-20 50]); addUnityLine;
+xData = all_cps(:,5); yData = all_cps(:,6);
+scatter(xData, yData); 
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(xData, yData, 'poly1', fo); 
+    fph=plot(fob,'predfunc'); legend off;
+    set(fph, 'LineWidth', 0.5);
+    xlabel('Ach.'); ylabel('Dop.');
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end
+%     ha = findobj(gcf, 'Type', 'Axes');
+%     sameXYScale(ha);
+
+%% (DOESN'T LOOK GOOD) make a bar graph of changepoints, this time connect the lines between the paired conditions
+    
+saveName = 'changepoints_all_conected';
+ensureFigure(savename, 1); axes('FontSize', 12); hold on;
+fields = {'licks_acq', 'chat_acq', 'dat_acq', 'licks_ext', 'chat_ext', 'dat_ext'};
+colors = {mycolors('licks') mycolors('chat') mycolors('dat') mycolors('licks') mycolors('chat') mycolors('dat')};
+
+all_cps = [];
+for counter = 1:length(fields)
+    ydata = cp.(fields{counter}).index(goodReversals) - baselineTrials;
+    all_cps = [all_cps ydata];
+end
+
+plot([1:3 NaN 4:6]', [all_cps(:,1:3) NaN(size(all_cps, 1), 1) all_cps(:,4:6)]', '-', 'LineWidth', 0.5, 'Color', [0.5 0.5 0.5]);
+
+errorbar((1:3), mean(all_cps(:,1:3)), std(all_cps(:,1:3))/sqrt(size(all_cps, 1)), 'Color', colors{counter}, 'LineWidth', 2)
+errorbar((4:6), mean(all_cps(:,4:6)), std(all_cps(:,4:6))/sqrt(size(all_cps, 1)), 'Color', colors{counter}, 'LineWidth', 2)
+
+set(gca, 'XLim', [0.5 6.5], 'Ylim', [-20 40], 'XTick', 1:6, 'XTickLabel', {'licks', 'Ach.', 'Dop.', 'licks', 'Ach.', 'Dop.'}, 'FontSize', 12); ylabel('trials from rev.', 'FontSize', 12);
+
+
+formatFigurePublish('size', [3.5 2], 'fontSize', 12);
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end
 
 %% plot example reversals with weibull fits, changepoints
 nShow = 6;

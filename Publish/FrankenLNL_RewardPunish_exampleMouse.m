@@ -333,11 +333,11 @@ for acounter = 1:length(animals)
     % textBox('Cue', [], [0.5 0.95], 8);
     % xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
 %     ylabel('\fontsize{8}Right (\fontsize{12}\sigma\fontsize{8}-baseline)');
-    ylabel('Right (\sigma-baseline)');
+    ylabel('Right (reward-normalized)');
     % subplot(1,2,2);
     % textBox('Outcome', [], [0.5 0.95], 8);
 %     xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
-    xlabel('Left (\sigma-baseline)');
+    xlabel('Left (reward-normalized)');
     % ylabel('');   
 end
 
