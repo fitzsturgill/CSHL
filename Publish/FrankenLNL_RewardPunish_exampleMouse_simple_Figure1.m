@@ -1,113 +1,179 @@
 % FrankenLNL_RewardPunish_exampleMouse
 
 DB = dbLoadExperiment('FrankenLNL_RewardPunish');
-savepath = fullfile(DB.path, ['pooled' filesep 'figure']);
+animal = 'ACh_3';
+savepath = fullfile(DB.path, ['pooled' filesep 'figure' filesep animal]);
 ensureDirectory(savepath);
 smoothWindow = 1;
 saveOn = 1;
-animal = 'ACh_7';
+window = [-4 4];
 
 photometryField = 'Photometry';
 fdField = 'ZS';
 
 success = dbLoadAnimal(DB, animal); % load TE and trial lookups
 
-%% % find the session index for example session with air puff
-sessionName = 'ACh_7_FrankenLNL_4odors_Feb27_2019_Session1.mat';
-matches = strcmp(TE.filename, sessionName);
-sessionIndex = unique(TE.sessionIndex(matches));
+%%  take a nice swath of sessions for an example figure
+sessionNames = {'ACh_3_FrankenLNL_4odors_Jan27_2019_Session1.mat', 'ACh_3_FrankenLNL_4odors_Jan29_2019_Session1.mat', 'ACh_3_FrankenLNL_4odors_Jan30_2019_Session1.mat'};
+matches = ismember(TE.filename, sessionNames);
+sessionList = unique(TE.sessionIndex(matches));
 
 
-%% example traces
+%% make array of best example traces to choose 1 to show
+
 % rewarding subset
-window = [-4 7];
+
+% showTheseR = find(Odor2Valve1Trials & rewardTrials & ismember(TE.sessionIndex, sessionIndex));
+% [~, rixR] = sort(rand(size(showTheseR)));
+%{
+Good rixRs for example traces
+sessionIndex = 1
+ 55    27    49    33    25    14    31     2     5    13
+62    51     6    29    15     4    43    31    37    55
+65    26     2    49    16    38    14    55    64    35    40    12    41    57    23     7    59    18    37     
+
+sessionIndex = 2
+4     1     7    16    26    21    23    34    12     2
+ 5    21    24    26    22     6     4    16    10    28
+ 28    12    23    35    26    32     4    22    21    14
+  6     2    32    21    25    11    26    15     7    10
+
+sessionIndex = 3
+ 21     6    12    17     4    31    14    16    18    34
+ 14    15    12    30     9    34    18    10    21     3
+25     5    26     7     4    31    27    18    14     1
+%}
+
+exampleArray = [ 55    27    49    33    25    14    31     2     5    13;...
+    62    51     6    29    15     4    43    31    37    55;...
+    65    26     2    49    16    38    14    55    64    35;...
+    4     1     7    16    26    21    23    34    12     2;...
+    5    21    24    26    22     6     4    16    10    28;...
+    28    12    23    35    26    32     4    22    21    14;...
+    6     2    32    21    25    11    26    15     7    10;...
+    21     6    12    17     4    31    14    16    18    34;...
+    14    15    12    30     9    34    18    10    21     3;...
+    25     5    26     7     4    31    27    18    14     1];
+
+exampleArraySessionKey = [1 1 1 2 2 2 2 3 3 3];
+    
+    
+
+
+saveName = 'PE_BLA_exampleMouse_traces_array';  
+fig = ensureFigure(saveName, 1);    
+
+for counter = 1:length(exampleArraySessionKey)
+    showTheseR = find(Odor2Valve1Trials & rewardTrials & ismember(TE.sessionIndex, exampleArraySessionKey(counter)));
+    ax = subplot(2,5,counter);
+    plot(TE.Photometry.xData - 2, TE.Photometry.data(1).dFF(showTheseR(exampleArray(counter, :)), :)', 'k', 'LineWidth', 0.15); set(gca, 'XLim', window);
+    addStimulusPatch(gca, [-2 -1]); addStimulusPatch(gca, [-0.1 0.1]);
+    % set(gca, 'YTickLabel', {}); set(gca, 'XTickLabel', {}); 
+    set(gca, 'Visible', 'off');
+end
+
+formatFigurePublish('size', [1.6 1.1] * 3);
+
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end
+
+%% Choose a good example trace set and plot them for the figure
+
+
+sessionIndex = 2;
+whichOne = 7;
+rixR = exampleArray(whichOne, :);
 showTheseR = find(Odor2Valve1Trials & rewardTrials & ismember(TE.sessionIndex, sessionIndex));
-[~, rixR] = sort(rand(size(showTheseR)));
 
-
-
-saveName = 'PE_BLA_exampleMouse_traces';  
+saveName = ['PE_BLA_exampleMouse_traces' num2str(whichOne) '_cued'];  
 fig = ensureFigure(saveName, 1);    
 
-
 ax = subplot(1,1,1);
-plot(TE.Photometry.xData, TE.Photometry.data(1).dFF(showTheseR(rixR(1:10)), :)', 'k', 'LineWidth', 0.15); set(gca, 'XLim', window);
-addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [2.9 3.1]);
+plot(TE.Photometry.xData - 2, TE.Photometry.data(1).dFF(showTheseR(rixR(1:10)), :)', 'k', 'LineWidth', 0.15); set(gca, 'XLim', window); % xscale shifted relative to reinforcement
+addStimulusPatch(gca, [-2 -1]); addStimulusPatch(gca, [-0.1 0.1]);
 % set(gca, 'YTickLabel', {}); set(gca, 'XTickLabel', {}); 
-set(gca, 'Visible', 'off');
-% title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Left']);
-
-
-% 
-% ax(2) = subplot(1,2,2);
-% plot(TE.Photometry.xData, TE.Photometry.data(2).dFF(showTheseR(rixR(1:10)), :)', 'k', 'LineWidth', 0.15); set(gca, 'XLim', window);
-% addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [2.9 3.1]);
-% % title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Left']);
-% % set(gca, 'YTickLabel', {}); set(gca, 'XTickLabel', {}); 
-% set(gca, 'Visible', 'off');
-
-%% 
-saveName = 'PE_BLA_exampleMouse_traces_uncued';  
-fig = ensureFigure(saveName, 1);    
-
-% aversive subset
-showTheseU = find(uncuedReward & ismember(TE.sessionIndex, [2]));
-[~, rixU] = sort(rand(size(showTheseU)));
-
-ax = subplot(1,1,1);
-plot(TE.Photometry.xData, TE.Photometry.data(1).dFF(showTheseU(rixU(1:10)), :)', 'k', 'LineWidth', 0.15); set(gca, 'XLim', [-2 6]);
- addStimulusPatch(gca, [1.9 2.1]);
-% set(gca, 'YTickLabel', {}); set(gca, 'XTickLabel', {}); 
-set(gca, 'Visible', 'off');
+set(gca, 'YColor', 'none', 'YTick', [], 'XTickLabel', []);
 set(gca, 'YLim', [-0.1 0.3]);
 
-% formatFigurePublish('size', [1.6 1.1] );
+formatFigurePublish('size', [2 0.8]);
 
-% if saveOn 
-%     export_fig(fullfile(savepath, saveName), '-eps');
-% end
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end
 
-%% cued reward rasters, sorted by first lick
-% computer latency to first lick
+
+% also an uncued Example
+sessionIndex = 2;
+showTheseU = find(uncuedReward & ismember(TE.sessionIndex, sessionIndex));
+rixU = [ 7    15    19     1    10     4    18    11     6     8];
+saveName = ['PE_BLA_exampleMouse_traces' num2str(whichOne) '_uncued'];  
+fig = ensureFigure(saveName, 1);    
+
+ax = subplot(1,1,1);
+plot(TE.Photometry.xData - 2, TE.Photometry.data(1).dFF(showTheseU(rixU(1:10)), :)', 'k', 'LineWidth', 0.15); set(gca, 'XLim', window); % xscale shifted relative to reinforcement
+addStimulusPatch(gca, [-0.1 0.1]);
+% set(gca, 'YTickLabel', {}); set(gca, 'XTickLabel', {}); 
+set(gca, 'YColor', 'none', 'YTick', [], 'XTickLabel', []);
+set(gca, 'YLim', [-0.1 0.3]);
+
+formatFigurePublish('size', [2 0.8]);
+
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end
+
+%% cued reward rasters, cued and uncued for photometry
+
 
 
 fdField = 'ZS';
 tcolor = mycolors('chat');
-window = [-4 7]; % relative to Us
-TE.firstLick = calcEventLatency(TE, 'Port1In', TE.Cue2, TE.Us); % my calcEventLatency functions computes the latency between Bpod time stamps and events (e.g. licks and the start of a bpod state)
+sessionIndices = [2 3];
 hitTrials = TE.licks_cs.rate > 0;
-saveName = 'PE_BLA_exampleMouse_cuedReward_Rasters_sorted';  
+figSize = [2 1];
+saveName = 'PE_BLA_exampleMouse_Appetitive_Rasters_cuedLicks';  
 ensureFigure(saveName, 1);
-
-subplot(1,3,1);
-[~, lh] = eventRasterFromTE(TE, trialsByType{1} & hitTrials, 'Port1In', 'trialNumbering', 'consecutive',...
-    'zeroField', 'Cue2', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording', 'sortValues', TE.firstLick);
+subplot(1,1,1);
+[~, lh] = eventRasterFromTE(TE, trialsByType{1} & hitTrials & ismember(TE.sessionIndex, sessionIndices), 'Port1In', 'trialNumbering', 'consecutive',...
+    'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
 set(gca, 'XLim', window);
-% set(lh, 'LineWidth', 0.3, 'Color', [0 0 0]);
-title('licking');
-%     xlabel('Time from odor (s)');
+set(gca, 'YTick', [1 50]);
+% ylabel('Trial #');
+formatFigurePublish('size', figSize);
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end        
+
+
+saveName = 'PE_BLA_exampleMouse_Appetitive_Rasters_cued';  
+ensureFigure(saveName, 1);
 climfactor = 3;  
+subplot(1,1,1); phRasterFromTE(TE, trialsByType{1} & hitTrials & ismember(TE.sessionIndex, sessionIndices), 1, 'trialNumbering', 'consecutive',...
+    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry', 'zeroTimes', TE.Us, 'window', window, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
+set(gca, 'YTick', [1 50]);
+formatFigurePublish('size', figSize);
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end        
 
-lickOnsets = TE.firstLick(trialsByType{1});
-lickOnsets = sort(lickOnsets);
-subplot(1,3,2); phRasterFromTE(TE, trialsByType{1} & hitTrials, 1, 'trialNumbering', 'consecutive',...
-    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry', 'sortValues', TE.firstLick, 'zeroTimes', TE.Cue2, 'window', window); % 'CLimFactor', CLimFactor,
-line(lickOnsets, (1:sum(trialsByType{1}))', 'Parent', gca, 'Color', 'r', 'LineWidth', 2);
-title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Left']);
-subplot(1,3,3); phRasterFromTE(TE, trialsByType{1} & hitTrials, 2, 'trialNumbering', 'consecutive',...
-    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry', 'sortValues', TE.firstLick, 'zeroTimes', TE.Cue2, 'window', window); % 'CLimFactor', CLimFactor,
-line(lickOnsets, (1:sum(trialsByType{1}))', 'Parent', gca, 'Color', 'r', 'LineWidth', 2);
-title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Right']);
+saveName = 'PE_BLA_exampleMouse_Appetitive_Rasters_uncued';  
+ensureFigure(saveName, 1);
+subplot(1,1,1); phRasterFromTE(TE, uncuedReward & hitTrials & ismember(TE.sessionIndex, sessionIndices), 1, 'trialNumbering', 'consecutive',...
+    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry', 'zeroTimes', TE.Us, 'window', window, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
+set(gca, 'YTick', [1 30]);
+formatFigurePublish('size', figSize);
 
-
-        
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end        
 %% averages, appetitive
 
 fdField = 'ZS';
 saveName = 'PE_BLA_exampleMouse_avgs';  
 h=ensureFigure(saveName, 1); 
 sessionIndexList = 5; % just the 1 session because early sessions surprise modulation hasn't developed whereas later sessions I shorten the delay (surprise modulation is consistent) but it messes up the graph having 2 different delays
-window = [-7 4];
+
 linecolors = [0 0 1; 0 0 0; 0 1 1];            
 
 subplot(1, 2, 1);
@@ -115,7 +181,7 @@ set(gca, 'YLim', [-2 10]);
 tcolor = mycolors('chat');
 title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Left']);
 addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
-[ha, hl] = phPlotAverageFromTE(TE, {trialsByType{1} & ismember(TE.sessionIndex, sessionIndexList), trialsByType{2} & ismember(TE.sessionIndex, sessionIndexList), trialsByType{5} & ismember(TE.sessionIndex, sessionIndexList)}, 1,...
+[ha, hl] = phPlotAverageFromTE(TE, {trialsByType{1} & matches, trialsByType{2} & matches, trialsByType{5} & matches}, 1,...
     'zeroTimes', TE.Us, 'FluorDataField', fdField, 'window', window, 'cmap', linecolors); %high value, reward
 
 % legend(hl, {'omit', 'cued', 'uncued'}, 'Location', 'northwest'); legend('boxoff');
@@ -126,7 +192,7 @@ set(gca, 'YLim', [-2 10]);
 tcolor = mycolors('chat');
 title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Right']);
 addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
-[ha, hl] = phPlotAverageFromTE(TE, {trialsByType{1} & ismember(TE.sessionIndex, sessionIndexList), trialsByType{2} & ismember(TE.sessionIndex, sessionIndexList), trialsByType{5} & ismember(TE.sessionIndex, sessionIndexList)}, 2,...
+[ha, hl] = phPlotAverageFromTE(TE, {trialsByType{1} & matches, trialsByType{2} & matches, trialsByType{5} & matches}, 2,...
     'zeroTimes', TE.Us, 'FluorDataField', fdField, 'window', window, 'cmap', linecolors); %high value, reward
 
 % legend(hl, {'omit', 'cued', 'uncued'}, 'Location', 'northwest'); legend('boxoff');
@@ -320,7 +386,7 @@ for acounter = 1:length(animals)
             yDenom = nanmean(yData);
         end
         xData = xData ./ xDenom;
-        yData = yData ./ yDenom;
+        yData = yData ./ xDenom;
 
         h(end + 1) = scatter(xData, yData, 20, linecolors(counter, :), '.', 'MarkerFaceColor', 'flat', 'MarkerFaceAlpha', 0.3, 'MarkerEdgeAlpha', 0.3);
 
@@ -328,31 +394,17 @@ for acounter = 1:length(animals)
         xDataStruct(counter).SEM = nanstd(xData) / sqrt(sum(isfinite(xData)));
         yDataStruct(counter).Mean = nanmean(yData);
         yDataStruct(counter).SEM = nanstd(yData) / sqrt(sum(isfinite(yData)));
+
     end
-    addUnityLine(gca, [0.3 0.3 0.3]);
-
-%     xlim = get(gca,'XLim');
-%     ylim = get(gca,'YLim');
-% 
-%     p1 = min([min(xlim) min(ylim)]);
-%     p2 = min([max(xlim) max(ylim)]);
-%     p1 = 
-
-%     h = line('Parent',gca,'XData',[p1 p2],'YData',[p2 p1]);
-
-%     set(h,'Color',[0.3 0.3 0.3]);
     h = [];
     for counter = 1:size(trialSets, 2)
         errorbar(xDataStruct(counter).Mean, yDataStruct(counter).Mean, -yDataStruct(counter).SEM, yDataStruct(counter).SEM,-xDataStruct(counter).SEM, xDataStruct(counter).SEM, 'Color', linecolors(counter, :), 'LineWidth', 1, 'CapSize', 2, 'Marker', 'none');
         h(end + 1) = plot(xDataStruct(counter).Mean, yDataStruct(counter).Mean, '-', 'Color', linecolors(counter, :));
-    end
+    end    
     
-    if acounter == 2
-        set(gca, 'YLim', [-5 6], 'XLim', [-5 6]);
-    end
-    sameXYScale(gca);
-    addOrginLines(gca);
-    legend(h, trialSetNames, 'Location', 'Best'); 
+        sameXYScale(gca);
+        addOrginLines(gca);
+        legend(h, trialSetNames, 'Location', 'Best'); 
     % subplot(1,2,1);
     % textBox('Cue', [], [0.5 0.95], 8);
     % xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
@@ -362,7 +414,6 @@ for acounter = 1:length(animals)
     % textBox('Outcome', [], [0.5 0.95], 8);
 %     xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
     xlabel('Left (reward-normalized)');
-
     % ylabel('');   
 end
 
