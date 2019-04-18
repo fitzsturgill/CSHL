@@ -167,39 +167,27 @@ formatFigurePublish('size', figSize);
 if saveOn 
     export_fig(fullfile(savepath, saveName), '-eps');
 end        
-%% averages, appetitive
+%% averages, appetitive, one side only (left side, ch = 1)
 
 fdField = 'ZS';
-saveName = 'PE_BLA_exampleMouse_avgs';  
+saveName = 'PE_BLA_exampleMouse_avgs_simple';  
 h=ensureFigure(saveName, 1); 
-sessionIndexList = 5; % just the 1 session because early sessions surprise modulation hasn't developed whereas later sessions I shorten the delay (surprise modulation is consistent) but it messes up the graph having 2 different delays
-
+% use the same sessions used for the rasters
+sessionIndices = [2 3];
 linecolors = [0 0 1; 0 0 0; 0 1 1];            
 
-subplot(1, 2, 1);
-set(gca, 'YLim', [-2 10]);
+subplot(1, 1, 1);
+% set(gca, 'YLim', [-2 10]);
 tcolor = mycolors('chat');
-title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Left']);
-addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
-[ha, hl] = phPlotAverageFromTE(TE, {trialsByType{1} & matches, trialsByType{2} & matches, trialsByType{5} & matches}, 1,...
-    'zeroTimes', TE.Us, 'FluorDataField', fdField, 'window', window, 'cmap', linecolors); %high value, reward
 
-% legend(hl, {'omit', 'cued', 'uncued'}, 'Location', 'northwest'); legend('boxoff');
+[ha, hl] = phPlotAverageFromTE(TE, {trialsByType{1} & ismember(TE.sessionIndex, sessionIndices), trialsByType{2} & ismember(TE.sessionIndex, sessionIndices), trialsByType{5} & ismember(TE.sessionIndex, sessionIndices)}, 1,...
+    'zeroTimes', TE.Us, 'FluorDataField', fdField, 'window', window, 'cmap', linecolors, 'alpha', 1); %high value, reward
+addStimulusPatch(gca, [-2 -1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
+legend(hl, {'omit', 'cued', 'uncued'}, 'Location', 'best'); legend('boxoff');
 ylabel('F(\fontsize{12}\sigma\fontsize{8}-baseline)');  set(gca, 'XLim', window);
+xlabel('Time from reinforcement (s)');
 
-subplot(1, 2, 2);
-set(gca, 'YLim', [-2 10]);
-tcolor = mycolors('chat');
-title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Right']);
-addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
-[ha, hl] = phPlotAverageFromTE(TE, {trialsByType{1} & matches, trialsByType{2} & matches, trialsByType{5} & matches}, 2,...
-    'zeroTimes', TE.Us, 'FluorDataField', fdField, 'window', window, 'cmap', linecolors); %high value, reward
-
-% legend(hl, {'omit', 'cued', 'uncued'}, 'Location', 'northwest'); legend('boxoff');
-set(gca, 'XLim', window);
-
-
-formatFigurePublish('size', [3 1]);
+formatFigurePublish('size', [2 1]);
 
 if saveOn 
     export_fig(fullfile(savepath, saveName), '-eps');

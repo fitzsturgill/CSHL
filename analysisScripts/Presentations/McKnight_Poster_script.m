@@ -23,7 +23,7 @@ includedTrials(find(sum(isnan(allTE.phRaster), 2))) = 0; % get rid of NaN- conta
 
 TrialTypes = [1:7];
 byTypes = struct();
-for counter = 1:length(TrialTypes);
+for counter = 1:length(TrialTypes)
     byTypes(counter).Trials = bpFilterTrials2(allTE, 'TrialTypes', TrialTypes(counter)) & includedTrials;
     for counter2 = 1:length(plotFields)
         thisData = allTE.(plotFields{counter2});
