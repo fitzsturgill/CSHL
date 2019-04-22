@@ -170,7 +170,7 @@ end
 % and ChAT correlations with reward and without but doesn't have nice pupil
 % diameter
 % good trials with pupil traces that needed gap filling: 12
-trial = 10; % 7;
+trial = 5; % 7;
 ensureFigure('examples', 1);
 subplot(5,1,1);
 ydata = TE.Photometry.data(1).raw(trial, :);    
@@ -238,7 +238,8 @@ Fs = 20;
 bp = [0.1 2];
 
 
-TE.timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.TrialStartTimestamp, 'duration', baselineEnd + 1);
+% TE.timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.TrialStartTimestamp, 'duration', baselineEnd + 1);
+TE.timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.TrialStartTimestamp, 'duration', acqdur);
 
 % de-trend the signal with a band-pass filter
 % you may need the signal processing toolbox ....

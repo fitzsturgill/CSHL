@@ -612,7 +612,7 @@ hl = zeros(2,1);
 hl(1) = plot(TE.Photometry.xData, TE.Photometry.data(1).ZS(showThese(rix(1)), :)', 'g', 'LineWidth', 1); set(gca, 'XLim', [-2 4]); hold on;
 hl(2) = plot(TE.Photometry.xData, TE.Photometry.data(2).ZS(showThese(rix(1)), :)', 'r', 'LineWidth', 1); set(gca, 'XLim', [-2 4]);
 addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [1.9 2.1]);
-legend(hl, {'Flat', 'Tapered'}, 'Box', 'off', 'Location', 'northwest');
+legend(hl, {'Left', 'Right'}, 'Box', 'off', 'Location', 'northwest');
 xlabel('time from cue (s)'); ylabel('Fluor. (ZS)');
 
 

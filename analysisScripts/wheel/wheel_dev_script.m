@@ -100,8 +100,8 @@ if sessions(1).SessionData.Settings.GUI.LED2_amp > 0
 end
 
 
-TE.PhotometryHF = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit',...
-    'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 119], 'startField', 'Baseline', 'downsample', 10);
+% TE.PhotometryHF = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit',...
+%     'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 119], 'startField', 'Baseline', 'downsample', 10);
 %
 if saveOn
     save(fullfile(savepath, 'TE.mat'), 'TE');
@@ -112,8 +112,8 @@ end
 Photometry = 'Photometry';
 Fs = TE.(Photometry).sampleRate;
 %% ~or~
-Photometry = 'PhotometryHF';
-Fs = TE.(Photometry).sampleRate;
+% Photometry = 'PhotometryHF';
+% Fs = TE.(Photometry).sampleRate;
 
 %% coherence
 
@@ -297,7 +297,7 @@ end
 ensureFigure(['rewards_mean_sg_corrected_' num2str(lag)], 1);
 % axes('YDir', 'reverse');
 image(xdata, dc_cc.f, rewards_mean_sg_corrected', 'CDataMapping', 'Scaled');
-colormap('jet'); set(gca, 'YDir', 'normal', 'YLim', [0 6]);
+colormap('jet'); set(gca, 'YDir', 'normal', 'YLim', [0 20]);
 xlabel('time from reward (s)'); ylabel('Frequency (Hz)'); title('Coherence');
 set(gca, 'Clim', [min(rewards_mean_sg_corrected(:)), max(rewards_mean_sg_corrected(:))]);
 %  set(gca, 'CLim', [-0.1156    0.2122]);

@@ -1,6 +1,6 @@
 % for paul
 DB = dbLoadExperiment('reversals_noPunish_publish');
-animal = 'DC_44';
+animal = 'DC_47';
 dbLoadAnimal(DB, animal);
 
 savepath = fullfile(DB.path, ['pooled' filesep 'ForPaul']);

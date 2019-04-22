@@ -24,7 +24,10 @@ varargout = {};
 
     if isempty(s.linespec)
         s.linespec = {'g', 'r', 'b', 'k'};
+    elseif ischar(s.linespec)
+        s.linespec = {s.linespec};
     end
+    
     if isempty(s.fig)
         s.fig = figure;
     end
