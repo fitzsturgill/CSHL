@@ -35,6 +35,11 @@ TE.Photometry_ch2 = processTrialAnalysis_Photometry_expFitConcat(sessions,...
 duration = length(TE.Photometry_ch1.xData) / TE.Photometry_ch1.sampleRate;
 
 
+%% add wheel
+
+duration = length(TE.Photometry_ch1.xData) / TE.Photometry_ch1.sampleRate;
+TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', duration, 'Fs', 20, 'startField', 'PreCsRecording', 'zeroField', 'Cue2');
+
 %%
 % basepath = uigetdir;
 basepath = 'Z:\SummaryAnalyses\Franken_LNL_405_dev';
@@ -231,10 +236,12 @@ data470 = TE.Photometry_ch1.data(1).dF;
 estimated470 = data405 .* fob.p1 + fob.p2;
 TE.Photometry_ch1.data(1).dF_corrected = (data470 - estimated470);% ./ estimated470; 
 
-    if saveOn
-        saveas(gcf, fullfile(savepath, saveName), 'fig');
-        saveas(gcf, fullfile(savepath, saveName), 'jpeg');
-    end
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+    save(fullfile(savepath, 'TE.mat'), 'TE');
+    disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
+end
 
 %% redo rasters and averages using corrected dF
 trialNumbering = 'consecutive';
@@ -332,3 +339,266 @@ if saveOn
     saveas(gcf, fullfile(savepath, saveName), 'fig');
     saveas(gcf, fullfile(savepath, saveName), 'jpeg');
 end    
+
+
+%%
+%% rasters and averages, combined
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+PhotometryField = 'Photometry_ch1';
+FluorField = 'dF_corrected';
+
+saveName = 'cued_reinforcement_allBehavior_plusAvgs_airPuff_405corrected';
+fig = ensureFigure(saveName, 1);
+mcLandscapeFigSetup(fig);
+
+% Define the positions of different axes matrices on the figure
+    % params.matpos defines position of axesmatrix [LEFT TOP WIDTH HEIGHT].    
+    params = struct();
+    matpos_title_1 = [0 0 3/8 .1];
+    matpos_title_2 = [3/8 0 (1 - 3/8) .1];
+    matpos_rasters = [0 .1 1 0.5];    
+    matpos_avgs = [0 0.6 1 0.4];
+    params.cellmargin = [.02 .02 0.05 0.05];
+    params.figmargin = [0.05 0.05 0.025 0.025];
+    
+% add titles
+params.matpos = matpos_title_1;
+[ax txt] = textAxes(fig, 'Cued Reward -->', 12);
+setaxesOnaxesmatrix(ax, 1, 1, 1, params, fig);
+set(txt, 'HorizontalAlignment', 'left', 'Position', [0 .5]);
+params.matpos = matpos_title_2;
+[ax txt] = textAxes(fig, sprintf('       Cued Air Puff -->    Mouse = %s', subjectName), 12);
+setaxesOnaxesmatrix(ax, 1, 1, 1, params, fig);
+set(txt, 'HorizontalAlignment', 'left', 'Position', [0 .5]);    
+
+% cued Reward, cued Shock, all behavior, consecutive
+trialNumbering = 'consecutive';
+CLimFactor = 3;
+window = [-2 5];
+totalTrials = length(TE.filename);
+totalDelay = TE.Trace2{1}(2) - TE.Cue2{1}(1);
+
+
+params.matpos = matpos_rasters;
+nRows = 1; nColumns = 9; nAxes = 9;
+hax = axesmatrix(nRows, nColumns, 1:nAxes, params, fig);
+
+axes(hax(1)); hold on;
+eventRasterFromTE(TE, trialsByType{1}, 'Port1In', 'trialNumbering', trialNumbering,...
+    'zeroTimes', TE.Cue2, 'window', window); set(gca, 'XLim', window);         xlabel('time from cue (s)');  title('Licks');         
+addStimulusPatch(gca, [0 totalDelay]);
+
+
+
+axes(hax(2)); hold on;
+phRasterFromTE(TE, trialsByType{1}, 1, 'PhotometryField', PhotometryField, 'FluorDataField', FluorField, 'CLimFactor', CLimFactor, 'trialNumbering', trialNumbering, 'window', window, 'zeroTimes', TE.Cue2);
+title('corrected'); set(gca, 'XLim', window, 'YTick', []);
+
+
+
+% uncorrected
+axes(hax(3)); hold on;
+phRasterFromTE(TE, trialsByType{1}, 1,  'PhotometryField', PhotometryField, 'FluorDataField', 'dF', 'CLimFactor', CLimFactor, 'trialNumbering', trialNumbering, 'window', window, 'zeroTimes', TE.Cue2);
+title('uncorrected'); set(gca, 'XLim', window, 'YTick', []);
+
+
+try
+    axes(hax(4)); hold on;
+    alignedDataRaster(TE.pupil.(pupField), trialsByType{1}, 'zeroTimes', TE.Cue2, 'window', window, 'startTimes', TE.pupil.startTime, 'trialNumbering', trialNumbering, 'Fs', TE.pupil.frameRate(1));
+    title('Pupil diameter'); set(gca, 'XLim', window, 'YTick', []);
+catch
+end
+
+axes(hax(5)); hold on;
+phRasterFromTE(TE, trialsByType{3}, 1, 'PhotometryField', PhotometryField, 'FluorDataField', FluorField, 'CLimFactor', CLimFactor, 'trialNumbering', trialNumbering, 'window', window, 'zeroTimes', TE.Cue2);
+title('corrected'); set(gca, 'XLim', window);
+
+% uncorrected
+axes(hax(6)); hold on;
+phRasterFromTE(TE, trialsByType{3}, 1, 'PhotometryField', PhotometryField, 'FluorDataField', 'dF', 'CLimFactor', CLimFactor, 'trialNumbering', trialNumbering, 'window', window, 'zeroTimes', TE.Cue2);
+title('uncorrected'); set(gca, 'XLim', window, 'YTick', []);
+
+
+try
+    axes(hax(7)); hold on;
+    alignedDataRaster(TE.pupil.pupDiameterNorm, trialsByType{3}, 'zeroTimes', TE.Cue2, 'window', window, 'startTimes', TE.pupil.startTime, 'trialNumbering', trialNumbering, 'Fs', TE.pupil.frameRate(1));
+    title('Pupil diameter'); set(gca, 'XLim', window, 'YTick', []);
+catch
+end
+
+try
+    axes(hax(8)); hold on;
+    alignedDataRaster(TE.pupil.frameAvgNorm, trialsByType{3}, 'zeroTimes', TE.Cue2, 'window', window, 'startTimes', TE.pupil.startTime, 'trialNumbering', trialNumbering, 'Fs', TE.pupil.frameRate(1));
+    title('Eye closure'); set(gca, 'XLim', window, 'YTick', []);
+catch
+end
+
+axes(hax(9)); hold on;
+alignedDataRaster(TE.Wheel.data.V, trialsByType{3}, 'zeroTimes', TE.Cue2, 'window', window, 'startTimes', TE.Wheel.startTime, 'trialNumbering', trialNumbering, 'Fs', TE.Wheel.Fs, 'CLim', [0 20]);
+title('Velocity'); set(gca, 'XLim', window, 'YTick', []);
+
+
+for counter = 1:length(hax)
+    line(hax(counter), [0 0], get(hax(counter), 'YLim'), 'Color', 'r'); line(hax(counter), [totalDelay - 0.1 totalDelay - 0.1], get(hax(counter), 'YLim'), 'Color', 'r');
+end
+
+
+
+% averages
+% -3 6
+params.cellmargin = [.05 .05 0.05 0.05];
+params.matpos = matpos_avgs;
+nRows = 1; nColumns = 4; nAxes = 4;
+hax = axesmatrix(nRows, nColumns, 1:nAxes, params, fig);
+% for channel = channels
+
+% ch1, appetitive
+axes(hax(1)); hold on;
+[ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 2 5]), 1,  'PhotometryField', PhotometryField, 'FluorDataField', FluorField, 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'b', 'k', 'c'}); %high value, reward
+set(gca, 'XLim', window);  ylabel('Ch1 (dFCorrected)'); xlabel('time from cue (s)'); 
+addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1]);
+lh = legend(hl, 'cued reward', 'omit', 'uncued', 'Location', 'best'); set(lh, 'Box', 'off');
+
+% ch1, uncorrected, appetitive
+axes(hax(2)); hold on;
+try
+    [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 2 5]), 1, 'PhotometryField', PhotometryField, 'FluorDataField', 'dF', 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'b', 'k', 'c'}); %high value, reward
+%     legend(hl, {'pRhigh', 'pRmedium', 'pRlow'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
+    set(gca, 'XLim', window);  ylabel('Ch1 (dF)');
+    addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1]);
+catch
+end
+
+% ch1, aversive
+try
+    axes(hax(3)); hold on;
+    [ha, hl] = phPlotAverageFromTE(TE, trialsByType([3 4 6]), 1, 'PhotometryField', PhotometryField, 'FluorDataField', FluorField, 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'r', 'k', 'm'}); %high value, reward
+    set(gca, 'XLim', window);  ylabel('Ch1 (dFCorrected)'); xlabel('time from cue (s)');
+    addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1]);
+    lh = legend(hl, 'cued puff', 'omit', 'uncued', 'Location', 'best'); set(lh, 'Box', 'off');
+    % ch1 uncorrected, aversive
+    axes(hax(4)); hold on;
+catch
+end
+try
+    [ha, hl] = phPlotAverageFromTE(TE, trialsByType([3 4 6]), 1, 'PhotometryField', PhotometryField, 'FluorDataField', 'dF', 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'r', 'k', 'm'}); %high value, reward
+%     legend(hl, {'pRhigh', 'pRmedium', 'pRlow'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
+    set(gca, 'XLim', window);  ylabel('Ch1 (dF)');
+    addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1]);
+catch
+end
+
+
+
+
+
+
+if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+end
+
+
+%% just plain averages
+
+
+% Define the positions of different axes matrices on the figure
+    % params.matpos defines position of axesmatrix [LEFT TOP WIDTH HEIGHT].    
+    params = struct();
+    matpos_title = [0 0 1 .1];
+    matpos_avgs = [0 .1 1 0.85];    
+    params.cellmargin = [.05 .05 0.05 0.05];    
+    params.figmargin = [0.05 0.05 0.025 0.025];
+
+
+    
+    
+    % -3 6
+window = [-1 5];
+PhotometryField = 'Photometry_ch1';
+FluorField = 'dF_corrected';
+totalDelay = TE.Trace2{1}(2) - TE.Cue2{1}(1);
+
+% rewarding subset
+showTheseR = find(Odor2Valve1Trials & rewardTrials);
+[~, rixR] = sort(rand(size(showTheseR)));
+% aversive subset
+showTheseA = find(Odor2Valve2Trials & punishTrials);
+[~, rixA] = sort(rand(size(showTheseA)));
+
+
+for channel = 1
+    saveName = ['Averages_ch' num2str(channel)];
+    fig = ensureFigure(saveName, 1);
+    mcPortraitFigSetup(fig);
+
+    params.matpos = matpos_title;
+    [ax, ~] = textAxes(fig, sprintf('%s , Channel %d', subjectName, channel), 14);
+    setaxesOnaxesmatrix(ax, 1, 1, 1, params, fig);    
+    
+    try
+        ax = subplot(3,2,1);
+        plot(TE.(PhotometryField).xData, TE.(PhotometryField).data(channel).(FluorField)(showTheseR(rixR(1:10)), :)', 'LineWidth', 0.25); set(gca, 'XLim', window);
+        addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1]);
+        ylabel('Fluor. (ZS)'); title('rewarding');       
+    catch
+    end
+    
+    try
+        ax(2) = subplot(3,2,2);
+        plot(TE.(PhotometryField).xData, TE.(PhotometryField).data(channel).(FluorField)(showTheseA(rixA(1:10)), :)', 'LineWidth', 0.25); set(gca, 'XLim', window);
+        addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1]);
+        ylabel('Fluor. (ZS)'); title('aversive');
+    catch
+    end    
+
+    ax(3) = subplot(3,2,3);
+    [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 2 5]), channel, 'PhotometryField', PhotometryField, 'FluorDataField', FluorField, 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'b', 'k', 'c'}, 'PhotometryField', PhotometryField); %high value, reward
+%     legend(hl, {'pRhigh', 'pRmedium', 'pRlow'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
+    addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1]);
+    set(gca, 'XLim', window); ylabel('Fluor ZS');
+    
+    try
+        ax(4) = subplot(3,2,4);
+        [ha, hl] = phPlotAverageFromTE(TE, trialsByType([3 4 6]), channel, 'PhotometryField', PhotometryField, 'FluorDataField', FluorField, 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'r', 'k', 'm'}, 'PhotometryField', PhotometryField); %high value, reward
+    %     legend(hl, {'pRhigh', 'pRmedium', 'pRlow'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
+        addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1]);
+        set(gca, 'XLim', window); ylabel('Fluor ZS');
+    catch
+    end
+    
+    try
+        ax(5) = subplot(3,2,5);
+        varargin = {'window', window, 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'b', 'k','c'}};
+        axh = [];
+        [ha, hl] = plotEventAverageFromTE(TE, trialsByType([1 2 5]), 'Port1In', varargin{:});  
+        addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1]);
+        ylabel('licks (1/s)'); xlabel('time from cue(s)');  set(gca, 'XLim', window);
+        legend(hl, {'cued reward', 'cued ommission', 'uncued reward'}, 'Box', 'off', 'Location', 'best'); 
+    catch
+    end
+    
+    try
+        ax(6) = subplot(3,2,6);
+        varargin = {'window', window, 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'r', 'k','m'}};
+        axh = [];
+        [ha, hl] = plotEventAverageFromTE(TE, trialsByType([3 4 6]), 'Port1In', varargin{:});  
+        addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1]);
+        ylabel('licks (1/s)'); xlabel('time from cue(s)');  set(gca, 'XLim', window); legend(hl, {'cued punish', 'cued ommission', 'uncued punish'}, 'Box', 'off', 'Location', 'best');      
+    catch
+    end
+    
+
+    
+    params.matpos = matpos_avgs;
+    setaxesOnaxesmatrix(ax, 3, 2, 1:6, params, fig);     
+    if saveOn
+        saveas(gcf, fullfile(savepath, saveName), 'fig');
+        saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+    end    
+end
+
+

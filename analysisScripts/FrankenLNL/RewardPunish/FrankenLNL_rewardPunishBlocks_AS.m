@@ -186,7 +186,7 @@ saveName = 'Aversive_pupilRasters';
 ensureFigure(saveName, 1); colormap jet;
 % first just get all the data
 nTrials = length(TE.filename);
-[data, XData] = alignedDataWindow(TE, TE.pupil.pupDiameterNorm, true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window);
+[data, XData] = alignedDataWindow(TE.pupil.pupDiameterNorm, true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window, 'Fs', TE.pupil.frameRate(1));
 % determine the clims
 cmean = nanmean(nanmean(data(:, 1:20*4), 2), 1);
 cstd = nanmean(nanstd(data(:, 1:20*4), 0, 2), 1);
@@ -219,7 +219,7 @@ saveName = 'Appetitive_pupilRasters';
 ensureFigure(saveName, 1); colormap jet;
 % first just get all the data
 nTrials = length(TE.filename);
-[data, XData] = alignedDataWindow(TE, TE.pupil.pupDiameterNorm, true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window);
+[data, XData] = alignedDataWindow(TE.pupil.pupDiameterNorm, true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window, 'Fs', TE.pupil.frameRate(1));
 % determine the clims
 cmean = nanmean(nanmean(data(:, 1:20*4), 2), 1);
 cstd = nanmean(nanstd(data(:, 1:20*4), 0, 2), 1);
@@ -255,7 +255,7 @@ dataField = 'pupDiameterNorm';
 % dataField = 'frameAvgNorm';
 % first just get all the data
 nTrials = length(TE.filename);
-[data, XData] = alignedDataWindow(TE, TE.pupil.(dataField), true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window);
+[data, XData] = alignedDataWindow(TE.pupil.(dataField), true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window, 'Fs', TE.pupil.frameRate(1));
 % determine the clims
 cmean = nanmean(nanmean(data(:, 1:20*4), 2), 1);
 cstd = nanmean(nanstd(data(:, 1:20*4), 0, 2), 1);
@@ -359,7 +359,7 @@ saveName = 'Aversive_pupilRasters';
 ensureFigure(saveName, 1); colormap parula;
 % first just get all the data
 nTrials = length(TE.filename);
-[data, XData] = alignedDataWindow(TE, TE.pupil.pupDiameterNorm, true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window);
+[data, XData] = alignedDataWindow(TE.pupil.pupDiameterNorm, true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window, 'Fs', TE.pupil.frameRate(1));
 % determine the clims
 cmean = nanmean(nanmean(data(:, 1:20*4), 2), 1);
 cstd = nanmean(nanstd(data(:, 1:20*4), 0, 2), 1);
