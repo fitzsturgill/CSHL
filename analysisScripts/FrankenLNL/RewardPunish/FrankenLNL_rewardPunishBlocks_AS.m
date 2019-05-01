@@ -683,12 +683,12 @@ if ismember(2, TE.(PhotometryField).settings.channels)
     title('Ch 2'); set(gca, 'XLim', window, 'YTick', []);
 end
 
-try
+% try
     axes(hax(4)); hold on;
-    alignedDataRaster(TE.pupil.(pupField), trialsByType{1}, 'zeroTimes', TE.Cue2, 'window', window, 'startTimes', TE.pupil.startTime, 'trialNumbering', trialNumbering, 'Fs', TE.pupil.frameRate(1));
+    alignedDataRaster(TE.pupil.pupDiameterNorm, trialsByType{1}, 'zeroTimes', TE.Cue2, 'window', window, 'startTimes', TE.pupil.startTime, 'trialNumbering', trialNumbering, 'Fs', TE.pupil.frameRate(1));
     title('Pupil diameter'); set(gca, 'XLim', window, 'YTick', []);
-catch
-end
+% catch
+% end
 
 axes(hax(5)); hold on;
 phRasterFromTE(TE, trialsByType{3}, 1, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', trialNumbering, 'window', window, 'zeroTimes', TE.Cue2);

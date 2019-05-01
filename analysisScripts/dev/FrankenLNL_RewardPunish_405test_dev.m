@@ -18,6 +18,8 @@ end
 % channel 1 demodulated via channel 1 reference
 dFFMode = {'simple', 'simple'};
 bl = [2 4];
+
+%%
 % TE.Photometry_ch1 = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial',...
 %     'zeroField', 'Cue2', 'channels', 1, 'baseline', bl, 'downsample', 305, 'forceAmp', 1);
 % 
@@ -126,37 +128,96 @@ window = [-4 6];
 %% averages
 
 % -3 6
-window = [-4 7];
+window = [-8 7];
 PhotometryField = 'Photometry';
 totalDelay = TE.Trace2{1}(2) - TE.Cue2{1}(1);
-
+fluorField = 'ZS';
 
     saveName = ['Averages_405test'];
     fig = ensureFigure(saveName, 1);
 
-
-    axes; hold on;    
-    [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1]), 1, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'b', 'r'}, 'PhotometryField', 'Photometry_ch1'); %high value, reward
+    subplot(1,2,1); hold on;    title('Cued reward');
+    hls = [];
+    [ha, hl] = phPlotAverageFromTE(TE, rewardTrials & ~uncuedTrials, 1, 'FluorDataField', fluorField, 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'b'}, 'PhotometryField', 'Photometry_ch1'); %high value, reward
 %     legend(hl, {'pRhigh', 'pRmedium', 'pRlow'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
-
+    hls(end + 1) = hl;
     
 
-        [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1]), 1, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'c', 'm'}, 'PhotometryField', 'Photometry_ch2'); %high value, reward
+        [ha, hl] = phPlotAverageFromTE(TE, rewardTrials & ~uncuedTrials, 1, 'FluorDataField', fluorField, 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'m'}, 'PhotometryField', 'Photometry_ch2'); %high value, reward
     %     legend(hl, {'pRhigh', 'pRmedium', 'pRlow'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
         addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1]);
         set(gca, 'XLim', window); ylabel('Fluor ZS');
+        hls(end + 1) = hl;
+        legend(hls, {'470nm', '405nm'}, 'Location', 'best'); legend('boxoff');
         
+    subplot(1,2,2); hold on;    title('Cued punish');
+    hls = [];
+    [ha, hl] = phPlotAverageFromTE(TE, punishTrials & ~uncuedTrials, 1, 'FluorDataField', fluorField, 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'b'}, 'PhotometryField', 'Photometry_ch1'); %high value, reward
+%     legend(hl, {'pRhigh', 'pRmedium', 'pRlow'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
+    hls(end + 1) = hl;
+    
+
+        [ha, hl] = phPlotAverageFromTE(TE, punishTrials & ~uncuedTrials, 1, 'FluorDataField', fluorField, 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'m'}, 'PhotometryField', 'Photometry_ch2'); %high value, reward
+    %     legend(hl, {'pRhigh', 'pRmedium', 'pRlow'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');
+        addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1]);
+        set(gca, 'XLim', window); ylabel('Fluor ZS');
+        hls(end + 1) = hl;
+        legend(hls, {'470nm', '405nm'}, 'Location', 'best'); legend('boxoff');        
 if saveOn
     saveas(gcf, fullfile(savepath, saveName), 'fig');
     saveas(gcf, fullfile(savepath, saveName), 'jpeg');
 end
-        
+
+%% scaled averages
+window = [-2 7];
+totalDelay = TE.Trace2{1}(2) - TE.Cue2{1}(1);
+fluorField = 'ZS';
+
+    saveName = ['Averages_405test_matched'];
+    fig = ensureFigure(saveName, 1);
+
+    subplot(2,2,1); hold on;    title('Cued reward');    
+    avgData = phAverageFromTE(TE, rewardTrials & ~uncuedTrials, 1, 'FluorDataField', fluorField, 'zeroTimes', TE.Cue2, 'window', window, 'PhotometryField', 'Photometry_ch1'); %high value, reward
+    plot(avgData.xData, nanzscore(avgData.Avg), 'b-');
+    
+    avgData = phAverageFromTE(TE, rewardTrials & ~uncuedTrials, 1, 'FluorDataField', fluorField, 'zeroTimes', TE.Cue2, 'window', window, 'PhotometryField', 'Photometry_ch2'); %high value, reward
+    plot(avgData.xData, nanzscore(avgData.Avg), 'm-');    
+    legend({'470', '405'});
+    
+    subplot(2,2,2); hold on;    title('Cued punish');    
+    avgData = phAverageFromTE(TE, punishTrials & ~uncuedTrials, 1, 'FluorDataField', fluorField, 'zeroTimes', TE.Cue2, 'window', window, 'PhotometryField', 'Photometry_ch1'); %high value, reward
+    plot(avgData.xData, nanzscore(avgData.Avg), 'b-');
+    
+    avgData = phAverageFromTE(TE, punishTrials & ~uncuedTrials, 1, 'FluorDataField', fluorField, 'zeroTimes', TE.Cue2, 'window', window, 'PhotometryField', 'Photometry_ch2'); %high value, reward
+    plot(avgData.xData, nanzscore(avgData.Avg), 'm-');    
+    legend({'470', '405'});    
+    
+    subplot(2,2,3); hold on;    title('Uncued reward');    
+    avgData = phAverageFromTE(TE, rewardTrials & uncuedTrials, 1, 'FluorDataField', fluorField, 'zeroTimes', TE.Cue2, 'window', window, 'PhotometryField', 'Photometry_ch1'); %high value, reward
+    plot(avgData.xData, nanzscore(avgData.Avg), 'b-');
+    
+    avgData = phAverageFromTE(TE, rewardTrials & uncuedTrials, 1, 'FluorDataField', fluorField, 'zeroTimes', TE.Cue2, 'window', window, 'PhotometryField', 'Photometry_ch2'); %high value, reward
+    plot(avgData.xData, nanzscore(avgData.Avg), 'm-');    
+    legend({'470', '405'});
+    
+    subplot(2,2,4); hold on;    title('Uncued punish');    
+    avgData = phAverageFromTE(TE, punishTrials & uncuedTrials, 1, 'FluorDataField', fluorField, 'zeroTimes', TE.Cue2, 'window', window, 'PhotometryField', 'Photometry_ch1'); %high value, reward
+    plot(avgData.xData, nanzscore(avgData.Avg), 'b-');
+    
+    avgData = phAverageFromTE(TE, punishTrials & uncuedTrials, 1, 'FluorDataField', fluorField, 'zeroTimes', TE.Cue2, 'window', window, 'PhotometryField', 'Photometry_ch2'); %high value, reward
+    plot(avgData.xData, nanzscore(avgData.Avg), 'm-');    
+    legend({'470', '405'});        
+    
+    if saveOn
+    saveas(gcf, fullfile(savepath, saveName), 'fig');
+    saveas(gcf, fullfile(savepath, saveName), 'jpeg');
+end
 %%
 FluorDataField = 'dF';
 trialSets = [1 2 5 7];
 setLabels = {'cuedReward', 'omission', 'uncuedReward', 'control'};
 labels = {'baseline', 'cue', 'outcome'};
-windows = [-2 0; 0 3; 3 4];
+windows = [-4 0; 0 totalDelay; totalDelay totalDelay + 1];
 colors = [0 0 1; 0 1 0; 1 0 0];
 
 
@@ -211,7 +272,7 @@ end
 
 
 %% fit 470 to 405 using baseline period
-blRange = [-2 0];
+blRange = [-4 0];
 FluorDataField = 'dF'; % use dF because exponential bleaching trend across the entire session already removed from each signal
 pointRange = [bpX2pnt(blRange(1), 20, -4) bpX2pnt(blRange(2), 20, -4)];
 xData = TE.Photometry_ch2.data(1).(FluorDataField)(:,pointRange(1):pointRange(2));
@@ -246,7 +307,7 @@ end
 %% redo rasters and averages using corrected dF
 trialNumbering = 'consecutive';
 CLimFactor = 3;
-window = [-4 6];
+window = [-4 7];
 
 
     saveName = ['Reward_phRasters_dF_corrected'];
@@ -277,7 +338,7 @@ totalDelay = TE.Trace2{1}(2) - TE.Cue2{1}(1);
     fig = ensureFigure(saveName, 1);
 
 
-    
+%     [1 2 5 7]
     ax = subplot(1,2,1);    
     [ha, hl] = phPlotAverageFromTE(TE, trialsByType([1 2 5 7]), 1, 'FluorDataField', 'dF_corrected', 'zeroTimes', TE.Cue2, 'window', window, 'linespec', {'b', 'r', 'c', 'k'}, 'PhotometryField', 'Photometry_ch1'); %high value, reward
 %     legend(hl, {'pRhigh', 'pRmedium', 'pRlow'}, 'Location', 'northwest', 'FontSize', 12); legend('boxoff');    
@@ -300,15 +361,16 @@ end
 %% compare 470 and 405
 saveName = 'examples_470_vs_405';
 showThese = find(Odor2Valve1Trials & rewardTrials);
+[~, rix] = sort(rand(size(showThese)));
+
+window = [-2 6];
 ensureFigure(saveName, 1); 
-whichOne = 3;
-for counter = 1:4
-    whichOne = counter + 10;
-    subplot(2,2,counter); hold on;
+for counter = 1:12    
+    subplot(3,4,counter); hold on;
     hl = zeros(2,1);
-    hl(1) = plot(TE.Photometry_ch1.xData, TE.Photometry_ch1.data(1).ZS(showThese(whichOne), :)', 'b', 'LineWidth', 1); set(gca, 'XLim', [-2 4]); 
-    hl(2) = plot(TE.Photometry_ch1.xData, TE.Photometry_ch2.data(1).ZS(showThese(whichOne), :)', 'm', 'LineWidth', 1); set(gca, 'XLim', [-2 4]);
-    addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [1.9 2.1]);
+    hl(1) = plot(TE.Photometry_ch1.xData, TE.Photometry_ch1.data(1).ZS(showThese(rix(counter)), :)', 'b', 'LineWidth', 1); set(gca, 'XLim', window); 
+    hl(2) = plot(TE.Photometry_ch1.xData, TE.Photometry_ch2.data(1).ZS(showThese(rix(counter)), :)', 'm', 'LineWidth', 1); set(gca, 'XLim', window);
+    addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1]);
     legend(hl, {'470', '405'}, 'Box', 'off', 'Location', 'northwest');
     xlabel('time from cue (s)'); ylabel('Fluor. (ZS)');
 end
@@ -323,13 +385,12 @@ end
 % compare corrected and uncorrected
 saveName = 'examples_corrected_raw';
 ensureFigure(saveName, 1); 
-for counter = 1:4
-    whichOne = counter + 10;
-    subplot(2,2,counter); hold on;
+for counter = 1:12
+    subplot(3,4,counter); hold on;
     hl = zeros(2,1);
-    hl(1) = plot(TE.Photometry_ch1.xData, TE.Photometry_ch1.data(1).dF_corrected(showThese(whichOne), :)', 'b', 'LineWidth', 1); set(gca, 'XLim', [-2 4]); 
-    hl(2) = plot(TE.Photometry_ch1.xData, TE.Photometry_ch1.data(1).dF(showThese(whichOne), :)', 'm', 'LineWidth', 1); set(gca, 'XLim', [-2 4]);
-    addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [1.9 2.1]);
+    hl(1) = plot(TE.Photometry_ch1.xData, TE.Photometry_ch1.data(1).dF_corrected(showThese(rix(counter)), :)', 'b', 'LineWidth', 1); set(gca, 'XLim', window); 
+    hl(2) = plot(TE.Photometry_ch1.xData, TE.Photometry_ch1.data(1).dF(showThese(rix(counter)), :)', 'm', 'LineWidth', 1); set(gca, 'XLim', window);
+    addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [totalDelay - 0.1 totalDelay + 0.1]);
     legend(hl, {'corrected', 'raw'}, 'Box', 'off', 'Location', 'northwest');
     xlabel('time from cue (s)'); ylabel('Fluor. (dF)');
 end
@@ -377,7 +438,7 @@ set(txt, 'HorizontalAlignment', 'left', 'Position', [0 .5]);
 % cued Reward, cued Shock, all behavior, consecutive
 trialNumbering = 'consecutive';
 CLimFactor = 3;
-window = [-2 5];
+window = [-2 6];
 totalTrials = length(TE.filename);
 totalDelay = TE.Trace2{1}(2) - TE.Cue2{1}(1);
 
