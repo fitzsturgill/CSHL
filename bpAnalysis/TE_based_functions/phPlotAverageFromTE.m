@@ -48,11 +48,17 @@ function varargout = phPlotAverageFromTE(TE, trials, ch, varargin)
     xData = avgData.xData(1,:);    % fixed across trial subsets, see phAverageFromTE
     for counter = 1:nLines
         thisLinespec = s.linespec{rem(counter - 1, length(s.linespec)) + 1}; % cycle through linespec if it isn't long enough        
-        if isempty(s.cmap)
-            [thisHl, thisHp] = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :), thisLinespec, ax, alpha{:}, 'nan', 'gap');       
+        if any(isfinite(avgData.Avg(counter, :))) % can't be just all NaNs
+            if isempty(s.cmap)
+                [thisHl, thisHp] = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :), thisLinespec, ax, alpha{:}, 'nan', 'gap');       
+            else
+                [thisHl, thisHp] = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :), ax, alpha{:}, 'cmap', s.cmap(counter,:), 'nan', 'gap');    
+            end
         else
-            [thisHl, thisHp] = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :), ax, alpha{:}, 'cmap', s.cmap(counter,:), 'nan', 'gap');    
+            thisHl = NaN;
+            thisHp = NaN;
         end
+            
         lh(counter) = thisHl; % return handles of the solid lines in the bounded plots
         ph(counter) = thisHp;
     end
