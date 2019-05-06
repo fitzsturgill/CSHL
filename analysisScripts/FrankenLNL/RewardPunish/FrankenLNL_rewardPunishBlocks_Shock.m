@@ -45,7 +45,7 @@ TE.eyeAvg = addCSVToTE(TE, 'duration', duration, 'zeroField', 'Outcome', 'folder
 
 %% add pupil if desired/present
 duration = length(TE.Photometry.xData) / TE.Photometry.sampleRate;
-TE = addPupilometryToTE(TE, 'duration', duration, 'zeroField', 'Outcome', 'frameRate', 60, 'frameRateNew', 20, 'normMode', 'bySession');
+TE = addPupilometryToTE(TE, 'duration', duration, 'zeroField', 'Outcome', 'frameRate', 60, 'frameRateNew', 20, 'normMode', 'byTrial');
 
 %% add whisking
 TE.Whisk = addWhiskingToTE(TE, 'duration', duration);
@@ -195,7 +195,7 @@ nTrials = length(TE.filename);
 [data, XData] = alignedDataWindow(TE.pupil.pupDiameterNorm, true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window, 'Fs', 20);
 % determine the clims
 cmean = nanmean(nanmean(data(:, 1:20*4), 2), 1);
-cstd = nanmean(nanstd(data(:, 1:20*4), 0, 2), 1);
+cstd = nanmean(nanstd(data(:, 1:20*4), 0, 2), 0);
 cLimFactor = 4;
 clims = [cmean - cLimFactor * cstd cmean + cLimFactor * cstd];
 dummy = NaN(size(data));

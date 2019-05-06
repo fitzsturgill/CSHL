@@ -25,7 +25,7 @@ function bpCleanAndVerifyBonsai(readonly)
 %         shortestITI = min(cellfun(@(x) x.duration(1),
 %         sessions.SessionData.NidaqData(:,2))); % this is wrong, need to
 %         account for ITI in addition to acq duration
-        shortestITI = 13;
+        shortestITI = 10;
         teDelta = diff(sessions(scounter).SessionData.TrialStartTimestamp);
         fileTypes = {'Pupil_', '*upil_*.avi';...
                     'Pupil_', '*upil_*.mat';...
