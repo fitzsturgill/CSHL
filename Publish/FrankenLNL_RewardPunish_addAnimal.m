@@ -35,6 +35,13 @@ duration = length(TE.Photometry.xData) / TE.Photometry.sampleRate;
 %% add wheel
 TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', duration, 'Fs', 20, 'startField', 'Start');
 
+%% add pupil if desired/present
+duration = length(TE.Photometry.xData) / TE.Photometry.sampleRate;
+TE = addPupilometryToTE(TE, 'duration', duration, 'zeroField', 'Outcome', 'frameRate', 60, 'frameRateNew', 20, 'normMode', 'bySession');
+
+%% add whisking
+TE.Whisk = addWhiskingToTE(TE, 'duration', duration);
+
 %%
 sep = strfind(TE.filename{1}, '_');
 subjectName = TE.filename{1}(1:sep(2)-1);

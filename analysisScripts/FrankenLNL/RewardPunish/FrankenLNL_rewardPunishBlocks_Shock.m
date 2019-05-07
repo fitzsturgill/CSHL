@@ -45,7 +45,7 @@ TE.eyeAvg = addCSVToTE(TE, 'duration', duration, 'zeroField', 'Outcome', 'folder
 
 %% add pupil if desired/present
 duration = length(TE.Photometry.xData) / TE.Photometry.sampleRate;
-TE = addPupilometryToTE(TE, 'duration', duration, 'zeroField', 'Outcome', 'frameRate', 60, 'frameRateNew', 20, 'normMode', 'byTrial');
+TE = addPupilometryToTE(TE, 'duration', duration, 'zeroField', 'Outcome', 'frameRate', 60, 'frameRateNew', 20, 'normMode', 'bySession');
 
 %% add whisking
 TE.Whisk = addWhiskingToTE(TE, 'duration', duration);
@@ -195,7 +195,7 @@ nTrials = length(TE.filename);
 [data, XData] = alignedDataWindow(TE.pupil.pupDiameterNorm, true(nTrials, 1), 'startTimes', TE.Photometry.startTime, 'zeroTimes', TE.Cue2, 'window', window, 'Fs', 20);
 % determine the clims
 cmean = nanmean(nanmean(data(:, 1:20*4), 2), 1);
-cstd = nanmean(nanstd(data(:, 1:20*4), 0, 2), 0);
+cstd = nanmean(nanstd(data(:, 1:20*4), 0, 2), 1);
 cLimFactor = 4;
 clims = [cmean - cLimFactor * cstd cmean + cLimFactor * cstd];
 dummy = NaN(size(data));
@@ -612,7 +612,7 @@ hl = zeros(2,1);
 hl(1) = plot(TE.Photometry.xData, TE.Photometry.data(1).ZS(showThese(whichOne), :)', 'g', 'LineWidth', 1); set(gca, 'XLim', [-2 4]); hold on;
 hl(2) = plot(TE.Photometry.xData, TE.Photometry.data(2).ZS(showThese(whichOne), :)', 'r', 'LineWidth', 1); set(gca, 'XLim', [-2 4]);
 addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [1.9 2.1]);
-legend(hl, {'Flat', 'Tapered'}, 'Box', 'off', 'Location', 'northwest');
+legend(hl, {'Ch1', 'Ch2'}, 'Box', 'off', 'Location', 'northwest');
 xlabel('time from cue (s)'); ylabel('Fluor. (ZS)');
 
 
