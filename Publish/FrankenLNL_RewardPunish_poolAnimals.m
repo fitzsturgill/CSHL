@@ -137,7 +137,7 @@ for counter = 1:length(DB.animals)
     end
 end
 
-%% normalize grand Average data to uncued reward us amplitude
+%% compute averages, SEM, also normalize grand Average data to uncued reward us amplitude
 gAvgNorm = gAvg;
 % photometry reward Us size per fiber
 normVectorPh = max(gAvg.phUs.uncuedReward.data(:,1:bpX2pnt(1, 20)), [], 2);
@@ -145,20 +145,56 @@ normVectorPh = max(gAvg.phUs.uncuedReward.data(:,1:bpX2pnt(1, 20)), [], 2);
 % normVectorLick = nanmean(gAvg.lickUs.uncuedReward.data(:,1:bpX2pnt(1, 20)), 2);
 for tcounter = 1:size(trialSets, 1)
     label = trialSets{tcounter, 1};
+    gAvg.phCue.(label).Avg = nanmean(gAvg.phCue.(label).data);
+    gAvg.phCue.(label).SEM = nanstd(gAvg.phCue.(label).data, 0, 1) ./ sum(isfinite(gAvg.phCue.(label).data), 1);
+    gAvg.phCue.(label).xData = (0:(size(gAvg.phCue.(label).data, 2) - 1)) * 1/20 - 7;
+    gAvg.ph.(label).Avg = nanmean(gAvg.ph.(label).data);
+    gAvg.ph.(label).SEM = nanstd(gAvg.ph.(label).data, 0, 1) ./ sum(isfinite(gAvg.ph.(label).data), 1);
+    gAvg.ph.(label).xData = (0:(size(gAvg.phCue.(label).data, 2) - 1)) * 1/20 - (size(gAvg.phCue.(label).data, 2)/20 - 4);
+    gAvg.phUs.(label).Avg = nanmean(gAvg.phUs.(label).data);
+    gAvg.phUs.(label).SEM = nanstd(gAvg.phUs.(label).data, 0, 1) ./ sum(isfinite(gAvg.phUs.(label).data), 1);    
+    gAvg.phUs.(label).xData = (0:(size(gAvg.phUs.(label).data, 2) - 1)) * 1/20;
+    
     gAvgNorm.phCue.(label).data = gAvg.phCue.(label).data ./ normVectorPh;
     gAvgNorm.ph.(label).data = gAvg.ph.(label).data ./ normVectorPh;
     gAvgNorm.phUs.(label).data = gAvg.phUs.(label).data ./ normVectorPh;
+    
+    gAvgNorm.phCue.(label).Avg = nanmean(gAvgNorm.phCue.(label).data);
+    gAvgNorm.phCue.(label).SEM = nanstd(gAvgNorm.phCue.(label).data, 0, 1) ./ sum(isfinite(gAvgNorm.phCue.(label).data), 1);
+    gAvgNorm.phCue.(label).xData = (0:(size(gAvgNorm.phCue.(label).data, 2) - 1)) * 1/20 - 7;
+    gAvgNorm.ph.(label).Avg = nanmean(gAvgNorm.ph.(label).data);
+    gAvgNorm.ph.(label).SEM = nanstd(gAvgNorm.ph.(label).data, 0, 1) ./ sum(isfinite(gAvgNorm.ph.(label).data), 1);
+    gAvgNorm.ph.(label).xData = (0:(size(gAvgNorm.phCue.(label).data, 2) - 1)) * 1/20 - (size(gAvgNorm.phCue.(label).data, 2)/20 - 4);
+    gAvgNorm.phUs.(label).Avg = nanmean(gAvgNorm.phUs.(label).data);
+    gAvgNorm.phUs.(label).SEM = nanstd(gAvgNorm.phUs.(label).data, 0, 1) ./ sum(isfinite(gAvgNorm.phUs.(label).data), 1);    
+    gAvgNorm.phUs.(label).xData = (0:(size(gAvgNorm.phUs.(label).data, 2) - 1)) * 1/20;
+    
 %     gAvgNorm.lickCue(label).data = gAvgNorm.lickCue(label).data ./ normVectorLick;
 %     gAvgNorm.lick(label).data = gAvgNorm.lick(label).data ./ normVectorLick;
 %     gAvgNorm.lickUs(label).data = gAvgNorm.lickUs(label).data ./ normVectorLick;
 end
+return;
 %% plot grand Averages
-ensureFigure('raw', 1); plot(nanmean([gAvg.phCue.cuedReward.data gAvg.phUs.cuedReward.data])); hold on; plot(nanmean([gAvg.phCue.uncuedReward.data gAvg.phUs.uncuedReward.data]))
-ensureFigure('norm', 1); plot(nanmean([gAvgNorm.phCue.cuedReward.data gAvgNorm.phUs.cuedReward.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedReward.data gAvgNorm.phUs.uncuedReward.data]))
+ensureFigure('grandAverages', 1); 
+% xData = [0:(size(gAvg.phCue.cuedReward.data, 2) - 1) * 1/20 - 4 ...
+%     0:(size(gAvg.phUs.cuedReward.data, 2) - 1) * 1/20];
+subplot(2,2,1); %plot(nanmean([gAvg.phCue.cuedReward.data gAvg.phUs.cuedReward.data])); hold on; plot(nanmean([gAvg.phCue.uncuedReward.data gAvg.phUs.uncuedReward.data])); 
+boundedline([gAvg.phCue.cuedReward.xData gAvg.phUs.cuedReward.xData],...
+    [[gAvg.phCue.cuedReward.Avg'; gAvg.phUs.cuedReward.Avg'] [gAvg.phCue.uncuedReward.Avg'; gAvg.phUs.uncuedReward.Avg']],...
+    permute([[gAvg.phCue.cuedReward.SEM gAvg.phUs.cuedReward.SEM] ; [gAvg.phCue.cuedReward.SEM gAvg.phUs.cuedReward.SEM]], [2 3 1]));
+title('appetitive');
+subplot(2,2,2); plot(nanmean([gAvgNorm.phCue.cuedReward.data gAvgNorm.phUs.cuedReward.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedReward.data gAvgNorm.phUs.uncuedReward.data]))
+title('appetitive norm.');
+subplot(2,2,3); plot(nanmean([gAvgNorm.phCue.cuedPuff.data gAvgNorm.phUs.cuedPuff.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedPuff.data gAvgNorm.phUs.uncuedPuff.data]))
+title('normPunish');
+subplot(2,2,4); plot(nanmean([gAvgNorm.phCue.cuedShock.data gAvgNorm.phUs.cuedShock.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedShock.data gAvgNorm.phUs.uncuedShock.data]))
+title('normShock');
 
-ensureFigure('normPunish', 1); plot(nanmean([gAvgNorm.phCue.cuedPuff.data gAvgNorm.phUs.cuedPuff.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedPuff.data gAvgNorm.phUs.uncuedPuff.data]))
 
-ensureFigure('normShock', 1); plot(nanmean([gAvgNorm.phCue.cuedShock.data gAvgNorm.phUs.cuedShock.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedShock.data gAvgNorm.phUs.uncuedShock.data]))
-
-
+%% 
+boundedline(xData(:), [nanmean(pupData(trialsByType{3}, :)); nanmean(pupData(trialsByType{4} & TE.BlockNumber == 4, :)); nanmean(pupData(trialsByType{6}, :))]',...
+    permute([nanstd(pupData(trialsByType{3}, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{3},:)), 1));...
+    nanstd(pupData(trialsByType{4} & TE.BlockNumber == 4, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{4} & TE.BlockNumber == 4,:)), 1));...
+    nanstd(pupData(trialsByType{6}, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{6},:)), 1))], [2 3 1]),...
+    'cmap', [1 0 0; 0 0 0; 1 0 1]);
     
