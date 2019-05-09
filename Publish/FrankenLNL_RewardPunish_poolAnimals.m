@@ -156,5 +156,9 @@ end
 ensureFigure('raw', 1); plot(nanmean([gAvg.phCue.cuedReward.data gAvg.phUs.cuedReward.data])); hold on; plot(nanmean([gAvg.phCue.uncuedReward.data gAvg.phUs.uncuedReward.data]))
 ensureFigure('norm', 1); plot(nanmean([gAvgNorm.phCue.cuedReward.data gAvgNorm.phUs.cuedReward.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedReward.data gAvgNorm.phUs.uncuedReward.data]))
 
+ensureFigure('normPunish', 1); plot(nanmean([gAvgNorm.phCue.cuedPuff.data gAvgNorm.phUs.cuedPuff.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedPuff.data gAvgNorm.phUs.uncuedPuff.data]))
+
+ensureFigure('normShock', 1); plot(nanmean([gAvgNorm.phCue.cuedShock.data gAvgNorm.phUs.cuedShock.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedShock.data gAvgNorm.phUs.uncuedShock.data]))
+
 
     
