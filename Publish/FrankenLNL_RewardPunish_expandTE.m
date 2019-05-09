@@ -32,14 +32,17 @@ for counter = 1:length(DB.animals)
     usWindow = [0 1];  
     
     % percentile value for peak estimations
-    percentValue = 0.8;
+    percentValue = 0.9;
     
     % estimate respones for different events in each trial for photometry
     % (bpCalcPeak_dFF) and for licking (countEventFromTE)
     TE.licks_cs = countEventFromTE(TE, 'Port1In', csWindow, TE.Cue2);
     TE.lickIntervals_cs = eventIntervalsFromTE(TE, 'Port1In', csWindow, TE.Cue2);
-    TE.licks_us = countEventFromTE(TE, 'Port1In', [0 2], TE.Us);
+    TE.lickLatency_cs = calcEventLatency(TE, 'Port1In', TE.Cue2, TE.Outcome);
+    TE.licks_us = countEventFromTE(TE, 'Port1In', usWindow, TE.Us);
     TE.licks_baseline = countEventFromTE(TE, 'Port1In', [0 4], TE.PreCsRecording);
+    TE.lickIntervals_us = eventIntervalsFromTE(TE, 'Port1In', usWindow, TE.Outcome);
+    TE.lickLatency_us = calcEventLatency(TE, 'Port1In', TE.Outcome);
     
     for channel = channels
         TE.phPeakMean_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, csWindow, TE.Cue2, 'method', 'mean', 'phField', 'ZS');

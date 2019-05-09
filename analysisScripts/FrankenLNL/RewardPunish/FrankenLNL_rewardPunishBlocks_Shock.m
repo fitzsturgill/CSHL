@@ -265,7 +265,7 @@ nTrials = length(TE.filename);
 % determine the clims
 cmean = nanmean(nanmean(data(:, 1:20*4), 2), 1);
 cstd = nanmean(nanstd(data(:, 1:20*4), 0, 2), 1);
-cLimFactor = 4;
+cLimFactor = 6;
 clims = [cmean - cLimFactor * cstd cmean + cLimFactor * cstd];
 
 subplot(1,3,1);
@@ -370,7 +370,7 @@ nTrials = length(TE.filename);
 % determine the clims
 cmean = nanmean(nanmean(data(:, 1:20*4), 2), 1);
 cstd = nanmean(nanstd(data(:, 1:20*4), 0, 2), 1);
-cLimFactor = 4;
+cLimFactor = 6;
 clims = [cmean - cLimFactor * cstd cmean + cLimFactor * cstd];
 
 subplot(1,3,1);

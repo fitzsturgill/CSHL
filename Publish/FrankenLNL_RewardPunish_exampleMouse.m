@@ -189,6 +189,8 @@ hitTrials = TE.licks_cs.rate > 0;
 linecolors = [0 0 1; 0 1 1; 1 0 0; 0 1 0; mycolors('shock')];         
 trialSets = [Odor2Valve1Trials & hitTrials & rewardTrials, uncuedReward, Odor2Valve2Trials & punishTrials, Odor2Valve2Trials & shockTrials];
 allTrials = sum(trialSets, 2) ~= 0;
+FluorField_cs = 'phPeakMean_cs';
+FluorField_us = 'phPeakMean_us';
 % xlims = [min(TE.phPeakMean_cs(2).data(allTrials)) max(TE.phPeakMean_cs(2).data(allTrials)); min(TE.phPeakMean_us(2).data(allTrials)) max(TE.phPeakMean_us(2).data(allTrials))];
 
 subplot(1,2,1); hold on; subplot(1,2,2); hold on;
@@ -196,7 +198,7 @@ for counter = 1:size(trialSets, 2)
     h=[];
     h(1) = subplot(1,2,1); %set(gca, 'XLim', xlims(1,:));
 %     allTrials = allTrials | trialSets{counter};
-    xData = TE.phPeakMean_cs(1).data(trialSets(:, counter)); yData = TE.phPeakMean_cs(2).data(trialSets(:, counter)); 
+    xData = TE.(FluorField_cs)(1).data(trialSets(:, counter)); yData = TE.(FluorField_cs)(2).data(trialSets(:, counter)); 
 %     scatter(TE.phPeakMean_cs(2).data(trialSets{counter}), TE.phPeakMean_cs(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');
     scatter(xData, yData, 8, linecolors(counter, :), '.');
     % fit for cs
@@ -206,7 +208,7 @@ for counter = 1:size(trialSets, 2)
     set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :));
 
     h(2) = subplot(1,2,2); %set(gca, 'XLim', xlims(2,:));
-    xData = TE.phPeakMean_us(1).data(trialSets(:, counter)); yData = TE.phPeakMean_us(2).data(trialSets(:, counter)); 
+    xData = TE.(FluorField_us)(1).data(trialSets(:, counter)); yData = TE.(FluorField_us)(2).data(trialSets(:, counter)); 
 %     scatter(TE.phPeakMean_us(2).data(trialSets{counter}), TE.phPeakMean_us(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');    
     scatter(xData, yData, 8, linecolors(counter, :), '.');
     % fit for us
@@ -249,8 +251,8 @@ for counter = 1:size(trialSets, 2)
     h=[];
     h(1) = subplot(1,2,1); %set(gca, 'XLim', xlims(1,:));
 %     allTrials = allTrials | trialSets{counter};
-    xData = TE.phPeakMean_cs(1).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_cs(1).data(trialSets(:, counter))); 
-    yData = TE.phPeakMean_cs(2).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_cs(2).data(trialSets(:, counter))); 
+    xData = TE.(FluorField_cs)(1).data(trialSets(:, counter)) - nanmean(TE.(FluorField_cs)(1).data(trialSets(:, counter))); 
+    yData = TE.(FluorField_cs)(2).data(trialSets(:, counter)) - nanmean(TE.(FluorField_cs)(2).data(trialSets(:, counter))); 
 %     scatter(TE.phPeakMean_cs(2).data(trialSets{counter}), TE.phPeakMean_cs(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');
     scatter(xData, yData, 8, linecolors(counter, :), '.');
     % fit for cs
@@ -260,8 +262,8 @@ for counter = 1:size(trialSets, 2)
     set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :));
 
     h(2) = subplot(1,2,2); %set(gca, 'XLim', xlims(2,:));
-    xData = TE.phPeakMean_us(1).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_us(1).data(trialSets(:, counter))); 
-    yData = TE.phPeakMean_us(2).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_us(2).data(trialSets(:, counter))); 
+    xData = TE.(FluorField_us)(1).data(trialSets(:, counter)) - nanmean(TE.(FluorField_us)(1).data(trialSets(:, counter))); 
+    yData = TE.(FluorField_us)(2).data(trialSets(:, counter)) - nanmean(TE.(FluorField_us)(2).data(trialSets(:, counter))); 
 %     scatter(TE.phPeakMean_us(2).data(trialSets{counter}), TE.phPeakMean_us(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');    
     scatter(xData, yData, 8, linecolors(counter, :), '.');
     % fit for us
@@ -291,16 +293,20 @@ return
 %% Development code below:
 %% normalize responses to punishment by those to reward and compare between left and right BLA
 
-saveName = 'LeftRight_PunNorm_dev';
+
+FluorField_us = 'phPeakMean_us';
+
+saveName = sprintf('LeftRight_PunNorm_%s', FluorField_us);
 ensureFigure(saveName, 1);
-formatFigurePublish('size', [4 2], 'fontSize', 8);
-animals = {'ACh_7', 'ACh_3'};
+% formatFigurePublish('size', [4 2], 'fontSize', 8);
+% animals = {'ACh_7', 'ACh_3'};
+animals = DB.animals;
 
 
 % xlims = [min(TE.phPeakMean_cs(2).data(allTrials)) max(TE.phPeakMean_cs(2).data(allTrials)); min(TE.phPeakMean_us(2).data(allTrials)) max(TE.phPeakMean_us(2).data(allTrials))];
 
 for acounter = 1:length(animals)
-    subplot(1,2,acounter); hold on;
+    subplot(2,3,acounter); hold on;
     success = dbLoadAnimal(DB, animals{acounter}); % load TE and trial lookups
     title(animals{acounter}, 'Interpreter', 'none');
     % reward is first in the trialSets list, use it to normalize
@@ -313,7 +319,7 @@ for acounter = 1:length(animals)
     h=[];   
     for counter = 1:size(trialSets, 2)        
     %     allTrials = allTrials | trialSets{counter};
-        xData = TE.phPeakMean_us(1).data(trialSets(:, counter)); yData = TE.phPeakMean_us(2).data(trialSets(:, counter)); 
+        xData = TE.(FluorField_us)(1).data(trialSets(:, counter)); yData = TE.(FluorField_us)(2).data(trialSets(:, counter)); 
         xData = xData(:); yData = yData(:);
         if counter == 1
             xDenom = nanmean(xData);
@@ -352,7 +358,7 @@ for acounter = 1:length(animals)
     end
     sameXYScale(gca);
     addOrginLines(gca);
-    legend(h, trialSetNames, 'Location', 'Best'); 
+    legend(h, trialSetNames, 'Location', 'Best'); legend('boxoff'); 
     % subplot(1,2,1);
     % textBox('Cue', [], [0.5 0.95], 8);
     % xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
@@ -370,7 +376,8 @@ end
 
 
 if saveOn 
-    export_fig(fullfile(savepath, saveName), '-eps');
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
 end
 
 
