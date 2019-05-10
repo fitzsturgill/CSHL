@@ -10,8 +10,10 @@ goals:
 DB = dbLoadExperiment('FrankenLNL_RewardPunish');
 
 minRewardLickRate = 2; % at least n Hz licking (during us window)
-
-
+savepath = fullfile(DB.path, ['pooled' filesep]);
+ensureDirectory(savepath);
+figsavepath = fullfile(DB.path, ['pooled' filesep 'figure']);
+ensureDirectory(figsavepath);
 %% Goal 1: Grand Averages
 % data and associated descriptors for each data type, trial set combination
 s3 = struct(...
@@ -173,7 +175,13 @@ for tcounter = 1:size(trialSets, 1)
 %     gAvgNorm.lick(label).data = gAvgNorm.lick(label).data ./ normVectorLick;
 %     gAvgNorm.lickUs(label).data = gAvgNorm.lickUs(label).data ./ normVectorLick;
 end
-return;
+
+save(fullfile(savepath, 'grandAverages.mat'), 'gAvg');
+disp(['*** saving: ' fullfile(savepath, 'grandAverages.mat') ' ***']);
+save(fullfile(savepath, 'grandAveragesNorm.mat'), 'gAvgNorm');
+disp(['*** saving: ' fullfile(savepath, 'grandAveragesNorm.mat') ' ***']);
+
+
 %% plot grand Averages
 ensureFigure('grandAverages', 1); 
 % xData = [0:(size(gAvg.phCue.cuedReward.data, 2) - 1) * 1/20 - 4 ...
@@ -196,5 +204,4 @@ boundedline(xData(:), [nanmean(pupData(trialsByType{3}, :)); nanmean(pupData(tri
     permute([nanstd(pupData(trialsByType{3}, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{3},:)), 1));...
     nanstd(pupData(trialsByType{4} & TE.BlockNumber == 4, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{4} & TE.BlockNumber == 4,:)), 1));...
     nanstd(pupData(trialsByType{6}, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{6},:)), 1))], [2 3 1]),...
-    'cmap', [1 0 0; 0 0 0; 1 0 1]);
-    
+    'cmap', [1 0 0; 0 0 0; 1 0 1]);    
