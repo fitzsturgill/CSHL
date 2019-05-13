@@ -1,0 +1,139 @@
+%{
+Script to generate simple RPE graphs and early/middle/late acquisition graphs for figure 1 from
+ChAT_22, derived from McKnight_Poster_script
+Fig1_GCaMP_simple_v2.m
+%}
+
+%%
+DB = dbLoadExperiment('SO_RewardPunish_odor');
+photometryField = 'Photometry';
+saveOn = 1;
+climfactor = 2;
+window = [-4 4];
+
+animal = 'ChAT_22';
+success = dbLoadAnimal(DB, animal);
+
+% set savepath
+savepath = fullfile(DB.path, ['figure1' filesep animal]);
+ensureDirectory(savepath);
+
+earlySessions = {'ChAT_22_SO_RewardPunish_odor_May11_2016_Session1.mat'};
+midSessions = {'ChAT_22_SO_RewardPunish_odor_May12_2016_Session1.mat'};
+lateSessions = {'ChAT_22_SO_RewardPunish_odor_May15_2016_Session1.mat', 'ChAT_22_SO_RewardPunish_odor_May16_2016_Session1.mat'};
+lateLickSessions = {'ChAT_22_SO_RewardPunish_odor_May15_2016_Session1.mat'}; % May 16th session is "funny" for licking, i.e. lick sensor not working properly or mouse having incredibly well timed and efficient licks
+
+%% make continuous early -> middle -> late phRaster
+
+figSize = [1.6 1];
+climfactor = 3;  
+fdField = 'ZS';
+linewidth = 4;
+window = [-4 3.9];
+offset = -0.1;
+tcolors = [204 153 255; 153 51 255; 51 0 102]; tcolors = tcolors ./ 255; 
+
+saveName = ['acquisition_phRaster_' animal];
+ensureFigure(saveName, 1); axes; hold on;
+phRasterFromTE(TE, rewardOdorTrials & rewardTrials, 1, 'trialNumbering', 'consecutive',...
+    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry', 'zeroTimes', TE.usZeros, 'window', window, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
+
+% make lines to label early/middle/late trial sets for averages
+allTrials = TE.filename(rewardOdorTrials & rewardTrials);
+theseTrials = find(ismember(allTrials, earlySessions));
+line([window(2) + offset window(2) + offset], [theseTrials(1) theseTrials(end)], 'Color', tcolors(1,:), 'LineWidth', linewidth);
+theseTrials = find(ismember(allTrials, midSessions));
+line([window(2) + offset window(2) + offset], [theseTrials(1) theseTrials(end)], 'Color', tcolors(2,:), 'LineWidth', linewidth);
+theseTrials = find(ismember(allTrials, lateSessions));
+line([window(2) + offset window(2) + offset], [theseTrials(1) theseTrials(end)], 'Color', tcolors(3,:), 'LineWidth', linewidth);
+
+% set(gca, 'Visible', 'off');
+set(gca, 'YTick', [100 200 300 400], 'XTick', []);
+
+formatFigurePublish('size', figSize);
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end
+
+%% align raster/ averages to odor onset vs lick onset, version #1
+
+TE.lickLatency_cs = calcEventLatency(TE, 'Port1In', TE.Cue, TE.usZeros);
+lickZeros = TE.lickLatency_cs + cellfun(@(x) x(1), TE.Cue);
+specialWindowByLick = [cellfun(@(x) x(1), TE.Cue) cellfun(@(x) x(end), TE.Cue)] - lickZeros;
+
+% rasters
+saveName = ['align_lick_vs_odor_v1_' animal];
+ensureFigure(saveName, 1); 
+
+
+subplot(2,2,1);
+specialWindowByCue = [0 2];
+phRasterFromTE(TE, rewardOdorTrials, 1, 'trialNumbering', 'consecutive',...
+    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry',...
+    'zeroTimes', TE.Cue, 'window', specialWindowByCue, 'sortValues', TE.lickLatency_cs, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
+ylabel ('trial # sorted by lick latency');
+
+subplot(2,2,2);
+phRasterFromTE(TE, rewardOdorTrials, 1, 'trialNumbering', 'consecutive',...
+    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry',...
+    'zeroTimes', lickZeros, 'window', specialWindowByLick, 'sortValues', TE.lickLatency_cs, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
+ set(gca, 'YTick', []);
+
+% averages
+tcolor = mycolors('chat');
+subplot(2,2,3); hold on;
+phPlotAverageFromTE(TE, rewardOdorTrials, 1, 'FluorDataField', fdField, 'PhotometryField', 'Photometry',...
+    'zeroTimes', TE.Cue, 'window', specialWindowByCue, 'cmap', tcolor, 'alpha', 1); % 'CLimFactor', CLimFactor,
+xlabel('time from cue (s)'); 
+ylabel('F(\fontsize{12}\sigma\fontsize{8}-baseline)');
+
+subplot(2,2,4);
+phPlotAverageFromTE(TE, rewardOdorTrials, 1, 'FluorDataField', fdField, 'PhotometryField', 'Photometry',...
+    'zeroTimes', lickZeros, 'window', specialWindowByLick, 'cmap', tcolor, 'alpha', 1); % 'CLimFactor', CLimFactor,
+xlabel('time from response (s)');
+
+
+%% align raster/ averages to odor onset vs lick onset, version #2
+
+figSize = [2.5 3];
+
+TE.lickLatency_cs = calcEventLatency(TE, 'Port1In', TE.Cue, TE.usZeros);
+lickZeros = TE.lickLatency_cs + cellfun(@(x) x(1), TE.Cue);
+specialWindow = [-1 1];
+
+% rasters
+saveName = ['align_lick_vs_odor_v2_' animal];
+ensureFigure(saveName, 1); 
+
+
+subplot(2,2,1);
+specialWindowByCue = [0 2];
+phRasterFromTE(TE, rewardOdorTrials, 1, 'trialNumbering', 'consecutive',...
+    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry',...
+    'zeroTimes', TE.Cue, 'window', specialWindow, 'sortValues', TE.lickLatency_cs, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
+ylabel ('trial # sorted'); set(gca, 'YTick', [100 300 500], 'XTick', []);
+
+subplot(2,2,2);
+phRasterFromTE(TE, rewardOdorTrials, 1, 'trialNumbering', 'consecutive',...
+    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry',...
+    'zeroTimes', lickZeros, 'window', specialWindow, 'sortValues', TE.lickLatency_cs, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
+ set(gca, 'YTick', [], 'XTick', []);
+
+% averages
+tcolor = mycolors('chat');
+ha=[];
+ha(1) = subplot(2,2,3); hold on;
+phPlotAverageFromTE(TE, rewardOdorTrials, 1, 'FluorDataField', fdField, 'PhotometryField', 'Photometry',...
+    'zeroTimes', TE.Cue, 'window', specialWindow, 'cmap', tcolor, 'alpha', 1); % 'CLimFactor', CLimFactor,
+xlabel('time from cue (s)'); 
+ylabel('F(\fontsize{12}\sigma\fontsize{8}-baseline)');
+
+ha(2) = subplot(2,2,4);
+phPlotAverageFromTE(TE, rewardOdorTrials, 1, 'FluorDataField', fdField, 'PhotometryField', 'Photometry',...
+    'zeroTimes', lickZeros, 'window', specialWindow, 'cmap', tcolor, 'alpha', 1); % 'CLimFactor', CLimFactor,
+xlabel('time from response (s)'); sameYScale(ha);
+
+formatFigurePublish('size', figSize);
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end

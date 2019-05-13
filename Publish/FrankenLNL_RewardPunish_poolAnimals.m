@@ -8,7 +8,7 @@ goals:
 %}
 
 DB = dbLoadExperiment('FrankenLNL_RewardPunish');
-
+saveOn = 1;
 minRewardLickRate = 2; % at least n Hz licking (during us window)
 savepath = fullfile(DB.path, ['pooled' filesep]);
 ensureDirectory(savepath);
@@ -183,25 +183,57 @@ disp(['*** saving: ' fullfile(savepath, 'grandAveragesNorm.mat') ' ***']);
 
 
 %% plot grand Averages
-ensureFigure('grandAverages', 1); 
-% xData = [0:(size(gAvg.phCue.cuedReward.data, 2) - 1) * 1/20 - 4 ...
-%     0:(size(gAvg.phUs.cuedReward.data, 2) - 1) * 1/20];
-subplot(2,2,1); %plot(nanmean([gAvg.phCue.cuedReward.data gAvg.phUs.cuedReward.data])); hold on; plot(nanmean([gAvg.phCue.uncuedReward.data gAvg.phUs.uncuedReward.data])); 
-boundedline([gAvg.phCue.cuedReward.xData gAvg.phUs.cuedReward.xData],...
-    [[gAvg.phCue.cuedReward.Avg'; gAvg.phUs.cuedReward.Avg'] [gAvg.phCue.uncuedReward.Avg'; gAvg.phUs.uncuedReward.Avg']],...
-    permute([[gAvg.phCue.cuedReward.SEM gAvg.phUs.cuedReward.SEM] ; [gAvg.phCue.cuedReward.SEM gAvg.phUs.cuedReward.SEM]], [2 3 1]));
-title('appetitive');
-subplot(2,2,2); plot(nanmean([gAvgNorm.phCue.cuedReward.data gAvgNorm.phUs.cuedReward.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedReward.data gAvgNorm.phUs.uncuedReward.data]))
-title('appetitive norm.');
-subplot(2,2,3); plot(nanmean([gAvgNorm.phCue.cuedPuff.data gAvgNorm.phUs.cuedPuff.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedPuff.data gAvgNorm.phUs.uncuedPuff.data]))
-title('normPunish');
-subplot(2,2,4); plot(nanmean([gAvgNorm.phCue.cuedShock.data gAvgNorm.phUs.cuedShock.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedShock.data gAvgNorm.phUs.uncuedShock.data]))
-title('normShock');
+
+saveName = 'grandAverage_appetitive_simple';
+ensureFigure(saveName, 1); 
+linecolors = [0 0 1; 0 0 0; 0 1 1];     
+window = [-5 3];
+axes; hold on;
+xData = [gAvg.phCue.cuedReward.xData gAvg.phUs.cuedReward.xData;...
+    gAvg.phCue.omitReward.xData gAvg.phUs.omitReward.xData;...
+    gAvg.phCue.uncuedReward.xData gAvg.phUs.uncuedReward.xData]';
+yData = [gAvg.phCue.cuedReward.Avg gAvg.phUs.cuedReward.Avg;...
+    gAvg.phCue.omitReward.Avg gAvg.phUs.omitReward.Avg;
+    gAvg.phCue.uncuedReward.Avg gAvg.phUs.uncuedReward.Avg]';
+bData = permute([gAvg.phCue.cuedReward.SEM gAvg.phUs.cuedReward.SEM;...
+    gAvg.phCue.omitReward.SEM gAvg.phUs.omitReward.SEM;...
+    gAvg.phCue.uncuedReward.SEM gAvg.phUs.uncuedReward.SEM], [2 3 1]);
+[hl, hp] = boundedline(xData, yData, bData, 'cmap', linecolors);
+set(gca, 'XLim', window);
+addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
+% legend(hl, {'cued', 'omit', 'uncued'}, 'Location', 'best'); legend('boxoff');
+ylabel('F(\fontsize{12}\sigma\fontsize{8}-baseline)');  set(gca, 'XLim', window);
+xlabel('Time from reinforcement (s)');
+
+formatFigurePublish('size', [2 1]);
+
+if saveOn 
+    export_fig(fullfile(figsavepath, saveName), '-eps');
+end
+
+
+
+
+
+
+
+
+
+
+
+%%
+% title('appetitive');
+% subplot(2,2,2); plot(nanmean([gAvgNorm.phCue.cuedReward.data gAvgNorm.phUs.cuedReward.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedReward.data gAvgNorm.phUs.uncuedReward.data]))
+% title('appetitive norm.');
+% subplot(2,2,3); plot(nanmean([gAvgNorm.phCue.cuedPuff.data gAvgNorm.phUs.cuedPuff.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedPuff.data gAvgNorm.phUs.uncuedPuff.data]))
+% title('normPunish');
+% subplot(2,2,4); plot(nanmean([gAvgNorm.phCue.cuedShock.data gAvgNorm.phUs.cuedShock.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedShock.data gAvgNorm.phUs.uncuedShock.data]))
+% title('normShock');
 
 
 %% 
-boundedline(xData(:), [nanmean(pupData(trialsByType{3}, :)); nanmean(pupData(trialsByType{4} & TE.BlockNumber == 4, :)); nanmean(pupData(trialsByType{6}, :))]',...
-    permute([nanstd(pupData(trialsByType{3}, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{3},:)), 1));...
-    nanstd(pupData(trialsByType{4} & TE.BlockNumber == 4, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{4} & TE.BlockNumber == 4,:)), 1));...
-    nanstd(pupData(trialsByType{6}, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{6},:)), 1))], [2 3 1]),...
-    'cmap', [1 0 0; 0 0 0; 1 0 1]);    
+% boundedline(xData(:), [nanmean(pupData(trialsByType{3}, :)); nanmean(pupData(trialsByType{4} & TE.BlockNumber == 4, :)); nanmean(pupData(trialsByType{6}, :))]',...
+%     permute([nanstd(pupData(trialsByType{3}, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{3},:)), 1));...
+%     nanstd(pupData(trialsByType{4} & TE.BlockNumber == 4, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{4} & TE.BlockNumber == 4,:)), 1));...
+%     nanstd(pupData(trialsByType{6}, :)) ./ sqrt(sum(isfinite(pupData(trialsByType{6},:)), 1))], [2 3 1]),...
+%     'cmap', [1 0 0; 0 0 0; 1 0 1]);    
