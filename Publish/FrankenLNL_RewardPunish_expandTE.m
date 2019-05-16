@@ -1,7 +1,7 @@
 
 DB = dbLoadExperiment('FrankenLNL_RewardPunish');
 
-
+minRewardLickRate = 2; % for reward response jitter and reliability, stipulate that mouse actually licks for reward at minimum rate of 2Hz
 for counter = 1:length(DB.animals)
     animal = DB.animals{counter};
     success = dbLoadAnimal(DB, animal);
@@ -49,7 +49,12 @@ for counter = 1:length(DB.animals)
         TE.phPeakMean_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, usWindow, TE.Us, 'method', 'mean', 'phField', 'ZS');
         TE.phPeakMean_baseline(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [1 4], [], 'method', 'mean', 'phField', 'ZS');
         TE.phPeakPercentile_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, csWindow, TE.Cue2, 'method', 'percentile', 'percentile', percentValue, 'phField', 'ZS');
-        TE.phPeakPercentile_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, usWindow, TE.Us, 'method', 'percentile', 'percentile', percentValue, 'phField', 'ZS');        
+        TE.phPeakPercentile_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, usWindow, TE.Us, 'method', 'percentile', 'percentile', percentValue, 'phField', 'ZS');          
     end     
+    
+    
+
+    
+    
     dbSaveAnimal(DB, animal);            
 end

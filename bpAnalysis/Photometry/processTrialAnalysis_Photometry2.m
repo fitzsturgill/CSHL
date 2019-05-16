@@ -14,7 +14,8 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         'expFitBegin', 0.1;...
         'zeroField', 'Us';...
         'startField', 'PreCsRecording';... % TO DO: PROVIDE AUTOMATICALLY BY BPOD NIDAQ CODE 
-        'downsample', 305;...
+        'downsample', 305;...  % much faster, relies upon decimation, originally specified smaple rate must be evenly divisible by decimation factor
+        'sampleRate', []; % often much slower, use to achieve an exact final sample rate
         'uniformOutput', 1;...            % set to 0 if acqs are variable in length (store data in cell array)
 %         'tau', [];... % tau option currently deprecated, now tau is a
 %         free parameter
@@ -42,22 +43,50 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
         s.refChannels = s.channels; % use same reference by default
     end   
     
+    
+    % get old sample rate    
+    try
+        if isempty(s.sampleRate) % for downsample/decimation, use requested not achieved nidaq sample rate
+            sampleRate_old = sessions(1).SessionData.TrialSettings(1).nidaq.sample_rate;
+        else % to achieve an exact resampled sample rate, try to get the achieved nidaq sample rate (a la setverify)
+            try
+                sampleRate_old = sessions(1).SessionData.NidaqData{1,2}.sample_rate(1); 
+            catch
+                sampleRate_old = sessions(1).SessionData.TrialSettings(1).nidaq.sample_rate;    
+            end
+        end
+    catch
+        sampleRate_old = 6100; % very early sessions don't have sample rate in settings
+    end
+    
+    
+    if ~isempty(s.sampleRate)
+        sampleRate = s.sampleRate;
+        [p, q] = rat(sampleRate/sampleRate_old);            
+    else % determine final sample rate and coefficients for resampling    
+        if rem(sampleRate_old, s.downsample)
+            error('downsample must be a factor of sampleRate');
+        end
+        sampleRate = sampleRate_old / s.downsample;
+    end
+
+    
+    
     % find total number of trials across selected sessions and maximum size of
     % nidaq data per session
     scounter = zeros(size(sessions));    
     maxSamplesPerSession = zeros(size(sessions));
     for i = 1:length(sessions)
         scounter(i) = sessions(i).SessionData.nTrials;
-        maxSamplesPerSession(i) = ceil(max(cellfun(@(x) size(x, 1), sessions(i).SessionData.NidaqData(:,1))) / s.downsample);
+        if ~isempty(s.sampleRate)
+            maxSamplesPerSession(i) = ceil(max(cellfun(@(x) ceil(size(x, 1) * p/q), sessions(i).SessionData.NidaqData(:,1))));
+        else
+            maxSamplesPerSession(i) = ceil(max(cellfun(@(x) ceil(size(x, 1) / s.downsample), sessions(i).SessionData.NidaqData(:,1))));
+        end
     end
 
     totalTrials = sum(scounter);    
-
-    try
-        sampleRate = sessions(1).SessionData.TrialSettings(1).nidaq.sample_rate;
-    catch
-        sampleRate = 6100; % very early sessions don't have sample rate in settings
-    end
+    
     if s.uniformOutput % different sized trials are padded with NaNs, aligned to photometry start
         % determine maximum number of samples
         maxDuration = 0;
@@ -66,22 +95,18 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                 maxDuration = max(maxDuration, sessions(scounter).SessionData.TrialSettings(counter).nidaq.duration);
             end
         end
-
-        originalSamples = maxDuration * sessions(1).SessionData.TrialSettings(1).nidaq.sample_rate;                            
-        expectedSamples = ceil(originalSamples/s.downsample);
-        if rem(sampleRate, s.downsample)
-            error('downsample must be a factor of sampleRate');
+        originalSamples = ceil(maxDuration * sampleRate_old);
+        if ~isempty(s.sampleRate)
+            expectedSamples = ceil(originalSamples * p/q);                   
+        else
+            expectedSamples = ceil(originalSamples / s.downsample);  
         end
-        % update sampleRate because you no longer need non-decimated sample rate
-        sampleRate = sampleRate / s.downsample; % downsample must be a factor of sampleRate      
         zeroTime = sessions(1).SessionData.RawEvents.Trial{1}.States.(s.zeroField)(1) - ...
             sessions(1).SessionData.RawEvents.Trial{1}.States.(s.startField)(1);
         xData = linspace(-zeroTime, ((expectedSamples - 1) / sampleRate) - zeroTime, expectedSamples);    
     else % different sized trials are stored in cell arrays, no padding occurs
         originalSamples = [];
         expectedSamples = [];
-        sampleRate = sampleRate / s.downsample; % downsample must be a factor of sampleRate      
-
         xData = [];
     end
      
@@ -171,7 +196,11 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                     warning('do something for empty trials here, maybe continue?');
                 end
                
-                downData = decimate(trialData, s.downsample);
+                if isempty(s.downsample)
+                    downData = resample(trialData, p, q);
+                else
+                    downData = decimate(trialData, s.downsample);
+                end
                 downSamples = length(downData); % replace nSamples
                 
                 % baseline fluor.
