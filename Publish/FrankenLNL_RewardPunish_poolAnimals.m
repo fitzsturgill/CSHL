@@ -213,69 +213,184 @@ if saveOn
 end
 
 
+%% make avg rasters
+% STUB
+saveName = 'uncuedUs_avgRasters_rewNorm';
+ensureFigure(saveName, 1);
+clim = [-1 2];
+
+subplot(1,3,1); imagesc(gAvgNorm.phUs.uncuedReward.data, clim); title('reward');
+subplot(1,3,2); imagesc(gAvgNorm.phUs.uncuedPuff.data, clim); title('air puff');
+subplot(1,3,3); imagesc(gAvgNorm.phUs.uncuedShock.data, clim); title('shock');
+
+saveName = 'uncuedUs_avgRasters_rew';
+ensureFigure(saveName, 1);
+clim = [-1 5];
+
+subplot(1,3,1); imagesc(gAvg.phUs.uncuedReward.data, clim); title('reward');
+subplot(1,3,2); imagesc(gAvg.phUs.uncuedPuff.data, clim); title('air puff');
+subplot(1,3,3); imagesc(gAvg.phUs.uncuedShock.data, clim); title('shock');
 
 
 %% calculate latency, jitter, and reliability of uncued Us responses
+minRewardLickRate = 2;
 bl_window = [-1 0];
 response_window = [0 2]; % must start at 0
-PhotometryField = 'Photometry';
-Fs = TE.(PhotometryField).sampleRate;
+PhotometryField = 'PhotometryHF';
 na = length(DB.animals);
 us_pooled = struct(...
     'rew_latency', zeros(na, 2),...
+    'rew_avg_delta', zeros(na, 2),...
     'rew_jitter_std', zeros(na, 2),...
     'rew_jitter_avg', zeros(na, 2),...
     'rew_jitter_tt50', [],... % cell array to hold distributions
     'rew_jitter_delta', [],... % cell array to hold distributions
     'puff_latency', zeros(na, 2),...
-    'puff_jitter', zeros(na, 2),...
+    'puff_avg_delta', zeros(na, 2),...    
+    'puff_jitter_std', zeros(na, 2),...
+    'puff_jitter_avg', zeros(na, 2),...    
     'puff_jitter_tt50', [],... % cell array to hold distributions    
     'puff_jitter_delta', []... % cell array to hold distributions    
     );
+
+trialSets = {'rew', 'puff'};
 for counter = 1:length(DB.animals)
     animal = DB.animals{counter}
     dbLoadAnimal(DB, animal);
-    theseTrials = find(rewardTrials & uncuedTrials & (TE.licks_us.rate > minRewardLickRate));    
-    [tt50, deltaMax] = deal(NaN(length(theseTrials), 2));
-    for channel = 1:2
-        [responseData, xData] = phAlignedWindow(TE, theseTrials, channel, 'zeroTimes', TE.Us, 'window', response_window, 'FluorDataField', 'ZS');
-        [blData, blx] = phAlignedWindow(TE, theseTrials, channel, 'zeroTimes', TE.Us, 'window', bl_window, 'FluorDataField', 'ZS');
-        [M, I] = max(responseData, [], 2);
-        bl = mean(blData, 2);
-        deltaMax(:,channel) = M - bl;
-        level50 = bl + deltaMax(:,channel) * 0.5;
-        rew_avg = nanmean(responseData);        
-        [~, iAvg] = max(rew_avg);
-        us_pooled.rew_latency(counter, channel) = bpPnt2x(iAvg, Fs, 0);
-        % find time to 50% per trial and magnitude of trial response
+    Fs = TE.(PhotometryField).sampleRate;
+    for tscounter = 1:length(trialSets)
+        trialSet = trialSets{tscounter};
+        switch trialSet
+            case 'rew'
+                theseTrials = find(rewardTrials & uncuedTrials & (TE.licks_us.rate > minRewardLickRate));    
+            case 'puff'
+                theseTrials = find(punishTrials & uncuedTrials);    
+        end
+        [tt50, deltaMax] = deal(NaN(length(theseTrials), 2));
+        for channel = 1:2
+            [responseData, xData] = phAlignedWindow(TE, theseTrials, channel, 'zeroTimes', TE.Us, 'window', response_window, 'FluorDataField', 'ZS');
+            [blData, blx] = phAlignedWindow(TE, theseTrials, channel, 'zeroTimes', TE.Us, 'window', bl_window, 'FluorDataField', 'ZS');
+            bl = mean(blData, 2);
+            response_avg = nanmean(responseData);
+            % check if response is positive or negative
+            if (max(response_avg) - mean(bl)) > (mean(bl) - min(response_avg))
+                [peakVal, iAvg] = max(response_avg);
+                direction = 1;
+                [M, I] = max(responseData, [], 2);                
+            else
+                [peakVal, iAvg] = min(response_avg);
+                direction = -1;
+                if strcmp(trialSet, 'rew')
+                    disp([animal 'wtf']);
+                end
+                [M, I] = min(responseData, [], 2);                
+            end
+                        
+            deltaMax(:,channel) = M - bl;
+            level50 = bl + deltaMax(:,channel) * 0.5;
+            
+            us_pooled.([trialSet '_latency'])(counter, channel) = bpPnt2x(iAvg, Fs, 0);
+            us_pooled.([trialSet '_avg_delta'])(counter,channel) = peakVal - mean(bl); % can be negative or positive
+            
+            % find time to 50% per trial and magnitude of trial response
 
-        thresh = responseData >= level50;
-        crossings = [zeros(size(thresh,1), 1) thresh(:,2:end) - thresh(:,1:end-1)];
-        crossings = crossings > 0; % only want upward crossings
-        [row, col] = find(thresh);
-        pointMatrix = NaN(size(thresh));
-        pointMatrix(sub2ind(size(thresh), row,col)) = col;
-        valid = isfinite(min(pointMatrix,[],2)); % only include trials where crossing is found
-        theseCrossings = min(pointMatrix(valid,:),[],2);
-        tt50(valid,channel) = xData(theseCrossings);        
-
-%         ensureFigure('test', 1);
-%         trials = randperm(length(theseTrials), 16);
-%         for counter = 1:16
-%             trial = trials(counter);
-%             subplot(4,4,counter); hold on;
-%         %     plot(xData, [responseData(trial,:)' zeros(numel(xData), 1) + level50(trial)]);
-%             plot(xData, responseData(trial,:));
-%             plot(blx, blData(trial,:));
-%             scatter(tt50(trial), level50(trial));
-%         end    
-    end       
-    us_pooled.rew_jitter_tt50{counter} = tt50;
-    us_pooled.rew_jitter_std(counter, :) = nanstd(tt50);
-    us_pooled.rew_jitter_avg(counter, :) = nanmean(tt50);
-    us_pooled.rew_jitter_delta{counter} = deltaMax;    
+            thresh = responseData >= level50;
+            crossings = [false(size(thresh,1), 1) thresh(:,2:end) - thresh(:,1:end-1)];
+            crossings = crossings > 0; % only want upward crossings
+            [row, col] = find(crossings);
+            pointMatrix = NaN(size(crossings));
+            pointMatrix(sub2ind(size(crossings), row,col)) = col;
+            valid = isfinite(min(pointMatrix,[],2)); % only include trials where crossing is found
+            theseCrossings = min(pointMatrix(valid,:),[],2);
+            responseDataValid = responseData(valid,:);
+            x2 = xData(theseCrossings)';
+            x1 = xData(theseCrossings - 1)';
+            y2 = responseDataValid(sub2ind(size(responseDataValid), (1:length(theseCrossings))', theseCrossings));
+            y1 = responseDataValid(sub2ind(size(responseDataValid), (1:length(theseCrossings))', theseCrossings - 1)); 
+            m = (y2 - y1) ./ (x2 - x1);
+            x = (level50(valid) - y1 + m .* x1) ./ m;
+            tt50(valid,channel) = x;       
+    %         ensureFigure('test', 1);
+    %         trials = randperm(length(theseTrials), 16);
+    %         for counter = 1:16
+    %             trial = trials(counter);
+    %             subplot(4,4,counter); hold on;
+    %             plot(xData, responseData(trial,:), '-*');
+    %             plot(blx, blData(trial,:));
+    %             scatter(tt50(trial, 2), level50(trial));
+    %             plot(get(gca, 'XLim'), [level50(trial) level50(trial)], '--');
+    %         end
+        end       
+        us_pooled.([trialSet '_jitter_tt50']){counter} = tt50;
+        us_pooled.([trialSet '_jitter_std'])(counter, :) = nanstd(tt50);
+        us_pooled.([trialSet '_jitter_avg'])(counter, :) = nanmean(tt50);
+        us_pooled.([trialSet '_jitter_delta']){counter} = deltaMax;    
+    end
 end
 
+%% plot scatter plots for reward and air puff of tt50 vs delta
+
+saveName = 'jitter_tt50_vs_delta';
+ensureFigure(saveName, 1);
+
+rew_tt50_all = [];
+puff_tt50_all = [];
+for counter = 1:length(us_pooled.rew_jitter_tt50)
+    for channel = 1:2
+        subplot(2,2,1); hold on;
+        scatter(us_pooled.rew_jitter_tt50{counter}(:,channel), us_pooled.rew_jitter_delta{counter}(:,channel), '.');
+        rew_tt50_all = [rew_tt50_all; us_pooled.rew_jitter_tt50{counter}(:,channel)];
+        subplot(2,2,2); hold on;
+        scatter(us_pooled.puff_jitter_tt50{counter}(:,channel), us_pooled.puff_jitter_delta{counter}(:,channel), '.');    
+        puff_tt50_all = [puff_tt50_all; us_pooled.puff_jitter_tt50{counter}(:,channel)];
+    end
+end
+subplot(2,2,1); title('Reward'); ylabel('amplitude (ZS)');
+subplot(2,2,2); title('Air Puff'); 
+
+bins = [0:0.01:2];
+subplot(2,2,3); hold on; histogram(rew_tt50_all, bins); xlabel('latency (s)'); 
+[N, edges] = histcounts(rew_tt50_all, bins); [~, ix] = max(N); rewMode = edges(ix);
+plot([rewMode rewMode], get(gca, 'YLim'), '--r'); 
+textBox(sprintf('mode=%.4g(s)', rewMode));
+
+subplot(2,2,4); hold on; histogram(puff_tt50_all, bins); xlabel('latency (s)'); 
+[N, edges] = histcounts(puff_tt50_all, bins); [~, ix] = max(N); puffMode = edges(ix);
+plot([puffMode puffMode], get(gca, 'YLim'), '--r'); 
+textBox(sprintf('mode=%.4g(s)', puffMode));
+
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+end        
+%%
+% make cumulative histograms for latency and jitter for reward and
+% punishment
+lc = mycolors('chat');
+saveName = 'cumHist_reward';
+ensureFigure(saveName, 1);
+jitter.reward = cum(us_pooled.rew_jitter_std(:));
+jitter.puff = cum(us_pooled.puff_jitter_std(:));
+latency.reward = cum(us_pooled.rew_latency(:));
+latency.puff = cum(us_pooled.puff_latency(:));
+avg.reward = cum(us_pooled.rew_avg_delta(:));
+avg.puff= cum(us_pooled.puff_avg_delta(:));
+subplot(1,3,1); 
+plot(latency.reward.sorted, latency.reward.index, 'Color', lc); xlabel('latency (s)'); ylabel('fraction'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
+subplot(1,3,2); 
+plot(jitter.reward.sorted, jitter.reward.index, 'Color', lc); xlabel('jitter (s)'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
+subplot(1,3,3); 
+plot(avg.reward.sorted, avg.reward.index, 'Color', lc); xlabel('amplitude (Fluor. ZS)');
+
+
+saveName = 'cumHist_puff';
+ensureFigure(saveName, 1);
+subplot(1,3,1); 
+plot(latency.puff.sorted, latency.puff.index, 'Color', lc); xlabel('latency (s)'); ylabel('fraction'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
+subplot(1,3,2); 
+plot(jitter.puff.sorted, jitter.puff.index, 'Color', lc); xlabel('jitter (s)'); 
+subplot(1,3,3); 
+plot(avg.puff.sorted, avg.puff.index, 'Color', lc); xlabel('amplitude (Fluor. ZS)'); 
 %%
 % title('appetitive');
 % subplot(2,2,2); plot(nanmean([gAvgNorm.phCue.cuedReward.data gAvgNorm.phUs.cuedReward.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedReward.data gAvgNorm.phUs.uncuedReward.data]))

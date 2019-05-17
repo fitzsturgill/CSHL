@@ -2,8 +2,6 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
 % exemplar for new trial analysis functions
 
 
-    
-
     %% optional parameters, first set defaults
     defaults = {...
         'channels', 1;... % 8/28/2016- changed channels default from [] to 1
@@ -60,10 +58,10 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
     end
     
     
-    if ~isempty(s.sampleRate)
+    if ~isempty(s.sampleRate)% final sample rate and coefficients for resampling    
         sampleRate = s.sampleRate;
         [p, q] = rat(sampleRate/sampleRate_old);            
-    else % determine final sample rate and coefficients for resampling    
+    else 
         if rem(sampleRate_old, s.downsample)
             error('downsample must be a factor of sampleRate');
         end
