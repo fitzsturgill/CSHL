@@ -1,7 +1,7 @@
 
 DB = dbLoadExperiment('FrankenLNL_RewardPunish');
 
-minRewardLickRate = 2; % for reward response jitter and reliability, stipulate that mouse actually licks for reward at minimum rate of 2Hz
+
 for counter = 1:length(DB.animals)
     animal = DB.animals{counter};
     success = dbLoadAnimal(DB, animal);

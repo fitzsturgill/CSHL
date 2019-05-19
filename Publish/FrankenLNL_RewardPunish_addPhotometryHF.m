@@ -4,7 +4,7 @@ DB = dbLoadExperiment('FrankenLNL_RewardPunish');
 
 BL = [1 4];
 dFFMode = 'expFit'; % for both channels
-for counter = 1:length(DB.animals)
+for counter = length(DB.animals) - 1:length(DB.animals)
     animal = DB.animals{counter}
     dbLoadAnimal(DB, animal);    
     sessions = bpLoadSessionsFromTE(TE);

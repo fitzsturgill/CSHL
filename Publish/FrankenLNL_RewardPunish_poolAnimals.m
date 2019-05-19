@@ -10,7 +10,8 @@ goals:
 
 DB = dbLoadExperiment('FrankenLNL_RewardPunish');
 saveOn = 1;
-minRewardLickRate = 2; % at least n Hz licking (during us window)
+minRewardLickRate = 2; % at least n Hz licking (during us window for reward trials)
+minCueLickRate = 1; % at least n Hz licking (during cs window for reward cued reward trials)
 savepath = fullfile(DB.path, ['pooled' filesep]);
 ensureDirectory(savepath);
 figsavepath = fullfile(DB.path, ['pooled' filesep 'figure']);
@@ -61,7 +62,7 @@ for counter = 1:length(DB.animals)
     
     % cuedReward
     trialSets{end+1, 1} = 'cuedReward';
-    trialSets{end,2} = rewardTrials & Odor2Valve1Trials & (TE.licks_us.rate > minRewardLickRate);
+    trialSets{end,2} = rewardTrials & Odor2Valve1Trials & (TE.licks_us.rate > minRewardLickRate) & (TE.licks_cs.rate > minCueLickRate);
     trialSets{end,3} = 3;
     % uncuedReward
     trialSets{end+1, 1} = 'uncuedReward';
@@ -69,7 +70,7 @@ for counter = 1:length(DB.animals)
     trialSets{end,3} = 3;    
     % omitReward
     trialSets{end+1, 1} = 'omitReward';
-    trialSets{end,2} = neutralTrials & Odor2Valve1Trials & (TE.licks_us.rate > minRewardLickRate);        
+    trialSets{end,2} = neutralTrials & Odor2Valve1Trials;        
     trialSets{end,3} = 3;    
     % cuedPuff
     trialSets{end+1, 1} = 'cuedPuff';
@@ -237,24 +238,31 @@ end
 
 %% make avg rasters
 % STUB
+
 saveName = 'uncuedUs_avgRasters_rewNorm';
-
-
 ensureFigure(saveName, 1);
-clim = [-1 2];
-
-subplot(1,3,1); imagesc([gAvgNorm.phDelay.uncuedReward.data gAvgNorm.phUs.uncuedReward.data], clim); title('reward');
-subplot(1,3,2); imagesc([gAvgNorm.phDelay.uncuedPuff.data gAvgNorm.phUs.uncuedPuff.data], clim); title('air puff');
-subplot(1,3,3); imagesc([gAvgNorm.phDelay.uncuedShock.data gAvgNorm.phUs.uncuedShock.data], clim); title('shock');
+clim = [-1 1];
+xData = [-2 4]; yData = [1 length(DB.animals) + 0.5];
+subplot(1,3,1); imagesc(xData, yData, [gAvgNorm.phDelay.uncuedReward.data gAvgNorm.phUs.uncuedReward.data], clim); title('reward'); ylabel('Mouse #');
+subplot(1,3,2); imagesc(xData, yData, [gAvgNorm.phDelay.uncuedPuff.data gAvgNorm.phUs.uncuedPuff.data], clim); title('air puff'); set(gca, 'YTickLabel', {});
+xlabel('Time from reinforcment (s)');
+subplot(1,3,3); imagesc(xData, yData, [gAvgNorm.phDelay.uncuedShock.data gAvgNorm.phUs.uncuedShock.data], clim); title('shock'); set(gca, 'YTickLabel', {});
+formatFigurePublish('size', [2 1]);
+if saveOn 
+    export_fig(fullfile(figsavepath, saveName), '-eps');
+end
 
 saveName = 'uncuedUs_avgRasters_rew';
 ensureFigure(saveName, 1);
 clim = [-1 5];
-
-subplot(1,3,1); imagesc([gAvg.phDelay.uncuedReward.data gAvg.phUs.uncuedReward.data], clim); title('reward');
-subplot(1,3,2); imagesc([gAvg.phDelay.uncuedPuff.data gAvg.phUs.uncuedPuff.data], clim); title('air puff');
-subplot(1,3,3); imagesc([gAvg.phDelay.uncuedShock.data gAvg.phUs.uncuedShock.data], clim); title('shock');
-
+subplot(1,3,1); imagesc(xData, yData, [gAvg.phDelay.uncuedReward.data gAvg.phUs.uncuedReward.data], clim); title('reward'); ylabel('Mouse #');
+subplot(1,3,2); imagesc(xData, yData, [gAvg.phDelay.uncuedPuff.data gAvg.phUs.uncuedPuff.data], clim); title('air puff'); set(gca, 'YTickLabel', {});
+xlabel('Time from reinforcment (s)');
+subplot(1,3,3); imagesc(xData, yData, [gAvg.phDelay.uncuedShock.data gAvg.phUs.uncuedShock.data], clim); title('shock'); set(gca, 'YTickLabel', {});
+formatFigurePublish('size', [2 1]);
+if saveOn 
+    export_fig(fullfile(figsavepath, saveName), '-eps');
+end
 
 %% calculate latency, jitter, and reliability of uncued Us responses
 minRewardLickRate = 2;
@@ -278,6 +286,8 @@ us_pooled = struct(...
     );
 
 trialSets = {'rew', 'puff'};
+rewAvgDelta = NaN(length(DB.animals), 2); % hold average rew delta ZS of uncued reward trials
+puffAvgDelta = NaN(length(DB.animals), 2); % hold average rew delta ZS of uncued punish trials
 for counter = 1:length(DB.animals)
     animal = DB.animals{counter}
     dbLoadAnimal(DB, animal);
@@ -298,11 +308,23 @@ for counter = 1:length(DB.animals)
             response_avg = nanmean(responseData);
             % check if response is positive or negative
             if (max(response_avg) - mean(bl)) > (mean(bl) - min(response_avg))
-                [peakVal, iAvg] = max(response_avg);
+                [peakVal, iAvg] = max(response_avg);                
+                switch trialSet
+                    case 'rew'
+                        rewAvgDelta(counter, channel) = max(response_avg) - mean(bl);
+                    case 'puff'
+                        puffAvgDelta(counter, channel) = max(response_avg) - mean(bl);
+                end
                 direction = 1;
                 [M, I] = max(responseData, [], 2);                
             else
                 [peakVal, iAvg] = min(response_avg);
+                switch trialSet
+                    case 'rew'
+                        rewAvgDelta(counter, channel) = min(response_avg) - mean(bl);
+                    case 'puff'
+                        puffAvgDelta(counter, channel) = min(response_avg) - mean(bl);
+                end                
                 direction = -1;
                 if strcmp(trialSet, 'rew')
                     disp([animal 'wtf']);
@@ -353,7 +375,7 @@ for counter = 1:length(DB.animals)
 end
 
 %% plot scatter plots for reward and air puff of tt50 vs delta
-
+minDelta = 2; % minimum deltaF in baseline standard deviation units (ZS)
 saveName = 'jitter_tt50_vs_delta';
 ensureFigure(saveName, 1);
 
@@ -361,26 +383,33 @@ rew_tt50_all = [];
 puff_tt50_all = [];
 for counter = 1:length(us_pooled.rew_jitter_tt50)
     for channel = 1:2
-        subplot(2,2,1); hold on;
-        scatter(us_pooled.rew_jitter_tt50{counter}(:,channel), us_pooled.rew_jitter_delta{counter}(:,channel), '.');
-        rew_tt50_all = [rew_tt50_all; us_pooled.rew_jitter_tt50{counter}(:,channel)];
-        subplot(2,2,2); hold on;
-        scatter(us_pooled.puff_jitter_tt50{counter}(:,channel), us_pooled.puff_jitter_delta{counter}(:,channel), '.');    
-        puff_tt50_all = [puff_tt50_all; us_pooled.puff_jitter_tt50{counter}(:,channel)];
+        if rewAvgDelta(counter, channel) > minDelta
+            subplot(2,2,1); hold on;
+            scatter(us_pooled.rew_jitter_tt50{counter}(:,channel), us_pooled.rew_jitter_delta{counter}(:,channel), '.');
+            rew_tt50_all = [rew_tt50_all; us_pooled.rew_jitter_tt50{counter}(:,channel)];
+        end
+        if puffAvgDelta(counter, channel) > minDelta
+            subplot(2,2,2); hold on;
+            scatter(us_pooled.puff_jitter_tt50{counter}(:,channel), us_pooled.puff_jitter_delta{counter}(:,channel), '.');    
+            puff_tt50_all = [puff_tt50_all; us_pooled.puff_jitter_tt50{counter}(:,channel)];
+        end
     end
 end
 subplot(2,2,1); title('Reward'); ylabel('amplitude (ZS)');
 subplot(2,2,2); title('Air Puff'); 
 
-bins = [0:0.01:2];
+binSize = 0.05;
+bins = [0:binSize:2];
 subplot(2,2,3); hold on; histogram(rew_tt50_all, bins); xlabel('latency (s)'); 
-[N, edges] = histcounts(rew_tt50_all, bins); [~, ix] = max(N); rewMode = edges(ix);
+[N, edges] = histcounts(rew_tt50_all, bins); [~, ix] = max(N); rewMode = edges(ix) + binSize/2;
 plot([rewMode rewMode], get(gca, 'YLim'), '--r'); 
+set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
 textBox(sprintf('mode=%.4g(s)', rewMode));
 
 subplot(2,2,4); hold on; histogram(puff_tt50_all, bins); xlabel('latency (s)'); 
-[N, edges] = histcounts(puff_tt50_all, bins); [~, ix] = max(N); puffMode = edges(ix);
+[N, edges] = histcounts(puff_tt50_all, bins); [~, ix] = max(N); puffMode = edges(ix) + binSize/2;
 plot([puffMode puffMode], get(gca, 'YLim'), '--r'); 
+set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
 textBox(sprintf('mode=%.4g(s)', puffMode));
 
 if saveOn
@@ -390,31 +419,44 @@ end
 %%
 % make cumulative histograms for latency and jitter for reward and
 % punishment
+
 lc = mycolors('chat');
+
+jitter.reward = cum(us_pooled.rew_jitter_std(rewAvgDelta > minDelta));
+jitter.puff = cum(us_pooled.puff_jitter_std(puffAvgDelta > minDelta));
+latency.reward = cum(us_pooled.rew_latency(rewAvgDelta > minDelta));
+latency.puff = cum(us_pooled.puff_latency(puffAvgDelta > minDelta));
+avg.reward = cum(us_pooled.rew_avg_delta(rewAvgDelta > minDelta));
+avg.puff= cum(us_pooled.puff_avg_delta(puffAvgDelta > minDelta));
+figSize = [3 1];
 saveName = 'cumHist_reward';
 ensureFigure(saveName, 1);
-jitter.reward = cum(us_pooled.rew_jitter_std(:));
-jitter.puff = cum(us_pooled.puff_jitter_std(:));
-latency.reward = cum(us_pooled.rew_latency(:));
-latency.puff = cum(us_pooled.puff_latency(:));
-avg.reward = cum(us_pooled.rew_avg_delta(:));
-avg.puff= cum(us_pooled.puff_avg_delta(:));
 subplot(1,3,1); 
 plot(latency.reward.sorted, latency.reward.index, 'Color', lc); xlabel('latency (s)'); ylabel('fraction'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
+title('reward');
 subplot(1,3,2); 
 plot(jitter.reward.sorted, jitter.reward.index, 'Color', lc); xlabel('jitter (s)'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
 subplot(1,3,3); 
-plot(avg.reward.sorted, avg.reward.index, 'Color', lc); xlabel('amplitude (Fluor. ZS)');
-
+plot(avg.reward.sorted, avg.reward.index, 'Color', lc); xlabel('amplitude (Fluor. ZS)'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
+formatFigurePublish('size', figSize);
+if saveOn 
+    export_fig(fullfile(figsavepath, saveName), '-eps');
+end
 
 saveName = 'cumHist_puff';
 ensureFigure(saveName, 1);
 subplot(1,3,1); 
 plot(latency.puff.sorted, latency.puff.index, 'Color', lc); xlabel('latency (s)'); ylabel('fraction'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
+title('air puff');
 subplot(1,3,2); 
-plot(jitter.puff.sorted, jitter.puff.index, 'Color', lc); xlabel('jitter (s)'); 
+plot(jitter.puff.sorted, jitter.puff.index, 'Color', lc); xlabel('jitter (s)'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
 subplot(1,3,3); 
-plot(avg.puff.sorted, avg.puff.index, 'Color', lc); xlabel('amplitude (Fluor. ZS)'); 
+plot(avg.puff.sorted, avg.puff.index, 'Color', lc); xlabel('amplitude (Fluor. ZS)'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
+
+formatFigurePublish('size', figSize);
+if saveOn 
+    export_fig(fullfile(figsavepath, saveName), '-eps');
+end
 %%
 % title('appetitive');
 % subplot(2,2,2); plot(nanmean([gAvgNorm.phCue.cuedReward.data gAvgNorm.phUs.cuedReward.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedReward.data gAvgNorm.phUs.uncuedReward.data]))
