@@ -47,3 +47,14 @@ allData.licks.lickTimes = lickTimes;
 allData.licks.lickTrials = lickTrials;
 save(fullfile(savepath, sprintf('fitzData_%s.mat', animal)), 'allData');
 
+
+
+%% 
+
+DB = dbLoadExperiment('FrankenLNL_RewardPunish');
+
+animals = {'ACh_3', 'ACh_7', 'ACh_13'};
+
+animal = animals{3};
+dbLoadAnimal(DB, animal);
+

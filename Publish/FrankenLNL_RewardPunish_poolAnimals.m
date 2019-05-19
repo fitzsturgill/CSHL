@@ -39,9 +39,11 @@ s2 = struct(...
 % s1
 gAvg = struct(...
     'lickCue', s2,...
+    'lickDelay', s2,...
     'lick', s2,...
     'lickUs', s2,...    
     'phCue', s2,...
+    'phDelay', s2,...
     'ph', s2,...
     'phUs', s2...
     );
@@ -99,7 +101,10 @@ for counter = 1:length(DB.animals)
         label = trialSets{tcounter, 1};
         fullBlock = trialSets{tcounter, 3};
         % windows
-        cueWindow = [zeros(size(TE.filename)) - 4 cellfun(@(x,y) y(end) - x(1), TE.Cue2, TE.Trace2)]; % allow for variable trace 2 duration, relative to cue onset
+        % baseline, cue, and delay period: allow for variable trace 2 duration, relative to cue onset        
+        cueWindow = [zeros(size(TE.filename)) - 4 cellfun(@(x,y) y(end) - x(1), TE.Cue2, TE.Trace2)]; 
+        % just the delay period, relative to outcome
+        delayWindow = [zeros(size(TE.filename)) - cellfun(@(x) x(end) - x(1), TE.Trace2) zeros(size(TE.filename))];
         window = [-7 4]; % relative to outcome
         usWindow = [0 4]; % relative to outcome
 
@@ -108,6 +113,11 @@ for counter = 1:length(DB.animals)
         gAvg.lickCue.(label).data = expandVertCat(gAvg.lickCue.(label).data, avgData.Avg, 'left');
         gAvg.lickCue.(label).animal{end+1,1} = animal;
         gAvg.lickCue.(label).ch(end+1,1) = NaN;
+        % licking, delay, aligned at right        
+        avgData = eventAverageFromTE(TE, trials, 'Port1In', 'zeroTimes', TE.Us, 'window', delayWindow);
+        gAvg.lickDelay.(label).data = expandVertCat(gAvg.lickDelay.(label).data, avgData.Avg, 'right');
+        gAvg.lickDelay.(label).animal{end+1,1} = animal;
+        gAvg.lickDelay.(label).ch(end+1,1) = NaN;        
         % licking, full (only relevant for block number = fullBlock)
         avgData = eventAverageFromTE(TE, trials & (TE.BlockNumber == fullBlock), 'Port1In', 'zeroTimes', TE.Us, 'window', window);
         gAvg.lick.(label).data = expandVertCat(gAvg.lick.(label).data, avgData.Avg, 'left');
@@ -126,6 +136,11 @@ for counter = 1:length(DB.animals)
             gAvg.phCue.(label).data = expandVertCat(gAvg.phCue.(label).data, avgData.Avg, 'left');
             gAvg.phCue.(label).animal{end+1,1} = animal;
             gAvg.phCue.(label).ch(end+1,1) = ch;
+            % photometry, delay        
+            avgData = phAverageFromTE(TE, trials, ch, 'zeroTimes', TE.Us, 'window', delayWindow, 'FluorDataField', 'ZS');
+            gAvg.phDelay.(label).data = expandVertCat(gAvg.phDelay.(label).data, avgData.Avg, 'right');
+            gAvg.phDelay.(label).animal{end+1,1} = animal;
+            gAvg.phDelay.(label).ch(end+1,1) = ch;            
             % photometry, full (only relevant for block number = fullBlock)
             avgData = phAverageFromTE(TE, trials & (TE.BlockNumber == fullBlock), ch, 'zeroTimes', TE.Us, 'window', window, 'FluorDataField', 'ZS');
             gAvg.ph.(label).data = expandVertCat(gAvg.ph.(label).data, avgData.Avg, 'left');
@@ -151,6 +166,9 @@ for tcounter = 1:size(trialSets, 1)
     gAvg.phCue.(label).Avg = nanmean(gAvg.phCue.(label).data);
     gAvg.phCue.(label).SEM = nanstd(gAvg.phCue.(label).data, 0, 1) ./ sum(isfinite(gAvg.phCue.(label).data), 1);
     gAvg.phCue.(label).xData = (0:(size(gAvg.phCue.(label).data, 2) - 1)) * 1/20 - 7;
+    gAvg.phDelay.(label).Avg = nanmean(gAvg.phDelay.(label).data);
+    gAvg.phDelay.(label).SEM = nanstd(gAvg.phDelay.(label).data, 0, 1) ./ sum(isfinite(gAvg.phDelay.(label).data), 1);
+    gAvg.phDelay.(label).xData = (0:(size(gAvg.phDelay.(label).data, 2) - 1)) * 1/20 - 2;    
     gAvg.ph.(label).Avg = nanmean(gAvg.ph.(label).data);
     gAvg.ph.(label).SEM = nanstd(gAvg.ph.(label).data, 0, 1) ./ sum(isfinite(gAvg.ph.(label).data), 1);
     gAvg.ph.(label).xData = (0:(size(gAvg.phCue.(label).data, 2) - 1)) * 1/20 - (size(gAvg.phCue.(label).data, 2)/20 - 4);
@@ -159,12 +177,16 @@ for tcounter = 1:size(trialSets, 1)
     gAvg.phUs.(label).xData = (0:(size(gAvg.phUs.(label).data, 2) - 1)) * 1/20;
     
     gAvgNorm.phCue.(label).data = gAvg.phCue.(label).data ./ normVectorPh;
+    gAvgNorm.phDelay.(label).data = gAvg.phDelay.(label).data ./ normVectorPh;
     gAvgNorm.ph.(label).data = gAvg.ph.(label).data ./ normVectorPh;
     gAvgNorm.phUs.(label).data = gAvg.phUs.(label).data ./ normVectorPh;
     
     gAvgNorm.phCue.(label).Avg = nanmean(gAvgNorm.phCue.(label).data);
     gAvgNorm.phCue.(label).SEM = nanstd(gAvgNorm.phCue.(label).data, 0, 1) ./ sum(isfinite(gAvgNorm.phCue.(label).data), 1);
     gAvgNorm.phCue.(label).xData = (0:(size(gAvgNorm.phCue.(label).data, 2) - 1)) * 1/20 - 7;
+    gAvgNorm.phDelay.(label).Avg = nanmean(gAvg.phDelay.(label).data);
+    gAvgNorm.phDelay.(label).SEM = nanstd(gAvg.phDelay.(label).data, 0, 1) ./ sum(isfinite(gAvg.phDelay.(label).data), 1);
+    gAvgNorm.phDelay.(label).xData = (0:(size(gAvg.phDelay.(label).data, 2) - 1)) * 1/20 - 2;        
     gAvgNorm.ph.(label).Avg = nanmean(gAvgNorm.ph.(label).data);
     gAvgNorm.ph.(label).SEM = nanstd(gAvgNorm.ph.(label).data, 0, 1) ./ sum(isfinite(gAvgNorm.ph.(label).data), 1);
     gAvgNorm.ph.(label).xData = (0:(size(gAvgNorm.phCue.(label).data, 2) - 1)) * 1/20 - (size(gAvgNorm.phCue.(label).data, 2)/20 - 4);
