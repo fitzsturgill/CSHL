@@ -238,20 +238,22 @@ end
 %% make avg rasters
 % STUB
 saveName = 'uncuedUs_avgRasters_rewNorm';
+
+
 ensureFigure(saveName, 1);
 clim = [-1 2];
 
-subplot(1,3,1); imagesc(gAvgNorm.phUs.uncuedReward.data, clim); title('reward');
-subplot(1,3,2); imagesc(gAvgNorm.phUs.uncuedPuff.data, clim); title('air puff');
-subplot(1,3,3); imagesc(gAvgNorm.phUs.uncuedShock.data, clim); title('shock');
+subplot(1,3,1); imagesc([gAvgNorm.phDelay.uncuedReward.data gAvgNorm.phUs.uncuedReward.data], clim); title('reward');
+subplot(1,3,2); imagesc([gAvgNorm.phDelay.uncuedPuff.data gAvgNorm.phUs.uncuedPuff.data], clim); title('air puff');
+subplot(1,3,3); imagesc([gAvgNorm.phDelay.uncuedShock.data gAvgNorm.phUs.uncuedShock.data], clim); title('shock');
 
 saveName = 'uncuedUs_avgRasters_rew';
 ensureFigure(saveName, 1);
 clim = [-1 5];
 
-subplot(1,3,1); imagesc(gAvg.phUs.uncuedReward.data, clim); title('reward');
-subplot(1,3,2); imagesc(gAvg.phUs.uncuedPuff.data, clim); title('air puff');
-subplot(1,3,3); imagesc(gAvg.phUs.uncuedShock.data, clim); title('shock');
+subplot(1,3,1); imagesc([gAvg.phDelay.uncuedReward.data gAvg.phUs.uncuedReward.data], clim); title('reward');
+subplot(1,3,2); imagesc([gAvg.phDelay.uncuedPuff.data gAvg.phUs.uncuedPuff.data], clim); title('air puff');
+subplot(1,3,3); imagesc([gAvg.phDelay.uncuedShock.data gAvg.phUs.uncuedShock.data], clim); title('shock');
 
 
 %% calculate latency, jitter, and reliability of uncued Us responses
