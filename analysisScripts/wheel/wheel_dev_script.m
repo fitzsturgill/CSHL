@@ -112,8 +112,8 @@ end
 Photometry = 'Photometry';
 Fs = TE.(Photometry).sampleRate;
 %% ~or~
-% Photometry = 'PhotometryHF';
-% Fs = TE.(Photometry).sampleRate;
+Photometry = 'PhotometryHF';
+Fs = TE.(Photometry).sampleRate;
 
 %% coherence
 
@@ -132,7 +132,7 @@ params.trialave = 1;
 params.err = [2 0.05];
 params.tapers = [8 15];
 params.pad = 1;
-params.fpass = [0 20];
+params.fpass = [0 40];
 
 [C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat, data_dat, params);
 f(1) = eps;

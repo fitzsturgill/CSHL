@@ -18,10 +18,13 @@ end
 matches = strcmp(DB.animals, animal);
 if ~delete
     if ~any(matches)
-        DB.animals{end+1} = animal;
+        DB.animals{end+1} = animal;            
     end
 else
     DB.animals = DB.animals(~matches);
+    if isfield(DB, 'table')
+        DB.table(matches,:) = [];
+    end
 end
 
 if ~delete

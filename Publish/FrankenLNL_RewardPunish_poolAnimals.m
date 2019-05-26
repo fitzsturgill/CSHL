@@ -62,15 +62,15 @@ for counter = 1:length(DB.animals)
     
     % cuedReward
     trialSets{end+1, 1} = 'cuedReward';
-    trialSets{end,2} = rewardTrials & Odor2Valve1Trials & (TE.licks_us.rate > minRewardLickRate) & (TE.licks_cs.rate > minCueLickRate);
+    trialSets{end,2} = rewardTrials & Odor2Valve1Trials & (TE.licks_us.rate > minRewardLickRate) & (TE.licks_cs.rate > minCueLickRate) & ismember(TE.BlockNumber, [2 3]); % exclude shock or extinction days
     trialSets{end,3} = 3;
     % uncuedReward
     trialSets{end+1, 1} = 'uncuedReward';
-    trialSets{end,2} = uncuedReward & (TE.licks_us.rate > minRewardLickRate);    
+    trialSets{end,2} = uncuedReward & (TE.licks_us.rate > minRewardLickRate) & ismember(TE.BlockNumber, [2 3]);    
     trialSets{end,3} = 3;    
     % omitReward
     trialSets{end+1, 1} = 'omitReward';
-    trialSets{end,2} = neutralTrials & Odor2Valve1Trials;        
+    trialSets{end,2} = neutralTrials & Odor2Valve1Trials & ismember(TE.BlockNumber, [2 3]);        
     trialSets{end,3} = 3;    
     % cuedPuff
     trialSets{end+1, 1} = 'cuedPuff';
@@ -206,7 +206,22 @@ save(fullfile(savepath, 'grandAveragesNorm.mat'), 'gAvgNorm');
 disp(['*** saving: ' fullfile(savepath, 'grandAveragesNorm.mat') ' ***']);
 
 
+%%
+savepath = fullfile(DB.path, ['pooled' filesep]);
+load(fullfile(savepath, 'grandAverages.mat'), 'gAvg');
+disp(['*** loading: ' fullfile(savepath, 'grandAverages.mat') ' ***']);
+load(fullfile(savepath, 'grandAveragesNorm.mat'), 'gAvgNorm');
+disp(['*** loading: ' fullfile(savepath, 'grandAveragesNorm.mat') ' ***']);
+
+
 %% plot grand Averages
+
+
+save(fullfile(savepath, 'grandAverages.mat'), 'gAvg');
+disp(['*** saving: ' fullfile(savepath, 'grandAverages.mat') ' ***']);
+save(fullfile(savepath, 'grandAveragesNorm.mat'), 'gAvgNorm');
+disp(['*** saving: ' fullfile(savepath, 'grandAveragesNorm.mat') ' ***']);
+
 
 saveName = 'grandAverage_appetitive_simple';
 ensureFigure(saveName, 1); 
@@ -264,28 +279,64 @@ if saveOn
     export_fig(fullfile(figsavepath, saveName), '-eps');
 end
 
+%% plot the averages for each animal
+
+saveName = 'uncuedUs_avgs_rew';
+ensureFigure(saveName, 1);
+nAnimals = length(DB.animals);
+nRows = ceil(sqrt(nAnimals));
+nColumns = ceil(nAnimals/nRows);
+xData = linspace(-2, 4, size([gAvg.phDelay.uncuedReward.data gAvg.phUs.uncuedReward.data], 2));
+for counter = 1:nAnimals
+    subplot(nRows, nColumns, counter);
+    plot(xData, [gAvg.phDelay.uncuedReward.data(counter * 2 - 1:counter*2,:) gAvg.phUs.uncuedReward.data(counter * 2 - 1:counter*2,:)]');
+end
+
+saveName = 'uncuedUs_avgs_puff';
+ensureFigure(saveName, 1);
+for counter = 1:nAnimals
+    subplot(nRows, nColumns, counter);
+    plot(xData, [gAvg.phDelay.uncuedPuff.data(counter * 2 - 1:counter*2,:) gAvg.phUs.uncuedPuff.data(counter * 2 - 1:counter*2,:)]');
+end
+
+saveName = 'uncuedUs_avgs_shock';
+ensureFigure(saveName, 1);
+for counter = 1:nAnimals
+    subplot(nRows, nColumns, counter);
+    plot(xData, [gAvg.phDelay.uncuedShock.data(counter * 2 - 1:counter*2,:) gAvg.phUs.uncuedShock.data(counter * 2 - 1:counter*2,:)]');
+end
+
 %% calculate latency, jitter, and reliability of uncued Us responses
+
 minRewardLickRate = 2;
 bl_window = [-1 0];
-response_window = [0 2]; % must start at 0
+response_window = [0 3]; % must start at 0
+endTauOff = 0.8; % use up to n seconds after us delivery to fit tau off
 PhotometryField = 'PhotometryHF';
 na = length(DB.animals);
-us_pooled = struct(...
+
+s2 = struct(...
     'rew_latency', zeros(na, 2),...
-    'rew_avg_delta', zeros(na, 2),...
-    'rew_jitter_std', zeros(na, 2),...
-    'rew_jitter_avg', zeros(na, 2),...
-    'rew_jitter_tt50', [],... % cell array to hold distributions
-    'rew_jitter_delta', [],... % cell array to hold distributions
-    'puff_latency', zeros(na, 2),...
-    'puff_avg_delta', zeros(na, 2),...    
-    'puff_jitter_std', zeros(na, 2),...
-    'puff_jitter_avg', zeros(na, 2),...    
-    'puff_jitter_tt50', [],... % cell array to hold distributions    
-    'puff_jitter_delta', []... % cell array to hold distributions    
+    'avg_delta', zeros(na, 2),...
+    'avgMax', NaN(na, 2),...
+    'tauOff', NaN(na, 2),...
+    'tauObject', [],...
+    'tauData', [],...
+    'tauDataX', [],...
+    'avgData', [],...
+    'avgDataX', [],...
+    'jitter_std', zeros(na, 2),...
+    'jitter_avg', zeros(na, 2),...
+    'jitter_tt50', [],... % cell array to hold distributions
+    'jitter_delta', []... % cell array to hold distributions
     );
 
-trialSets = {'rew', 'puff'};
+us_pooled = struct(...
+    'rew', s2,...
+    'puff', s2...
+    );
+
+trialSets = {'rew', 'puff', 'shock'};
 rewAvgDelta = NaN(length(DB.animals), 2); % hold average rew delta ZS of uncued reward trials
 puffAvgDelta = NaN(length(DB.animals), 2); % hold average rew delta ZS of uncued punish trials
 for counter = 1:length(DB.animals)
@@ -298,48 +349,58 @@ for counter = 1:length(DB.animals)
             case 'rew'
                 theseTrials = find(rewardTrials & uncuedTrials & (TE.licks_us.rate > minRewardLickRate));    
             case 'puff'
-                theseTrials = find(punishTrials & uncuedTrials);    
+                theseTrials = find(punishTrials & uncuedTrials);   
+            case 'shock'
+                theseTrials = find(shockTrials & uncuedTrials);
         end
         [tt50, deltaMax] = deal(NaN(length(theseTrials), 2));
         for channel = 1:2
-            [responseData, xData] = phAlignedWindow(TE, theseTrials, channel, 'zeroTimes', TE.Us, 'window', response_window, 'FluorDataField', 'ZS');
-            [blData, blx] = phAlignedWindow(TE, theseTrials, channel, 'zeroTimes', TE.Us, 'window', bl_window, 'FluorDataField', 'ZS');
+            [responseData, xData] = phAlignedWindow(TE, theseTrials, channel, 'zeroTimes', TE.Us, 'window', response_window, 'FluorDataField', 'ZS', 'PhotometryField', PhotometryField);
+            [blData, blx] = phAlignedWindow(TE, theseTrials, channel, 'zeroTimes', TE.Us, 'window', bl_window, 'FluorDataField', 'ZS', 'PhotometryField', PhotometryField);
             bl = mean(blData, 2);
             response_avg = nanmean(responseData);
             % check if response is positive or negative
             if (max(response_avg) - mean(bl)) > (mean(bl) - min(response_avg))
-                [peakVal, iAvg] = max(response_avg);                
-                switch trialSet
-                    case 'rew'
-                        rewAvgDelta(counter, channel) = max(response_avg) - mean(bl);
-                    case 'puff'
-                        puffAvgDelta(counter, channel) = max(response_avg) - mean(bl);
-                end
+                [peakVal, iAvg] = max(response_avg);
+                avgDelta = peakVal - mean(bl);
                 direction = 1;
                 [M, I] = max(responseData, [], 2);                
+                
+                % fit exponential
+                fitData = response_avg(iAvg:min(bpX2pnt(xData(iAvg) + endTauOff, Fs), length(response_avg)));
+                fitXData = xData(iAvg:min(bpX2pnt(xData(iAvg) + endTauOff, Fs), length(response_avg)));            
+                model = 'a + b * exp(-1/c*x)';
+                fo = fitoptions('Method', 'NonlinearLeastSquares',...
+                    'Upper', [min(response_avg), Inf, Inf],...
+                    'Lower', [min(response_avg), 0, 0],...
+                    'StartPoint', [min(response_avg), range(response_avg), 1]...
+                    );
+                ft = fittype(model, 'options', fo);
+                [fitobject, gof, output] = fit(fitXData(:) - fitXData(1), fitData(:), ft, fo);
+                us_pooled.(trialSet).tauOff(counter,channel) = fitobject.c;
+                us_pooled.(trialSet).tauObject{counter,channel} = fitobject;
+                us_pooled.(trialSet).tauData{counter,channel} = fitobject.a + fitobject.b * exp(-1/fitobject.c * (fitXData - fitXData(1)));
+                us_pooled.(trialSet).tauDataX{counter,channel} = fitXData;                
             else
                 [peakVal, iAvg] = min(response_avg);
-                switch trialSet
-                    case 'rew'
-                        rewAvgDelta(counter, channel) = min(response_avg) - mean(bl);
-                    case 'puff'
-                        puffAvgDelta(counter, channel) = min(response_avg) - mean(bl);
-                end                
+                avgDelta = peakVal - mean(bl);
                 direction = -1;
                 if strcmp(trialSet, 'rew')
                     disp([animal 'wtf']);
                 end
                 [M, I] = min(responseData, [], 2);                
             end
-                        
+            
+            us_pooled.(trialSet).avgDataX{counter,channel} = xData;
+            us_pooled.(trialSet).avgData{counter,channel} = response_avg;
+                                                                           
             deltaMax(:,channel) = M - bl;
             level50 = bl + deltaMax(:,channel) * 0.5;
             
-            us_pooled.([trialSet '_latency'])(counter, channel) = bpPnt2x(iAvg, Fs, 0);
-            us_pooled.([trialSet '_avg_delta'])(counter,channel) = peakVal - mean(bl); % can be negative or positive
+            us_pooled.(trialSet).latency(counter, channel) = bpPnt2x(iAvg, Fs, 0);
+            us_pooled.(trialSet).avg_delta(counter,channel) = avgDelta; % can be negative or positive
             
             % find time to 50% per trial and magnitude of trial response
-
             thresh = responseData >= level50;
             crossings = [false(size(thresh,1), 1) thresh(:,2:end) - thresh(:,1:end-1)];
             crossings = crossings > 0; % only want upward crossings
@@ -367,10 +428,10 @@ for counter = 1:length(DB.animals)
     %             plot(get(gca, 'XLim'), [level50(trial) level50(trial)], '--');
     %         end
         end       
-        us_pooled.([trialSet '_jitter_tt50']){counter} = tt50;
-        us_pooled.([trialSet '_jitter_std'])(counter, :) = nanstd(tt50);
-        us_pooled.([trialSet '_jitter_avg'])(counter, :) = nanmean(tt50);
-        us_pooled.([trialSet '_jitter_delta']){counter} = deltaMax;    
+        us_pooled.(trialSet).jitter_tt50{counter} = tt50;
+        us_pooled.(trialSet).jitter_std(counter, :) = nanstd(tt50);
+        us_pooled.(trialSet).jitter_avg(counter, :) = nanmean(tt50);
+        us_pooled.(trialSet).jitter_delta{counter} = deltaMax;    
     end
 end
 
@@ -381,53 +442,107 @@ ensureFigure(saveName, 1);
 
 rew_tt50_all = [];
 puff_tt50_all = [];
-for counter = 1:length(us_pooled.rew_jitter_tt50)
+shock_tt50_all = [];
+for counter = 1:length(us_pooled.rew.jitter_tt50)
     for channel = 1:2
-        if rewAvgDelta(counter, channel) > minDelta
-            subplot(2,2,1); hold on;
-            scatter(us_pooled.rew_jitter_tt50{counter}(:,channel), us_pooled.rew_jitter_delta{counter}(:,channel), '.');
-            rew_tt50_all = [rew_tt50_all; us_pooled.rew_jitter_tt50{counter}(:,channel)];
+        if us_pooled.rew.avg_delta(counter, channel) > minDelta
+            subplot(2,3,1); hold on;
+            scatter(us_pooled.rew.jitter_tt50{counter}(:,channel), us_pooled.rew.jitter_delta{counter}(:,channel), '.');
+            rew_tt50_all = [rew_tt50_all; us_pooled.rew.jitter_tt50{counter}(:,channel)];
         end
-        if puffAvgDelta(counter, channel) > minDelta
-            subplot(2,2,2); hold on;
-            scatter(us_pooled.puff_jitter_tt50{counter}(:,channel), us_pooled.puff_jitter_delta{counter}(:,channel), '.');    
-            puff_tt50_all = [puff_tt50_all; us_pooled.puff_jitter_tt50{counter}(:,channel)];
+        if us_pooled.puff.avg_delta(counter, channel) > minDelta
+            subplot(2,3,2); hold on;
+            scatter(us_pooled.puff.jitter_tt50{counter}(:,channel), us_pooled.puff.jitter_delta{counter}(:,channel), '.');    
+            puff_tt50_all = [puff_tt50_all; us_pooled.puff.jitter_tt50{counter}(:,channel)];
         end
+        if us_pooled.shock.avg_delta(counter, channel) > minDelta
+            subplot(2,3,3); hold on;
+            scatter(us_pooled.shock.jitter_tt50{counter}(:,channel), us_pooled.shock.jitter_delta{counter}(:,channel), '.');    
+            shock_tt50_all = [shock_tt50_all; us_pooled.shock.jitter_tt50{counter}(:,channel)];
+        end        
     end
 end
-subplot(2,2,1); title('Reward'); ylabel('amplitude (ZS)');
-subplot(2,2,2); title('Air Puff'); 
+subplot(2,3,1); title('Reward'); ylabel('amplitude (ZS)');
+subplot(2,3,2); title('Air Puff'); 
+subplot(2,3,3); title('Shock'); 
 
 binSize = 0.05;
 bins = [0:binSize:2];
-subplot(2,2,3); hold on; histogram(rew_tt50_all, bins); xlabel('latency (s)'); 
+subplot(2,3,4); hold on; histogram(rew_tt50_all, bins); xlabel('latency (s)'); 
 [N, edges] = histcounts(rew_tt50_all, bins); [~, ix] = max(N); rewMode = edges(ix) + binSize/2;
 plot([rewMode rewMode], get(gca, 'YLim'), '--r'); 
 set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
 textBox(sprintf('mode=%.4g(s)', rewMode));
 
-subplot(2,2,4); hold on; histogram(puff_tt50_all, bins); xlabel('latency (s)'); 
+subplot(2,3,5); hold on; histogram(puff_tt50_all, bins); xlabel('latency (s)'); 
 [N, edges] = histcounts(puff_tt50_all, bins); [~, ix] = max(N); puffMode = edges(ix) + binSize/2;
 plot([puffMode puffMode], get(gca, 'YLim'), '--r'); 
 set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
 textBox(sprintf('mode=%.4g(s)', puffMode));
 
+subplot(2,3,6); hold on; histogram(shock_tt50_all, bins); xlabel('latency (s)'); 
+[N, edges] = histcounts(shock_tt50_all, bins); [~, ix] = max(N); shockMode = edges(ix) + binSize/2;
+plot([shockMode shockMode], get(gca, 'YLim'), '--r'); 
+set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
+textBox(sprintf('mode=%.4g(s)', shockMode));
+
 if saveOn
     saveas(gcf, fullfile(savepath, [saveName '.fig']));
     saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
 end        
-%%
-% make cumulative histograms for latency and jitter for reward and
+%% plot averages with tauOff annotated
+
+
+
+
+nAnimals = length(DB.animals);
+nRows = ceil(sqrt(nAnimals));
+nColumns = ceil(nAnimals/nRows);
+trialSets = {'rew', 'puff', 'shock'};
+for trialSet = trialSets
+    trialSet = trialSet{1};
+    saveName = [trialSet '_avgs_Taus'];
+    ensureFigure(saveName, 1);
+    for counter = 1:nAnimals
+        subplot(nRows, nColumns, counter); hold on;
+        plot(us_pooled.(trialSet).avgDataX{counter, 1},  us_pooled.(trialSet).avgData{counter, 1}, '--b');
+        plot(us_pooled.(trialSet).avgDataX{counter, 2},  us_pooled.(trialSet).avgData{counter, 2}, '--g');
+        try
+            plot(us_pooled.(trialSet).tauDataX{counter, 1},  us_pooled.(trialSet).tauData{counter, 1}, '-b');
+            plot(us_pooled.(trialSet).tauDataX{counter, 2},  us_pooled.(trialSet).tauData{counter, 2}, '-g');    
+            t = textBox({['\color{blue}' sprintf('Ch1=%.3g',us_pooled.(trialSet).tauOff(counter,1))]; ['\color{green}' sprintf('Ch2=%.3g',us_pooled.(trialSet).tauOff(counter,2))]});             
+            set(t, 'Interpreter', 'tex');
+        end
+    end
+end
+
+% saveName = 'rew_avgs_Taus';
+% ensureFigure(saveName, 1);
+% for counter = 1:nAnimals
+%     subplot(nRows, nColumns, counter);
+%     plot(xData, [gAvg.phDelay.uncuedPuff.data(counter * 2 - 1:counter*2,:) gAvg.phUs.uncuedPuff.data(counter * 2 - 1:counter*2,:)]');
+% end
+% 
+% saveName = 'uncuedUs_avgs_shock';
+% ensureFigure(saveName, 1);
+% for counter = 1:nAnimals
+%     subplot(nRows, nColumns, counter);
+%     plot(xData, [gAvg.phDelay.uncuedShock.data(counter * 2 - 1:counter*2,:) gAvg.phUs.uncuedShock.data(counter * 2 - 1:counter*2,:)]');
+% end
+
+
+
+%% make cumulative histograms for latency and jitter for reward and
 % punishment
 
 lc = mycolors('chat');
 
-jitter.reward = cum(us_pooled.rew_jitter_std(rewAvgDelta > minDelta));
-jitter.puff = cum(us_pooled.puff_jitter_std(puffAvgDelta > minDelta));
-latency.reward = cum(us_pooled.rew_latency(rewAvgDelta > minDelta));
-latency.puff = cum(us_pooled.puff_latency(puffAvgDelta > minDelta));
-avg.reward = cum(us_pooled.rew_avg_delta(rewAvgDelta > minDelta));
-avg.puff= cum(us_pooled.puff_avg_delta(puffAvgDelta > minDelta));
+jitter.reward = cum(us_pooled.rew.jitter_std(rewAvgDelta > minDelta));
+jitter.puff = cum(us_pooled.puff.jitter_std(puffAvgDelta > minDelta));
+latency.reward = cum(us_pooled.rew.latency(rewAvgDelta > minDelta));
+latency.puff = cum(us_pooled.puff.latency(puffAvgDelta > minDelta));
+avg.reward = cum(us_pooled.rew.avg_delta(rewAvgDelta > minDelta));
+avg.puff= cum(us_pooled.puff.avg_delta(puffAvgDelta > minDelta));
 figSize = [3 1];
 saveName = 'cumHist_reward';
 ensureFigure(saveName, 1);
