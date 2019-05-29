@@ -316,9 +316,10 @@ PhotometryField = 'PhotometryHF';
 na = length(DB.animals);
 
 s2 = struct(...
-    'rew_latency', zeros(na, 2),...
-    'avg_delta', zeros(na, 2),...
-    'avgMax', NaN(na, 2),...
+    'latency', zeros(na, 2),...
+    'latencyY', zeros(na, 2),... % 1/2 max value
+    'avg_delta', zeros(na, 2),... % delta responsee from baseline
+    'avgMax', NaN(na, 2),... % maximum (or minimum) value of response
     'tauOff', NaN(na, 2),...
     'tauObject', [],...
     'tauData', [],...
@@ -397,7 +398,9 @@ for counter = 1:length(DB.animals)
             deltaMax(:,channel) = M - bl;
             level50 = bl + deltaMax(:,channel) * 0.5;
             
-            us_pooled.(trialSet).latency(counter, channel) = bpPnt2x(iAvg, Fs, 0);
+            [ind, to] = crossing(response_avg, xData, mean(bl) + avgDelta/2);
+            us_pooled.(trialSet).latency(counter, channel) = to(1);
+            us_pooled.(trialSet).latencyY(counter, channel) = avgDelta/2;
             us_pooled.(trialSet).avg_delta(counter,channel) = avgDelta; % can be negative or positive
             
             % find time to 50% per trial and magnitude of trial response
@@ -513,6 +516,8 @@ for trialSet = trialSets
             t = textBox({['\color{blue}' sprintf('Ch1=%.3g',us_pooled.(trialSet).tauOff(counter,1))]; ['\color{green}' sprintf('Ch2=%.3g',us_pooled.(trialSet).tauOff(counter,2))]});             
             set(t, 'Interpreter', 'tex');
         end
+        plot(us_pooled.(trialSet).latency(counter, 1), us_pooled.(trialSet).latencyY(counter, 1), '*b');
+        plot(us_pooled.(trialSet).latency(counter, 2), us_pooled.(trialSet).latencyY(counter, 2), '*g');
     end
 end
 
@@ -537,22 +542,26 @@ end
 
 lc = mycolors('chat');
 
-jitter.reward = cum(us_pooled.rew.jitter_std(rewAvgDelta > minDelta));
-jitter.puff = cum(us_pooled.puff.jitter_std(puffAvgDelta > minDelta));
-latency.reward = cum(us_pooled.rew.latency(rewAvgDelta > minDelta));
-latency.puff = cum(us_pooled.puff.latency(puffAvgDelta > minDelta));
-avg.reward = cum(us_pooled.rew.avg_delta(rewAvgDelta > minDelta));
-avg.puff= cum(us_pooled.puff.avg_delta(puffAvgDelta > minDelta));
-figSize = [3 1];
+jitter.reward = cum(us_pooled.rew.jitter_std(us_pooled.rew.avg_delta > minDelta));
+jitter.puff = cum(us_pooled.puff.jitter_std(us_pooled.puff.avg_delta> minDelta));
+latency.reward = cum(us_pooled.rew.latency(us_pooled.rew.avg_delta > minDelta));
+latency.puff = cum(us_pooled.puff.latency(us_pooled.puff.avg_delta > minDelta));
+avg.reward = cum(us_pooled.rew.avg_delta(us_pooled.rew.avg_delta > minDelta));
+avg.puff= cum(us_pooled.puff.avg_delta(us_pooled.puff.avg_delta > minDelta));
+tauOff.reward = cum(us_pooled.rew.tauOff(us_pooled.rew.avg_delta > minDelta));
+tauOff.puff = cum(us_pooled.puff.tauOff(us_pooled.rew.avg_delta > minDelta));
+figSize = [4 1];
 saveName = 'cumHist_reward';
 ensureFigure(saveName, 1);
-subplot(1,3,1); 
-plot(latency.reward.sorted, latency.reward.index, 'Color', lc); xlabel('latency (s)'); ylabel('fraction'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
+subplot(1,4,1); 
+plot(latency.reward.sorted * 1000, latency.reward.index, 'Color', lc); xlabel('latency (ms)'); ylabel('fraction'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
 title('reward');
-subplot(1,3,2); 
-plot(jitter.reward.sorted, jitter.reward.index, 'Color', lc); xlabel('jitter (s)'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
-subplot(1,3,3); 
-plot(avg.reward.sorted, avg.reward.index, 'Color', lc); xlabel('amplitude (Fluor. ZS)'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
+subplot(1,4,2); 
+plot(jitter.reward.sorted * 1000, jitter.reward.index, 'Color', lc); xlabel('jitter (ms)'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))], 'YTickLabel', {});
+subplot(1,4,3); 
+plot(avg.reward.sorted, avg.reward.index, 'Color', lc); xlabel('amplitude (ZS)'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))], 'YTickLabel', {});
+subplot(1,4,4); 
+plot(tauOff.reward.sorted * 1000, tauOff.reward.index, 'Color', lc); xlabel('Tau (ms)'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))], 'YTickLabel', {});
 formatFigurePublish('size', figSize);
 if saveOn 
     export_fig(fullfile(figsavepath, saveName), '-eps');
@@ -560,13 +569,15 @@ end
 
 saveName = 'cumHist_puff';
 ensureFigure(saveName, 1);
-subplot(1,3,1); 
-plot(latency.puff.sorted, latency.puff.index, 'Color', lc); xlabel('latency (s)'); ylabel('fraction'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
+subplot(1,4,1); 
+plot(latency.puff.sorted * 1000, latency.puff.index, 'Color', lc); xlabel('latency (ms)'); ylabel('fraction'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
 title('air puff');
-subplot(1,3,2); 
-plot(jitter.puff.sorted, jitter.puff.index, 'Color', lc); xlabel('jitter (s)'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
-subplot(1,3,3); 
-plot(avg.puff.sorted, avg.puff.index, 'Color', lc); xlabel('amplitude (Fluor. ZS)'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))]);
+subplot(1,4,2); 
+plot(jitter.puff.sorted * 1000, jitter.puff.index, 'Color', lc); xlabel('jitter (ms)'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))], 'YTickLabel', {});
+subplot(1,4,3); 
+plot(avg.puff.sorted, avg.puff.index, 'Color', lc); xlabel('amplitude (ZS)'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))], 'YTickLabel', {});
+subplot(1,4,4); 
+plot(tauOff.puff.sorted * 1000, tauOff.puff.index, 'Color', lc); xlabel('Tau (ms)'); set(gca, 'XLim', [0 max(get(gca, 'XLim'))], 'YTickLabel', {}, 'YTickLabel', {});
 
 formatFigurePublish('size', figSize);
 if saveOn 

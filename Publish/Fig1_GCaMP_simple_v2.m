@@ -106,17 +106,20 @@ saveName = ['align_lick_vs_odor_v2_' animal];
 ensureFigure(saveName, 1); 
 
 
-subplot(2,2,1);
+subplot(2,2,1); hold on;
 specialWindowByCue = [0 2];
 phRasterFromTE(TE, rewardOdorTrials, 1, 'trialNumbering', 'consecutive',...
     'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry',...
     'zeroTimes', TE.Cue, 'window', specialWindow, 'sortValues', TE.lickLatency_cs, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
+lickTimes_sorted = sort(TE.lickLatency_cs(rewardOdorTrials));
+plot(lickTimes_sorted, 1:sum(rewardOdorTrials), '--r');
 ylabel ('trial # sorted'); set(gca, 'YTick', [100 300 500], 'XTick', []);
 
-subplot(2,2,2);
+subplot(2,2,2); hold on;
 phRasterFromTE(TE, rewardOdorTrials, 1, 'trialNumbering', 'consecutive',...
     'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry',...
     'zeroTimes', lickZeros, 'window', specialWindow, 'sortValues', TE.lickLatency_cs, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
+plot(0 - lickTimes_sorted, 1:sum(rewardOdorTrials), '--k');
  set(gca, 'YTick', [], 'XTick', []);
 
 % averages
@@ -128,10 +131,16 @@ phPlotAverageFromTE(TE, rewardOdorTrials, 1, 'FluorDataField', fdField, 'Photome
 xlabel('time from cue (s)'); 
 ylabel('F(\fontsize{12}\sigma\fontsize{8}-baseline)');
 
-ha(2) = subplot(2,2,4);
+ha(2) = subplot(2,2,4); hold on;
 phPlotAverageFromTE(TE, rewardOdorTrials, 1, 'FluorDataField', fdField, 'PhotometryField', 'Photometry',...
     'zeroTimes', lickZeros, 'window', specialWindow, 'cmap', tcolor, 'alpha', 1); % 'CLimFactor', CLimFactor,
-xlabel('time from response (s)'); sameYScale(ha);
+xlabel('time from response (s)'); 
+
+sameYScale(ha);
+yData = get(gca, 'YLim');
+plot([0 0], yData, '--r');
+subplot(2,2,3);
+plot([0 0], yData, '--k');
 
 formatFigurePublish('size', figSize);
 if saveOn 
