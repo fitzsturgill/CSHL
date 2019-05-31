@@ -147,15 +147,15 @@ for counter = 1:length(fieldsToCompile)
     odor3.(field) = smoothdata([AR.thirdOdor.(field).before AR.thirdOdor.(field).after], 2, 'movmean', smoothWindow, 'omitnan');
 end
 
-newCsPlus_trialNumber = (1:size(newCsPlus.licks_cs, 2)) - size(AR.csMinus.licks_cs.before, 2);
-newCsPlus_firstRevTrial = size(AR.csMinus.licks_cs.before, 2) + 1;
-newCsMinus_trialNumber = (1:size(newCsMinus.licks_cs, 2)) - size(AR.csPlus.licks_cs.before, 2);
-newCsMinus_firstRevTrial = size(AR.csPlus.licks_cs.before, 2) + 1;
-alwaysCsPlus_trialNumber = (1:size(alwaysCsPlus.licks_cs, 2)) - size(AR.csPlus.licks_cs.before, 2);
-alwaysCsPlus_firstRevTrial = size(AR.csPlus.licks_cs.before, 2) + 1;
-alwaysCsPlusReward_trialNumber = (1:size(alwaysCsPlusReward.licks_cs, 2)) - size(AR.csPlusReward.licks_cs.before, 2);
-alwaysCsPlusReward_firstRevTrial = size(AR.csPlusReward.licks_cs.before, 2) + 1;
-odor3_trialNumber = (1:size(odor3.licks_cs, 2)) - size(AR.thirdOdor.licks_cs.before, 2);
+newCsPlus_trialNumber = (1:size(newCsPlus.licks_cs, 2)) - size(AR.csMinus.licks_cs.before, 2); newCsPlus.trialNumber = newCsPlus_trialNumber;
+newCsPlus_firstRevTrial = size(AR.csMinus.licks_cs.before, 2) + 1; newCsPlus.firstRevTrial = newCsPlus_firstRevTrial;
+newCsMinus_trialNumber = (1:size(newCsMinus.licks_cs, 2)) - size(AR.csPlus.licks_cs.before, 2);  newCsMinus.trialNumber = newCsMinus_trialNumber;
+newCsMinus_firstRevTrial = size(AR.csPlus.licks_cs.before, 2) + 1; newCsMinus.firstRevTrial = newCsMinus_firstRevTrial;
+alwaysCsPlus_trialNumber = (1:size(alwaysCsPlus.licks_cs, 2)) - size(AR.csPlus.licks_cs.before, 2); alwaysCsPlus.trialNumber = alwaysCsPlus_trialNumber;
+alwaysCsPlus_firstRevTrial = size(AR.csPlus.licks_cs.before, 2) + 1; alwaysCsPlus.firstRevTrial = alwaysCsPlus_firstRevTrial;
+alwaysCsPlusReward_trialNumber = (1:size(alwaysCsPlusReward.licks_cs, 2)) - size(AR.csPlusReward.licks_cs.before, 2); alwaysCsPlusReward.trialNumber = alwaysCsPlusReward_trialNumber;
+alwaysCsPlusReward_firstRevTrial = size(AR.csPlusReward.licks_cs.before, 2) + 1; alwaysCsPlusReward.firstRevTrial = alwaysCsPlusReward_firstRevTrial; 
+odor3_trialNumber = (1:size(odor3.licks_cs, 2)) - size(AR.thirdOdor.licks_cs.before, 2); 
 
 oldCsPlus_trialNumber = -(size(AR.csPlus.licks_cs.before, 2) - 1) : 0;
 oldCsMinus_trialNumber = -(size(AR.csMinus.licks_cs.before, 2) - 1) : 0;
@@ -899,7 +899,7 @@ for compCounter = 1:size(compFields, 2)
                 weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).a(counter) = fitobject.a;
                 weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).b(counter) = fitobject.b;
                 weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).c(counter) = fitobject.c;
-                weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).c(counter) = fitobject.d;
+                weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).d(counter) = fitobject.d;
             catch
                 continue
             end
@@ -997,8 +997,9 @@ cp.csMinus.phPeakMean_cs_ch2 = bpChangePoints([AR.csPlus.phPeakMean_cs_ch2.befor
 
 %% make a bar graph or box plot of changepoints
     
-saveName = 'changepoints_all';
+savename = 'changepoints_all';
 ensureFigure(savename, 1); axes('FontSize', 12); hold on;
+markerSize = 15;
 
 fields = {...
     'csPlus', 'licks_cs', mycolors('licks'), 'licks';...
@@ -1015,7 +1016,7 @@ for counter = 1:size(fields, 1)
     ydata = cp.(fields{counter, 1}).(fields{counter, 2}).index(goodReversals) - baselineTrials;   
     kstest(ydata)
     all_cps = [all_cps ydata];
-    scatter(repmat(counter, numel(ydata), 1), ydata, 8, fields{counter, 3}, '.');
+    scatter(repmat(counter, numel(ydata), 1) + (rand(numel(ydata), 1) - 0.5)/3, ydata, markerSize, fields{counter, 3}, '.');
     errorbar(counter, mean(ydata), std(ydata)/sqrt(numel(ydata)), 'Color', fields{counter, 3}, 'LineWidth', 2)
 end
 
@@ -1026,7 +1027,7 @@ formatFigurePublish('size', [3.5 2], 'fontSize', 12);
 if saveOn 
     saveas(gcf, fullfile(savepath, [savename '.fig']));
     saveas(gcf, fullfile(savepath, [savename '.jpg']));   
-    export_fig(fullfile(savepath, saveName), '-eps');
+    export_fig(fullfile(savepath, savename), '-eps');
 end
 
 %% despite paired measurements, weak correlations between detected changepoints
@@ -1344,7 +1345,8 @@ end
 savename = 'xcorr_newCsPlus_corrected';
 ensureFigure(savename, 1); 
 % [R, lags] = avgXCorr(x, y, maxlag)
-maxlag = 20;
+maxlag = 10;
+trialRange = [30 30];
 R = deal(zeros(maxlag*2+1, 6, 3)); % corrected, shift predictor, raw occupy third dimension
 lags = -maxlag:maxlag;
 
@@ -1352,36 +1354,89 @@ lags = -maxlag:maxlag;
 %     dat = nanzscore(newCsPlus.phPeakMean_cs_ch2, 0, 2);
 %     licks = nanzscore(newCsPlus.licks_cs, 0, 2);
 
-chat = newCsPlus.phPeakMean_cs_ch1(goodReversals, :);
-dat = newCsPlus.phPeakMean_cs_ch2(goodReversals, :);
-licks = newCsPlus.licks_cs(goodReversals, :);        
+chat = newCsPlus.phPeakMean_cs_ch1(goodReversals, newCsPlus.firstRevTrial - trialRange:newCsPlus.firstRevTrial + trialRange - 1);
+dat = newCsPlus.phPeakMean_cs_ch2(goodReversals, newCsPlus.firstRevTrial - trialRange:newCsPlus.firstRevTrial + trialRange - 1);
+licks = newCsPlus.licks_cs(goodReversals, newCsPlus.firstRevTrial - trialRange:newCsPlus.firstRevTrial + trialRange - 1);        
 
 [R1, R2, R3, testlags] = correctedXCorr(chat, dat, maxlag, 2);
-R(:,1,1) = theseR; R(:,1,2) = R2; R(:,1) = R3;
+R(:,1,1) = R1; R(:,1,2) = R2; R(:,1,3) = R3;
 
-[theseR, R2, R3, ~] = correctedXCorr(chat, chat, maxlag, 2);
-R(:,2,1) = theseR; R(:,2,2) = R2; R(:,2,3) = R3;
+[R1, R2, R3, ~] = correctedXCorr(chat, chat, maxlag, 2);
+R(:,2,1) = R1; R(:,2,2) = R2; R(:,2,3) = R3;
 
-[theseR, R2, R3, ~] = correctedXCorr(dat, dat, maxlag, 2);
-R(:,3,1) = theseR; R(:,3,2) = R2; R(:,3,3) = R3;
+[R1, R2, R3, ~] = correctedXCorr(dat, dat, maxlag, 2);
+R(:,3,1) = R1; R(:,3,2) = R2; R(:,3,3) = R3;
 
-[theseR, R2, R3, ~] = correctedXCorr(chat, licks, maxlag, 2);
-R(:,4,1) = theseR; R(:,4,2) = R2; R(:,4,3) = R3;
+[R1, R2, R3, ~] = correctedXCorr(chat, licks, maxlag, 2);
+R(:,4,1) = R1; R(:,4,2) = R2; R(:,4,3) = R3;
 
-[theseR, R2, R3, ~] = correctedXCorr(dat, licks, maxlag, 2);
-R(:,5,1) = theseR; R(:,5,2) = R2; R(:,5,3) = R3;
+[R1, R2, R3, ~] = correctedXCorr(dat, licks, maxlag, 2);
+R(:,5,1) = R1; R(:,5,2) = R2; R(:,5,3) = R3;
 
-[theseR, R2, R3, ~] = correctedXCorr(licks, licks, maxlag, 2);
-R(:,6,1) = theseR; R(:,6,2) = R2; R(:,6,3) = R3;
+[R1, R2, R3, ~] = correctedXCorr(licks, licks, maxlag, 2);
+R(:,6,1) = R1; R(:,6,2) = R2; R(:,6,3) = R3;
     
    
 
-subplot(3,2,1); plot(lags, squeeze(R(:,1,3))); title('chat vs dat'); legend('corrected', 'shift predictor', 'raw'); legend boxoff;
+subplot(3,2,1); plot(lags, squeeze(R(:,1,:))); title('chat vs dat'); legend('corrected', 'shift predictor', 'raw'); legend boxoff;
 subplot(3,2,2); plot(lags, squeeze(R(:,2,:))); title('chat');  legend('corrected', 'shift predictor', 'raw'); legend boxoff;
 subplot(3,2,3); plot(lags, squeeze(R(:,3,:))); title('dat'); 
 subplot(3,2,4); plot(lags, squeeze(R(:,4,:))); title('chat vs licks');
 subplot(3,2,5); plot(lags, squeeze(R(:,5,:))); title('dat vs licks'); xlabel('new cs+ trials');
 subplot(3,2,6); plot(lags, squeeze(R(:,6,:))); title('licks'); xlabel('new cs+ trials');
+
+
+if saveOn
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));   
+end
+
+
+%% cross correlations, new Cs-, corrected
+
+savename = 'xcorr_newCsMinus_corrected';
+ensureFigure(savename, 1); 
+% [R, lags] = avgXCorr(x, y, maxlag)
+maxlag = 10;
+trialRange = [30 30];
+R = deal(zeros(maxlag*2+1, 6, 3)); % corrected, shift predictor, raw occupy third dimension
+lags = -maxlag:maxlag;
+
+%     chat = nanzscore(newCsPlus.phPeakMean_cs_ch1, 0, 2);
+%     dat = nanzscore(newCsPlus.phPeakMean_cs_ch2, 0, 2);
+%     licks = nanzscore(newCsPlus.licks_cs, 0, 2);
+
+chat = newCsMinus.phPeakMean_cs_ch1(goodReversals, newCsMinus.firstRevTrial - trialRange:newCsMinus.firstRevTrial + trialRange - 1);
+dat = newCsMinus.phPeakMean_cs_ch2(goodReversals, newCsMinus.firstRevTrial - trialRange:newCsMinus.firstRevTrial + trialRange - 1);
+licks = newCsMinus.licks_cs(goodReversals, newCsMinus.firstRevTrial - trialRange:newCsMinus.firstRevTrial + trialRange - 1);        
+
+[R1, R2, R3, testlags] = correctedXCorr(chat, dat, maxlag, 2);
+R(:,1,1) = R1; R(:,1,2) = R2; R(:,1,3) = R3;
+
+[R1, R2, R3, ~] = correctedXCorr(chat, chat, maxlag, 2);
+R(:,2,1) = R1; R(:,2,2) = R2; R(:,2,3) = R3;
+
+[R1, R2, R3, ~] = correctedXCorr(dat, dat, maxlag, 2);
+R(:,3,1) = R1; R(:,3,2) = R2; R(:,3,3) = R3;
+
+[R1, R2, R3, ~] = correctedXCorr(chat, licks, maxlag, 2);
+R(:,4,1) = R1; R(:,4,2) = R2; R(:,4,3) = R3;
+
+[R1, R2, R3, ~] = correctedXCorr(dat, licks, maxlag, 2);
+R(:,5,1) = R1; R(:,5,2) = R2; R(:,5,3) = R3;
+
+[R1, R2, R3, ~] = correctedXCorr(licks, licks, maxlag, 2);
+R(:,6,1) = R1; R(:,6,2) = R2; R(:,6,3) = R3;
+    
+   
+
+subplot(3,2,1); plot(lags, squeeze(R(:,1,:))); title('chat vs dat'); legend('corrected', 'shift predictor', 'raw'); legend boxoff;
+subplot(3,2,2); plot(lags, squeeze(R(:,2,:))); title('chat');  legend('corrected', 'shift predictor', 'raw'); legend boxoff;
+subplot(3,2,3); plot(lags, squeeze(R(:,3,:))); title('dat'); 
+subplot(3,2,4); plot(lags, squeeze(R(:,4,:))); title('chat vs licks');
+subplot(3,2,5); plot(lags, squeeze(R(:,5,:))); title('dat vs licks'); xlabel('new cs- trials');
+subplot(3,2,6); plot(lags, squeeze(R(:,6,:))); title('licks'); xlabel('new cs- trials');
 
 
 if saveOn

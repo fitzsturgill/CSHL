@@ -16,9 +16,9 @@ function [R, shiftR, rawR, lags] = correctedXCorr(x, y, maxlag, dim)
     
     assert(all(size(x) == size(y)), 'matrices must be same size');
     assert(all(isfinite(x(:)) == isfinite(y(:))), 'NaNs must match in x and y');
-    if any(~isfinite(x(:)) | any(~isfinite(y(:))))
-        warning('correctedXCorr doesn''t handle interior NaNs, only NaNs at edges');
-    end
+%     if any(~isfinite(x(:)) | any(~isfinite(y(:))))
+%         warning('correctedXCorr doesn''t handle interior NaNs, only NaNs at edges');
+%     end
 
     
     if dim == 2
