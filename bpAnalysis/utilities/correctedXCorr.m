@@ -3,6 +3,9 @@ function [R, shiftR, rawR, lags] = correctedXCorr(x, y, maxlag, dim)
 % computes the average, all-ways shift-predictor subtracted (corrected)
 % cross-correlogram between matrices x, y
 %     if dim == 1 data lies in columns, if dim == 2, rows
+
+% 5/30/19   now NaN tolerant (assumes that NaNs will be in same places in
+% both x and y or else it throws an error)
     if nargin < 4
         dim = 1;
     end
@@ -11,9 +14,12 @@ function [R, shiftR, rawR, lags] = correctedXCorr(x, y, maxlag, dim)
         error('');
     end
     
-    if ~all(size(x) == size(y))
-        error('');
+    assert(all(size(x) == size(y)), 'matrices must be same size');
+    assert(all(isfinite(x(:)) == isfinite(y(:))), 'NaNs must match in x and y');
+    if any(~isfinite(x(:)) | any(~isfinite(y(:))))
+        warning('correctedXCorr doesn''t handle interior NaNs, only NaNs at edges');
     end
+
     
     if dim == 2
         x = x';
@@ -50,7 +56,9 @@ function [R, lags] = avgXCorr(x, y, maxlag)
     lags = -maxlag:maxlag;
 
     for column = 1:size(x, 2)
-        [theseR, lags] = xcorr(x(:,column), y(:,column), maxlag);
+        thisX = x(isfinite(x(:,column)),column);
+        thisY = y(isfinite(y(:,column)),column);
+        [theseR, lags] = xcorr(thisX, thisY, maxlag);
         allR(:,column) = theseR;
     end
     R = nanmean(allR, 2);

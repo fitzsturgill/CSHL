@@ -14,6 +14,7 @@ function [ax txt] = textAxes(h, txt, fsize)
         axes(h);
         cla;
         axis off;
+        ax = h;
     end
     
 
