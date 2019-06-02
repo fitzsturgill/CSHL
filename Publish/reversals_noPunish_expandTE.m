@@ -51,6 +51,20 @@ for counter = 1:7
     % percentile value for peak estimations
     percentValue = 0.8;
     
+    % smooth lick times into lick rates
+    window = [-7 4];
+    sigma = 0.2; % standard deviation of gaussian to smooth licks
+    binEdges = linspace(window(1), window(2), TE.Photometry.sampleRate * diff(window) + 1);
+    [eventTimes, eventTrials] = extractEventTimesFromTE(TE, 1:length(TE.filename), 'Port1In', 'zeroTimes', TE.Us, 'window', window);
+    counts = histCountsByTrial(eventTimes, eventTrials, binEdges);
+    counts = counts .* TE.Photometry.sampleRate;
+    kernel_time = -3*sigma:1/TE.Photometry.sampleRate:3*sigma; % kernel is 3 standard deviations wide 
+    kernel = normpdf(kernel_time, 0, sigma);
+    TE.lickRates.data = conv2(counts, kernel, 'same');
+    TE.lickRates.settings.sigma = sigma;
+    TE.lickRates.startTime = cellfun(@(x) x(1), TE.Us) + window(1);
+    TE.lickRates.sampleRate = TE.Photometry.sampleRate;
+    
     % estimate respones for different events in each trial for photometry
     % (bpCalcPeak_dFF) and for licking (countEventFromTE)
     TE.licks_cs = countEventFromTE(TE, 'Port1In', csWindow, TE.Cue);

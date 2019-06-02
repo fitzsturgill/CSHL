@@ -1,4 +1,10 @@
 % for paul
+
+
+animals = {'DC_44', 'DC_46', 'DC_47', 'DC_53', 'DC_54', 'DC_56'}; % exclude DC_52 (low S/N)
+
+
+
 DB = dbLoadExperiment('reversals_noPunish_publish');
 animal = 'DC_47';
 dbLoadAnimal(DB, animal);
