@@ -54,9 +54,12 @@ for counter = 1:length(DB.animals)
         'filename', TE.filename,...
         'ReinforcementOutcome', TE.ReinforcementOutcome,...
         'OdorValveIndex', TE.OdorValveIndex,...
-        'csLicksROC', TE.AnswerLicksROC,...
         };
-    
+    if isfield(TE, 'AnswerLicksROC')
+                dataToPull(end+1:end+2) = {'csLicksROC', TE.AnswerLicksROC};
+    else
+        dataToPull(end+1:end+2) = {'csLicksROC', NaN(length(TE.filename), 1)};
+    end
     RE = struct();
     RE.csPlus = extractReversalsFromTE(TE, csPlusTrials, dataToPull, 'maxReversals', 1000);%, 'maxReversals', 1);
     RE.csMinus = extractReversalsFromTE(TE, csMinusTrials, dataToPull, 'maxReversals', 1000);%, 'maxReversals', 1);

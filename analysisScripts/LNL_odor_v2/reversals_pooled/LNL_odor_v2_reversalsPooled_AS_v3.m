@@ -48,8 +48,8 @@ end
 
 %% desktop
 % savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\SFN_2017\Reversals';
-savepath = uigetdir;
-% savepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\Reversals_Pooled';
+% savepath = uigetdir;
+savepath = 'Z:\SummaryAnalyses\LickNoLick_odor_v2_BaselineTrialByTrial\Reversals_Pooled';
 saveOn = 1;
 
 

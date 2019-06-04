@@ -19,9 +19,10 @@ F = [data(:) data2(:)];
 
 %%
 ops.fs = TE.(photometryField).sampleRate;
-ops.sensorTau = 0.2;
+ops.sensorTau = 0.1;
 ops.estimateNeuropil = 0;
 ops.deconvType = 'OASIS'; % L0 or OASIS
+ops.runningBasleine = 0;
 
 
 % looks like I need to properly install suite2p...
@@ -45,13 +46,13 @@ TE.(photometryField).data(2).spikes = reshape(sp(:,2), [sz(2) sz(1)])';
 
 trial = 3;
 xlim = [5 20];
-ensureFigure('test', 1); 
+% ensureFigure('test', 1); 
 subplot(2,1,1); plot(TE.(photometryField).xData, [zscore(TE.(photometryField).data(1).ZS(trial,:))' zscore(TE.(photometryField).data(1).reconstructed(trial,:))'])
 yyaxis right; stem(TE.(photometryField).xData, TE.(photometryField).data(1).spikes(trial,:));
 set(gca, 'XLim', xlim);
 subplot(2,1,2); plot(TE.(photometryField).xData, [zscore(TE.(photometryField).data(2).ZS(trial,:))' zscore(TE.(photometryField).data(2).reconstructed(trial,:))'])
 yyaxis right; stem(TE.(photometryField).xData, TE.(photometryField).data(2).spikes(trial,:));
-set(gca, 'XLim', xlim);
+% set(gca, 'XLim', xlim);
 
 
 %% find optimal tau
@@ -59,6 +60,7 @@ set(gca, 'XLim', xlim);
 taus = 0.01:0.01:2;
 ops.fs = TE.(photometryField).sampleRate;
 ops.estimateNeuropil = 0;
+ops.runningBaseline = 0;
 ops.deconvType = 'OASIS';
 
 data = TE.(photometryField).data(1).ZS';
@@ -83,6 +85,6 @@ end
 
 %% plot correlation vs sensor tau
 
-ensureFigure('Pearson_vs_tau', 1); plot(taus, corrValues); xlabel('sensor tau (s)'); title('Pearson'); ylabel('rho'); legend({'ch1', 'ch2'}); legend boxoff;
+ensureFigure('Pearson_vs_tau', 1); plot(taus, corrValues); xlabel('sensor tau (s)'); title('Pearson'); ylabel('rho'); %legend({'ch1', 'ch2'}); legend boxoff;
 
-ensureFigure('Spearman_vs_tau', 1); plot(taus, corrValues2); xlabel('sensor tau (s)'); title('Spearman'); ylabel('rho'); legend({'ch1', 'ch2'}); legend boxoff;
+ensureFigure('Spearman_vs_tau', 1); plot(taus, corrValues2); xlabel('sensor tau (s)'); title('Spearman'); ylabel('rho');% legend({'ch1', 'ch2'}); legend boxoff;

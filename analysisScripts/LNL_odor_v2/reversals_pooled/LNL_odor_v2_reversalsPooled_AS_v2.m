@@ -106,9 +106,10 @@ alwaysCsPlus_licks = [AR.csPlus.csLicks.before AR.csPlus.csLicks.after];
 
 %% newCsPlus - normalize by 90% of pre reversal (CS+) values, smooth, find first and last common points across reversals
 f = 0.9;
-% newCsPlus_ch1_norm = smoothdata(newCsPlus_ch1, 2, 'movmean', 3, 'omitnan');
-% newCsPlus_ch2_norm = smoothdata(newCsPlus_ch2, 2, 'movmean', 3, 'omitnan');
-% newCsPlus_licks_norm = smoothdata(newCsPlus_licks, 2, 'movmean', 3, 'omitnan');
+smoothWindow = 1;
+newCsPlus_ch1_norm = smoothdata(newCsPlus_ch1, 2, 'movmean', smoothWindow, 'omitnan');
+newCsPlus_ch2_norm = smoothdata(newCsPlus_ch2, 2, 'movmean', smoothWindow, 'omitnan');
+newCsPlus_licks_norm = smoothdata(newCsPlus_licks, 2, 'movmean', smoothWindow, 'omitnan');
 
 newCsPlus_ch1_norm = bsxfun(@rdivide, newCsPlus_ch1_norm, percentile(newCsMinus_ch1_norm(:,1:newCsPlus_firstRevTrial - 1), f, 2));
 newCsPlus_ch2_norm = bsxfun(@rdivide, newCsPlus_ch2_norm, percentile(newCsMinus_ch2_norm(:,1:newCsPlus_firstRevTrial - 1), f, 2));
@@ -150,9 +151,9 @@ end
 %%
 %% newCsMinus - normalize by 90% of pre reversal values, smooth, find first and last common points across reversals
 f = 0.9;
-% newCsMinus_ch1_norm = smoothdata(newCsMinus_ch1, 2, 'movmean', 3, 'omitnan');
-% newCsMinus_ch2_norm = smoothdata(newCsMinus_ch2, 2, 'movmean', 3, 'omitnan');
-% newCsMinus_licks_norm = smoothdata(newCsMinus_licks, 2, 'movmean', 3, 'omitnan');
+newCsMinus_ch1_norm = smoothdata(newCsMinus_ch1, 2, 'movmean', smoothWindow, 'omitnan');
+newCsMinus_ch2_norm = smoothdata(newCsMinus_ch2, 2, 'movmean', smoothWindow, 'omitnan');
+newCsMinus_licks_norm = smoothdata(newCsMinus_licks, 2, 'movmean', smoothWindow, 'omitnan');
 
 newCsMinus_ch1_norm = bsxfun(@rdivide, newCsMinus_ch1_norm, percentile(newCsMinus_ch1_norm(:,1:newCsMinus_firstRevTrial - 1), f, 2));
 newCsMinus_ch2_norm = bsxfun(@rdivide, newCsMinus_ch2_norm, percentile(newCsMinus_ch2_norm(:,1:newCsMinus_firstRevTrial - 1), f, 2));

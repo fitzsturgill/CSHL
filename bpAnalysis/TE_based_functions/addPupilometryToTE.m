@@ -95,7 +95,7 @@ function TE = addPupilometryToTE(TE, varargin)
 
         fs = dir('*upil_*.avi'); % use videos to get time stamps, then generate .mat file name later on which will be derived from the timstamped video file
         if length(fs) == 0
-            warning(['*** No Pupil_ files found in ' pupilFolder]); % you need to analyze it first!
+            warning(['*** No Pupil_ files found in ' pupilPath]); % you need to analyze it first!
             continue
         end
         fileList = {fs(:).name};        
@@ -185,7 +185,8 @@ function TE = addPupilometryToTE(TE, varargin)
         correctedIx_dm = [1 correctedIx_dm + 1];
 
         if abs(numFileDifference) > maxDifference            
-            error('*** spurious or missing pupil.mat files detected, difference of %d files for %s you may need to run  bpCleanAndVerifyBonsai ***', numFileDifference, sessionname);
+            warning('*** spurious or missing pupil.mat files detected, difference of %d files for %s you may need to run  bpCleanAndVerifyBonsai ***', numFileDifference, sessionname);
+            continue;
         end        
         
 %         if any(dmDelta < 2)

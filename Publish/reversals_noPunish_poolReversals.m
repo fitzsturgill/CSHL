@@ -108,8 +108,12 @@ end
 
 
 %% filter reversals according to quality
+% goodReversals = ...
+%     ~isnan(trialsToCriterion) &...
+%     auROC.phPeakMean_cs_ch1.acq > 0 &...
+%     auROC.phPeakMean_cs_ch2.acq > 0;
+
 goodReversals = ...
-    ~isnan(trialsToCriterion) &...
     auROC.phPeakMean_cs_ch1.acq > 0 &...
     auROC.phPeakMean_cs_ch2.acq > 0;
 
@@ -1547,9 +1551,9 @@ ensureFigure(savename, 1);
 ll = [];
 subplot(1,2,1); hold on; subplot(1,2,2); hold on;
 for counter = 1:nMice
-    if ~ismember(counter, keepers)
-        continue;
-    end
+%     if ~ismember(counter, keepers)
+%         continue;
+%     end
     thisMouse = all_mouseNumber == counter;
     subplot(1,2,1); %set(gca, 'XLim', xlims(1,:));
 %     allTrials = allTrials | trialSets{counter};
