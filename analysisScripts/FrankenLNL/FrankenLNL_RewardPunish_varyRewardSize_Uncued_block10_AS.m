@@ -54,11 +54,12 @@ TE.usLicks = countEventFromTE(TE, 'Port1In', [0 2], usZeros);
 truncateSessionsFromTE(TE, 'init', 'usLicks', filterTE(TE, 'trialType', 1));
 
 %%
+TE.licks_us = countEventFromTE(TE, 'Port1In', usWindow, TE.Us);
 usWindow = [0 .5];  
 minRewardLickRate = percentile(TE.licks_us.rate(rewardTrials), 0.2);
 frankenLNL_conditions;
 
-TE.licks_us = countEventFromTE(TE, 'Port1In', usWindow, TE.Us);
+
 
 
 bigHit = trialsByType{1} & (TE.licks_us.rate >= minRewardLickRate);
