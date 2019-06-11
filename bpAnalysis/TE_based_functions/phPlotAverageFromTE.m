@@ -54,9 +54,12 @@ function varargout = phPlotAverageFromTE(TE, trials, ch, varargin)
             else
                 [thisHl, thisHp] = boundedline(xData, avgData.Avg(counter, :), avgData.SEM(counter, :), ax, alpha{:}, 'cmap', s.cmap(counter,:), 'nan', 'gap');    
             end
+            thisHl = thisHl;
+            thisHp = thisHp;
         else
-            thisHl = NaN;
-            thisHp = NaN;
+            continue % stupid matlab now handles line and patch handles as options, yet doesn't allow you to generate null handles with NaNs
+%             thisHl = NaN;
+%             thisHp = NaN;
         end
             
         lh(counter) = thisHl; % return handles of the solid lines in the bounded plots

@@ -12,7 +12,7 @@ saveOn = 1;
 exp.value = {'DC_44'  'DC_46'  'DC_47' 'DC_53'  'DC_54'  'DC_56'}; % exclude DC_51
 exp.valence = {'DC_17'  'DC_20'  'DC_35'  'DC_36'  'DC_37'  'DC_40'};
 exp.all = [exp.value exp.valence];
-expType = 'valence';
+expType = 'all';
 
 %% create structure containing all reversals-  SKIPS DC_51
 AR = struct('csPlus', [], 'csMinus', [], 'csPlusReward', [], 'thirdOdor', []); % AR = all reversals
@@ -341,6 +341,9 @@ end
 
 %% test subtraction approach to take advantage of paired recordings
 
+common = sum(~isnan(newCsPlus.licks_cs)) > 3;
+common_odor3 = (-9 <= odor3_trialNumber) & (odor3_trialNumber <= 9);
+
 
 savename = ['ACh_minus_Dop_avgs_' '_' expType];
 ensureFigure(savename, 1);
@@ -356,6 +359,9 @@ ylabel('F(\fontsize{12}\sigma\fontsize{8}-baseline)');
 addOrginLines;
 % t = textBox('\color{green} ACh. minus Dop.'); set(t, 'Interpreter', 'tex', 'FontSize', 8);
 
+
+
+common = sum(~isnan(newCsMinus.licks_cs)) > 3;
 subplot(2,2,2);
 title('new Cs-');
 [hl, hp] = boundedline(newCsMinus_trialNumber(common), nanmean(newCsMinus.phPeakMean_cs_AchMinusDop(goodReversals, common)), nanSEM(newCsMinus.phPeakMean_cs_AchMinusDop(goodReversals, common))',...
@@ -391,12 +397,16 @@ if saveOn
 end    
 
 
-%% align reversals by lick changepoint, then plot subtraction averages
+%% align reversals by lick changepoint
 minLogit = 5;
 trialWindow = [-30 30];
 cpField = 'licks_cs';
+cLimFactor = 4;
+trialWindow_rev = [0 40];
 
 % first new csPlus (acquisition)
+
+% setup for aligned by changepoint
 goodOnes = goodReversals & (cp.csPlus.(cpField).logit > minLogit) & (cp.csPlus.(cpField).index > (baselineTrials - 0));
 zeroTrials = cp.csPlus.(cpField).index - baselineTrials;
 reversalPoints = 0 - zeroTrials;
@@ -408,32 +418,47 @@ reversalPoints = reversalPoints(goodOnes); % select good subset
 [aligned_ch1, ~] = alignedDataWindow(newCsPlus.phPeakMean_cs_ch1, goodOnes, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1), nReversals, 1));
 [aligned_ch2, ~] = alignedDataWindow(newCsPlus.phPeakMean_cs_ch2, goodOnes, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1), nReversals, 1));
 
+% setup for alignment by reversal
+% [sorted_rev, sortOrder_rev] = sort(cp.csPlus.licks_cs.index(goodOnes));
+cp_rev = zeroTrials(goodOnes);
+
+
 % first images, sorted by reversal point.
 savename = ['cp_aligned_newCsPlus_images' '_' expType];
 ensureFigure(savename, 1);
 
-subplot(2,2,1); hold on;
+subplot(4,2,1); hold on;
 title('Cue licks');
-imagesc('XData', xData, 'CData', aligned_licks(ix, :));
-plot(reversalPoints(ix), 1:sum(goodOnes), '--w', 'LineWidth', 2); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)]);
+cData = aligned_licks(ix, :);
+clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
+imagesc('XData', xData, 'CData', cData, clim);
+plot(reversalPoints(ix), 1:sum(goodOnes), '--r', 'LineWidth', 2); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)]);
 
-subplot(2,2,2); hold on;
+
+subplot(4,2,2); hold on;
+cData = newCsPlus.licks_cs(goodOnes, :);
+imagesc('XData', newCsPlus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
+plot(cp_rev, 1:sum(goodOnes), 'r.', 'LineStyle', 'none', 'MarkerSize', 10);
+set(gca, 'YLim', [1 sum(goodOnes)]);
+
+
+subplot(4,2,3); hold on;
 title('ACh.', 'Color', mycolors('ChAT'));
 imagesc('XData', xData, 'CData', aligned_ch1(ix, :));
 plot(reversalPoints(ix), 1:sum(goodOnes), '--w', 'LineWidth', 2); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)]);
 
-subplot(2,2,3); hold on;
+subplot(4,2,4); hold on;
 title('Dop.', 'Color', mycolors('DAT'));
 imagesc('XData', xData, 'CData', aligned_ch2(ix, :));
 plot(reversalPoints(ix), 1:sum(goodOnes), '--w', 'LineWidth', 2); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)]);
 
-subplot(2,2,4); hold on;
+subplot(4,2,5); hold on;
 title('ACh. - Dop.');
 imagesc('XData', xData, 'CData', aligned_subtract(ix, :));
 plot(reversalPoints(ix), 1:sum(goodOnes), '--w', 'LineWidth', 2); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)]);
 
 formatFigurePoster([5.5 4], '', 12);
-
+%%
 if saveOn
     saveas(gcf, fullfile(savepath, [savename '.fig']));
     saveas(gcf, fullfile(savepath, [savename '.jpg']));   
