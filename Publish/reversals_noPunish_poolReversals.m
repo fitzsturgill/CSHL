@@ -113,12 +113,12 @@ end
 
 baselineTrials = 20;
 % cp_licks = bpChangePoints([AR.csMinus.licks_cs.before(:, end - baselineTrials + 1:end) AR.csPlus.licks_cs.after(:, 1:end)], 2, 1000);
-cp.csPlus.licks_cs = bpChangePoints([AR.csMinus.licks_cs.before(:, end - baselineTrials + 1:end) AR.csPlus.licks_cs.after(:, 1:end)], 2, 1000);
-cp.csPlus.phPeakMean_cs_ch1 = bpChangePoints([AR.csMinus.phPeakMean_cs_ch1.before(:, end - baselineTrials + 1:end) AR.csPlus.phPeakMean_cs_ch1.after(:, 1:end)], 2, 1000);
-cp.csPlus.phPeakMean_cs_ch2 = bpChangePoints([AR.csMinus.phPeakMean_cs_ch2.before(:, end - baselineTrials + 1:end) AR.csPlus.phPeakMean_cs_ch2.after(:, 1:end)], 2, 1000);
-cp.csMinus.licks_cs = bpChangePoints([AR.csPlus.licks_cs.before(:, end - baselineTrials + 1:end) AR.csMinus.licks_cs.after(:, 1:end)], 2, 1000);
-cp.csMinus.phPeakMean_cs_ch1 = bpChangePoints([AR.csPlus.phPeakMean_cs_ch1.before(:, end - baselineTrials + 1:end) AR.csMinus.phPeakMean_cs_ch1.after(:, 1:end)], 2, 1000);
-cp.csMinus.phPeakMean_cs_ch2 = bpChangePoints([AR.csPlus.phPeakMean_cs_ch2.before(:, end - baselineTrials + 1:end) AR.csMinus.phPeakMean_cs_ch2.after(:, 1:end)], 2, 1000);
+cp.csPlus.licks_cs = bpChangePoints([AR.csMinus.licks_cs.before(:, end - baselineTrials + 1:end) AR.csPlus.licks_cs.after(:, 1:end)], 2, 1000, 'up');
+cp.csPlus.phPeakMean_cs_ch1 = bpChangePoints([AR.csMinus.phPeakMean_cs_ch1.before(:, end - baselineTrials + 1:end) AR.csPlus.phPeakMean_cs_ch1.after(:, 1:end)], 2, 1000, 'up');
+cp.csPlus.phPeakMean_cs_ch2 = bpChangePoints([AR.csMinus.phPeakMean_cs_ch2.before(:, end - baselineTrials + 1:end) AR.csPlus.phPeakMean_cs_ch2.after(:, 1:end)], 2, 1000, 'up');
+cp.csMinus.licks_cs = bpChangePoints([AR.csPlus.licks_cs.before(:, end - baselineTrials + 1:end) AR.csMinus.licks_cs.after(:, 1:end)], 2, 1000, 'down');
+cp.csMinus.phPeakMean_cs_ch1 = bpChangePoints([AR.csPlus.phPeakMean_cs_ch1.before(:, end - baselineTrials + 1:end) AR.csMinus.phPeakMean_cs_ch1.after(:, 1:end)], 2, 1000, 'down');
+cp.csMinus.phPeakMean_cs_ch2 = bpChangePoints([AR.csPlus.phPeakMean_cs_ch2.before(:, end - baselineTrials + 1:end) AR.csMinus.phPeakMean_cs_ch2.after(:, 1:end)], 2, 1000, 'down');
 
 
 %% filter reversals according to quality
@@ -1221,55 +1221,58 @@ toShow = gr(ordering);
 % nice toShow for csPlus, phPeakMean_cs_ch1: [86    70    42    26    77    44]
 
 
-condition = 'csPlus'; % csPlus for newCsPlus
+conditions = {'csPlus', 'csMinus'}; % csPlus for newCsPlus
 dataField = 'phPeakMean_cs_ch1';
 fieldLabel = 'ACh.';
-savename = ['reversals_pooled_Latency_examples_' fieldLabel];
-ensureFigure(savename, 1);
-% dataField = 'licks_cs';
-for counter = 1:nShow   
-    thisRev = toShow(counter);
-%     thisRevCP = 
-    
-    % weibull
-    subplot(nShow, 3, counter*3 - 2); hold on;
-    if counter == 1
-        title('Weibull');
-    end
-    plot(weibull.(condition).(dataField).toFit{thisRev}, '.', 'Color', [0 0.75 0]); 
-    plot(weibull.(condition).(dataField).object{thisRev}); legend off;
-    plot([1 1] + baselineTrials, get(gca, 'YLim'), '--k');
-        set(gca, 'XLim', [0 120]);
-    if counter == round(nShow/2)
-        ylabel(fieldLabel, 'Interpreter', 'none', 'FontWeight', 'bold');
-    else
-        ylabel('');
-    end
-    % changepoint
-    subplot(nShow, 3, counter*3 - 1); hold on;
-    if counter == 1
-        title('Changepoint');
-    end    
-    scatter(1:length(cp.(condition).(dataField).cumsum{thisRev}), cp.(condition).(dataField).cumsum{thisRev}, 10, cp.(condition).(dataField).logitAll{thisRev}); colormap jet;
-    line(repmat(cp.(condition).(dataField).index(thisRev), 1, 2), get(gca, 'YLim')); 
-    plot([1 1] + baselineTrials, get(gca, 'YLim'), '--k');
-    set(gca, 'XLim', [0 120]);
-    textBox(sprintf('Logit=%.2f', cp.(condition).(dataField).logit(thisRev)));
-    % exponential
-    subplot(nShow, 3, counter*3); hold on;    
-    if counter == 1
-        title('Exponential');
-    end    
-    plot(expFit.(condition).(dataField).toFit{thisRev}, '.', 'Color', [0 0.75 0]); hold on;
-    plot(expFit.(condition).(dataField).object{thisRev}); legend off;
-    plot([0 0], get(gca, 'YLim'), '--k');
-    set(gca, 'XLim', [0 120 - baselineTrials]);
-end
+for ccounter = 1:length(conditions)
+    condition = conditions{ccounter};
+    savename = ['reversals_pooled_Latency_examples_' fieldLabel '_' condition];
+    ensureFigure(savename, 1);
+    % dataField = 'licks_cs';
+    for counter = 1:nShow   
+        thisRev = toShow(counter);
+    %     thisRevCP = 
 
-if saveOn
-    saveas(gcf, fullfile(savepath, [savename '.fig']));
-    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
-    saveas(gcf, fullfile(savepath, [savename '.epsc']));   
+        % weibull
+        subplot(nShow, 3, counter*3 - 2); hold on;
+        if counter == 1
+            title('Weibull');
+        end
+        plot(weibull.(condition).(dataField).toFit{thisRev}, '.', 'Color', [0 0.75 0]); 
+        plot(weibull.(condition).(dataField).object{thisRev}); legend off;
+        plot([1 1] + baselineTrials, get(gca, 'YLim'), '--k');
+            set(gca, 'XLim', [0 120]);
+        if counter == round(nShow/2)
+            ylabel(fieldLabel, 'Interpreter', 'none', 'FontWeight', 'bold');
+        else
+            ylabel('');
+        end
+        % changepoint
+        subplot(nShow, 3, counter*3 - 1); hold on;
+        if counter == 1
+            title('Changepoint');
+        end    
+        scatter(1:length(cp.(condition).(dataField).cumsum{thisRev}), cp.(condition).(dataField).cumsum{thisRev}, 10, cp.(condition).(dataField).logitAll{thisRev}); colormap jet;
+        line(repmat(cp.(condition).(dataField).index(thisRev), 1, 2), get(gca, 'YLim')); 
+        plot([1 1] + baselineTrials, get(gca, 'YLim'), '--k');
+        set(gca, 'XLim', [0 120]);
+        textBox(sprintf('Logit=%.2f', cp.(condition).(dataField).logit(thisRev)));
+        % exponential
+        subplot(nShow, 3, counter*3); hold on;    
+        if counter == 1
+            title('Exponential');
+        end    
+        plot(expFit.(condition).(dataField).toFit{thisRev}, '.', 'Color', [0 0.75 0]); hold on;
+        plot(expFit.(condition).(dataField).object{thisRev}); legend off;
+        plot([0 0], get(gca, 'YLim'), '--k');
+        set(gca, 'XLim', [0 120 - baselineTrials]);
+    end
+
+    if saveOn
+        saveas(gcf, fullfile(savepath, [savename '.fig']));
+        saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+        saveas(gcf, fullfile(savepath, [savename '.epsc']));   
+    end
 end
 
 %% images ordered by lick changepoints
@@ -1618,9 +1621,11 @@ subplot(1,2,2); scatter(all_Licks, all_DAT, 8, '.'); ylabel('cue DAT'); textBox(
 
 
 linecolors = [1 0 0; 0 0 1; 0 1 1; 0 1 0; 1 1 0; 1 0 1];     
-keepers = [1:6];
+% keepers = [1:6];
 
 nMice = max(mouseNumber);
+cm = hsv;
+linecolors = cm(floor((1:nMice) .* (size(cm, 1) / nMice)), :);
 savename = 'reversal_trial_correlations';
 ensureFigure(savename, 1);
 % allTrials = true; 
@@ -1655,7 +1660,7 @@ for counter = 1:nMice
     set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :));    
 end
 
-subplot(1,2,1); legend(ll, DB.animals(keepers), 'Interpreter', 'none');
+subplot(1,2,1); legend(ll, DB.animals(1:nMice), 'Interpreter', 'none', 'Location', 'northwest'); legend boxoff;
 title('Cs'); ylabel('Dop.'); xlabel('ACh.');
 subplot(1,2,2);
 title('Us'); ylabel('Dop.'); xlabel('ACh.');

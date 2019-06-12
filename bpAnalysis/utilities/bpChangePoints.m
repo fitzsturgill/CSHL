@@ -1,4 +1,4 @@
-function cp = bpChangePoints(Data, dim, nShuff)
+function cp = bpChangePoints(Data, dim, nShuff, direction)
     
 if nargin < 2
     dim = 1;
@@ -6,6 +6,10 @@ end
 
 if nargin < 3
     nShuff = 1000;
+end
+
+if nargin < 4
+    direction = 'both'; % choices; 'up', 'down', or 'both'[default] 
 end
 
 assert(ndims(Data) <= 2);
@@ -29,14 +33,15 @@ for counter = 1:ncp
     np = length(valid);
     total = sum(data(valid));
     nochange = total/np * (1:np); nochange = nochange(:); % diagonal line from orgin
-    [val, ix] = changepoint(data(valid), nochange);
+    [val, ix] = changepoint(data(valid), nochange, direction);
     null = zeros(nShuff, 1);
     for shuffCounter = 1:nShuff % null distribution
         shuffIx = randperm(np);
-        [nullVal, ~] = changepoint(data(valid(shuffIx)), nochange);
+        [nullVal, ~] = changepoint(data(valid(shuffIx)), nochange, direction);
         null(shuffCounter) = nullVal;
     end
-    difference = nochange - cumsum(data(valid)); % redundant to subfunction
+
+    difference = abs(nochange - cumsum(data(valid))); % redundant to subfunction
     p = iprctile(null, val);
     cp.index(counter) = valid(ix);
     cp.p(counter) = p;
@@ -57,11 +62,19 @@ end
     
     
     
-function [val, ix] = changepoint(data, nochange)
+function [val, ix] = changepoint(data, nochange, direction)
 test = cumsum(data);
-difference = abs(nochange - test);
-[~, ix] = max(difference);
-val = difference(ix);
+difference = nochange - test;
+switch direction
+    case 'both'
+        difference = abs(difference);
+        [~, ix] = max(difference);
+    case 'up'
+        [~, ix] = max(difference);
+    case 'down'
+        [~, ix] = min(difference);
+end
+val = abs(difference(ix));
 
 
             

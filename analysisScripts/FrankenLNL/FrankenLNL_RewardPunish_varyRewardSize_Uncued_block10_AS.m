@@ -59,10 +59,6 @@ TE.licks_us = countEventFromTE(TE, 'Port1In', usWindow, TE.Us);
 frankenLNL_conditions;
 minRewardLickRate = percentile(TE.licks_us.rate(rewardTrials), 0.2);
 
-
-
-
-
 bigHit = trialsByType{1} & (TE.licks_us.rate >= minRewardLickRate);
 mediumHit = trialsByType{2} & (TE.licks_us.rate >= minRewardLickRate);
 smallHit = trialsByType{3} & (TE.licks_us.rate >=minRewardLickRate);
@@ -70,9 +66,6 @@ smallHit = trialsByType{3} & (TE.licks_us.rate >=minRewardLickRate);
 bigMiss = trialsByType{1} & (TE.licks_us.rate < minRewardLickRate);
 mediumMiss = trialsByType{2} & (TE.licks_us.rate < minRewardLickRate);
 smallMiss = trialsByType{3} & (TE.licks_us.rate < minRewardLickRate);
-
-
-
 %% rasters
 
 PhotometryField = 'Photometry';
@@ -82,7 +75,6 @@ window = [-2 4];
 
 savename = 'varyReward_phRasters_block10' ;
 ensureFigure(savename, 1);
-
 
 subplot(3,3,1);
 eventRasterFromTE(TE, trialsByType{1}, 'Port1In', 'trialNumbering', trialNumbering,...

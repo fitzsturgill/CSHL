@@ -133,13 +133,14 @@ end
 % fitFields = {'licks_cs', 'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2'};
 
 baselineTrials = 20;
+% baselineTrials = 1;
 % cp_licks = bpChangePoints([AR.csMinus.licks_cs.before(:, end - baselineTrials + 1:end) AR.csPlus.licks_cs.after(:, 1:end)], 2, 1000);
-cp.csPlus.licks_cs = bpChangePoints([AR.csMinus.licks_cs.before(:, end - baselineTrials + 1:end) AR.csPlus.licks_cs.after(:, 1:end)], 2, 1000);
-cp.csPlus.phPeakMean_cs_ch1 = bpChangePoints([AR.csMinus.phPeakMean_cs_ch1.before(:, end - baselineTrials + 1:end) AR.csPlus.phPeakMean_cs_ch1.after(:, 1:end)], 2, 1000);
-cp.csPlus.phPeakMean_cs_ch2 = bpChangePoints([AR.csMinus.phPeakMean_cs_ch2.before(:, end - baselineTrials + 1:end) AR.csPlus.phPeakMean_cs_ch2.after(:, 1:end)], 2, 1000);
-cp.csMinus.licks_cs = bpChangePoints([AR.csPlus.licks_cs.before(:, end - baselineTrials + 1:end) AR.csMinus.licks_cs.after(:, 1:end)], 2, 1000);
-cp.csMinus.phPeakMean_cs_ch1 = bpChangePoints([AR.csPlus.phPeakMean_cs_ch1.before(:, end - baselineTrials + 1:end) AR.csMinus.phPeakMean_cs_ch1.after(:, 1:end)], 2, 1000);
-cp.csMinus.phPeakMean_cs_ch2 = bpChangePoints([AR.csPlus.phPeakMean_cs_ch2.before(:, end - baselineTrials + 1:end) AR.csMinus.phPeakMean_cs_ch2.after(:, 1:end)], 2, 1000);
+cp.csPlus.licks_cs = bpChangePoints([AR.csMinus.licks_cs.before(:, end - baselineTrials + 1:end) AR.csPlus.licks_cs.after(:, 1:end)], 2, 1000, 'down');
+cp.csPlus.phPeakMean_cs_ch1 = bpChangePoints([AR.csMinus.phPeakMean_cs_ch1.before(:, end - baselineTrials + 1:end) AR.csPlus.phPeakMean_cs_ch1.after(:, 1:end)], 2, 1000, 'up');
+cp.csPlus.phPeakMean_cs_ch2 = bpChangePoints([AR.csMinus.phPeakMean_cs_ch2.before(:, end - baselineTrials + 1:end) AR.csPlus.phPeakMean_cs_ch2.after(:, 1:end)], 2, 1000, 'up');
+cp.csMinus.licks_cs = bpChangePoints([AR.csPlus.licks_cs.before(:, end - baselineTrials + 1:end) AR.csMinus.licks_cs.after(:, 1:end)], 2, 1000, 'down');
+cp.csMinus.phPeakMean_cs_ch1 = bpChangePoints([AR.csPlus.phPeakMean_cs_ch1.before(:, end - baselineTrials + 1:end) AR.csMinus.phPeakMean_cs_ch1.after(:, 1:end)], 2, 1000, 'down');
+cp.csMinus.phPeakMean_cs_ch2 = bpChangePoints([AR.csPlus.phPeakMean_cs_ch2.before(:, end - baselineTrials + 1:end) AR.csMinus.phPeakMean_cs_ch2.after(:, 1:end)], 2, 1000, 'down');
 
 
 %% filter reversals according to quality
@@ -218,7 +219,7 @@ titles = {'ACh', 'Dop.', 'Licks', 'Lick auROC', 'Pupil', 'Whisk'};
 clim = [-5 5];
 fh=[];
 
-savename = ['newCsPlus_image' expType];
+savename = ['newCsPlus_image_' expType];
 fh(end+1) = ensureFigure(savename, 1);
 cLimFactor = 3;
 smoothWindow = 1;
@@ -239,8 +240,8 @@ subplot(2,3,5); xlabel('Odor presentations from reversal');
 subplot(2,3,2); title('New Cs+');
 set(gcf, 'Position', [304   217   633   485]);
 
-savename = ['newCsMinus_image' expType];
-fh(end+1) = ensureFigure(saveName, 1);
+savename = ['newCsMinus_image_' expType];
+fh(end+1) = ensureFigure(savename, 1);
 cLimFactor = 3;
 xData = [min(newCsMinus_trialNumber), max(newCsMinus_trialNumber)];
 xlim = [-30 70];
@@ -401,64 +402,184 @@ end
 minLogit = 5;
 trialWindow = [-30 30];
 cpField = 'licks_cs';
-cLimFactor = 4;
+cLimFactor = 3;
 trialWindow_rev = [0 40];
+markerSize = 4;
 
 % first new csPlus (acquisition)
 
 % setup for aligned by changepoint
 goodOnes = goodReversals & (cp.csPlus.(cpField).logit > minLogit) & (cp.csPlus.(cpField).index > (baselineTrials - 0));
-zeroTrials = cp.csPlus.(cpField).index - baselineTrials;
+zeroTrials = cp.csPlus.(cpField).index(goodOnes) - baselineTrials;
 reversalPoints = 0 - zeroTrials;
-reversalPoints = reversalPoints(goodOnes); % select good subset
+reversalPoints = reversalPoints;
 [sorted, ix] = sort(reversalPoints); % THEN sort them
 
-[aligned_subtract, xData] = alignedDataWindow(newCsPlus.phPeakMean_cs_AchMinusDop, goodOnes, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1), nReversals, 1));
-[aligned_licks, ~] = alignedDataWindow(newCsPlus.licks_cs, goodOnes, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1), nReversals, 1));
-[aligned_ch1, ~] = alignedDataWindow(newCsPlus.phPeakMean_cs_ch1, goodOnes, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1), nReversals, 1));
-[aligned_ch2, ~] = alignedDataWindow(newCsPlus.phPeakMean_cs_ch2, goodOnes, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1), nReversals, 1));
+
+% first select good subset
+good_subtract = newCsPlus.phPeakMean_cs_AchMinusDop(goodOnes, :);
+good_licks = newCsPlus.licks_cs(goodOnes, :);
+good_ch1 = newCsPlus.phPeakMean_cs_ch1(goodOnes, :);
+good_ch2 = newCsPlus.phPeakMean_cs_ch2(goodOnes, :);
+
+trials = true(sum(goodOnes), 1);
+[aligned_subtract, xData] = alignedDataWindow(good_subtract, trials, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1), sum(goodOnes), 1));
+[aligned_licks, ~] = alignedDataWindow(good_licks, trials, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
+[aligned_ch1, ~] = alignedDataWindow(good_ch1, trials, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
+[aligned_ch2, ~] = alignedDataWindow(good_ch2, trials, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
+
+% randomly permute across reversals (not time) to preserve average but
+% scramble potential changepoints
+maxTrials = length(newCsPlus.trialNumber);
+
+% generate subscript indices for permutation
+row_ix = repmat(1:maxTrials, sum(goodOnes), 1);
+col_ix = zeros(sum(goodOnes), maxTrials);
+for counter = 1:maxTrials
+    col_ix(:,counter) = randperm(sum(goodOnes))';
+end
+
+lin_ix = sub2ind([sum(goodOnes) maxTrials], col_ix, row_ix);
+perm_subtract = good_subtract(lin_ix);
+perm_licks = good_licks(lin_ix);
+perm_ch1 = good_ch1(lin_ix);
+perm_ch2 = good_ch2(lin_ix);
+
+% quick plot of regular and permuted lick_cs images, and corresponding
+% averages
+savename = 'permutation_sanity_check';
+ensureFigure(savename, 1);
+clim = [0 10]; xlim = [-20 40];
+subplot(3,1,1);
+imagesc(newCsPlus.trialNumber(:, newCsPlus.firstRevTrial - 21:newCsPlus.firstRevTrial + 39), 1:sum(goodOnes), good_licks(:, newCsPlus.firstRevTrial - 20:newCsPlus.firstRevTrial + 40), clim);
+set(gca, 'XLim', xlim);
+title('Licks');
+subplot(3,1,2);
+imagesc(newCsPlus.trialNumber(:, newCsPlus.firstRevTrial - 21:newCsPlus.firstRevTrial + 39), 1:sum(goodOnes), perm_licks(:, newCsPlus.firstRevTrial - 20:newCsPlus.firstRevTrial + 40), clim);
+set(gca, 'XLim', xlim);
+title('Licks permuted');
+subplot(3,1,3); hold on; 
+title('averages');
+plot(newCsPlus.trialNumber(newCsPlus.firstRevTrial - 20:newCsPlus.firstRevTrial + 40), nanmean(good_licks(:, newCsPlus.firstRevTrial - 20:newCsPlus.firstRevTrial + 40)), '-k');
+plot(newCsPlus.trialNumber(newCsPlus.firstRevTrial - 20:newCsPlus.firstRevTrial + 40), nanmean(perm_licks(:, newCsPlus.firstRevTrial - 20:newCsPlus.firstRevTrial + 40)), '--', 'Color', [0.8 0.8 0.8]);
+legend({'intact', 'permuted'}, 'Location', 'best');
+set(gca, 'XLim', xlim); xlabel('new Cs+ trials from rev.');
+
+formatFigurePoster([3 5], '', 10);
+
+if saveOn
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+end    
+
+
+% cp_perm.csPlus.licks_cs = bpChangePoints([AR.csMinus.licks_cs.before(:, end - baselineTrials + 1:end) AR.csPlus.licks_cs.after(:, 1:end)], 2, 1000);
+cp_perm.csPlus.licks_cs = bpChangePoints(perm_licks(:,newCsPlus.firstRevTrial - baselineTrials:end), 2, 1000, 'down');
+zeroTrials_perm = cp_perm.csPlus.licks_cs.index - baselineTrials;
+reversalPoints_perm = 0 - zeroTrials_perm;
+reversalPoints_perm = reversalPoints_perm;
+[sorted_perm, ix_perm] = sort(reversalPoints_perm); % THEN sort them
+
+[aligned_subtract_perm, xData] = alignedDataWindow(perm_subtract, trials, 'zeroTimes', zeroTrials_perm, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1), sum(goodOnes), 1));
+[aligned_licks_perm, ~] = alignedDataWindow(perm_licks, trials, 'zeroTimes', zeroTrials_perm, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
+[aligned_ch1_perm, ~] = alignedDataWindow(perm_ch1, trials, 'zeroTimes', zeroTrials_perm, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
+[aligned_ch2_perm, ~] = alignedDataWindow(perm_ch2, trials, 'zeroTimes', zeroTrials_perm, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
+
 
 % setup for alignment by reversal
 % [sorted_rev, sortOrder_rev] = sort(cp.csPlus.licks_cs.index(goodOnes));
-cp_rev = zeroTrials(goodOnes);
-
+cp_rev = zeroTrials;
 
 % first images, sorted by reversal point.
 savename = ['cp_aligned_newCsPlus_images' '_' expType];
 ensureFigure(savename, 1);
 
-subplot(4,2,1); hold on;
-title('Cue licks');
-cData = aligned_licks(ix, :);
-clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
-imagesc('XData', xData, 'CData', cData, clim);
-plot(reversalPoints(ix), 1:sum(goodOnes), '--r', 'LineWidth', 2); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)]);
-
-
-subplot(4,2,2); hold on;
+subplot(4,3,1); hold on;
+title('Reversal Aligned');
+ylabel('Cue licks');
 cData = newCsPlus.licks_cs(goodOnes, :);
+% use same clim for all images in each row
+clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
 imagesc('XData', newCsPlus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
-plot(cp_rev, 1:sum(goodOnes), 'r.', 'LineStyle', 'none', 'MarkerSize', 10);
+plot(cp_rev, 1:sum(goodOnes), 'wo', 'LineStyle', 'none', 'MarkerSize', markerSize);
 set(gca, 'YLim', [1 sum(goodOnes)]);
 
+subplot(4,3,2); hold on;
+title('Changepoint Aligned');
+cData = aligned_licks(ix, :);
+imagesc('XData', xData, 'CData', cData, clim);
+plot(reversalPoints(ix), 1:sum(goodOnes), ':w', 'LineWidth', 4); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', []);
 
-subplot(4,2,3); hold on;
-title('ACh.', 'Color', mycolors('ChAT'));
-imagesc('XData', xData, 'CData', aligned_ch1(ix, :));
-plot(reversalPoints(ix), 1:sum(goodOnes), '--w', 'LineWidth', 2); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)]);
+subplot(4,3,3); hold on;
+title('Changepoint Aligned, permuted');
+cData = aligned_licks_perm(ix_perm, :);
+imagesc('XData', xData, 'CData', cData, clim);
+plot(reversalPoints_perm(ix_perm), 1:sum(goodOnes), ':w', 'LineWidth', 4); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', []);
 
-subplot(4,2,4); hold on;
-title('Dop.', 'Color', mycolors('DAT'));
-imagesc('XData', xData, 'CData', aligned_ch2(ix, :));
-plot(reversalPoints(ix), 1:sum(goodOnes), '--w', 'LineWidth', 2); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)]);
+subplot(4,3,4); hold on;
+ylabel('ACh.', 'Color', mycolors('ChAT'));
+cData = newCsPlus.phPeakMean_cs_ch1(goodOnes, :);
+% use same clim for all images in each row
+clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
+imagesc('XData', newCsPlus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
+plot(cp_rev, 1:sum(goodOnes), 'wo', 'LineStyle', 'none', 'MarkerSize', markerSize);
+set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', []);
 
-subplot(4,2,5); hold on;
-title('ACh. - Dop.');
-imagesc('XData', xData, 'CData', aligned_subtract(ix, :));
-plot(reversalPoints(ix), 1:sum(goodOnes), '--w', 'LineWidth', 2); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)]);
+subplot(4,3,5); hold on;
+cData = aligned_ch1(ix, :);
+imagesc('XData', xData, 'CData', cData, clim);
+plot(reversalPoints(ix), 1:sum(goodOnes), ':w', 'LineWidth', 4); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', []);
 
-formatFigurePoster([5.5 4], '', 12);
-%%
+subplot(4,3,6); hold on;
+cData = aligned_ch1_perm(ix_perm, :);
+imagesc('XData', xData, 'CData', cData, clim);
+plot(reversalPoints_perm(ix_perm), 1:sum(goodOnes), ':w', 'LineWidth', 4); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', []);
+
+subplot(4,3,7); hold on;
+ylabel('Dop.', 'Color', mycolors('DAT'));
+cData = newCsPlus.phPeakMean_cs_ch2(goodOnes, :);
+% use same clim for all images in each row
+clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
+imagesc('XData', newCsPlus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
+plot(cp_rev, 1:sum(goodOnes), 'wo', 'LineStyle', 'none', 'MarkerSize', markerSize);
+set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', []);
+
+subplot(4,3,8); hold on;
+cData = aligned_ch2(ix, :);
+imagesc('XData', xData, 'CData', cData, clim);
+plot(reversalPoints(ix), 1:sum(goodOnes), ':w', 'LineWidth', 4); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', []);
+
+subplot(4,3,9); hold on;
+cData = aligned_ch2_perm(ix_perm, :);
+imagesc('XData', xData, 'CData', cData, clim);
+plot(reversalPoints_perm(ix_perm), 1:sum(goodOnes), ':w', 'LineWidth', 4); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', []);
+
+subplot(4,3,10); hold on;
+ylabel('Subtract', 'Color', [0 1 0]);
+cData = newCsPlus.phPeakMean_cs_AchMinusDop(ix_perm, :);
+% use same clim for all images in each row
+clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
+imagesc('XData', newCsPlus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
+plot(cp_rev, 1:sum(goodOnes), 'wo', 'LineStyle', 'none', 'MarkerSize', markerSize);
+set(gca, 'YLim', [1 sum(goodOnes)]);
+xlabel('Trials from reversal');
+
+subplot(4,3,11); hold on;
+cData = aligned_subtract(ix, :);
+imagesc('XData', xData, 'CData', cData, clim);
+plot(reversalPoints(ix), 1:sum(goodOnes), ':w', 'LineWidth', 4); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', []);
+xlabel('Trials from changepoint');
+
+subplot(4,3,12); hold on;
+cData = aligned_subtract_perm(ix_perm, :);
+imagesc('XData', xData, 'CData', cData, clim);
+plot(reversalPoints_perm(ix_perm), 1:sum(goodOnes), ':w', 'LineWidth', 4); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', []);
+xlabel('Trials from changepoint');
+
+
+
+formatFigurePoster([8 10], '', 10);
+
 if saveOn
     saveas(gcf, fullfile(savepath, [savename '.fig']));
     saveas(gcf, fullfile(savepath, [savename '.jpg']));   
@@ -468,41 +589,42 @@ end
 % second averages
 savename = ['cp_aligned_newCsPlus_avgs' '_' expType];
 ensureFigure(savename, 1);
-
+marker = '.';
 subplot(2,2,1); title('new Cs+ (acquisition)');
-[hl, hp] = boundedline(xData, nanmean(aligned_licks), nanSEM(aligned_licks)',...
-    'cmap', [0 0 0], 'nan', 'gap'); hold on
+[hl, hp] = boundedline(xData, [nanmean(aligned_licks)' nanmean(aligned_licks_perm)'], permute([nanSEM(aligned_licks)' nanSEM(aligned_licks)'], [1 3 2]),...
+    'cmap', [0 0 0; 0.7 0.7 0.7], 'nan', 'gap'); hold on
 set(gca, 'XLim', trialWindow);%, 'YLim', [-1 2]);
-hl.Marker = 'o';
+set(hl, 'Marker', marker);
 ylabel('cue licks');
 addOrginLines;
+legend(hl, 'Intact', 'Permuted', 'Location', 'best'); legend boxoff;
 
 subplot(2,2,2);
-[hl, hp] = boundedline(xData, nanmean(aligned_ch1), nanSEM(aligned_ch1)',...
-    'cmap', mycolors('ChAT'), 'nan', 'gap'); hold on
+[hl, hp] = boundedline(xData, [nanmean(aligned_ch1)' nanmean(aligned_ch1_perm)'], permute([nanSEM(aligned_ch1)' nanSEM(aligned_ch1_perm)'], [1 3 2]),...
+    'cmap', [mycolors('ChAT'); 0.7 0.7 0.7], 'nan', 'gap'); hold on
 set(gca, 'XLim', trialWindow);%, 'YLim', [-1 2]);
-hl.Marker = 'o';
+set(hl, 'Marker', marker);
 ylabel('ACh.');
 addOrginLines;
 
 subplot(2,2,3);
-[hl, hp] = boundedline(xData, nanmean(aligned_ch2), nanSEM(aligned_ch2)',...
-    'cmap', mycolors('DAT'), 'nan', 'gap'); hold on
+[hl, hp] = boundedline(xData, [nanmean(aligned_ch2)' nanmean(aligned_ch2_perm)'], permute([nanSEM(aligned_ch2)' nanSEM(aligned_ch2_perm)'], [1 3 2]),...
+    'cmap', [mycolors('DAT'); 0.7 0.7 0.7], 'nan', 'gap'); hold on
 set(gca, 'XLim', trialWindow);%, 'YLim', [-1 2]);
-hl.Marker = 'o';
+set(hl, 'Marker', marker);
 ylabel('Dop.');
 xlabel('trials from lick changepoint');
 addOrginLines;
 
 subplot(2,2,4);
-[hl, hp] = boundedline(xData, nanmean(aligned_subtract), nanSEM(aligned_subtract)',...
-    'cmap', [0 1 0], 'nan', 'gap'); hold on
+[hl, hp] = boundedline(xData, [nanmean(aligned_subtract)' nanmean(aligned_subtract_perm)'], permute([nanSEM(aligned_subtract)' nanSEM(aligned_subtract_perm)'], [1 3 2]),...
+    'cmap', [0 1 0; 0.7 0.7 0.7], 'nan', 'gap'); hold on
 set(gca, 'XLim', trialWindow);%, 'YLim', [-1 2]);
 ylabel('ACh. - Dop.');
 xlabel('trials from lick changepoint');
 addOrginLines;
 
-formatFigurePoster([5.5 4], '', 12);
+formatFigurePoster([5.5 4], '', 8);
 
 if saveOn
     saveas(gcf, fullfile(savepath, [savename '.fig']));
