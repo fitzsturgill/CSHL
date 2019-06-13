@@ -65,48 +65,7 @@ sortVariable = revNumber;
 
 
 
-
-
-%% quality control- calculate auROC and dPrime for relevent comparisons
-trialWindow = [-20 60];%?
-
-% initialize
-comp = {'licks_cs', 'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'pupil_csBaselined', 'whisk_csBaselined'}; % comparisons
-all_ways = struct(...
-    'before', zeros(nReversals, 1),... % compare cs- and cs+ before reversal
-    'after', zeros(nReversals, 1),... % compare cs- and cs+ after reversal
-    'acq', zeros(nReversals, 1),... % acquisition: compare cs- before and cs+ after reversal
-    'ext', zeros(nReversals, 1)...  % extinction: compare cs+ before and cs- after reversal
-    );
-% clear dPrime auROC
-for field = comp
-    dPrime.(field{:}) = all_ways;
-    auROC.(field{:}) = all_ways;
-end
-
-% calculate metrics
-for field = comp
-    for rev = 1:nReversals
-        % before
-        dPrime.(field{:}).before(rev) = dPrime_SNR(AR.csPlus.(field{:}).before(rev,trialWindow(1) + end + 1:end), AR.csMinus.(field{:}).before(rev,trialWindow(1) + end + 1:end));
-        auROC.(field{:}).before(rev) = rocarea(stripNaNs(AR.csPlus.(field{:}).before(rev,trialWindow(1) + end + 1:end)), stripNaNs(AR.csMinus.(field{:}).before(rev,trialWindow(1) + end + 1:end)), 'scale');
-        % after
-        dPrime.(field{:}).after(rev) = dPrime_SNR(AR.csPlus.(field{:}).after(rev,1:trialWindow(2)), AR.csMinus.(field{:}).after(rev,1:trialWindow(2)));
-        auROC.(field{:}).after(rev) = rocarea(stripNaNs(AR.csPlus.(field{:}).after(rev,1:trialWindow(2))), stripNaNs(AR.csMinus.(field{:}).after(rev,1:trialWindow(2))), 'scale');        
-        % acquisition
-        dPrime.(field{:}).acq(rev) = dPrime_SNR(AR.csPlus.(field{:}).after(rev,1:trialWindow(2)), AR.csMinus.(field{:}).before(rev,trialWindow(1) + end + 1:end));
-        auROC.(field{:}).acq(rev) = rocarea(stripNaNs(AR.csPlus.(field{:}).after(rev,1:trialWindow(2))), stripNaNs(AR.csMinus.(field{:}).before(rev,trialWindow(1) + end + 1:end)), 'scale');                
-        % extinction
-        dPrime.(field{:}).ext(rev) = dPrime_SNR(AR.csPlus.(field{:}).before(rev,trialWindow(1) + end + 1:end), AR.csMinus.(field{:}).after(rev,1:trialWindow(2)));
-        auROC.(field{:}).ext(rev) = rocarea(stripNaNs(AR.csPlus.(field{:}).before(rev,trialWindow(1) + end + 1:end)), stripNaNs(AR.csMinus.(field{:}).after(rev,1:trialWindow(2))), 'scale');
-    end    
-end
-
-% quality control % 2
-% detect when auROC values first exceed threshold
-
-
-% HACK ALERT- TO INCLUDE PUNISH REVERSALS TEMPORARILY
+%% HACK ALERT- TO INCLUDE PUNISH REVERSALS TEMPORARILY (or not so temporarily)
 % HACK ALERT- TO INCLUDE PUNISH REVERSALS TEMPORARILY
 % HACK ALERT- TO INCLUDE PUNISH REVERSALS TEMPORARILY
 % HACK ALERT- TO INCLUDE PUNISH REVERSALS TEMPORARILY
@@ -694,95 +653,16 @@ if saveOn
 end    
 
 
-% second new csMinus (extinction)
-goodOnes = goodReversals & (cp.csMinus.(cpField).logit > minLogit) & (cp.csMinus.(cpField).index > (baselineTrials - 0));
-zeroTrials = cp.csMinus.(cpField).index - baselineTrials;
-reversalPoints = 0 - zeroTrials;
-reversalPoints = reversalPoints(goodOnes); % select good subset
-[sorted, ix] = sort(reversalPoints); % THEN sort them
+%% time to 50% or equivalent fraction
 
-[aligned_subtract, xData] = alignedDataWindow(newCsMinus.phPeakMean_cs_AchMinusDop, goodOnes, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsMinus.trialNumber(1), nReversals, 1));
-[aligned_licks, ~] = alignedDataWindow(newCsMinus.licks_cs, goodOnes, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsMinus.trialNumber(1), nReversals, 1));
-[aligned_ch1, ~] = alignedDataWindow(newCsMinus.phPeakMean_cs_ch1, goodOnes, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsMinus.trialNumber(1), nReversals, 1));
-[aligned_ch2, ~] = alignedDataWindow(newCsMinus.phPeakMean_cs_ch2, goodOnes, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsMinus.trialNumber(1), nReversals, 1));
-
-% first images, sorted by reversal point.
-savename = ['cp_aligned_newCsMinus_images' '_' expType];
-ensureFigure(savename, 1);
-
-subplot(2,2,1); hold on;
-title('Cue licks');
-imagesc('XData', xData, 'CData', aligned_licks(ix, :));
-plot(reversalPoints(ix), 1:sum(goodOnes), '--w', 'LineWidth', 2); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)]);
-
-subplot(2,2,2); hold on;
-title('ACh.', 'Color', mycolors('ChAT'));
-imagesc('XData', xData, 'CData', aligned_ch1(ix, :));
-plot(reversalPoints(ix), 1:sum(goodOnes), '--w', 'LineWidth', 2); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)]);
-
-subplot(2,2,3); hold on;
-title('Dop.', 'Color', mycolors('DAT'));
-imagesc('XData', xData, 'CData', aligned_ch2(ix, :));
-plot(reversalPoints(ix), 1:sum(goodOnes), '--w', 'LineWidth', 2); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)]);
-
-subplot(2,2,4); hold on;
-title('ACh. - Dop.');
-imagesc('XData', xData, 'CData', aligned_subtract(ix, :));
-plot(reversalPoints(ix), 1:sum(goodOnes), '--w', 'LineWidth', 2); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)]);
-
-formatFigurePoster([5.5 4], '', 12);
-
-if saveOn
-    saveas(gcf, fullfile(savepath, [savename '.fig']));
-    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
-    saveas(gcf, fullfile(savepath, [savename '.epsc']));   
-end 
+fract = 0.5;
 
 
-% second averages
-savename = ['cp_aligned_newCsMinus_avgs' '_' expType];
-ensureFigure(savename, 1);
 
-subplot(2,2,1);
-title('new Cs- (extinction)');
-[hl, hp] = boundedline(xData, nanmean(aligned_licks), nanSEM(aligned_licks)',...
-    'cmap', [0 0 0], 'nan', 'gap'); hold on
-set(gca, 'XLim', trialWindow);%, 'YLim', [-1 2]);
-ylabel('cue licks');
-addOrginLines;
 
-subplot(2,2,2);
-[hl, hp] = boundedline(xData, nanmean(aligned_ch1), nanSEM(aligned_ch1)',...
-    'cmap', mycolors('ChAT'), 'nan', 'gap'); hold on
-set(gca, 'XLim', trialWindow);%, 'YLim', [-1 2]);
-ylabel('ACh.');
-addOrginLines;
 
-subplot(2,2,3);
-[hl, hp] = boundedline(xData, nanmean(aligned_ch2), nanSEM(aligned_ch2)',...
-    'cmap', mycolors('DAT'), 'nan', 'gap'); hold on
-set(gca, 'XLim', trialWindow);%, 'YLim', [-1 2]);
-ylabel('Dop.');
-xlabel('trials from lick changepoint');
-addOrginLines;
 
-subplot(2,2,4);
-[hl, hp] = boundedline(xData, nanmean(aligned_subtract), nanSEM(aligned_subtract)',...
-    'cmap', [0 1 0], 'nan', 'gap'); hold on
-set(gca, 'XLim', trialWindow);%, 'YLim', [-1 2]);
-ylabel('ACh. - Dop.');
-xlabel('trials from lick changepoint');
-addOrginLines;
-
-formatFigurePoster([5.5 4], '', 12);
-
-if saveOn
-    saveas(gcf, fullfile(savepath, [savename '.fig']));
-    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
-    saveas(gcf, fullfile(savepath, [savename '.epsc']));   
-end    
-
-%% to detect latency to learning, fit weibull function, exponential functions, also changepoint detection
+%% weibull function
 baselineTrials = 20;
 fitField = 'phPeakMean_cs_ch1';
 
@@ -1034,31 +914,7 @@ end
 %     ha = findobj(gcf, 'Type', 'Axes');
 %     sameXYScale(ha);
 
-%% (DOESN'T LOOK GOOD) make a bar graph of changepoints, this time connect the lines between the paired conditions
-    
-% saveName = 'changepoints_all_conected';
-% ensureFigure(savename, 1); axes('FontSize', 12); hold on;
-% fields = {'licks_acq', 'chat_acq', 'dat_acq', 'licks_ext', 'chat_ext', 'dat_ext'};
-% colors = {mycolors('licks') mycolors('chat') mycolors('dat') mycolors('licks') mycolors('chat') mycolors('dat')};
-% 
-% all_cps = [];
-% for counter = 1:length(fields)
-%     ydata = cp.(fields{counter}).index(goodReversals) - baselineTrials;
-%     all_cps = [all_cps ydata];
-% end
-% 
-% plot([1:3 NaN 4:6]', [all_cps(:,1:3) NaN(size(all_cps, 1), 1) all_cps(:,4:6)]', '-', 'LineWidth', 0.5, 'Color', [0.5 0.5 0.5]);
-% 
-% errorbar((1:3), mean(all_cps(:,1:3)), std(all_cps(:,1:3))/sqrt(size(all_cps, 1)), 'Color', colors{counter}, 'LineWidth', 2)
-% errorbar((4:6), mean(all_cps(:,4:6)), std(all_cps(:,4:6))/sqrt(size(all_cps, 1)), 'Color', colors{counter}, 'LineWidth', 2)
-% 
-% set(gca, 'XLim', [0.5 6.5], 'Ylim', [-20 40], 'XTick', 1:6, 'XTickLabel', {'licks', 'Ach.', 'Dop.', 'licks', 'Ach.', 'Dop.'}, 'FontSize', 12); ylabel('trials from rev.', 'FontSize', 12);
-% 
-% 
-% formatFigurePublish('size', [3.5 2], 'fontSize', 12);
-% if saveOn 
-%     export_fig(fullfile(savepath, saveName), '-eps');
-% end
+
 
 %% plot example reversals with weibull fits, changepoints
 nShow = 6;
