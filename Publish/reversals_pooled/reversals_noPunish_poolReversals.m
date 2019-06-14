@@ -935,7 +935,16 @@ fitField = 'phPeakMean_cs_ch1';
 %     
 % %     weibull(counter).xData = xData - baselineTrials;
 % end
+%% for fits of cs_licks, potential issue is that licks are definitely not gaussian
 
+savename = 'cs_licks_distribution';
+ensureFigure(savename, 1);
+lickData = newCsPlus.licks_cs(goodReversals, newCsPlus.firstRevTrial:end);
+lickData = lickData(isfinite(lickData));
+histogram(lickData, 20, 'Normalization', 'pdf');
+xlabel('CS+ lick rate');
+ylabel('probability');
+title('post-reversal CS+ lick rates');
 
 %% fit weibull function, CDF form with offset and scaling parameters
 
@@ -962,7 +971,7 @@ end
 
 weibullModel =  'a * (1 - exp(-1 * (x/b)^c)) + d'; % weibull function, CDF form
 
-
+maxLickRate = 10;
 for compCounter = 1:size(compFields, 2)    
     for fieldCounter = 1:length(fitFields)
         weibullData = [AR.(compFields{2, compCounter}).(fitFields{fieldCounter}).before(:, end - baselineTrials + 1:end) AR.(compFields{1, compCounter}).(fitFields{fieldCounter}).after];
@@ -971,16 +980,29 @@ for compCounter = 1:size(compFields, 2)
             switch compFields{1, compCounter}
                 case 'csPlus'
                     fo = fitoptions('Method', 'NonlinearLeastSquares',... 
-                        'Upper', [Inf  Inf Inf Inf],...  % 20 (3rd upper)
-                        'Lower', [0 0 0 -Inf],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
+                        'Upper', [maxLickRate  Inf Inf maxLickRate],...  % 20 (3rd upper)
+                        'Lower', [0 0 0 0],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
                         'StartPoint', [range(toFit) baselineTrials baselineTrials min(toFit)]...  % 'StartPoint', [range(toFit) baselineTrials baselineTrials min(toFit)]...
                         );
                 case 'csMinus'
                     fo = fitoptions('Method', 'NonlinearLeastSquares',... 
-                        'Upper', [0  Inf Inf Inf],...  % 20 (3rd upper)
-                        'Lower', [-Inf 0 0 -Inf],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
+                        'Upper', [0  Inf Inf maxLickRate],...  % 20 (3rd upper)
+                        'Lower', [-maxLickRate 0 0 0],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
                         'StartPoint', [-range(toFit) baselineTrials baselineTrials max(toFit)]... % 'StartPoint', [-range(toFit) baselineTrials baselineTrials max(toFit)]...
-                        );            
+                        );         
+                    
+%                 case 'csPlus'
+%                     fo = fitoptions('Method', 'NonlinearLeastSquares',... 
+%                         'Upper', [maxLickRate  Inf Inf maxLickRate],...  % 20 (3rd upper)
+%                         'Lower', [0 0 0 0],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
+%                         'StartPoint', [range(toFit) baselineTrials baselineTrials min(toFit)]...  % 'StartPoint', [range(toFit) baselineTrials baselineTrials min(toFit)]...
+%                         );
+%                 case 'csMinus'
+%                     fo = fitoptions('Method', 'NonlinearLeastSquares',... 
+%                         'Upper', [0  Inf Inf maxLickRate],...  % 20 (3rd upper)
+%                         'Lower', [-maxLickRate 0 0 0],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
+%                         'StartPoint', [-range(toFit) baselineTrials baselineTrials max(toFit)]... % 'StartPoint', [-range(toFit) baselineTrials baselineTrials max(toFit)]...
+%                         );                       
             end            
             ft = fittype(weibullModel, 'options', fo);
             weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).toFit{counter} = toFit;
@@ -1077,7 +1099,7 @@ end
 
 %% make a bar graph or box plot of changepoints
     
-savename = 'changepoints_all';
+savename = 'changepoints_all_bargraph';
 ensureFigure(savename, 1); axes('FontSize', 12); hold on;
 markerSize = 15;
 
@@ -1219,10 +1241,10 @@ gr = find(goodReversals);
 toShow = gr(ordering);
 % toShow = [86    70    42    26    77    44];
 % nice toShow for csPlus, phPeakMean_cs_ch1: [86    70    42    26    77    44]
-
+%    toShow = [20 47 57 102 86 70];
 
 conditions = {'csPlus', 'csMinus'}; % csPlus for newCsPlus
-dataField = 'phPeakMean_cs_ch1';
+dataField = 'licks_cs';
 fieldLabel = 'ACh.';
 for ccounter = 1:length(conditions)
     condition = conditions{ccounter};
@@ -1247,6 +1269,7 @@ for ccounter = 1:length(conditions)
         else
             ylabel('');
         end
+        textBox(sprintf('b=%.4g', weibull.(condition).(dataField).b(thisRev)));
         % changepoint
         subplot(nShow, 3, counter*3 - 1); hold on;
         if counter == 1
@@ -1275,6 +1298,18 @@ for ccounter = 1:length(conditions)
     end
 end
 
+%% show parameter distributions of weibull fits
+savename = 'weibull_parameters';
+ensureFigure(savename, 1);
+nbins = 40;
+subplot(2,2,1); 
+histogram(weibull.csPlus.licks_cs.a(goodReversals), nbins, 'Normalization', 'probability');
+subplot(2,2,2); 
+histogram(weibull.csPlus.licks_cs.b(goodReversals), nbins, 'Normalization', 'probability');
+subplot(2,2,3); 
+histogram(weibull.csPlus.licks_cs.c(goodReversals), nbins, 'Normalization', 'probability');
+subplot(2,2,4); 
+histogram(weibull.csPlus.licks_cs.d(goodReversals), nbins, 'Normalization', 'probability');
 %% images ordered by lick changepoints
 % 
 % fieldsToShow = {'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'licks_cs', 'csLicksROC', 'pupil_cs', 'whisk_cs'};
