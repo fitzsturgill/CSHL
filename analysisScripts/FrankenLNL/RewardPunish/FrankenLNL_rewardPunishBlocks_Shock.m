@@ -401,7 +401,7 @@ end
 
 %% averages
 % -3 6
-window = [-1 4];
+window = [-1 6];
 for channel = channels
     saveName = ['Averages_ch' num2str(channel)];
     ensureFigure(saveName, 1);
