@@ -952,7 +952,7 @@ compFields = {'csPlus', 'csMinus';...  % first row is after reversal
               'csMinus', 'csPlus'...   % second row is before reversal
               };
 fitFields = {'licks_cs', 'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2'};
-outputFields = {'object', 'gof', 'output', 'toFit', 'a', 'b', 'c', 'd'};
+outputFields = {'object', 'gof', 'output', 'toFit', 'a', 'b', 'c', 'd', 'latency', 'thresh'};
 weibull = struct();
 
 nReversals = size(AR.csPlus.globalTrialNumber.after, 1);
@@ -960,7 +960,7 @@ nReversals = size(AR.csPlus.globalTrialNumber.after, 1);
 for counter = 1:length(compFields)
     for counter2 = 1:length(fitFields)
         for counter3 = 1:length(outputFields)
-            if ~ismember(outputFields{counter3}, {'a', 'b', 'c', 'd'})
+            if ~ismember(outputFields{counter3}, {'a', 'b', 'c', 'd', 'latency', 'thresh'})
                 weibull.(compFields{counter}).(fitFields{counter2}).(outputFields{counter3}) = cell(nReversals, 1);
             else
                 weibull.(compFields{counter}).(fitFields{counter2}).(outputFields{counter3}) = NaN(nReversals, 1);
@@ -1007,12 +1007,33 @@ for compCounter = 1:size(compFields, 2)
             ft = fittype(weibullModel, 'options', fo);
             weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).toFit{counter} = toFit;
             try
-                [fitobject, gof, output] = fit((0:length(toFit) - 1)', toFit', ft, fo);
+                xdata = (0:length(toFit) - 1);
+                [fitobject, gof, output] = fit(xdata', toFit', ft, fo);
                 weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).object{counter} = fitobject;
                 weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).a(counter) = fitobject.a;
                 weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).b(counter) = fitobject.b;
                 weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).c(counter) = fitobject.c;
                 weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).d(counter) = fitobject.d;
+                weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).output{counter} = output;
+                weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).gof{counter} = gof;  
+                switch compFields{1, compCounter}
+                    case 'csPlus'
+                        thresh = fitobject(0) + (fitobject(Inf) - fitobject(0)) * 0.2;
+                        latency = find(fitobject(xdata) >= thresh, 1) - baselineTrials;
+                        if isempty(latency)
+                            continue
+                        end
+                        weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).latency(counter) = latency;
+                        weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).thresh(counter) = thresh;
+                    case 'csMinus'
+                        thresh = fitobject(0) + (fitobject(Inf) - fitobject(0)) * 0.2;
+                        latency = find(fitobject(xdata) <= thresh, 1) - baselineTrials;
+                        if isempty(latency)
+                            continue
+                        end
+                        weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).latency(counter) = latency;
+                        weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).thresh(counter) = thresh;
+                end                
             catch
                 continue
             end
@@ -1132,6 +1153,41 @@ if saveOn
     export_fig(fullfile(savepath, savename), '-eps');
 end
 
+
+%% make a bar graph or box plot of tt20 from weibull fits
+    
+savename = 'weibull_tt20_all_bargraph';
+ensureFigure(savename, 1); axes('FontSize', 12); hold on;
+markerSize = 15;
+
+fields = {...
+    'csPlus', 'licks_cs', mycolors('licks'), 'licks';...
+    'csPlus', 'phPeakMean_cs_ch1', mycolors('chat'), 'ACh.';...
+    'csPlus', 'phPeakMean_cs_ch2', mycolors('dat'), 'Dop.';...
+    'csMinus', 'licks_cs', mycolors('licks'), 'licks';...
+    'csMinus', 'phPeakMean_cs_ch1', mycolors('chat'), 'ACh.';...
+    'csMinus', 'phPeakMean_cs_ch2', mycolors('dat'), 'Dop.';...    
+    };
+
+
+all_cps = [];
+for counter = 1:size(fields, 1)
+    ydata = weibull.(fields{counter, 1}).(fields{counter, 2}).latency(goodReversals);       
+    all_cps = [all_cps ydata];
+    scatter(repmat(counter, numel(ydata), 1) + (rand(numel(ydata), 1) - 0.5)/3, ydata, markerSize, fields{counter, 3}, '.');
+    errorbar(counter, nanmean(ydata), nanstd(ydata)/sqrt(sum(isfinite(ydata))), 'Color', fields{counter, 3}, 'LineWidth', 2)
+end
+
+set(gca, 'XLim', [0.5 6.5], 'Ylim', [-20 40], 'XTick', 1:6, 'XTickLabel', fields(:,4)', 'FontSize', 12); ylabel('trials from rev.', 'FontSize', 12);
+
+
+formatFigurePublish('size', [3.5 2], 'fontSize', 12);
+if saveOn 
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    export_fig(fullfile(savepath, savename), '-eps');
+end
+
 %% despite paired measurements, weak correlations between detected changepoints
 savename = 'ChangePoint_correlations_scatter';
 ensureFigure(savename, 1);
@@ -1206,31 +1262,7 @@ end
 %     ha = findobj(gcf, 'Type', 'Axes');
 %     sameXYScale(ha);
 
-%% (DOESN'T LOOK GOOD) make a bar graph of changepoints, this time connect the lines between the paired conditions
-    
-% saveName = 'changepoints_all_conected';
-% ensureFigure(savename, 1); axes('FontSize', 12); hold on;
-% fields = {'licks_acq', 'chat_acq', 'dat_acq', 'licks_ext', 'chat_ext', 'dat_ext'};
-% colors = {mycolors('licks') mycolors('chat') mycolors('dat') mycolors('licks') mycolors('chat') mycolors('dat')};
-% 
-% all_cps = [];
-% for counter = 1:length(fields)
-%     ydata = cp.(fields{counter}).index(goodReversals) - baselineTrials;
-%     all_cps = [all_cps ydata];
-% end
-% 
-% plot([1:3 NaN 4:6]', [all_cps(:,1:3) NaN(size(all_cps, 1), 1) all_cps(:,4:6)]', '-', 'LineWidth', 0.5, 'Color', [0.5 0.5 0.5]);
-% 
-% errorbar((1:3), mean(all_cps(:,1:3)), std(all_cps(:,1:3))/sqrt(size(all_cps, 1)), 'Color', colors{counter}, 'LineWidth', 2)
-% errorbar((4:6), mean(all_cps(:,4:6)), std(all_cps(:,4:6))/sqrt(size(all_cps, 1)), 'Color', colors{counter}, 'LineWidth', 2)
-% 
-% set(gca, 'XLim', [0.5 6.5], 'Ylim', [-20 40], 'XTick', 1:6, 'XTickLabel', {'licks', 'Ach.', 'Dop.', 'licks', 'Ach.', 'Dop.'}, 'FontSize', 12); ylabel('trials from rev.', 'FontSize', 12);
-% 
-% 
-% formatFigurePublish('size', [3.5 2], 'fontSize', 12);
-% if saveOn 
-%     export_fig(fullfile(savepath, saveName), '-eps');
-% end
+
 
 %% plot example reversals with weibull fits, changepoints
 nShow = 6;
@@ -1258,18 +1290,20 @@ for ccounter = 1:length(conditions)
         % weibull
         subplot(nShow, 3, counter*3 - 2); hold on;
         if counter == 1
-            title('Weibull');
+             title('a * (1 - exp(-1 * (x/b)^c)) + d');
         end
-        plot(weibull.(condition).(dataField).toFit{thisRev}, '.', 'Color', [0 0.75 0]); 
+        plot(weibull.(condition).(dataField).toFit{thisRev}, '.', 'Color', [0 0.75 0], 'MarkerSize', 10); 
         plot(weibull.(condition).(dataField).object{thisRev}); legend off;
         plot([1 1] + baselineTrials, get(gca, 'YLim'), '--k');
-            set(gca, 'XLim', [0 120]);
+        plot(repmat(weibull.(condition).(dataField).latency(thisRev) + baselineTrials, 2, 1), get(gca, 'YLim'), '--b');
+        plot(get(gca, 'XLim'), repmat(weibull.(condition).(dataField).thresh(thisRev), 2, 1), '--b');
+            set(gca, 'XLim', [-1 120]);
         if counter == round(nShow/2)
             ylabel(fieldLabel, 'Interpreter', 'none', 'FontWeight', 'bold');
         else
             ylabel('');
         end
-        textBox(sprintf('b=%.4g', weibull.(condition).(dataField).b(thisRev)));
+        textBox(sprintf('a=%.3g, b=%.3g, c=%.3g, d=%.3g', weibull.(condition).(dataField).a(thisRev), weibull.(condition).(dataField).b(thisRev), weibull.(condition).(dataField).c(thisRev), weibull.(condition).(dataField).d(thisRev)));
         % changepoint
         subplot(nShow, 3, counter*3 - 1); hold on;
         if counter == 1
@@ -1302,14 +1336,35 @@ end
 savename = 'weibull_parameters';
 ensureFigure(savename, 1);
 nbins = 40;
-subplot(2,2,1); 
+subplot(2,2,1); hold on;
+title('parameter dist.');
 histogram(weibull.csPlus.licks_cs.a(goodReversals), nbins, 'Normalization', 'probability');
-subplot(2,2,2); 
-histogram(weibull.csPlus.licks_cs.b(goodReversals), nbins, 'Normalization', 'probability');
+xlabel('a');
+subplot(2,2,2); hold on;
+title('a * (1 - exp(-1 * (x/b)^c)) + d');
+histogram(weibull.csPlus.licks_cs.b(goodReversals), nbins * 5, 'Normalization', 'probability');
+set(gca, 'XLim', [0 100]);
+xlabel('b');
 subplot(2,2,3); 
 histogram(weibull.csPlus.licks_cs.c(goodReversals), nbins, 'Normalization', 'probability');
+xlabel('c');
 subplot(2,2,4); 
 histogram(weibull.csPlus.licks_cs.d(goodReversals), nbins, 'Normalization', 'probability');
+xlabel('d');
+
+% distribution of residuals
+
+tr = find(goodReversals);
+csPlus_residuals = [];
+[csPlus_c, csPlus_maxSlope] = deal(zeros(length(tr), 1));
+for counter = 1:length(tr)
+    trial = tr(counter);
+    csPlus_residuals = [csPlus_residuals; weibull.csPlus.licks_cs.output{trial}.residuals];              
+end
+savename = 'weibull_csPlus_residuals';
+ensureFigure(savename, 1);
+histogram(csPlus_residuals, 50);
+
 %% images ordered by lick changepoints
 % 
 % fieldsToShow = {'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'licks_cs', 'csLicksROC', 'pupil_cs', 'whisk_cs'};

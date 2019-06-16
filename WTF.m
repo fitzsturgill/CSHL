@@ -1,60 +1,96 @@
-
-% find trials to 50%
-fraction = 0.5;
 compFields = {'csPlus', 'csMinus';...  % first row is after reversal
               'csMinus', 'csPlus'...   % second row is before reversal
               };
 fitFields = {'licks_cs', 'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2'};
-outputFields = {'bl', 'max', 'tt50'};
-tt50 = struct();
+outputFields = {'object', 'gof', 'output', 'toFit', 'a', 'b', 'c', 'd', 'tt20'};
+weibull = struct();
 
 nReversals = size(AR.csPlus.globalTrialNumber.after, 1);
 
 for counter = 1:length(compFields)
     for counter2 = 1:length(fitFields)
-        for counter3 = 1:length(outputFields)            
-            tt50.(compFields{counter}).(fitFields{counter2}).(outputFields{counter3}) = NaN(nReversals, 1);
+        for counter3 = 1:length(outputFields)
+            if ~ismember(outputFields{counter3}, {'a', 'b', 'c', 'd', 'tt20'})
+                weibull.(compFields{counter}).(fitFields{counter2}).(outputFields{counter3}) = cell(nReversals, 1);
+            else
+                weibull.(compFields{counter}).(fitFields{counter2}).(outputFields{counter3}) = NaN(nReversals, 1);
+            end
         end
     end
 end
-tt50.fraction = fraction;
-tt50.baselineTrials = baselineTrials;
 
+weibullModel =  'a * (1 - exp(-1 * (x/b)^c)) + d'; % weibull function, CDF form
 
+maxLickRate = 10;
 for compCounter = 1:size(compFields, 2)    
     for fieldCounter = 1:length(fitFields)
-        bl = nanmean(AR.(compFields{2, compCounter}).(fitFields{fieldCounter}).before(:, end - baselineTrials + 1:end), 2);
-        tt50.(compFields{1, compCounter}).(fitFields{fieldCounter}).bl = bl;
-        tt50Data = AR.(compFields{1, compCounter}).(fitFields{fieldCounter}).after;
-        for counter = 1:size(tt50Data, 1)        
-            thisData = tt50Data(counter, :);
-            if ~any(isfinite(thisData))
-                continue
-            end
+        weibullData = [AR.(compFields{2, compCounter}).(fitFields{fieldCounter}).before(:, end - baselineTrials + 1:end) AR.(compFields{1, compCounter}).(fitFields{fieldCounter}).after];
+        for counter = 1:size(weibullData, 1)        
+            toFit = weibullData(counter, ~isnan(weibullData(counter, :)));
             switch compFields{1, compCounter}
                 case 'csPlus'
-                    top = percentile(thisData, 0.9);
-                    thresh = (bl(counter) + (top - bl(counter)) * fraction);
-                    latency = find(thisData > thresh, 1);
-                    if isempty(latency)
-                        continue
-                    end
-                    tt50.(compFields{1, compCounter}).(fitFields{fieldCounter}).tt50(counter) = latency;
-                    tt50.(compFields{1, compCounter}).(fitFields{fieldCounter}).thresh(counter) = thresh;
+                    fo = fitoptions('Method', 'NonlinearLeastSquares',... 
+                        'Upper', [maxLickRate  Inf Inf maxLickRate],...  % 20 (3rd upper)
+                        'Lower', [0 0 0 0],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
+                        'StartPoint', [range(toFit) baselineTrials baselineTrials min(toFit)]...  % 'StartPoint', [range(toFit) baselineTrials baselineTrials min(toFit)]...
+                        );
                 case 'csMinus'
-                    bottom = percentile(thisData, 0.1);
-                    thresh = (bl(counter) - (bl(counter) - bottom) * fraction);
-                    latency = find(thisData < thresh, 1);
-                    if isempty(latency)
-                        continue
-                    end
-                    tt50.(compFields{1, compCounter}).(fitFields{fieldCounter}).tt50(counter) = latency;                    
-                    tt50.(compFields{1, compCounter}).(fitFields{fieldCounter}).thresh(counter) = thresh;
+                    fo = fitoptions('Method', 'NonlinearLeastSquares',... 
+                        'Upper', [0  Inf Inf maxLickRate],...  % 20 (3rd upper)
+                        'Lower', [-maxLickRate 0 0 0],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
+                        'StartPoint', [-range(toFit) baselineTrials baselineTrials max(toFit)]... % 'StartPoint', [-range(toFit) baselineTrials baselineTrials max(toFit)]...
+                        );         
+                    
+%                 case 'csPlus'
+%                     fo = fitoptions('Method', 'NonlinearLeastSquares',... 
+%                         'Upper', [maxLickRate  Inf Inf maxLickRate],...  % 20 (3rd upper)
+%                         'Lower', [0 0 0 0],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
+%                         'StartPoint', [range(toFit) baselineTrials baselineTrials min(toFit)]...  % 'StartPoint', [range(toFit) baselineTrials baselineTrials min(toFit)]...
+%                         );
+%                 case 'csMinus'
+%                     fo = fitoptions('Method', 'NonlinearLeastSquares',... 
+%                         'Upper', [0  Inf Inf maxLickRate],...  % 20 (3rd upper)
+%                         'Lower', [-maxLickRate 0 0 0],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
+%                         'StartPoint', [-range(toFit) baselineTrials baselineTrials max(toFit)]... % 'StartPoint', [-range(toFit) baselineTrials baselineTrials max(toFit)]...
+%                         );                       
             end            
+            ft = fittype(weibullModel, 'options', fo);
+            weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).toFit{counter} = toFit;
+            try
+                [fitobject, gof, output] = fit((0:length(toFit) - 1)', toFit', ft, fo);
+                weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).object{counter} = fitobject;
+                weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).a(counter) = fitobject.a;
+                weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).b(counter) = fitobject.b;
+                weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).c(counter) = fitobject.c;
+                weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).d(counter) = fitobject.d;
+                weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).output{counter} = output;
+                weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).gof{counter} = gof;  
+                if counter == 3
+                    disp('wtf');
+                end
+                switch compFields{1, compCounter}
+                    case 'csPlus'
+                        thresh = fitobject(0) + (fitobject(Inf) - fitobject(0)) * 0.2;
+                        latency = find(toFit >= thresh, 1) - baselineTrials;
+                        if isempty(latency)
+                            continue
+                        end
+                        weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).tt20(counter) = latency;
+                    case 'csMinus'
+                        thresh = fitobject(0) - (fitobject(Inf) - fitobject(0)) * 0.2;
+                        latency = find(toFit <= thresh, 1) - baselineTrials;
+                        if isempty(latency)
+                            continue
+                        end
+                        weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).tt20(counter) = latency;
+                end                
+            catch
+                continue
+            end
+
         end
     end
 end
-
 
 %%
 
