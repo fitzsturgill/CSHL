@@ -5,7 +5,7 @@ to leverage statistical power of paired recordings of ACh. and Dop. neurons
 %}
 DB = dbLoadExperiment('reversals_noPunish_publish');
 savepath = fullfile(DB.path, 'pooled', filesep);
-smoothWindow = 5;
+smoothWindow = 1;
 saveOn = 1;
 
 %%
@@ -306,11 +306,11 @@ good_licks = good_licks ./ percentile(good_licks(:,newCsPlus.firstRevTrial:end),
 good_ch1 = newCsPlus.phPeakMean_cs_ch1(goodOnes, :);
 good_ch2 = newCsPlus.phPeakMean_cs_ch2(goodOnes, :);
 
-trials = true(sum(goodOnes), 1);
-[aligned_subtract, xData] = alignedDataWindow(good_subtract, trials, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1), sum(goodOnes), 1));
-[aligned_licks, ~] = alignedDataWindow(good_licks, trials, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
-[aligned_ch1, ~] = alignedDataWindow(good_ch1, trials, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
-[aligned_ch2, ~] = alignedDataWindow(good_ch2, trials, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
+reversals = true(sum(goodOnes), 1);
+[aligned_subtract, xData] = alignedDataWindow(good_subtract, reversals, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1), sum(goodOnes), 1));
+[aligned_licks, ~] = alignedDataWindow(good_licks, reversals, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
+[aligned_ch1, ~] = alignedDataWindow(good_ch1, reversals, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
+[aligned_ch2, ~] = alignedDataWindow(good_ch2, reversals, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
 
 % randomly permute across reversals (not time) to preserve average but
 % scramble potential changepoints
@@ -365,10 +365,10 @@ reversalPoints_perm = 0 - zeroTrials_perm;
 reversalPoints_perm = reversalPoints_perm;
 [sorted_perm, ix_perm] = sort(reversalPoints_perm); % THEN sort them
 
-[aligned_subtract_perm, xData] = alignedDataWindow(perm_subtract, trials, 'zeroTimes', zeroTrials_perm, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1), sum(goodOnes), 1));
-[aligned_licks_perm, ~] = alignedDataWindow(perm_licks, trials, 'zeroTimes', zeroTrials_perm, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
-[aligned_ch1_perm, ~] = alignedDataWindow(perm_ch1, trials, 'zeroTimes', zeroTrials_perm, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
-[aligned_ch2_perm, ~] = alignedDataWindow(perm_ch2, trials, 'zeroTimes', zeroTrials_perm, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
+[aligned_subtract_perm, xData] = alignedDataWindow(perm_subtract, reversals, 'zeroTimes', zeroTrials_perm, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1), sum(goodOnes), 1));
+[aligned_licks_perm, ~] = alignedDataWindow(perm_licks, reversals, 'zeroTimes', zeroTrials_perm, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
+[aligned_ch1_perm, ~] = alignedDataWindow(perm_ch1, reversals, 'zeroTimes', zeroTrials_perm, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
+[aligned_ch2_perm, ~] = alignedDataWindow(perm_ch2, reversals, 'zeroTimes', zeroTrials_perm, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
 
 
 % setup for alignment by reversal
@@ -571,6 +571,19 @@ if saveOn
     saveas(gcf, fullfile(savepath, [savename '.epsc']));   
 end    
 
+%
+savename = 'cp_licks_cp_vs_permute_correlation';
+ensureFigure(savename, 1);
+title('Cs+ licking changepoints');
+xdata = cp.csPlus.licks_cs.index(goodOnes) - baselineTrials;
+ydata = cp_perm.csPlus.licks_cs.index - baselineTrials;
+figure; scatter(xdata, ydata);
+xlabel('change points'); ylabel('change points (permuted)');
+textBox(sprintf('Rsq=%.3g', corr(xdata, ydata)));
+if saveOn
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+end    
 
 %% time to 50% or equivalent fraction
 

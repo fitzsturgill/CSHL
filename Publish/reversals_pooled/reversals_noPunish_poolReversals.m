@@ -978,19 +978,6 @@ for compCounter = 1:size(compFields, 2)
         for counter = 1:size(weibullData, 1)        
             toFit = weibullData(counter, ~isnan(weibullData(counter, :)));
             switch compFields{1, compCounter}
-                case 'csPlus'
-                    fo = fitoptions('Method', 'NonlinearLeastSquares',... 
-                        'Upper', [maxLickRate  Inf Inf maxLickRate],...  % 20 (3rd upper)
-                        'Lower', [0 0 0 0],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
-                        'StartPoint', [range(toFit) baselineTrials baselineTrials min(toFit)]...  % 'StartPoint', [range(toFit) baselineTrials baselineTrials min(toFit)]...
-                        );
-                case 'csMinus'
-                    fo = fitoptions('Method', 'NonlinearLeastSquares',... 
-                        'Upper', [0  Inf Inf maxLickRate],...  % 20 (3rd upper)
-                        'Lower', [-maxLickRate 0 0 0],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
-                        'StartPoint', [-range(toFit) baselineTrials baselineTrials max(toFit)]... % 'StartPoint', [-range(toFit) baselineTrials baselineTrials max(toFit)]...
-                        );         
-                    
 %                 case 'csPlus'
 %                     fo = fitoptions('Method', 'NonlinearLeastSquares',... 
 %                         'Upper', [maxLickRate  Inf Inf maxLickRate],...  % 20 (3rd upper)
@@ -1002,7 +989,20 @@ for compCounter = 1:size(compFields, 2)
 %                         'Upper', [0  Inf Inf maxLickRate],...  % 20 (3rd upper)
 %                         'Lower', [-maxLickRate 0 0 0],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
 %                         'StartPoint', [-range(toFit) baselineTrials baselineTrials max(toFit)]... % 'StartPoint', [-range(toFit) baselineTrials baselineTrials max(toFit)]...
-%                         );                       
+%                         );         
+                    
+                case 'csPlus'
+                    fo = fitoptions('Method', 'NonlinearLeastSquares',... 
+                        'Upper', [Inf Inf Inf Inf],...  % 20 (3rd upper)
+                        'Lower', [0 0 0 0],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
+                        'StartPoint', [range(toFit) baselineTrials baselineTrials min(toFit)]...  % 'StartPoint', [range(toFit) baselineTrials baselineTrials min(toFit)]...
+                        );
+                case 'csMinus'
+                    fo = fitoptions('Method', 'NonlinearLeastSquares',... 
+                        'Upper', [0  Inf Inf Inf],...  % 20 (3rd upper)
+                        'Lower', [-Inf 0 0 0],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
+                        'StartPoint', [-range(toFit) baselineTrials baselineTrials max(toFit)]... % 'StartPoint', [-range(toFit) baselineTrials baselineTrials max(toFit)]...
+                        );                       
             end            
             ft = fittype(weibullModel, 'options', fo);
             weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).toFit{counter} = toFit;
@@ -1041,6 +1041,19 @@ for compCounter = 1:size(compFields, 2)
         end
     end
 end
+%%
+savename = 'weibull_vs_cp_corr';
+ensureFigure(savename, 1);
+xdata = cp.csPlus.licks_cs.index(goodOnes) - baselineTrials;
+ydata = weibull.csPlus.licks_cs.latency(goodOnes);
+scatter(xdata, ydata);
+xlabel('change points'); ylabel('weibull (time to 20%)');
+textBox(sprintf('Rsq=%.3g', corr(xdata, ydata)));
+setXYsameLimit; addUnityLine;
+if saveOn
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+end    
 
 %% fit exponentials to post-reversal data for both acquisition and extinction (no baseline trials for exponential....)
 % ss = struct('object', zeros(sum(goodReversals), 1), 'gof', zeros(sum(goodReversals), 1), 'output', zeros(sum(goodReversals), 1), 'toFit', zeros(sum(goodReversals), 1));

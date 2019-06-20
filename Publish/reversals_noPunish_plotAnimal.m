@@ -107,7 +107,10 @@ for counter = 1:length(DB.animals)
     subplot(1,6,1);    
     image(TE.Wheel.data.V(csPlusTrials, :), 'XData', [-4 7], 'CDataMapping', 'Scaled');
 %     set(gca, 'CLim', [min(TE.Wheel.data.V(:)), max(TE.Wheel.data.V(:))]); 
-    set(gca, 'CLim', [mean(TE.Wheel.data.V(:)) - std(TE.Wheel.data.V(:)) * 3, mean(TE.Wheel.data.V(:)) + std(TE.Wheel.data.V(:)) * 3]); 
+    try
+        set(gca, 'CLim', [mean(TE.Wheel.data.V(:)) - std(TE.Wheel.data.V(:)) * 3, mean(TE.Wheel.data.V(:)) + std(TE.Wheel.data.V(:)) * 3]); 
+    catch
+    end
     line(repmat([-4; 7], 1, length(sessionChanges)), [sessionChanges'; sessionChanges'], 'Parent', gca, 'Color', 'w', 'LineWidth', 1); % reversal lines    
     line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1);
     t = textBox(animal); set(t, 'Color', [1 1 1], 'FontSize', 16, 'FontWeight', 'bold');
@@ -118,7 +121,10 @@ for counter = 1:length(DB.animals)
     
     try
         image(TE.pupil.pupDiameterNorm(csPlusTrials, :), 'XData', [-4 7], 'CDataMapping', 'Scaled');
-        set(gca, 'CLim', [nanmean(TE.pupil.pupDiameterNorm(:)) - std(TE.pupil.pupDiameterNorm(:), 'omitnan') * climfactor, nanmean(TE.pupil.pupDiameterNorm(:)) + std(TE.pupil.pupDiameterNorm(:), 'omitnan') * climfactor]); 
+        try
+            set(gca, 'CLim', [nanmean(TE.pupil.pupDiameterNorm(:)) - std(TE.pupil.pupDiameterNorm(:), 'omitnan') * climfactor, nanmean(TE.pupil.pupDiameterNorm(:)) + std(TE.pupil.pupDiameterNorm(:), 'omitnan') * climfactor]); 
+        catch
+        end
         line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 2); % reversal lines    
         colormap('parula');  
         title('Pupil Diameter');    
@@ -168,7 +174,10 @@ for counter = 1:length(DB.animals)
     subplot(1,6,1);    
     image(TE.Wheel.data.V(csMinusTrials, :), 'XData', [-4 7], 'CDataMapping', 'Scaled');
 %     set(gca, 'CLim', [min(TE.Wheel.data.V(:)), max(TE.Wheel.data.V(:))]); 
-    set(gca, 'CLim', [mean(TE.Wheel.data.V(:)) - std(TE.Wheel.data.V(:)) * 3, mean(TE.Wheel.data.V(:)) + std(TE.Wheel.data.V(:)) * 3]); 
+    try
+        set(gca, 'CLim', [mean(TE.Wheel.data.V(:)) - std(TE.Wheel.data.V(:)) * 3, mean(TE.Wheel.data.V(:)) + std(TE.Wheel.data.V(:)) * 3]); 
+    catch
+    end
     line(repmat([-4; 7], 1, length(sessionChanges)), [sessionChanges'; sessionChanges'], 'Parent', gca, 'Color', 'w', 'LineWidth', 1); % reversal lines    
     line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines      
     title('Velocity');
@@ -178,7 +187,10 @@ for counter = 1:length(DB.animals)
     subplot(1,6,2);    
     try
         image(TE.pupil.pupDiameterNorm(csMinusTrials, :), 'XData', [-4 7], 'CDataMapping', 'Scaled');
-        set(gca, 'CLim', [nanmean(TE.pupil.pupDiameterNorm(:)) - std(TE.pupil.pupDiameterNorm(:), 'omitnan') * climfactor, nanmean(TE.pupil.pupDiameterNorm(:)) + std(TE.pupil.pupDiameterNorm(:), 'omitnan') * climfactor]); 
+        try
+            set(gca, 'CLim', [nanmean(TE.pupil.pupDiameterNorm(:)) - std(TE.pupil.pupDiameterNorm(:), 'omitnan') * climfactor, nanmean(TE.pupil.pupDiameterNorm(:)) + std(TE.pupil.pupDiameterNorm(:), 'omitnan') * climfactor]); 
+        catch
+        end
         line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 2); % reversal lines    
         colormap('parula');  
         title('Pupil Diameter');    
@@ -219,11 +231,11 @@ for counter = 1:length(DB.animals)
     saveas(gcf, fullfile(savepath, 'allBehavior_whisk_csMinus'), 'jpeg');
 end
 
+
 % save pdf versions of allBehavior
 
 h = waitbar(0, 'slowly writing pdfs');
-
-pdfPlus = fullfile(DB.path, 'pooled', sprintf('allBehavior_csPlus_%s_%s.pdf', photometryField, fdfield));
+pdfPlus = fullfile(DB.path, 'pooled', sprintf('allBehavior_csPlus_%s_%s.pdf', photometryField, fdField));
 for counter = 1:length(fhp)    
     if counter == 1
         export_fig(fhp(counter),pdfPlus);  % write to pdf
@@ -233,8 +245,9 @@ for counter = 1:length(fhp)
     waitbar(counter/(length(fhp)*2));
 end
 
-pdfMinus = fullfile(DB.path, 'pooled', sprintf('allBehavior_csMinus_%s_%s.pdf', photometryField, fdfield));
-for counter = 1:length(fhm)    
+pdfMinus = fullfile(DB.path, 'pooled', sprintf('allBehavior_csMinus_%s_%s.pdf', photometryField, fdField));
+for counter = 1:length(fhm)  
+    counter
     if counter == 1
         export_fig(fhm(counter),pdfMinus);  % write to pdf
     else

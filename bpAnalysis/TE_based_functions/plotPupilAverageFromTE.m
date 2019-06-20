@@ -48,18 +48,18 @@ function varargout = plotPupilAverageFromTE(TE, trials, varargin)
     
 
     ax = s.ax;
+    lh = [];
     for counter = 1:length(trials)
         thisLinespec = s.linespec{rem(counter - 1, length(s.linespec)) + 1}; % cycle through linespec if it isn't long enough        
         currentTrials = trials{counter};
-        if (length(currentTrials) <= 1) || (sum(currentTrials) <= 1) % verify more than 1 trial for linear or logical indices
-            lh(counter) = NaN;            
+        if (length(currentTrials) <= 1) || (sum(currentTrials) <= 1) % verify more than 1 trial for linear or logical indices            
             continue
         end
         currentData = TE.(pupil).(s.measurementField)(currentTrials, startP:endP);
         avg = nanmean(currentData, 1);
         avgSEM = std(currentData, 0, 1, 'omitnan') ./ sqrt(sum(~isnan(currentData), 1));
         thisHl = boundedline(xData, avg, avgSEM, thisLinespec, ax);       
-        lh(counter) = thisHl; % return handles of the solid lines in the bounded plots
+        lh(end+1) = thisHl; % return handles of the solid lines in the bounded plots
     end
     
     

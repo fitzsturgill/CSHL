@@ -89,7 +89,7 @@ set(gca, 'XLim', window); title('Ch1');
 subplot(3,3,3);
 try
     phRasterFromTE(TE, trialsByType{1}, 2, 'PhotometryField', PhotometryField, 'CLimFactor', CLimFactor, 'trialNumbering', trialNumbering, 'window', window, 'zeroTimes', TE.Us);
-    set(gca, 'XLim', window); title('Ch1');
+    set(gca, 'XLim', window); title('Ch2');
 end
 
 subplot(3,3,4);
