@@ -128,7 +128,7 @@ for counter = 1:length(DB.animals)
         avgData = eventAverageFromTE(TE, trials, 'Port1In', 'zeroTimes', TE.Us, 'window', usWindow);
         gAvg.lickUs.(label).data = expandVertCat(gAvg.lickUs.(label).data, avgData.Avg, 'left');
         gAvg.lickUs.(label).animal{end+1,1} = animal;
-        gAvg.lickUs.(label).ch(end+1,1) = NaN;                
+        gAvg.lickUs.(label).ch(end+1,1) = NaN;
         
         
         for ch = 1:length(TE.Photometry.data)
@@ -437,6 +437,9 @@ for counter = 1:length(DB.animals)
         us_pooled.(trialSet).jitter_delta{counter} = deltaMax;    
     end
 end
+
+save(fullfile(savepath, 'us_pooled.mat'), 'us_pooled');
+disp(['*** saving: ' fullfile(savepath, 'us_pooled.mat') ' ***']);
 
 %% plot scatter plots for reward and air puff of tt50 vs delta
 minDelta = 2; % minimum deltaF in baseline standard deviation units (ZS)

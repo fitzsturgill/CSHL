@@ -107,26 +107,28 @@ for counter = 1:length(DB.animals)
     subplot(3,3,1); t = textBox(animal, gca, [0.1 0.95]); set(t, 'Color', [1 0 0], 'FontSize', 10, 'FontWeight', 'bold', 'BackgroundColor', [0.8 0.8 0.8], 'HorizontalAlignment', 'left');
 end
 
-h = waitbar(0, 'slowly writing avg pdfs');
-pdfavg = fullfile(DB.path, 'pooled', 'FrankenLNL_varyRewardSize_avgs_allAnimals.pdf');
-for counter = 1:length(fha)    
-    if counter == 1
-        export_fig(fha(counter),pdfavg);  % write to pdf
-    else
-        export_fig(fha(counter),'-append',pdfavg);  % write to pdf
-    end
-    waitbar(counter/(length(fha)));
-end
-close(h);
 
-h = waitbar(0, 'slowly writing raster pdfs');
-pdfavg = fullfile(DB.path, 'pooled', 'FrankenLNL_varyRewardSize_rasters_allAnimals.pdf');
-for counter = 1:length(fhr)    
-    if counter == 1
-        export_fig(fhr(counter),pdfavg);  % write to pdf
-    else
-        export_fig(fhr(counter),'-append',pdfavg);  % write to pdf
-    end
-    waitbar(counter/(length(fhr)));
-end
-close(h);
+
+% h = waitbar(0, 'slowly writing avg pdfs');
+% pdfavg = fullfile(DB.path, 'pooled', 'FrankenLNL_varyRewardSize_avgs_allAnimals.pdf');
+% for counter = 1:length(fha)    
+%     if counter == 1
+%         export_fig(fha(counter),pdfavg);  % write to pdf
+%     else
+%         export_fig(fha(counter),'-append',pdfavg);  % write to pdf
+%     end
+%     waitbar(counter/(length(fha)));
+% end
+% close(h);
+% 
+% h = waitbar(0, 'slowly writing raster pdfs');
+% pdfavg = fullfile(DB.path, 'pooled', 'FrankenLNL_varyRewardSize_rasters_allAnimals.pdf');
+% for counter = 1:length(fhr)    
+%     if counter == 1
+%         export_fig(fhr(counter),pdfavg);  % write to pdf
+%     else
+%         export_fig(fhr(counter),'-append',pdfavg);  % write to pdf
+%     end
+%     waitbar(counter/(length(fhr)));
+% end
+% close(h);
