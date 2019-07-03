@@ -66,6 +66,11 @@ smallHit = trialsByType{3} & (TE.licks_us.rate >=minRewardLickRate);
 bigMiss = trialsByType{1} & (TE.licks_us.rate < minRewardLickRate);
 mediumMiss = trialsByType{2} & (TE.licks_us.rate < minRewardLickRate);
 smallMiss = trialsByType{3} & (TE.licks_us.rate < minRewardLickRate);
+%%
+if saveOn
+    save(fullfile(savepath, 'TE.mat'), 'TE');
+    disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
+end
 %% rasters
 
 PhotometryField = 'Photometry';

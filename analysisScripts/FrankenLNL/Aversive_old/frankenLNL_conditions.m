@@ -1,7 +1,7 @@
-% LNL_Conditions
+% frankenLNL_conditions
 
 % script to generate trial lookups by condition for
-% LNL_odor_v2
+% frankenLNL_4odors
 
 %% generate trial lookups for different combinations of conditions
 % see Pavlovian_reversals_blocks    blocks 2 and 3

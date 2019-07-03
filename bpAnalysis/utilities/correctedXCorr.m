@@ -56,9 +56,13 @@ function [R, lags] = avgXCorr(x, y, maxlag)
     lags = -maxlag:maxlag;
 
     for column = 1:size(x, 2)
-        thisX = x(isfinite(x(:,column)),column);
-        thisY = y(isfinite(y(:,column)),column);
-        [theseR, lags] = xcorr(thisX, thisY, maxlag);
+        common = isfinite(x(:,column)) & isfinite(y(:,column));
+        thisX = x(common,column);
+        thisY = y(common,column);
+        if length(thisX) ~= length(thisY)
+            disp('wtf');
+        end
+        [theseR, lags] = xcorr(thisX, thisY, maxlag, 'coeff');
         allR(:,column) = theseR;
     end
     R = nanmean(allR, 2);

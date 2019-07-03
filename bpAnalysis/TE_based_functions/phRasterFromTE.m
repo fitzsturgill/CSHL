@@ -27,7 +27,7 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
     end   
     
     if isempty(s.ax)
-        figure(s.fig);
+%         figure(s.fig);
         s.ax = axes('YDir', 'Reverse');
     else
         set(s.ax, 'YDir', 'Reverse');
@@ -79,9 +79,9 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
             end
             sessionBreaks = find(diff(TE.sessionIndex(trials)))';            
             ih = image('Xdata', [xData(1) xData(end)], 'YData', [1 size(cData, 1)],...
-                'CData', cData, 'CDataMapping', 'Scaled', 'Parent', gca);
+                'CData', cData, 'CDataMapping', 'Scaled', 'Parent', s.ax);
             if s.showSessionBreaks
-                line(repmat(s.window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks
+                line(repmat(s.window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', s.ax, 'Color', 'w', 'LineWidth', 2); % session breaks
             end
 
         case 'global'
@@ -89,14 +89,14 @@ function ih = phRasterFromTE(TE, trials, ch, varargin)
             cData = NaN(length(TE.filename), size(cDataCopy, 2));
             cData(trials,:) = cDataCopy;
             ih = image('Xdata', [xData(1) xData(end)], 'YData', [1 size(cData, 1)],...
-                'CData', cData, 'CDataMapping', 'Scaled', 'Parent', gca);
+                'CData', cData, 'CDataMapping', 'Scaled', 'Parent', s.ax);
             sessionBreaks = find(diff(TE.sessionIndex))';  
             if s.showSessionBreaks            
-                line(repmat(s.window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', gca, 'Color', 'w', 'LineWidth', 2); % session breaks            
+                line(repmat(s.window', 1, length(sessionBreaks)), [sessionBreaks; sessionBreaks], 'Parent', s.ax, 'Color', 'w', 'LineWidth', 2); % session breaks            
             end
     end    
     if size(cData, 1) > 0
-        set(gca, 'YLim', [1 size(cData, 1)], 'XLim', [xData(1) xData(end)], 'CLim', s.CLim);    
+        set(s.ax, 'YLim', [1 size(cData, 1)], 'XLim', [xData(1) xData(end)], 'CLim', s.CLim);    
     end
 end
 

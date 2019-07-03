@@ -5,7 +5,7 @@ to leverage statistical power of paired recordings of ACh. and Dop. neurons
 %}
 DB = dbLoadExperiment('reversals_noPunish_publish');
 savepath = fullfile(DB.path, 'pooled', filesep);
-smoothWindow = 1;
+smoothWindow = 1; % smoothing ruins cross correlation validity, also problematic for permutation test
 saveOn = 1;
 
 %%
@@ -17,28 +17,6 @@ expType = 'all';
 
 %%
 compile_reversal_data;
-
-%% HACK ALERT- TO INCLUDE PUNISH REVERSALS TEMPORARILY (or not so temporarily)
-% HACK ALERT- TO INCLUDE PUNISH REVERSALS TEMPORARILY
-% HACK ALERT- TO INCLUDE PUNISH REVERSALS TEMPORARILY
-% HACK ALERT- TO INCLUDE PUNISH REVERSALS TEMPORARILY
-% HACK ALERT- TO INCLUDE PUNISH REVERSALS TEMPORARILY
-
-rocThresh = 0.5;
-trialsToCriterion = NaN(nReversals, 1);
-% looping is just easier
-for counter = 1:nReversals    
-    thisRev = AR.csPlus.csLicksROC.after(counter, :);
-    thisRev = thisRev > rocThresh;
-    nt = find(thisRev, 1);
-    if ~isempty(nt) && any(isfinite(AR.csPlus.csLicksROC.after(counter, :)))
-        trialsToCriterion(counter) = nt;
-    else
-        trialsToCriterion(counter) = Inf;  % HACK
-    end
-end
-
-
 
 %% changepoint detection for acquisition (acq) and extinction (ext)
 % compFields = {'csPlus', 'csMinus'};
@@ -101,7 +79,7 @@ clim = [-5 5];
 fh=[];
 
 savename = ['newCsPlus_image_' expType];
-fh(end+1) = ensureFigure(savename, 1);
+    fh(end+1) = ensureFigure(savename, 1);
 cLimFactor = 3;
 % smoothWindow = 1;
 xData = [min(newCsPlus.trialNumber), max(newCsPlus.trialNumber)];
@@ -218,6 +196,74 @@ if saveOn
     saveas(gcf, fullfile(savepath, [savename '.epsc']));   
 end    
 
+%% averages
+trialWindow = [-30 30];
+ylim = [-1 2];
+figsize = [1.7 1.5];
+% new cs plus
+% common = sum(~isnan(newCsPlus.licks_cs)) > 3;
+common = newCsPlus.firstRevTrial + trialWindow(1):newCsPlus.firstRevTrial + trialWindow(2) - 1;
+savename = ['reversals_newCsPlus' expType];
+fh = ensureFigure(savename, 1);
+hla = zeros(1,3);
+[hl, hp] = boundedline(newCsPlus.trialNumber(common), nanmean(newCsPlus.licks_cs(goodReversals, common)), nanSEM(newCsPlus.licks_cs(goodReversals, common))',...
+    'cmap', mycolors('licks'), 'nan', 'gap');
+hla(1) = hl;
+[hl, hp] = boundedline(newCsPlus.trialNumber(common), nanmean(newCsPlus.phPeakMean_cs_ch2(goodReversals, common)), nanSEM(newCsPlus.phPeakMean_cs_ch2(goodReversals, common))',...
+    'cmap', mycolors('dat'), 'nan', 'gap'); hold on
+hla(2) = hl;
+[hl, hp] = boundedline(newCsPlus.trialNumber(common), nanmean(newCsPlus.phPeakMean_cs_ch1(goodReversals, common)), nanSEM(newCsPlus.phPeakMean_cs_ch1(goodReversals, common))',...
+    'cmap', mycolors('chat'), 'nan', 'gap');
+hla(3) = hl;
+
+
+set(hla, 'LineWidth', 1);
+set(gca, 'XLim', trialWindow);%, 'YLim', ylim);
+h  = addOrginLines;
+set(h, 'LineWidth', 1);
+legend(hla, { '\bf\color[rgb]{0.5,0.5,0.5}Licks', '\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.'},...
+    'Location', 'northwest', 'FontSize', 6, 'Interpreter', 'tex', 'Box', 'off');
+
+title('New Cs+');
+xlabel('Odor presentations from rev.');
+ylabel('Cue response');
+
+formatFigurePublish('size', figsize);
+if saveOn 
+    export_fig(fullfile(savepath, savename), '-eps');
+end   
+
+
+% new cs minus
+% common = sum(~isnan(newCsMinus.licks_cs)) > 3;
+common = newCsMinus.firstRevTrial + trialWindow(1):newCsMinus.firstRevTrial + trialWindow(2) - 1;
+
+savename = ['reversals_newCsMinus' expType];
+ensureFigure(savename, 1);
+hla = zeros(1,3);
+[hl, hp] = boundedline(newCsMinus.trialNumber(common), nanmean(newCsMinus.licks_cs(goodReversals, common)), nanSEM(newCsMinus.licks_cs(goodReversals, common))',...
+    'cmap', mycolors('licks'));
+hla(1) = hl;
+[hl, hp] = boundedline(newCsMinus.trialNumber(common), nanmean(newCsMinus.phPeakMean_cs_ch2(goodReversals, common)), nanSEM(newCsMinus.phPeakMean_cs_ch2(goodReversals, common))',...
+    'cmap', mycolors('dat')); hold on
+hla(2) = hl;
+[hl, hp] = boundedline(newCsMinus.trialNumber(common), nanmean(newCsMinus.phPeakMean_cs_ch1(goodReversals, common)), nanSEM(newCsMinus.phPeakMean_cs_ch1(goodReversals, common))',...
+    'cmap', mycolors('chat'));
+hla(3) = hl;
+
+set(hla, 'LineWidth', 1);
+set(gca, 'XLim', trialWindow);%, 'YLim', ylim);    
+h  = addOrginLines;
+set(h, 'LineWidth', 1);
+legend(hla, {'\bf\color[rgb]{0.5,0.5,0.5}Licks', '\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.'},...
+            'Location', 'northeast', 'FontSize', 6, 'Interpreter', 'tex', 'Box', 'off');
+title('New Cs-');
+xlabel('Odor presentations from rev.');
+ylabel('Cue response');    
+formatFigurePublish('size', figsize);
+if saveOn 
+    export_fig(fullfile(savepath, savename), '-eps');
+end   
 
 
 
@@ -283,8 +329,8 @@ end
 minLogit = 5;
 trialWindow = [-20 20];
 cpField = 'licks_cs';
-cLimFactor = 3;
-trialWindow_rev = [0 40];
+cLimFactor = 4;
+trialWindow_rev = [-10 30];
 markerSize = 4;
 
 
@@ -299,12 +345,13 @@ reversalPoints = reversalPoints;
 
 
 % first select good subset
-good_subtract = newCsPlus.phPeakMean_cs_AchMinusDop(goodOnes, :);
+
 good_licks = newCsPlus.licks_cs(goodOnes, :);
 % try normalizing licks
 good_licks = good_licks ./ percentile(good_licks(:,newCsPlus.firstRevTrial:end), 0.9, 2);
-good_ch1 = newCsPlus.phPeakMean_cs_ch1(goodOnes, :);
-good_ch2 = newCsPlus.phPeakMean_cs_ch2(goodOnes, :);
+good_ch1 = nanzscore(newCsPlus.phPeakMean_cs_ch1(goodOnes, :), 0, 2);
+good_ch2 = nanzscore(newCsPlus.phPeakMean_cs_ch2(goodOnes, :), 0, 2);
+good_subtract = newCsPlus.phPeakMean_cs_AchMinusDop(goodOnes, :);
 
 reversals = true(sum(goodOnes), 1);
 [aligned_subtract, xData] = alignedDataWindow(good_subtract, reversals, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1), sum(goodOnes), 1));
@@ -323,12 +370,13 @@ for counter = 1:maxTrials
     col_ix(:,counter) = randperm(sum(goodOnes))';
 end
 
+
+
 lin_ix = sub2ind([sum(goodOnes) maxTrials], col_ix, row_ix);
-perm_subtract = smoothdata(good_subtract(lin_ix), 2, 'movmean', smoothWindow, 'omitnan');
 perm_licks = good_licks(lin_ix);
-perm_licks = smoothdata(perm_licks, 2, 'movmean', smoothWindow, 'omitnan');
-perm_ch1 = smoothdata(good_ch1(lin_ix), 2, 'movmean', smoothWindow, 'omitnan');
-perm_ch2 = smoothdata(good_ch2(lin_ix), 2, 'movmean', smoothWindow, 'omitnan');
+perm_ch1 = good_ch1(lin_ix);
+perm_ch2 = good_ch2(lin_ix);
+perm_subtract = good_subtract(lin_ix);
 
 % quick plot of regular and permuted lick_cs images, and corresponding
 % averages
@@ -433,7 +481,7 @@ plot(reversalPoints_perm(ix_perm), 1:sum(goodOnes), ':w', 'LineWidth', 4); set(g
 
 subplot(4,4,5); hold on;
 ylabel('ACh.', 'Color', mycolors('ChAT'));
-cData = newCsPlus.phPeakMean_cs_ch1(goodOnes, :);
+cData = good_ch1;
 % use same clim for all images in each row
 clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
 imagesc('XData', newCsPlus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
@@ -460,7 +508,7 @@ plot(reversalPoints_perm(ix_perm), 1:sum(goodOnes), ':w', 'LineWidth', 4); set(g
 
 subplot(4,4,9); hold on;
 ylabel('Dop.', 'Color', mycolors('DAT'));
-cData = newCsPlus.phPeakMean_cs_ch2(goodOnes, :);
+cData = good_ch2;
 % use same clim for all images in each row
 clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
 imagesc('XData', newCsPlus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
@@ -487,7 +535,7 @@ plot(reversalPoints_perm(ix_perm), 1:sum(goodOnes), ':w', 'LineWidth', 4); set(g
 
 subplot(4,4,13); hold on;
 ylabel('Subtract', 'Color', [0 1 0]);
-cData = newCsPlus.phPeakMean_cs_AchMinusDop(goodOnes, :);
+cData = good_licks;
 % use same clim for all images in each row
 clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
 imagesc('XData', newCsPlus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
@@ -530,7 +578,7 @@ savename = ['cp_aligned_newCsPlus_avgs' '_' expType];
 ensureFigure(savename, 1);
 marker = '.';
 subplot(2,2,1); title('new Cs+ (acquisition)');
-[hl, hp] = boundedline(xData, [nanmean(aligned_licks)' nanmean(aligned_licks_perm)'], permute([nanSEM(aligned_licks)' nanSEM(aligned_licks)'], [1 3 2]),...
+[hl, hp] = boundedline(xData, [nanmean(aligned_licks)' nanmean(aligned_licks_perm)'], permute([nanSEM(aligned_licks)' nanSEM(aligned_licks_perm)'], [1 3 2]),...
     'cmap', [0 0 0; 0.7 0.7 0.7], 'nan', 'gap'); hold on
 set(gca, 'XLim', trialWindow);%, 'YLim', [-1 2]);
 set(hl, 'Marker', marker);
@@ -653,6 +701,7 @@ for compCounter = 1:size(compFields, 2)
                 weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).b(counter) = fitobject.b;
                 weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).c(counter) = fitobject.c;
                 weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).d(counter) = fitobject.d;
+                weibull.(compFields{1, compCounter}).(fitFields{fieldCounter}).output{counter} = output;
             catch
                 continue
             end
@@ -756,14 +805,20 @@ fields = {...
 all_cps = [];
 
 for counter = 1:size(fields, 1)
-    ydata = cp.(fields{counter, 1}).(fields{counter, 2}).index;       
+    ydata = cp.(fields{counter, 1}).(fields{counter, 2}).index - baselineTrials;       
     all_cps = [all_cps ydata];
 %     scatter(repmat(counter, numel(ydata), 1) + (rand(numel(ydata), 1) - 0.5)/3, ydata, markerSize, fields{counter, 3}, '.');    
 %     errorbar(counter, mean(ydata), std(ydata)/sqrt(numel(ydata)), 'Color', fields{counter, 3}, 'LineWidth', 2)
 end
-violins = violinplot(all_cps, fields(:, 4), 'ShowMean', true, 'ShowNotches', true');
+bar(1:6, median(all_cps), 'CData', vertcat(fields{:,3}), 'EdgeColor', 'flat', 'FaceColor', 'none'); 
+violins = violinplot(all_cps, fields(:, 4), 'ShowMean', false, 'ShowNotches', false, 'EdgeColor', [1 1 1]);
 for counter = 1:length(violins)
-    violins(1).ViolinColor = fields{counter,3};
+    violins(counter).ViolinColor = fields{counter,3};
+    xData = violins(counter).ScatterPlot.XData;
+    yData = violins(counter).ScatterPlot.YData;
+    violins(counter).ScatterPlot.delete;
+    violins(counter).ScatterPlot = scatter(xData, yData, 12, fields{counter, 3}, 'filled');    
+    violins(counter).MedianPlot.delete;
 end
 ylabel('changepoint trials from rev.');
 % set(gca, 'XLim', [0.5 6.5], 'XTick', 1:6, 'XTickLabel', fields(:,4)', 'FontSize', 12); ylabel('trials from rev.', 'FontSize', 12);
@@ -778,14 +833,27 @@ ylabel('changepoint trials from rev.');
 % end
 % 
 % set(gca, 'XLim', [0.5 6.5], 'Ylim', [-20 40], 'XTick', 1:6, 'XTickLabel', fields(:,4)', 'FontSize', 12); ylabel('trials from rev.', 'FontSize', 12);
-plot(get(gca, 'XLim'), [baselineTrials baselineTrials], '--', 'Color', [0.7 0.7 0.7]);
-set(gca, 'YLim', [0 60]);
-formatFigurePublish('size', [3.5 2], 'fontSize', 12);
+plot(get(gca, 'XLim'), [0 0], '--', 'Color', [0.7 0.7 0.7]);
+set(gca, 'YLim', [-baselineTrials 40]);
+formatFigurePublish('size', [2.6 1.5], 'fontSize', 8);
 if saveOn 
     saveas(gcf, fullfile(savepath, [savename '.fig']));
     saveas(gcf, fullfile(savepath, [savename '.jpg']));   
     export_fig(fullfile(savepath, savename), '-eps');
 end
+%% stats on changepoints
+
+
+comp = {'Lick_vs_ACh'; 'Lick_vs_Dop'; 'ACh_vs_Dop'};
+acq_p = zeros(3,1);
+ext_p = zeros(3,1);
+cp_stats = table(comp, acq_p, ext_p);
+cp_stats.acq_p(1) = signrank(all_cps(:,1), all_cps(:,2));
+cp_stats.acq_p(2) = signrank(all_cps(:,1), all_cps(:,3));
+cp_stats.acq_p(3) = signrank(all_cps(:,2), all_cps(:,3));
+cp_stats.ext_p(1) = signrank(all_cps(:,4), all_cps(:,5));
+cp_stats.ext_p(2) = signrank(all_cps(:,4), all_cps(:,6));
+cp_stats.ext_p(3) = signrank(all_cps(:,5), all_cps(:,6));
 
 %% despite paired measurements, weak correlations between detected changepoints
 savename = ['ChangePoint_correlations_scatter' '_' expType];
@@ -1072,6 +1140,53 @@ if saveOn
     saveas(gcf, fullfile(savepath, [savename '.epsc']));   
 end
 
+%% cross correlations, new Cs-, 
+savename = 'xcorr_newCsMinus';
+ensureFigure(savename, 1); 
+% [R, lags] = avgXCorr(x, y, maxlag)
+    maxlag = 20;
+    allR = zeros(maxlag*2+1, sum(goodReversals), 6);
+    lags = -maxlag:maxlag;
+%     chat = nanzscore(newCsMinus.phPeakMean_cs_ch1, 0, 2);
+%     dat = nanzscore(newCsMinus.phPeakMean_cs_ch2, 0, 2);
+%     licks = nanzscore(newCsMinus.licks_cs, 0, 2);
+    chat = newCsMinus.phPeakMean_cs_ch1;
+    dat = newCsMinus.phPeakMean_cs_ch2;
+    licks = newCsMinus.licks_cs;    
+    theseOnes = find(goodReversals);
+    for counter = 1:length(theseOnes)
+        thisRev = theseOnes(counter);
+        thisChat = chat(thisRev, isfinite(chat(thisRev, :)));
+        thisDat = dat(thisRev, isfinite(dat(thisRev, :)));
+        theseLicks = licks(thisRev, isfinite(licks(thisRev, :)));
+        [theseR, ~] = xcorr(thisChat, thisDat, maxlag, 'coeff');
+        allR(:,counter, 1) = theseR;
+        [theseR, ~] = xcorr(thisChat, thisChat, maxlag, 'coeff');
+        allR(:,counter, 2) = theseR;        
+        [theseR, ~] = xcorr(thisDat, thisDat, maxlag, 'coeff');
+        allR(:,counter, 3) = theseR;                
+        [theseR, ~] = xcorr(thisChat, theseLicks, maxlag, 'coeff');
+        allR(:,counter, 4) = theseR;                
+        [theseR, ~] = xcorr(thisDat, theseLicks, maxlag, 'coeff');
+        allR(:,counter, 5) = theseR;                        
+        [theseR, ~] = xcorr(theseLicks, theseLicks, maxlag, 'coeff');
+        allR(:,counter, 6) = theseR;                
+    end
+    R = squeeze(nanmean(allR, 2));
+
+subplot(3,2,1); plot(lags, R(:,1)); title('chat vs dat'); 
+subplot(3,2,2); plot(lags, R(:,2)); title('chat'); 
+subplot(3,2,3); plot(lags, R(:,3)); title('dat'); 
+subplot(3,2,4); plot(lags, R(:,4)); title('chat vs licks');
+subplot(3,2,5); plot(lags, R(:,5)); title('dat vs licks'); xlabel('new cs- trials');
+subplot(3,2,6); plot(lags, R(:,6)); title('licks'); xlabel('new cs- trials');
+
+
+if saveOn
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));   
+end
 
 %% cross correlations, new Cs+, corrected
 
@@ -1178,53 +1293,118 @@ if saveOn
     saveas(gcf, fullfile(savepath, [savename '.epsc']));   
 end
 
-%% cross correlations, new Cs-, 
-savename = 'xcorr_newCsMinus';
+
+
+%% cross correlations, all mouse/odor/reversal pairs
+
+savename = 'xcorr_all_corrected';
 ensureFigure(savename, 1); 
 % [R, lags] = avgXCorr(x, y, maxlag)
-    maxlag = 20;
-    allR = zeros(maxlag*2+1, sum(goodReversals), 6);
-    lags = -maxlag:maxlag;
-%     chat = nanzscore(newCsMinus.phPeakMean_cs_ch1, 0, 2);
-%     dat = nanzscore(newCsMinus.phPeakMean_cs_ch2, 0, 2);
-%     licks = nanzscore(newCsMinus.licks_cs, 0, 2);
-    chat = newCsMinus.phPeakMean_cs_ch1;
-    dat = newCsMinus.phPeakMean_cs_ch2;
-    licks = newCsMinus.licks_cs;    
-    theseOnes = find(goodReversals);
-    for counter = 1:length(theseOnes)
-        thisRev = theseOnes(counter);
-        thisChat = chat(thisRev, isfinite(chat(thisRev, :)));
-        thisDat = dat(thisRev, isfinite(dat(thisRev, :)));
-        theseLicks = licks(thisRev, isfinite(licks(thisRev, :)));
-        [theseR, ~] = xcorr(thisChat, thisDat, maxlag, 'coeff');
-        allR(:,counter, 1) = theseR;
-        [theseR, ~] = xcorr(thisChat, thisChat, maxlag, 'coeff');
-        allR(:,counter, 2) = theseR;        
-        [theseR, ~] = xcorr(thisDat, thisDat, maxlag, 'coeff');
-        allR(:,counter, 3) = theseR;                
-        [theseR, ~] = xcorr(thisChat, theseLicks, maxlag, 'coeff');
-        allR(:,counter, 4) = theseR;                
-        [theseR, ~] = xcorr(thisDat, theseLicks, maxlag, 'coeff');
-        allR(:,counter, 5) = theseR;                        
-        [theseR, ~] = xcorr(theseLicks, theseLicks, maxlag, 'coeff');
-        allR(:,counter, 6) = theseR;                
-    end
-    R = squeeze(nanmean(allR, 2));
+maxlag = 10;
+trialRange = [-30 30];
+R = deal(zeros(maxlag*2+1, 6, 3)); % corrected, shift predictor, raw occupy third dimension
+lags = -maxlag:maxlag;
 
-subplot(3,2,1); plot(lags, R(:,1)); title('chat vs dat'); 
-subplot(3,2,2); plot(lags, R(:,2)); title('chat'); 
-subplot(3,2,3); plot(lags, R(:,3)); title('dat'); 
-subplot(3,2,4); plot(lags, R(:,4)); title('chat vs licks');
-subplot(3,2,5); plot(lags, R(:,5)); title('dat vs licks'); xlabel('new cs- trials');
-subplot(3,2,6); plot(lags, R(:,6)); title('licks'); xlabel('new cs- trials');
+%     chat = nanzscore(newCsPlus.phPeakMean_cs_ch1, 0, 2);
+%     dat = nanzscore(newCsPlus.phPeakMean_cs_ch2, 0, 2);
+%     licks = nanzscore(newCsPlus.licks_cs, 0, 2);
+
+chat = [newCsPlus.phPeakMean_cs_ch1(goodReversals, newCsPlus.firstRevTrial + trialRange(1):newCsPlus.firstRevTrial + trialRange(2) - 1);...
+    newCsMinus.phPeakMean_cs_ch1(goodReversals, newCsMinus.firstRevTrial + trialRange(1):newCsMinus.firstRevTrial + trialRange(2) - 1)];
+dat = [newCsPlus.phPeakMean_cs_ch2(goodReversals, newCsPlus.firstRevTrial + trialRange(1):newCsPlus.firstRevTrial + trialRange(2) - 1);...
+    newCsMinus.phPeakMean_cs_ch2(goodReversals, newCsMinus.firstRevTrial + trialRange(1):newCsMinus.firstRevTrial + trialRange(2) - 1)];
+licks = [newCsPlus.licks_cs(goodReversals, newCsPlus.firstRevTrial + trialRange(1):newCsPlus.firstRevTrial + trialRange(2) - 1);...
+    newCsMinus.licks_cs(goodReversals, newCsMinus.firstRevTrial + trialRange(1):newCsMinus.firstRevTrial + trialRange(2) - 1)];        
+
+[R1, R2, R3, testlags] = correctedXCorr(chat, dat, maxlag, 2);
+R(:,1,1) = R1; R(:,1,2) = R2; R(:,1,3) = R3;
+
+[R1, R2, R3, ~] = correctedXCorr(chat, chat, maxlag, 2);
+R(:,2,1) = R1; R(:,2,2) = R2; R(:,2,3) = R3;
+
+[R1, R2, R3, ~] = correctedXCorr(dat, dat, maxlag, 2);
+R(:,3,1) = R1; R(:,3,2) = R2; R(:,3,3) = R3;
+
+[R1, R2, R3, ~] = correctedXCorr(chat, licks, maxlag, 2);
+R(:,4,1) = R1; R(:,4,2) = R2; R(:,4,3) = R3;
+
+[R1, R2, R3, ~] = correctedXCorr(dat, licks, maxlag, 2);
+R(:,5,1) = R1; R(:,5,2) = R2; R(:,5,3) = R3;
+
+[R1, R2, R3, ~] = correctedXCorr(licks, licks, maxlag, 2);
+R(:,6,1) = R1; R(:,6,2) = R2; R(:,6,3) = R3;
+    
+   
+
+subplot(3,2,1); plot(lags, squeeze(R(:,1,:))); title('chat vs dat'); legend('corrected', 'shift predictor', 'raw'); legend boxoff;
+subplot(3,2,2); plot(lags, squeeze(R(:,2,:))); title('chat');  legend('corrected', 'shift predictor', 'raw'); legend boxoff;
+subplot(3,2,3); plot(lags, squeeze(R(:,3,:))); title('dat'); 
+subplot(3,2,4); plot(lags, squeeze(R(:,4,:))); title('chat vs licks');
+subplot(3,2,5); plot(lags, squeeze(R(:,5,:))); title('dat vs licks'); xlabel('new cs+ trials');
+subplot(3,2,6); plot(lags, squeeze(R(:,6,:))); title('licks'); xlabel('new cs+ trials');
 
 
-if saveOn
-    saveas(gcf, fullfile(savepath, [savename '.fig']));
-    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
-    saveas(gcf, fullfile(savepath, [savename '.epsc']));   
-end
+% if saveOn
+%     saveas(gcf, fullfile(savepath, [savename '.fig']));
+%     saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+%     saveas(gcf, fullfile(savepath, [savename '.epsc']));   
+% end
+
+%% cross correlations, always cs+
+
+savename = 'xcorr_alwaysCsPlus_corrected';
+ensureFigure(savename, 1); 
+% [R, lags] = avgXCorr(x, y, maxlag)
+maxlag = 10;
+trialRange = [30 30];
+R = deal(zeros(maxlag*2+1, 6, 3)); % corrected, shift predictor, raw occupy third dimension
+lags = -maxlag:maxlag;
+
+%     chat = nanzscore(newCsPlus.phPeakMean_cs_ch1, 0, 2);
+%     dat = nanzscore(newCsPlus.phPeakMean_cs_ch2, 0, 2);
+%     licks = nanzscore(newCsPlus.licks_cs, 0, 2);
+
+chat = [alwaysCsPlus.phPeakMean_cs_ch1(goodReversals, alwaysCsPlus.firstRevTrial - trialRange:alwaysCsPlus.firstRevTrial + trialRange - 1);...
+    newCsMinus.phPeakMean_cs_ch1(goodReversals, newCsMinus.firstRevTrial - trialRange:newCsMinus.firstRevTrial + trialRange - 1)];
+dat = [alwaysCsPlus.phPeakMean_cs_ch2(goodReversals, alwaysCsPlus.firstRevTrial - trialRange:alwaysCsPlus.firstRevTrial + trialRange - 1);...
+    newCsMinus.phPeakMean_cs_ch2(goodReversals, newCsMinus.firstRevTrial - trialRange:newCsMinus.firstRevTrial + trialRange - 1)];
+licks = [alwaysCsPlus.licks_cs(goodReversals, alwaysCsPlus.firstRevTrial - trialRange:alwaysCsPlus.firstRevTrial + trialRange - 1);...
+    newCsMinus.licks_cs(goodReversals, newCsMinus.firstRevTrial - trialRange:newCsMinus.firstRevTrial + trialRange - 1)];       
+
+[R1, R2, R3, testlags] = correctedXCorr(chat, dat, maxlag, 2);
+R(:,1,1) = R1; R(:,1,2) = R2; R(:,1,3) = R3;
+
+[R1, R2, R3, ~] = correctedXCorr(chat, chat, maxlag, 2);
+R(:,2,1) = R1; R(:,2,2) = R2; R(:,2,3) = R3;
+
+[R1, R2, R3, ~] = correctedXCorr(dat, dat, maxlag, 2);
+R(:,3,1) = R1; R(:,3,2) = R2; R(:,3,3) = R3;
+
+[R1, R2, R3, ~] = correctedXCorr(chat, licks, maxlag, 2);
+R(:,4,1) = R1; R(:,4,2) = R2; R(:,4,3) = R3;
+
+[R1, R2, R3, ~] = correctedXCorr(dat, licks, maxlag, 2);
+R(:,5,1) = R1; R(:,5,2) = R2; R(:,5,3) = R3;
+
+[R1, R2, R3, ~] = correctedXCorr(licks, licks, maxlag, 2);
+R(:,6,1) = R1; R(:,6,2) = R2; R(:,6,3) = R3;
+    
+   
+
+subplot(3,2,1); plot(lags, squeeze(R(:,1,:))); title('chat vs dat'); %legend('corrected', 'shift predictor', 'raw'); legend boxoff;
+subplot(3,2,2); plot(lags, squeeze(R(:,2,:))); title('chat');  %legend('corrected', 'shift predictor', 'raw'); legend boxoff;
+subplot(3,2,3); plot(lags, squeeze(R(:,3,:))); title('dat'); 
+subplot(3,2,4); plot(lags, squeeze(R(:,4,:))); title('chat vs licks');
+subplot(3,2,5); plot(lags, squeeze(R(:,5,:))); title('dat vs licks'); xlabel('always cs+ trials');
+subplot(3,2,6); plot(lags, squeeze(R(:,6,:))); title('licks'); xlabel('always cs+ trials');
+
+
+% if saveOn
+%     saveas(gcf, fullfile(savepath, [savename '.fig']));
+%     saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+%     saveas(gcf, fullfile(savepath, [savename '.epsc']));   
+% end
+
 
 %% test correlations
 x = linspace(0, 1, 10000);

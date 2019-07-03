@@ -1,5 +1,4 @@
 % FrankenLNL_RewardPunish_poolAnimals
-
 %{
 goals:
 1) Grand Averages per condition
@@ -16,6 +15,7 @@ savepath = fullfile(DB.path, ['pooled' filesep]);
 ensureDirectory(savepath);
 figsavepath = fullfile(DB.path, ['pooled' filesep 'figure']);
 ensureDirectory(figsavepath);
+
 %% Goal 1: Grand Averages
 % data and associated descriptors for each data type, trial set combination
 s3 = struct(...
@@ -256,7 +256,7 @@ end
 
 saveName = 'uncuedUs_avgRasters_rewNorm';
 ensureFigure(saveName, 1);
-clim = [-1 1];
+clim = [-1 4];
 xData = [-2 4]; yData = [1 length(DB.animals) + 0.5];
 subplot(1,3,1); imagesc(xData, yData, [gAvgNorm.phDelay.uncuedReward.data gAvgNorm.phUs.uncuedReward.data], clim); title('reward'); ylabel('Mouse #');
 subplot(1,3,2); imagesc(xData, yData, [gAvgNorm.phDelay.uncuedPuff.data gAvgNorm.phUs.uncuedPuff.data], clim); title('air puff'); set(gca, 'YTickLabel', {});
@@ -269,7 +269,7 @@ end
 
 saveName = 'uncuedUs_avgRasters_rew';
 ensureFigure(saveName, 1);
-clim = [-1 5];
+clim = [-1 10];
 subplot(1,3,1); imagesc(xData, yData, [gAvg.phDelay.uncuedReward.data gAvg.phUs.uncuedReward.data], clim); title('reward'); ylabel('Mouse #');
 subplot(1,3,2); imagesc(xData, yData, [gAvg.phDelay.uncuedPuff.data gAvg.phUs.uncuedPuff.data], clim); title('air puff'); set(gca, 'YTickLabel', {});
 xlabel('Time from reinforcment (s)');
@@ -583,6 +583,101 @@ formatFigurePublish('size', figSize);
 if saveOn 
     export_fig(fullfile(figsavepath, saveName), '-eps');
 end
+
+
+%% are the reward-normalized punishment responses more similar within subjects or not?
+% normalize by rew
+
+us_pooled.puff.avg_delta_norm = us_pooled.puff.avg_delta;% ./ (us_pooled.rew.avg_delta + us_pooled.puff.avg_delta + us_pooled.shock.avg_delta);
+us_pooled.shock.avg_delta_norm = us_pooled.shock.avg_delta;% ./ (us_pooled.rew.avg_delta + us_pooled.puff.avg_delta + us_pooled.shock.avg_delta);
+
+% are responses correlated?
+% saveName = 'us_norm_correlations';
+
+% % ensureFigure(saveName, 1);
+% xData = [us_pooled.rew.avg_delta(:,1) us_pooled.puff.avg_delta(:,1) us_pooled.shock.avg_delta(:,1)];
+% yData = [us_pooled.rew.avg_delta(:,2) us_pooled.puff.avg_delta(:,2) us_pooled.shock.avg_delta(:,2)];
+% scatter(xData, yData); hold on;
+% [fo, gof, output] = fit(xData, yData, 'poly1');
+% % plot(fo, 'predfunc');
+% % legend off;
+% addUnityLine;
+% addOrginLines;
+
+% textBox(sprintf('Rsq
+% saveName = 'us_delta_correlations';
+% ensureFigure(saveName, 1);
+% scatter(us_pooled.rew.avg_delta(:,1) - us_pooled.rew.avg_delta(:,2), us_pooled.puff.avg_delta(:,1) - us_pooled.puff.avg_delta(:,2));
+
+
+% lets test whether within animal difference are smaller than expected by chance
+
+nAnimals = length(DB.animals);
+titles = {'all', 'rew', 'puff', 'shock'};
+us_deltas = [us_pooled.rew.avg_delta(:,1) - us_pooled.rew.avg_delta(:,2) us_pooled.puff.avg_delta(:,1) - us_pooled.puff.avg_delta(:,2) us_pooled.shock.avg_delta(:,1) - us_pooled.shock.avg_delta(:,2)];
+umd = zeros(1,4);
+umd(1) = mean(abs(us_deltas(:))); % us abs mean delta
+umd(2:end) = mean(abs(us_deltas));
+allData = [us_pooled.rew.avg_delta(:) us_pooled.puff.avg_delta(:) us_pooled.shock.avg_delta(:)];
+nPerm =100000;
+umdPerm = zeros(nPerm, 4);
+for counter = 1:nPerm
+    pix = randperm(nAnimals * 2);
+    thisPerm = allData(pix, :);
+    theseDeltas = thisPerm(1:nAnimals, :) - thisPerm(nAnimals+1:end, :);
+    umdPerm(counter, 1) = mean(abs(theseDeltas(:)));
+    umdPerm(counter, 2:end) = mean(abs(theseDeltas));
+end
+
+saveName = 'us_deltas_permutation_test_separate';
+fh = ensureFigure(saveName, 1);
+subplot(2,2,1); hold on;
+title(titles{1});
+histogram(umdPerm(:,1), 100, 'Normalization', 'probability', 'EdgeColor', 'none', 'FaceColor', [0.5 0.5 0.5]); hold on;
+line([umd(1) umd(1)], get(gca, 'YLim'));
+% line(get(gca, 'XLim'), [0.025 0.025]);
+
+for counter = 1:size(us_deltas, 2)
+    subplot(2,2,counter + 1);    
+    histogram(umdPerm(:,counter + 1), 33, 'Normalization', 'probability', 'EdgeColor', 'none', 'FaceColor', [0.5 0.5 0.5]); hold on;
+    line([umd(counter + 1) umd(counter + 1)], get(gca, 'YLim'));
+%     line(get(gca, 'XLim'), [0.025 0.025]);
+    title(titles{counter + 1});
+end
+sameXScale(fh.Children);
+
+figSize = [3.9 1.5];
+saveName = 'us_deltas_permutation_test_figure_pooled';
+fh = ensureFigure(saveName, 1);
+
+% first plot left vs right correlatoin
+subplot(1,2,1); hold on;
+xData = [us_pooled.rew.avg_delta(:,1); us_pooled.puff.avg_delta(:,1); us_pooled.shock.avg_delta(:,1)];
+yData = [us_pooled.rew.avg_delta(:,2); us_pooled.puff.avg_delta(:,2); us_pooled.shock.avg_delta(:,2)];
+colors = [repmat([0 0 1], size(us_pooled.rew.avg_delta, 1), 1); repmat([1 0 0], size(us_pooled.puff.avg_delta, 1), 1); repmat([0 1 0], size(us_pooled.shock.avg_delta, 1), 1)];
+scatter(xData, yData, 10, colors, 'filled'); 
+% [fo, gof, output] = fit(xData, yData, 'poly1');
+% plot(fo, 'predfunc');
+% legend off;
+xlabel('left BLA'); ylabel('right BLA');
+addUnityLine;
+addOrginLines;
+textBox(sprintf('Rho=%.3g', corr(xData, yData)), [], [], 8);
+
+subplot(1,2,2); hold on;
+histogram(umdPerm(:,1), 100, 'Normalization', 'probability', 'EdgeColor', 'none', 'FaceColor', [0.5 0.5 0.5]); hold on;
+line([umd(1) umd(1)], get(gca, 'YLim'), 'Color', 'k');
+xlabel('Mean paired difference');
+ylabel('probability');
+title('Mean vs. sampling distribution');
+
+formatFigurePublish('size', figSize);
+if saveOn 
+    export_fig(fullfile(figsavepath, saveName), '-eps');
+end
+
+
+
 %%
 % title('appetitive');
 % subplot(2,2,2); plot(nanmean([gAvgNorm.phCue.cuedReward.data gAvgNorm.phUs.cuedReward.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedReward.data gAvgNorm.phUs.uncuedReward.data]))

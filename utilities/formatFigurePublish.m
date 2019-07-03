@@ -13,9 +13,9 @@ function formatFigurePublish(varargin)
     paperUnits = 'inches';
     screenUnits = 'inches';
     if isempty(s.size)
-        screenPosition = [0.25 0.25 1 * scaleFactor * aspect(2) 1 * scaleFactor * aspect(1)]; % left bottom width height
+        screenPosition = [0.5 0.5 1 * scaleFactor * aspect(2) 1 * scaleFactor * aspect(1)]; % left bottom width height
     else
-        screenPosition = [0.25 0.25 s.size];
+        screenPosition = [0.5 0.5 s.size];
     end
     
         
@@ -29,8 +29,8 @@ function formatFigurePublish(varargin)
         ylims{counter} = get(axs(counter), 'Ylim'); xlims{counter} = get(axs(counter), 'XLim');
     end
     set(gcf, 'PaperUnits', paperUnits, 'Units', screenUnits, 'ToolBar', 'none', 'MenuBar', 'none', 'DockControls', 'off');
-    set(gcf, 'defaultAxesTickDir', 'out', 'defaultAxesLineWidth', 1, 'defaultAxesFontName', 'Calibri', 'defaultAxesFontSize', s.fontSize, 'defaultLegendBox', 'off');    
-    set(axs, 'TickDir', 'out', 'LineWidth', 1, 'FontName', 'Calibri', 'FontSize', s.fontSize, 'defaultLegendBox', 'off', 'Box', 'off');
+    set(gcf, 'defaultAxesTickDir', 'out', 'defaultAxesLineWidth', 1, 'defaultAxesFontName', 'Arial', 'defaultAxesFontSize', s.fontSize, 'defaultLegendBox', 'off');    
+    set(axs, 'TickDir', 'out', 'LineWidth', 1, 'FontName', 'Arial', 'FontSize', s.fontSize, 'defaultLegendBox', 'off', 'Box', 'off');
     set(gcf, 'Position', screenPosition, 'PaperPosition', paperPosition, 'Color', [1 1 1]);    
     for counter = 1:nax
         set(axs(counter), 'YLim', ylims{counter}); set(axs(counter), 'XLim', xlims{counter});

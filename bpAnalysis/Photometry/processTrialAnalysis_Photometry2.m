@@ -229,11 +229,11 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             blF_fit = nanmean(allData(:, expFitStartP:blEndP), 2); % take mean across time, not trials                   
 
             fo = fitoptions('Method', 'NonlinearLeastSquares',...
-                'Upper', [Inf range(blF_fit) 0 range(blF_fit) 0],...
-                'Lower', [0 0 -1 0 -1],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
-                'StartPoint', [min(blF_fit) range(blF_fit)/2 -5 range(blF_fit)/2 -100]...
+                'Upper', [Inf range(blF_fit) Inf range(blF_fit) Inf],...
+                'Lower', [0 0 5 0 5],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
+                'StartPoint', [min(blF_fit) range(blF_fit)/2 5 range(blF_fit)/2 100]...
                 );
-            model = 'a + b*exp(c*x) + d*exp(e*x)';
+            model = 'a + b*exp(-1/c*x) + d*exp(-1/e*x)';
             ft = fittype(model, 'options', fo);
             if any(isnan(blF_fit))
                 blF_fit = inpaint_nans(blF_fit);
@@ -248,7 +248,7 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
             Photometry.bleachFit(si, fCh).gof_session = gof;
             Photometry.bleachFit(si, fCh).output_session = output;
 
-            blF_fit = fitobject.a + fitobject.b * exp(fitobject.c * x) + fitobject.d * exp(fitobject.e * x);   
+            blF_fit = fitobject.a + fitobject.b * exp(-1/fitobject.c * x) + fitobject.d * exp(-1/fitobject.e * x);   
             
             % apply the selected baseline mode
 
@@ -293,11 +293,15 @@ function Photometry = processTrialAnalysis_Photometry2(sessions, varargin)
                     x = (0:size(allData, 2) - 1)/sampleRate;
 
 %% single exponential, 
+%                     fo = fitoptions('Method', 'NonlinearLeastSquares',...
+%                         'Lower', [0 0 0.5],...%, -Inf],...
+%                         'Upper', [max(trialMeanY) range(trialMeanY) 100],... % old upper tau = 4
+%                         'StartPoint', [min(trialMeanY) * 0.99, 0.01 2]);%, -0.3,]);
                     fo = fitoptions('Method', 'NonlinearLeastSquares',...
                         'Lower', [0 0 0.5],...%, -Inf],...
-                        'Upper', [max(trialMeanY) range(trialMeanY) 4],... % old upper tau = 4
+                        'Upper', [max(trialMeanY) Inf Inf],... % old upper tau = 4
                         'StartPoint', [min(trialMeanY) * 0.99, 0.01 2]);%, -0.3,]);
-
+                    
                     model = 'a + b*exp(-1 /c * x)';
                     ft = fittype(model, 'options', fo);
                     [fitobject, gof, output] = ...

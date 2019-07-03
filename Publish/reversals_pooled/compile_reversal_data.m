@@ -97,9 +97,19 @@ odor3_trialNumber = (1:size(odor3.licks_cs, 2)) - size(AR.thirdOdor.licks_cs.bef
 oldCsPlus_trialNumber = -(size(AR.csPlus.licks_cs.before, 2) - 1) : 0;
 oldCsMinus_trialNumber = -(size(AR.csMinus.licks_cs.before, 2) - 1) : 0;
 
+
+%% take advantage of paired recordings, subtract dopamine cue response from Ach. cue response, etc.
+newCsPlus.phPeakMean_cs_AchMinusDop = newCsPlus.phPeakMean_cs_ch1 - newCsPlus.phPeakMean_cs_ch2;
+newCsMinus.phPeakMean_cs_AchMinusDop = newCsMinus.phPeakMean_cs_ch1 - newCsMinus.phPeakMean_cs_ch2;
+alwaysCsPlus.phPeakMean_cs_AchMinusDop = alwaysCsPlus.phPeakMean_cs_ch1 - alwaysCsPlus.phPeakMean_cs_ch2;
+odor3.phPeakMean_cs_AchMinusDop = odor3.phPeakMean_cs_ch1 - odor3.phPeakMean_cs_ch2;
+
+newCsPlus.phPeakMean_cs_DopMinusAch = newCsPlus.phPeakMean_cs_ch2 - newCsPlus.phPeakMean_cs_ch1;
+newCsMinus.phPeakMean_cs_DopMinusAch = newCsMinus.phPeakMean_cs_ch2 - newCsMinus.phPeakMean_cs_ch1;
+
 %%
 % quality control- calculate auROC and dPrime for relevent comparisons
-trialWindow = [-20 60];%?
+trialWindow = [-20 40];%? %[-20 60]
 
 % initialize
 comp = {'licks_cs', 'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'pupil_csBaselined', 'whisk_csBaselined'}; % comparisons
@@ -147,3 +157,36 @@ for counter = 1:nReversals
     end
 end
 
+
+
+%% HACK ALERT- TO INCLUDE PUNISH REVERSALS TEMPORARILY (or not so temporarily)
+% HACK ALERT- TO INCLUDE PUNISH REVERSALS TEMPORARILY
+% HACK ALERT- TO INCLUDE PUNISH REVERSALS TEMPORARILY
+% HACK ALERT- TO INCLUDE PUNISH REVERSALS TEMPORARILY
+% HACK ALERT- TO INCLUDE PUNISH REVERSALS TEMPORARILY
+
+rocThresh = 0.5;
+trialsToCriterion = NaN(nReversals, 1);
+% looping is just easier
+for counter = 1:nReversals    
+    thisRev = AR.csPlus.csLicksROC.after(counter, :);
+    thisRev = thisRev > rocThresh;
+    nt = find(thisRev, 1);
+    if ~isempty(nt) && any(isfinite(AR.csPlus.csLicksROC.after(counter, :)))
+        trialsToCriterion(counter) = nt;
+    else
+        trialsToCriterion(counter) = Inf;  % HACK
+    end
+end
+
+%% filter reversals according to quality
+goodReversals = ...
+    ~isnan(trialsToCriterion) &...
+    auROC.phPeakMean_cs_ch1.after > 0 &...
+    auROC.phPeakMean_cs_ch2.after > 0 &...
+    auROC.licks_cs.acq > 0;
+
+sortVariable = trialsToCriterion;
+sortVariable(~goodReversals) = NaN;
+
+[sorted, sortOrder] = sort(sortVariable);

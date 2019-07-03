@@ -1,370 +1,43 @@
 DB = dbLoadExperiment('reversals_noPunish_publish');
 savepath = fullfile(DB.path, ['pooled' filesep 'figure']);
 ensureDirectory(savepath);
+
 saveOn = 1;
-smoothWindow = 1;
-
-%% create structure containing all reversals-  SKIPS DC_51
-AR = struct('csPlus', [], 'csMinus', [], 'csPlusReward', [], 'thirdOdor', []); % AR = all reversals
-for si = 1:length(DB.animals)    
-    animal = DB.animals{si};
-    if strcmp(animal, 'DC_51')
-        continue;
-    end
-    load(fullfile(DB.path, 'pooled', ['RE_' animal '.mat']));
-    for group = fieldnames(AR)'
-        sgroup = group{:};
-        for field = fieldnames(RE.(sgroup))'
-            sfield = field{:};
-            if any(strcmp(sfield, {'trialsBefore', 'trialsAfter'})) % these are special fields that don't contain before and after data
-                continue
-            end
-            if si == 1
-                AR.(sgroup).(sfield).before = RE.(sgroup).(sfield).before;
-                AR.(sgroup).(sfield).after = RE.(sgroup).(sfield).after;
-            else
-                AR.(sgroup).(sfield).before = expandVertCat(AR.(sgroup).(sfield).before, RE.(sgroup).(sfield).before, 'right');
-                AR.(sgroup).(sfield).after = expandVertCat(AR.(sgroup).(sfield).after, RE.(sgroup).(sfield).after, 'left');
-            end
-        end
-    end
-end
-
-firstReversals = cellfun(@(x,y) ~strcmp(x(1:5), y(1:5)), AR.csPlus.filename.before(1:end-1,end), AR.csPlus.filename.before(2:end,end));
-firstReversals = [false; firstReversals];
-nReversals = size(AR.csPlus.globalTrialNumber.after, 1);
-% reversal #s
-revNumber = ones(nReversals,1);
-mouseNumber = ones(nReversals,1);
-
-thisRev = 1;
-thisMouse = 1;
-for counter = 2:nReversals
-    if strcmp(AR.csPlus.filename.before{counter - 1,end}(1:5), AR.csPlus.filename.before{counter,end}(1:5))
-        thisRev = thisRev + 1;
-    else
-        thisRev = 1;
-        thisMouse = thisMouse + 1;
-    end
-    revNumber(counter) = thisRev;
-    mouseNumber(counter) = thisMouse;
-end
-sortVariable = revNumber;
-% sortVariable = auROC.phPeakMean_cs_ch1.after;
-[~, sortOrder] = sort(sortVariable);
-
-
-
-
-
-% quality control- calculate auROC and dPrime for relevent comparisons
-trialWindow = [-20 60];%?
-
-% initialize
-comp = {'licks_cs', 'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'pupil_csBaselined', 'whisk_csBaselined'}; % comparisons
-all_ways = struct(...
-    'before', zeros(nReversals, 1),... % compare cs- and cs+ before reversal
-    'after', zeros(nReversals, 1),... % compare cs- and cs+ after reversal
-    'acq', zeros(nReversals, 1),... % acquisition: compare cs- before and cs+ after reversal
-    'ext', zeros(nReversals, 1)...  % extinction: compare cs+ before and cs- after reversal
-    );
-% clear dPrime auROC
-for field = comp
-    dPrime.(field{:}) = all_ways;
-    auROC.(field{:}) = all_ways;
-end
-
-% calculate metrics
-for field = comp
-    for rev = 1:nReversals
-        % before
-        dPrime.(field{:}).before(rev) = dPrime_SNR(AR.csPlus.(field{:}).before(rev,trialWindow(1) + end + 1:end), AR.csMinus.(field{:}).before(rev,trialWindow(1) + end + 1:end));
-        auROC.(field{:}).before(rev) = rocarea(stripNaNs(AR.csPlus.(field{:}).before(rev,trialWindow(1) + end + 1:end)), stripNaNs(AR.csMinus.(field{:}).before(rev,trialWindow(1) + end + 1:end)), 'scale');
-        % after
-        dPrime.(field{:}).after(rev) = dPrime_SNR(AR.csPlus.(field{:}).after(rev,1:trialWindow(2)), AR.csMinus.(field{:}).after(rev,1:trialWindow(2)));
-        auROC.(field{:}).after(rev) = rocarea(stripNaNs(AR.csPlus.(field{:}).after(rev,1:trialWindow(2))), stripNaNs(AR.csMinus.(field{:}).after(rev,1:trialWindow(2))), 'scale');        
-        % acquisition
-        dPrime.(field{:}).acq(rev) = dPrime_SNR(AR.csPlus.(field{:}).after(rev,1:trialWindow(2)), AR.csMinus.(field{:}).before(rev,trialWindow(1) + end + 1:end));
-        auROC.(field{:}).acq(rev) = rocarea(stripNaNs(AR.csPlus.(field{:}).after(rev,1:trialWindow(2))), stripNaNs(AR.csMinus.(field{:}).before(rev,trialWindow(1) + end + 1:end)), 'scale');                
-        % extinction
-        dPrime.(field{:}).ext(rev) = dPrime_SNR(AR.csPlus.(field{:}).before(rev,trialWindow(1) + end + 1:end), AR.csMinus.(field{:}).after(rev,1:trialWindow(2)));
-        auROC.(field{:}).ext(rev) = rocarea(stripNaNs(AR.csPlus.(field{:}).before(rev,trialWindow(1) + end + 1:end)), stripNaNs(AR.csMinus.(field{:}).after(rev,1:trialWindow(2))), 'scale');
-    end    
-end
-
-% quality control % 2
-% detect when auROC values first exceed threshold
-rocThresh = 0.5;
-trialsToCriterion = NaN(nReversals, 1);
-% looping is just easier
-for counter = 1:nReversals    
-    thisRev = AR.csPlus.csLicksROC.after(counter, :);
-    thisRev = thisRev > rocThresh;
-    nt = find(thisRev, 1);
-    if ~isempty(nt)
-        trialsToCriterion(counter) = nt;
-    end
-end
-
-
-
-%% filter reversals according to quality
-goodReversals = ...
-    ~isnan(trialsToCriterion) &...
-    auROC.phPeakMean_cs_ch1.acq > 0 &...
-    auROC.phPeakMean_cs_ch2.acq > 0;
-sortVariable = trialsToCriterion;
-sortVariable(~goodReversals) = NaN;
-
-
-
-[sorted, sortOrder] = sort(sortVariable);
-% sortOrder = sortOrder(~isnan(sorted));
-%
-
-
-
-goodPupil = auROC.pupil_csBaselined.before > 0.2;
-goodWhisk = auROC.whisk_csBaselined.before > 0.2;
-%% compile data
-fieldsToCompile = {...
-    'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'phPeakPercentile_cs_ch1', 'phPeakPercentile_cs_ch2', 'csLicksROC', 'licks_cs', 'pupil_cs', 'pupil_csBaselined' 'whisk_cs', 'wheel_baseline',...
-    'phPeakMean_us_ch1_deconv', 'phPeakMean_us_ch2_deconv', 'phPeakPercentile_us_ch1_deconv', 'phPeakPercentile_us_ch2_deconv'};
-
-newCsPlus = struct();
-newCsMinus = struct();
-alwaysCsPlus = struct();
-alwaysCsPlusReward = struct();
-odor3 = struct();
-
-for counter = 1:length(fieldsToCompile)
-    field = fieldsToCompile{counter};
-    newCsPlus.(field) = smoothdata([AR.csMinus.(field).before AR.csPlus.(field).after], 2, 'movmean', smoothWindow, 'omitnan');
-    newCsMinus.(field) = smoothdata([AR.csPlus.(field).before AR.csMinus.(field).after], 2, 'movmean', smoothWindow, 'omitnan');
-    alwaysCsPlus.(field) = smoothdata([AR.csPlus.(field).before AR.csPlus.(field).after], 2, 'movmean', smoothWindow, 'omitnan');
-    alwaysCsPlusReward.(field) = smoothdata([AR.csPlusReward.(field).before AR.csPlusReward.(field).after], 2, 'movmean', smoothWindow, 'omitnan');
-    odor3.(field) = smoothdata([AR.thirdOdor.(field).before AR.thirdOdor.(field).after], 2, 'movmean', smoothWindow, 'omitnan');
-end
-
-newCsPlus_trialNumber = (1:size(newCsPlus.licks_cs, 2)) - size(AR.csMinus.licks_cs.before, 2);
-newCsPlus_firstRevTrial = size(AR.csMinus.licks_cs.before, 2) + 1;
-newCsMinus_trialNumber = (1:size(newCsMinus.licks_cs, 2)) - size(AR.csPlus.licks_cs.before, 2);
-newCsMinus_firstRevTrial = size(AR.csPlus.licks_cs.before, 2) + 1;
-alwaysCsPlus_trialNumber = (1:size(alwaysCsPlus.licks_cs, 2)) - size(AR.csPlus.licks_cs.before, 2);
-alwaysCsPlus_firstRevTrial = size(AR.csPlus.licks_cs.before, 2) + 1;
-alwaysCsPlusReward_trialNumber = (1:size(alwaysCsPlusReward.licks_cs, 2)) - size(AR.csPlusReward.licks_cs.before, 2);
-alwaysCsPlusReward_firstRevTrial = size(AR.csPlusReward.licks_cs.before, 2) + 1;
-odor3_trialNumber = (1:size(odor3.licks_cs, 2)) - size(AR.thirdOdor.licks_cs.before, 2);
-
-oldCsPlus_trialNumber = -(size(AR.csPlus.licks_cs.before, 2) - 1) : 0;
-oldCsMinus_trialNumber = -(size(AR.csMinus.licks_cs.before, 2) - 1) : 0;
-
-%% images
-% orderings = {'newCsPlus', 'newCsMinus', 'alwaysCsPlus'};
-fieldsToShow = {'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'licks_cs', 'csLicksROC', 'pupil_cs', 'whisk_cs'};
-titles = {'ACh', 'Dop.', 'Licks', 'Lick auROC', 'Pupil', 'Whisk'};
-clim = [-5 5];
-fh=[];
-imageArraySize = [4 3];
-saveName = 'newCsPlus_image';
-h = ensureFigure(saveName, 1);
-cLimFactor = 3;
-xData = [min(newCsPlus_trialNumber), max(newCsPlus_trialNumber)];
-xlim = [-30 70];
-for fcounter = 1:length(fieldsToShow)
-    sfield = fieldsToShow{fcounter};
-    subplot(2,3,fcounter);
-    cData = newCsPlus.(sfield)(sortOrder, :);
-    cData = smoothdata(cData, 2, 'movmean', 5, 'omitnan');
-    imagesc('XData', xData, 'CData', cData); set(gca, 'XLim', xlim); hold on; 
-    scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:length(sortOrder), [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled'); 
-    set(gca, 'YLim', [1 length(sortOrder)]);
-    set(gca, 'CLim', [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor]);
-    t = textBox(titles{fcounter}, gca, [0.1 0.95]); set(t, 'Color', [0 0 0], 'FontSize', 6, 'FontWeight', 'bold', 'BackgroundColor', [0.8 0.8 0.8], 'HorizontalAlignment', 'left');
-end
-subplot(2,3,5); xlabel('Odor presentations from reversal');
-subplot(2,3,2); title('New Cs+');
-
-formatFigurePublish('size', imageArraySize);
-if saveOn 
-    export_fig(fullfile(savepath, saveName), '-eps');
-end
-
-saveName = 'newCsMinus_image';
-h = ensureFigure(saveName, 1);
-cLimFactor = 3;
-xData = [min(newCsMinus_trialNumber), max(newCsMinus_trialNumber)];
-xlim = [-30 70];
-for fcounter = 1:length(fieldsToShow)
-    sfield = fieldsToShow{fcounter};
-    subplot(2,3,fcounter);
-    cData = newCsMinus.(sfield)(sortOrder, :);
-    cData = smoothdata(cData, 2, 'movmean', 5, 'omitnan');
-    imagesc('XData', xData, 'CData', cData); set(gca, 'XLim', xlim); hold on; 
-    scatter(zeros(nReversals, 1) + xlim(1) + 1, 1:length(sortOrder), [], repmat(goodReversals(sortOrder), 1, 3) .* [1 0 0], 's', 'filled'); 
-    set(gca, 'YLim', [1 length(sortOrder)]);
-    set(gca, 'CLim', [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor]);
-    t = textBox(titles{fcounter}, gca, [0.1 0.95]); set(t, 'Color', [0 0 0], 'FontSize', 6, 'FontWeight', 'bold', 'BackgroundColor', [0.8 0.8 0.8], 'HorizontalAlignment', 'left');
-end
-subplot(2,3,5); xlabel('Odor presentations from reversal');
-subplot(2,3,2); title('New Cs-');
-
-formatFigurePublish('size', imageArraySize);
-if saveOn 
-    export_fig(fullfile(savepath, saveName), '-eps');
-end
-
-%% to detect latency to learning, fit weibull function, also changepoint detection
-
-% weibull doesn't work great due to overfitting and noisy data
-baselineTrials = 20;
-
-fitField = 'licks_cs';
-model = 'a * (1 - exp(-1 * (x/b)^c)) + d'; % weibull function, CDF form
-fitData = [AR.csMinus.(fitField).before(:, end - baselineTrials + 1:end) AR.csPlus.(fitField).after(:, :)];% - nanmean(AR.csMinus.licks_cs.before(goodReversals, end - baselineTrials + 1:end), 2); % zero/baseline data at start
-
-weibull = struct('object', [], 'gof', [], 'output', [], 'toFit', [], 'kappa', []);
-weibull = repmat(weibull, size(fitData, 1), 1);
-for counter = 1:size(fitData, 1)
-    toFit = fitData(counter, ~isnan(fitData(counter, :)));
-    fo = fitoptions('Method', 'NonlinearLeastSquares',...
-        'Upper', [Inf  Inf 20 Inf],...
-        'Lower', [0 0 0 -Inf],...    % 'Lower', [0 0 -1/5 0 -1/5],...                    
-        'StartPoint', [mean(toFit) baselineTrials baselineTrials min(toFit)]...
-        );
-    ft = fittype(model, 'options', fo);
-%     xData = (0:length(toFit) - 1)';
-    [fitobject, gof, output] = fit((0:length(toFit) - 1)', toFit', ft, fo);
-    weibull(counter).object = fitobject;
-    weibull(counter).gof = gof;
-    weibull(counter).output = output;
-    weibull(counter).toFit = toFit;
-    coeffs = coeffvalues(fitobject);
-    weibull(counter).kappa = coeffs(2);
-%     weibull(counter).xData = xData - baselineTrials;
-end
-
-% changepoint detection
-baselineTrials = 20;
-cp_licks = bpChangePoints([AR.csMinus.licks_cs.before(:, end - baselineTrials + 1:end) AR.csPlus.licks_cs.after(:, 1:end)], 2, 1000);
-
-%% plot example reversals with weibull fits, changepoints
-nShow = 4;
-% good revs include [77 3 48 74];,   3 and 74 best examples
-% mediocre,  84 and 91 and 42 are mediocre ones
-% 4 is good but gradual
-toShow = find(goodReversals);
-toShow = toShow(randperm(sum(goodReversals), nShow));
-
-%%
-% nShow = 4;  toShow = [74 4 91 42];
-saveName = 'weibull_vs_changepoint_dev';
-ensureFigure(saveName, 1);
-
-for counter = 1:nShow   
-    thisRev = toShow(counter);
-    % weibull
-    subplot(nShow, 2, counter*2 - 1);
-
-    plot(weibull(thisRev).toFit, 'g.'); hold on;
-    plot(weibull(thisRev).object, 'predfunc'); legend off;
-    set(gca, 'XLim', [0 120], 'XTick', [20 70], 'XTickLabel', {'0', '50'}); ylabel('antic. licks (1/s)'); xlabel('Cs+ trials from rev.');
-    if counter == 1
-        title('Weibull fit to Cs+ licking');
-    end        
-    % changepoint
-    subplot(nShow, 2, counter * 2); hold on;
-    if counter == 1
-        title('Changepoint, logit by permutation');
-    end    
-    scatter(1:length(cp_licks.cumsum{thisRev}), cp_licks.cumsum{thisRev}, 10, cp_licks.logitAll{thisRev}); colormap jet;
-    line(repmat(cp_licks.index(thisRev), 1, 2), get(gca, 'YLim')); 
-    textBox(sprintf('Logit=%.2f', cp_licks.logit(thisRev)), [], [.7 0.4], 6);
-    set(gca, 'XLim', [0 120], 'XTick', [20 70], 'XTickLabel', {'0', '50'}); ylabel('cum. lick rate'); xlabel('Cs+ trials from rev.');
-end
-
-formatFigurePublish('size', [4 4]);
-if saveOn 
-    export_fig(fullfile(savepath, saveName), '-eps');
-end
 
 
 %%
-saveName = 'weibull_vs_changepoint_scatter';
-ensureFigure(saveName, 1); colormap('winter');
-line([0 20 20], [20 20 0], 'Color', 'r'); hold on;
-scatter([weibull(:).kappa], cp_licks.index(:), 10, repmat([0.7 0.7 0.7], size(fitData, 1), 1) .* repmat(~goodReversals, 1, 3));
-xlabel('Kappa (weibull)'); ylabel('change point');
-set(gca, 'YLim', [0 70], 'XLim', [0 70]);
-addUnityLine;
-legend('reversal trial');
-formatFigurePublish('size', [2 2]);
-if saveOn 
-    export_fig(fullfile(savepath, saveName), '-eps');
-    export_fig(fullfile(savepath, saveName), '-jpg');
-end
+exp.value = {'DC_44'  'DC_46'  'DC_47' 'DC_53'  'DC_54'  'DC_56'}; % exclude DC_51
+exp.valence = {'DC_17'  'DC_20'  'DC_35'  'DC_36'  'DC_37'  'DC_40'};
+exp.all = [exp.value exp.valence];
 
-%% images ordered by lick changepoints
-
-fieldsToShow = {'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'licks_cs', 'csLicksROC', 'pupil_cs', 'whisk_cs'};
-titles = {'ACh', 'Dop.', 'Licks', 'Lick auROC', 'Pupil', 'Whisk'};
-clim = [-5 5];
-fh=[];
-
-sortVariable = (cp_licks.index - baselineTrials); % e.g. 20 baseline trials
-sortVariable(~goodReversals) = NaN;
-sortVariable(cp_licks.logit <= 3) = NaN;
-[sorted, sortOrder] = sort(sortVariable);
+%% averages
+expType = 'valence';
+smoothWindow = 3;
+compile_reversal_data;
 
 
-saveName = 'newCsPlus_image_changepoints';
-ensureFigure(saveName, 1); colormap parula;
-cLimFactor = 3;
-xData = [min(newCsPlus_trialNumber), max(newCsPlus_trialNumber)];
-xlim = [-30 70];
-for fcounter = 1:length(fieldsToShow)
-    sfield = fieldsToShow{fcounter};
-    subplot(2,3,fcounter);
-    cData = newCsPlus.(sfield)(sortOrder, :);
-    cData = smoothdata(cData, 2, 'movmean', 5, 'omitnan');
-    imagesc('XData', xData, 'CData', cData); set(gca, 'XLim', xlim); hold on; 
-    line(sorted, 1:length(sortOrder), 'Color', 'w', 'LineWidth', 2); 
-    set(gca, 'YLim', [1 find(isnan(sorted), 1) - 1]);
-    set(gca, 'CLim', [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor]);
-    t = textBox(titles{fcounter}, gca, [0.1 0.95]); set(t, 'Color', [0 0 0], 'FontSize', 6, 'FontWeight', 'bold', 'BackgroundColor', [0.8 0.8 0.8], 'HorizontalAlignment', 'left');
-end
-subplot(2,3,5); xlabel('Odor presentations from reversal');
-subplot(2,3,2); title('New Cs+, ordered by changepoint (logit > 3)');
-% imageArraySize
-formatFigurePublish('size', imageArraySize);
-if saveOn 
-    export_fig(fullfile(savepath, saveName), '-eps');
-end
-
-%%
-% averages
-common_odor3 = (-9 <= odor3_trialNumber) & (odor3_trialNumber <= 9);
-xlim = [-30 30];
+trialWindow = [-30 30];
 ylim = [-1 2];
-figsize = [1.7 1.5];
+figsize = [1.4 1.2];
 % new cs plus
-common = sum(~isnan(newCsPlus.licks_cs)) > 3;
+% common = sum(~isnan(newCsPlus.licks_cs)) > 3;
+common = newCsPlus.firstRevTrial + trialWindow(1):newCsPlus.firstRevTrial + trialWindow(2) - 1;
 savename = 'reversals_newCsPlus';
-fh(end + 1) = ensureFigure(savename, 1);
+ensureFigure(savename, 1);
 hla = zeros(1,3);
-[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus.licks_cs(goodReversals, common)), nanSEM(newCsPlus.licks_cs(goodReversals, common))',...
+[hl, hp] = boundedline(newCsPlus.trialNumber(common), nanmean(newCsPlus.licks_cs(goodReversals, common)), nanSEM(newCsPlus.licks_cs(goodReversals, common))',...
     'cmap', mycolors('licks'), 'nan', 'gap');
 hla(1) = hl;
-[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus.phPeakMean_cs_ch2(goodReversals, common)), nanSEM(newCsPlus.phPeakMean_cs_ch2(goodReversals, common))',...
+[hl, hp] = boundedline(newCsPlus.trialNumber(common), nanmean(newCsPlus.phPeakMean_cs_ch2(goodReversals, common)), nanSEM(newCsPlus.phPeakMean_cs_ch2(goodReversals, common))',...
     'cmap', mycolors('dat'), 'nan', 'gap'); hold on
 hla(2) = hl;
-[hl, hp] = boundedline(newCsPlus_trialNumber(common), nanmean(newCsPlus.phPeakMean_cs_ch1(goodReversals, common)), nanSEM(newCsPlus.phPeakMean_cs_ch1(goodReversals, common))',...
+[hl, hp] = boundedline(newCsPlus.trialNumber(common), nanmean(newCsPlus.phPeakMean_cs_ch1(goodReversals, common)), nanSEM(newCsPlus.phPeakMean_cs_ch1(goodReversals, common))',...
     'cmap', mycolors('chat'), 'nan', 'gap');
 hla(3) = hl;
 
 
 set(hla, 'LineWidth', 1);
-set(gca, 'XLim', xlim);%, 'YLim', ylim);
+set(gca, 'XLim', trialWindow);%, 'YLim', ylim);
 h  = addOrginLines;
 set(h, 'LineWidth', 1);
 legend(hla, { '\bf\color[rgb]{0.5,0.5,0.5}Licks', '\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.'},...
@@ -374,30 +47,33 @@ title('New Cs+');
 xlabel('Odor presentations from rev.');
 ylabel('Cue response');
 
-formatFigurePublish('size', figsize);
+formatFigurePublish('size', figsize, 'fontSize', 6);
 if saveOn 
-    export_fig(fullfile(savepath, savename), '-eps');
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));
 end   
 
 
 % new cs minus
-common = sum(~isnan(newCsMinus.licks_cs)) > 3;
+% common = sum(~isnan(newCsMinus.licks_cs)) > 3;
+common = newCsMinus.firstRevTrial + trialWindow(1):newCsMinus.firstRevTrial + trialWindow(2) - 1;
 
 savename = 'reversals_newCsMinus';
-fh(end + 1) = ensureFigure(savename, 1);
+ensureFigure(savename, 1);
 hla = zeros(1,3);
-[hl, hp] = boundedline(newCsMinus_trialNumber(common), nanmean(newCsMinus.licks_cs(goodReversals, common)), nanSEM(newCsMinus.licks_cs(goodReversals, common))',...
+[hl, hp] = boundedline(newCsMinus.trialNumber(common), nanmean(newCsMinus.licks_cs(goodReversals, common)), nanSEM(newCsMinus.licks_cs(goodReversals, common))',...
     'cmap', mycolors('licks'));
 hla(1) = hl;
-[hl, hp] = boundedline(newCsMinus_trialNumber(common), nanmean(newCsMinus.phPeakMean_cs_ch2(goodReversals, common)), nanSEM(newCsMinus.phPeakMean_cs_ch2(goodReversals, common))',...
+[hl, hp] = boundedline(newCsMinus.trialNumber(common), nanmean(newCsMinus.phPeakMean_cs_ch2(goodReversals, common)), nanSEM(newCsMinus.phPeakMean_cs_ch2(goodReversals, common))',...
     'cmap', mycolors('dat')); hold on
 hla(2) = hl;
-[hl, hp] = boundedline(newCsMinus_trialNumber(common), nanmean(newCsMinus.phPeakMean_cs_ch1(goodReversals, common)), nanSEM(newCsMinus.phPeakMean_cs_ch1(goodReversals, common))',...
+[hl, hp] = boundedline(newCsMinus.trialNumber(common), nanmean(newCsMinus.phPeakMean_cs_ch1(goodReversals, common)), nanSEM(newCsMinus.phPeakMean_cs_ch1(goodReversals, common))',...
     'cmap', mycolors('chat'));
 hla(3) = hl;
 
 set(hla, 'LineWidth', 1);
-set(gca, 'XLim', xlim);%, 'YLim', ylim);    
+set(gca, 'XLim', trialWindow);%, 'YLim', ylim);    
 h  = addOrginLines;
 set(h, 'LineWidth', 1);
 legend(hla, {'\bf\color[rgb]{0.5,0.5,0.5}Licks', '\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.'},...
@@ -405,14 +81,470 @@ legend(hla, {'\bf\color[rgb]{0.5,0.5,0.5}Licks', '\bf\color[rgb]{0.9258,0.4883,0
 title('New Cs-');
 xlabel('Odor presentations from rev.');
 ylabel('Cue response');    
-formatFigurePublish('size', figsize);
+formatFigurePublish('size', figsize, 'fontSize', 6);
 if saveOn 
-    export_fig(fullfile(savepath, savename), '-eps');
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));
 end   
 
 
+%% subtraction averages- show run-down and difference upon extinction
+
+trialWindow = [-30 30];
+ylim = [-1 2];
+figsize = [1.4 1.2];
+% new cs plus
+% common = sum(~isnan(newCsPlus.licks_cs)) > 3;
+
+
+savename = ['ACh_minus_Dop_avgs_newCsPlus' '_' expType];
+ensureFigure(savename, 1);
+common = newCsPlus.firstRevTrial + trialWindow(1):newCsPlus.firstRevTrial + trialWindow(2) - 1;
+axes;
+title('new Cs+');
+[hl, hp] = boundedline(newCsPlus.trialNumber(common), nanmean(newCsPlus.phPeakMean_cs_AchMinusDop(goodReversals, common)), nanSEM(newCsPlus.phPeakMean_cs_AchMinusDop(goodReversals, common))',...
+    'cmap', [0 1 0], 'nan', 'gap'); hold on
+set(gca, 'XLim', trialWindow);%, 'YLim', [-1 2]);
+addOrginLines;
+ylabel('ACh. - Dop.');    
+xlabel('Odor presentations from rev.');
+formatFigurePublish('size', figsize, 'fontSize', 6);
+
+if saveOn 
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));
+end   
+
+
+savename = ['ACh_minus_Dop_avgs_newCsMinus' '_' expType];
+ensureFigure(savename, 1);
+common = newCsMinus.firstRevTrial + trialWindow(1):newCsMinus.firstRevTrial + trialWindow(2) - 1;
+axes;
+title('new Cs-');
+[hl, hp] = boundedline(newCsMinus.trialNumber(common), nanmean(newCsMinus.phPeakMean_cs_AchMinusDop(goodReversals, common)), nanSEM(newCsMinus.phPeakMean_cs_AchMinusDop(goodReversals, common))',...
+    'cmap', [0 1 0], 'nan', 'gap'); hold on
+set(gca, 'XLim', trialWindow);%, 'YLim', [-1 2]);
+addOrginLines;
+ylabel('ACh. - Dop.');  
+xlabel('Odor presentations from rev.');
+formatFigurePublish('size', figsize, 'fontSize', 6);
+
+if saveOn 
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));
+end   
+
+%% changepoint detection for acquisition (acq) and extinction (ext)
+
+expType = 'all';
+smoothWindow = 1; % smoothing ruins cross correlation validity, also problematic for permutation test
+compile_reversal_data;
+minLogit = 3;
+
+baselineTrials = 20;
+cp.csPlus.licks_cs = bpChangePoints(newCsPlus.licks_cs(:,newCsPlus.firstRevTrial - baselineTrials:end), 2, 1000, 'up');
+cp.csPlus.phPeakMean_cs_ch1 = bpChangePoints(newCsPlus.phPeakMean_cs_ch1(:,newCsPlus.firstRevTrial - baselineTrials:end), 2, 1000, 'up');
+cp.csPlus.phPeakMean_cs_ch2 = bpChangePoints(newCsPlus.phPeakMean_cs_ch2(:,newCsPlus.firstRevTrial - baselineTrials:end), 2, 1000, 'up');
+cp.csMinus.licks_cs = bpChangePoints(newCsMinus.licks_cs(:,newCsMinus.firstRevTrial - baselineTrials:end), 2, 1000, 'down');
+cp.csMinus.phPeakMean_cs_ch1 = bpChangePoints(newCsMinus.phPeakMean_cs_ch1(:,newCsMinus.firstRevTrial - baselineTrials:end), 2, 1000, 'down');
+cp.csMinus.phPeakMean_cs_ch2 = bpChangePoints(newCsMinus.phPeakMean_cs_ch2(:,newCsMinus.firstRevTrial - baselineTrials:end), 2, 1000, 'down');
+
+goodPlus = goodReversals & (cp.csPlus.licks_cs.logit > minLogit) & (cp.csPlus.phPeakMean_cs_ch1.logit > minLogit) & (cp.csPlus.phPeakMean_cs_ch2.logit > minLogit);
+goodMinus = goodReversals & (cp.csMinus.licks_cs.logit > minLogit) & (cp.csMinus.phPeakMean_cs_ch1.logit > minLogit) & (cp.csMinus.phPeakMean_cs_ch2.logit > minLogit);
+
+%% make a bar graph or box plot of changepoints
+figSize = [1.6 1.2];    
+savename = ['cp_violin' '_' expType];
+ensureFigure(savename, 1); axes; hold on;
+markerSize = 4;
+
+
+fields = {...
+    'csPlus', 'licks_cs', mycolors('licks'), 'licks';...
+    'csPlus', 'phPeakMean_cs_ch1', mycolors('chat'), 'ACh.';...
+    'csPlus', 'phPeakMean_cs_ch2', mycolors('dat'), 'Dop.';...
+    'csMinus', 'licks_cs', mycolors('licks'), 'licks';...
+    'csMinus', 'phPeakMean_cs_ch1', mycolors('chat'), 'ACh.';...
+    'csMinus', 'phPeakMean_cs_ch2', mycolors('dat'), 'Dop.';...    
+    };
+
+
+all_cps = cell(size(fields, 1), 1);
+violins = [];
+for counter = 1:size(fields, 1)
+    switch fields{counter, 1}
+        case 'csPlus'
+            yData = cp.(fields{counter, 1}).(fields{counter, 2}).index(goodPlus) - baselineTrials;       
+        case 'csMinus'
+            yData = cp.(fields{counter, 1}).(fields{counter, 2}).index(goodMinus) - baselineTrials;       
+    end
+    xData = zeros(size(yData)) + counter;
+    all_cps{counter} = yData;    
+    violin = Violin(yData, counter, 'ShowMean', false, 'ShowNotches', false, 'EdgeColor', [1 1 1], 'ViolinColor', fields{counter, 3});
+    % customize appearance
+    violin.ScatterPlot.delete;
+    violin.ScatterPlot = scatter(xData, yData, markerSize, fields{counter, 3}, 'filled');    
+    violin.MedianPlot.delete;
+    violin.WhiskerPlot.delete
+    violin.BoxPlot.delete
+    violin.ViolinAlpha = 1;
+    line([counter - 0.4 counter - 0.4 counter + 0.4 counter + 0.4], [0 median(yData) median(yData) 0], 'Color', fields{counter, 3});
+end
+
+ylabel('changepoint (trials from rev.)');
+% bh.BaseLine.LineStyle = '--';
+% bh.BaseLine.Color = [0.7 0.7 0.7];
+% bh.BaseLine.LineWidth = 2;
+
+set(gca, 'XLim', [0.5 6.5]);
+plot(get(gca, 'XLim'), [0 0], '--', 'Color', [0.7 0.7 0.7]);
+set(gca, 'YLim', [-baselineTrials 50], 'XTick', [1 2 3 4 5 6], 'XTickLabel', fields(:,4));
+formatFigurePublish('size', figSize, 'fontSize', 6);
+if saveOn 
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));
+%     export_fig(fullfile(savepath, savename), '-eps');
+end
+
+% stats on changepoints
+
+
+comp = {'Lick_vs_ACh'; 'Lick_vs_Dop'; 'ACh_vs_Dop'};
+acq_p = zeros(3,1);
+acq_n = zeros(3,1);
+ext_p = zeros(3,1);
+ext_n = zeros(3,1);
+cp_stats = table(comp, acq_p, acq_n, ext_p, ext_n);
+cp_stats.acq_p(1) = signrank(cp.csPlus.licks_cs.index(goodPlus), cp.csPlus.phPeakMean_cs_ch1.index(goodPlus));
+cp_stats.acq_p(2) = signrank(cp.csPlus.licks_cs.index(goodPlus), cp.csPlus.phPeakMean_cs_ch2.index(goodPlus));
+cp_stats.acq_p(3) = signrank(cp.csPlus.phPeakMean_cs_ch1.index(goodPlus), cp.csPlus.phPeakMean_cs_ch2.index(goodPlus));
+cp_stats.acq_n(:) = sum(goodPlus);
+
+cp_stats.ext_p(1) = signrank(cp.csMinus.licks_cs.index(goodMinus), cp.csMinus.phPeakMean_cs_ch1.index(goodMinus));
+cp_stats.ext_p(2) = signrank(cp.csMinus.licks_cs.index(goodMinus), cp.csMinus.phPeakMean_cs_ch2.index(goodMinus));
+cp_stats.ext_p(3) = signrank(cp.csMinus.phPeakMean_cs_ch1.index(goodMinus), cp.csMinus.phPeakMean_cs_ch2.index(goodMinus));
+cp_stats.ext_n(:) = sum(goodMinus);
+
+
+if saveOn
+    save(fullfile(savepath, ['cp_stats_' expType]), 'cp_stats');    
+end
+
+cp_stats
 
 
 
 
+%% align reversals by lick changepoint
+
+% csPlus
+minLogit = 3;
+trialWindow = [-20 20];
+cpField = 'licks_cs';
+cLimFactor = 3;
+trialWindow_rev = [-10 30];
+markerSize = 3;
+lineWidth = 2;
+avgfigSize = [1.2 1.2];
+figSize = [1.6 1.2];
+
+
+% first new csPlus (acquisition)
+
+% setup for aligned by changepoint
+goodOnes = goodReversals & (cp.csPlus.(cpField).logit > minLogit) & (cp.csPlus.(cpField).index > (baselineTrials - 0));
+zeroTrials = cp.csPlus.(cpField).index(goodOnes) - baselineTrials;
+reversalPoints = 0 - zeroTrials;
+reversalPoints = reversalPoints;
+[sorted, ix] = sort(reversalPoints); % THEN sort them
+
+
+% first select good subset
+good_licks = newCsPlus.licks_cs(goodOnes, :);
+% % try normalizing licks
+% good_licks = good_licks ./ percentile(good_licks(:,newCsPlus.firstRevTrial:end), 0.9, 2);
+good_licks = nanzscore(good_licks, 0, 2);
+good_ch1 = nanzscore(newCsPlus.phPeakMean_cs_ch1(goodOnes, :), 0, 2);
+good_ch2 = nanzscore(newCsPlus.phPeakMean_cs_ch2(goodOnes, :), 0, 2);
+
+reversals = true(sum(goodOnes), 1);
+[aligned_licks, xData] = alignedDataWindow(good_licks, reversals, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
+[aligned_ch1, ~] = alignedDataWindow(good_ch1, reversals, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
+[aligned_ch2, ~] = alignedDataWindow(good_ch2, reversals, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
+
+% % randomly permute across reversals (not time) to preserve average but
+% % scramble potential changepoints
+% maxTrials = length(newCsPlus.trialNumber);
+% 
+% % generate subscript indices for permutation
+% row_ix = repmat(1:maxTrials, sum(goodOnes), 1);
+% col_ix = zeros(sum(goodOnes), maxTrials);
+% for counter = 1:maxTrials
+%     col_ix(:,counter) = randperm(sum(goodOnes))';
+% end
+% 
+% lin_ix = sub2ind([sum(goodOnes) maxTrials], col_ix, row_ix);
+% perm_licks = good_licks(lin_ix);
+% perm_ch1 = good_ch1(lin_ix);
+% perm_ch2 = good_ch2(lin_ix);
+
+% cp_perm.csPlus.licks_cs = bpChangePoints(perm_licks(:,newCsPlus.firstRevTrial - baselineTrials:end), 2, 1000, 'up');
+% zeroTrials_perm = cp_perm.csPlus.licks_cs.index - baselineTrials;
+% reversalPoints_perm = 0 - zeroTrials_perm;
+% reversalPoints_perm = reversalPoints_perm;
+% [sorted_perm, ix_perm] = sort(reversalPoints_perm); % THEN sort them
+
+% [aligned_licks_perm, ~] = alignedDataWindow(perm_licks, reversals, 'zeroTimes', zeroTrials_perm, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
+% [aligned_ch1_perm, ~] = alignedDataWindow(perm_ch1, reversals, 'zeroTimes', zeroTrials_perm, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
+% [aligned_ch2_perm, ~] = alignedDataWindow(perm_ch2, reversals, 'zeroTimes', zeroTrials_perm, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsPlus.trialNumber(1),  sum(goodOnes), 1));
+
+
+% setup for alignment by reversal
+cp_rev = zeroTrials;
+% cp_rev_perm = zeroTrials_perm;
+
+% first images, sorted by reversal point.
+savename = ['cp_aligned_images_newCsPlus_' expType];
+ensureFigure(savename, 1);
+
+params = struct();    
+params.matpos = [0 0 1 1];    
+params.figmargin = [0.15 0 0.1 0.2];
+params.cellmargin = [0.025 0.025 0.025 0.025];    
+
+hax = axesmatrix(3,2,1:6,params);
+
+axes(hax(1)); hold on;
+ylabel('Cue licks');
+cData = good_licks;
+% use same clim for all images in each row
+clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
+imagesc('XData', newCsPlus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
+scatter(cp_rev, 1:sum(goodOnes), markerSize, [1 1 1], 'filled');
+set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', []);
+
+axes(hax(2)); hold on;
+cData = aligned_licks(ix, :);
+imagesc('XData', xData, 'CData', cData, clim);
+plot(reversalPoints(ix), 1:sum(goodOnes), ':w', 'LineWidth', lineWidth);
+set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', []);
+
+axes(hax(3)); hold on;
+ylabel('ACh.', 'Color', mycolors('ChAT'));
+cData = good_ch1;
+% use same clim for all images in each row
+clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
+imagesc('XData', newCsPlus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
+scatter(cp_rev, 1:sum(goodOnes), markerSize, [1 1 1], 'filled');
+set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', []);
+
+axes(hax(4)); hold on;
+cData = aligned_ch1(ix, :);
+imagesc('XData', xData, 'CData', cData, clim);
+plot(reversalPoints(ix), 1:sum(goodOnes), ':w', 'LineWidth', lineWidth); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', []);
+
+axes(hax(5)); hold on;
+ylabel('Dop.', 'Color', mycolors('DAT'));
+cData = good_ch2;
+% use same clim for all images in each row
+clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
+imagesc('XData', newCsPlus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
+scatter(cp_rev, 1:sum(goodOnes), markerSize, [1 1 1], 'filled');
+set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', [0 10 20]);
+xlabel('Trials from rev.');
+
+axes(hax(6)); hold on;
+cData = aligned_ch2(ix, :);
+imagesc('XData', xData, 'CData', cData, clim);
+plot(reversalPoints(ix), 1:sum(goodOnes), ':w', 'LineWidth', lineWidth); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', [-10 0 10]);
+xlabel('Trials from c.p.');
+
+formatFigurePublish('size', figSize, 'fontSize', 6);
+if saveOn 
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));
+%     export_fig(fullfile(savepath, savename), '-eps');
+end
+
+%  averages
+savename = ['cp_aligned_newCsPlus_avgs' '_' expType];
+ensureFigure(savename, 1);
+marker = '.';
+yLim = [-0.8 0.8];
+
+axes; hold on;
+
+
+[hl, hp] = boundedline(xData, [nanmean(aligned_ch1)' nanmean(aligned_ch2)'], permute([nanSEM(aligned_ch1)' nanSEM(aligned_ch2)'], [1 3 2]),...
+    'cmap', [mycolors('chat'); mycolors('dat')], 'nan', 'gap');
+set(gca, 'YLim', yLim);
+ylabel('Cue response (z-score)');
+xlabel('Trials from lick c.p.');
+
+formatFigurePublish('size', avgfigSize, 'fontSize', 6);
+if saveOn 
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));
+%     export_fig(fullfile(savepath, savename), '-eps');
+end
+
+% now csMinus
+
+% csMinus
+minLogit = 3;
+trialWindow = [-20 20];
+cpField = 'licks_cs';
+cLimFactor = 3;
+trialWindow_rev = [-10 30];
+markerSize = 3;
+lineWidth = 2;
+
+
+
+% first new csMinus (acquisition)
+
+% setup for aligned by changepoint
+goodOnes = goodReversals & (cp.csMinus.(cpField).logit > minLogit) & (cp.csMinus.(cpField).index > (baselineTrials - 0));
+zeroTrials = cp.csMinus.(cpField).index(goodOnes) - baselineTrials;
+reversalPoints = 0 - zeroTrials;
+reversalPoints = reversalPoints;
+[sorted, ix] = sort(reversalPoints); % THEN sort them
+
+
+% first select good subset
+good_licks = newCsMinus.licks_cs(goodOnes, :);
+% % try normalizing licks
+% good_licks = good_licks ./ percentile(good_licks(:,newCsMinus.firstRevTrial:end), 0.9, 2);
+good_licks = nanzscore(good_licks, 0, 2);
+good_ch1 = nanzscore(newCsMinus.phPeakMean_cs_ch1(goodOnes, :), 0, 2);
+good_ch2 = nanzscore(newCsMinus.phPeakMean_cs_ch2(goodOnes, :), 0, 2);
+
+reversals = true(sum(goodOnes), 1);
+[aligned_licks, xData] = alignedDataWindow(good_licks, reversals, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsMinus.trialNumber(1),  sum(goodOnes), 1));
+[aligned_ch1, ~] = alignedDataWindow(good_ch1, reversals, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsMinus.trialNumber(1),  sum(goodOnes), 1));
+[aligned_ch2, ~] = alignedDataWindow(good_ch2, reversals, 'zeroTimes', zeroTrials, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsMinus.trialNumber(1),  sum(goodOnes), 1));
+
+% % randomly permute across reversals (not time) to preserve average but
+% % scramble potential changepoints
+% maxTrials = length(newCsMinus.trialNumber);
+% 
+% % generate subscript indices for permutation
+% row_ix = repmat(1:maxTrials, sum(goodOnes), 1);
+% col_ix = zeros(sum(goodOnes), maxTrials);
+% for counter = 1:maxTrials
+%     col_ix(:,counter) = randperm(sum(goodOnes))';
+% end
+% 
+% lin_ix = sub2ind([sum(goodOnes) maxTrials], col_ix, row_ix);
+% perm_licks = good_licks(lin_ix);
+% perm_ch1 = good_ch1(lin_ix);
+% perm_ch2 = good_ch2(lin_ix);
+
+% cp_perm.csMinus.licks_cs = bpChangePoints(perm_licks(:,newCsMinus.firstRevTrial - baselineTrials:end), 2, 1000, 'up');
+% zeroTrials_perm = cp_perm.csMinus.licks_cs.index - baselineTrials;
+% reversalPoints_perm = 0 - zeroTrials_perm;
+% reversalPoints_perm = reversalPoints_perm;
+% [sorted_perm, ix_perm] = sort(reversalPoints_perm); % THEN sort them
+
+% [aligned_licks_perm, ~] = alignedDataWindow(perm_licks, reversals, 'zeroTimes', zeroTrials_perm, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsMinus.trialNumber(1),  sum(goodOnes), 1));
+% [aligned_ch1_perm, ~] = alignedDataWindow(perm_ch1, reversals, 'zeroTimes', zeroTrials_perm, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsMinus.trialNumber(1),  sum(goodOnes), 1));
+% [aligned_ch2_perm, ~] = alignedDataWindow(perm_ch2, reversals, 'zeroTimes', zeroTrials_perm, 'window', trialWindow, 'Fs', 1, 'startTimes', repmat(newCsMinus.trialNumber(1),  sum(goodOnes), 1));
+
+
+% setup for alignment by reversal
+cp_rev = zeroTrials;
+% cp_rev_perm = zeroTrials_perm;
+
+% first images, sorted by reversal point.
+savename = ['cp_aligned_images_newCsMinus_' expType];
+ensureFigure(savename, 1);
+
+params = struct();    
+params.matpos = [0 0 1 1];    
+params.figmargin = [0.15 0 0.1 0.2];
+params.cellmargin = [0.025 0.025 0.025 0.025];    
+
+hax = axesmatrix(3,2,1:6,params);
+
+axes(hax(1)); hold on;
+ylabel('Cue licks');
+cData = good_licks;
+% use same clim for all images in each row
+clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
+imagesc('XData', newCsMinus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
+scatter(cp_rev, 1:sum(goodOnes), markerSize, [1 1 1], 'filled');
+set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', []);
+
+axes(hax(2)); hold on;
+cData = aligned_licks(ix, :);
+imagesc('XData', xData, 'CData', cData, clim);
+plot(reversalPoints(ix), 1:sum(goodOnes), ':w', 'LineWidth', lineWidth);
+set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', []);
+
+axes(hax(3)); hold on;
+ylabel('ACh.', 'Color', mycolors('ChAT'));
+cData = good_ch1;
+% use same clim for all images in each row
+clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
+imagesc('XData', newCsMinus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
+scatter(cp_rev, 1:sum(goodOnes), markerSize, [1 1 1], 'filled');
+set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', []);
+
+axes(hax(4)); hold on;
+cData = aligned_ch1(ix, :);
+imagesc('XData', xData, 'CData', cData, clim);
+plot(reversalPoints(ix), 1:sum(goodOnes), ':w', 'LineWidth', lineWidth); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', []);
+
+axes(hax(5)); hold on;
+ylabel('Dop.', 'Color', mycolors('DAT'));
+cData = good_ch2;
+% use same clim for all images in each row
+clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
+imagesc('XData', newCsMinus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
+scatter(cp_rev, 1:sum(goodOnes), markerSize, [1 1 1], 'filled');
+set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', [0 10 20]);
+xlabel('Trials from rev.');
+
+axes(hax(6)); hold on;
+cData = aligned_ch2(ix, :);
+imagesc('XData', xData, 'CData', cData, clim);
+plot(reversalPoints(ix), 1:sum(goodOnes), ':w', 'LineWidth', lineWidth); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', [-10 0 10]);
+xlabel('Trials from c.p.');
+
+formatFigurePublish('size', figSize, 'fontSize', 6);
+if saveOn 
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));
+%     export_fig(fullfile(savepath, savename), '-eps');
+end
+
+%  averages
+savename = ['cp_aligned_newCsMinus_avgs' '_' expType];
+ensureFigure(savename, 1);
+marker = '.';
+yLim = [-0.8 0.8];
+
+axes; hold on;
+
+
+[hl, hp] = boundedline(xData, [nanmean(aligned_ch1)' nanmean(aligned_ch2)'], permute([nanSEM(aligned_ch1)' nanSEM(aligned_ch2)'], [1 3 2]),...
+    'cmap', [mycolors('chat'); mycolors('dat')], 'nan', 'gap');
+set(gca, 'YLim', yLim);
+ylabel('Cue response (z-score)');
+xlabel('Trials from lick c.p.');
+
+formatFigurePublish('size', avgfigSize, 'fontSize', 6);
+if saveOn 
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));
+%     export_fig(fullfile(savepath, savename), '-eps');
+end
 

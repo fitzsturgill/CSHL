@@ -10,126 +10,105 @@ savepath = fullfile(DB.path, ['pooled' filesep 'figure']);
 ensureDirectory(savepath);
 smoothWindow = 1;
 saveOn = 1;
-animal = 'DC_56';
+
+
+
+
+animals = {'DC_56', 'DC_35'};
+% animals = {'DC_35'};
+sessions = [1 3];
+% sessions = [3];
 
 photometryField = 'Photometry';
+% photometryField = 'PhotometryExpFit';
 fdField = 'ZS';
 
-success = dbLoadAnimal(DB, animal); % load TE and trial lookups
 
-%% plot csMinus -> csPlus Rasters for an example session
+    
+%% plot odor 1 and odor 2 Rasters for an example session
+% Define the positions of different axes matrices on the figure
+    % params.matpos defines position of axesmatrix [LEFT TOP WIDTH HEIGHT].    
+    params = struct();    
+    params.matpos = [0 0 1 1];    
+%     params.cellmargin = [.05 .05 0.05 0.05];    
+    params.figmargin = [0.15 0 0.1 0.1];
+    params.cellmargin = [0.025 0.025 0.025 0.025];    
+    
+for counter = 1:length(animals)
+    animal = animals{counter};
+    session = sessions(counter);
+    success = dbLoadAnimal(DB, animal); % load TE and trial lookups
 
-    saveName = sprintf('example_allBehavior_csPlus_%s', animal); 
+    saveName = sprintf('example_allBehavior_v2_%s', animal); 
     ensureFigure(saveName, 1);
-    
-    csPlusExampleTrials = Odor2Trials & ismember(TE.sessionIndex, [1]);
-    reversals = find(diff(TE.BlockNumber(csPlusExampleTrials, :))) + 1;
-    sessionChanges = find(diff(TE.sessionIndex(csPlusExampleTrials, :))) + 1;
 
-    
-    climfactor = 2;
-    subplot(1,5,1);       
-    CData = TE.pupil.pupDiameterNorm(csPlusExampleTrials, :) - nanmean(TE.pupil.pupDiameterNorm(csPlusExampleTrials, 1:bpX2pnt(0,20,-4)), 2);
-    image(CData, 'XData', [-4 7], 'CDataMapping', 'Scaled');
-    set(gca, 'CLim', [nanmean(CData(:)) - std(CData(:), 'omitnan') * climfactor, nanmean(CData(:)) + std(CData(:), 'omitnan') * climfactor]); 
-    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 2); % reversal lines    
-    colormap('parula');  
-    title('pupil');  
-    ylabel('Odor 1 trial number');
-    
-    
-    subplot(1,5,2);
-%     CData = TE.Whisk.whiskNorm(csPlusExampleTrials, :) - nanmean(TE.Whisk.whiskNorm(csPlusExampleTrials, 1:bpX2pnt(0,20,-4)), 2);
-    imagesc(TE.Whisk.whiskNorm(csPlusExampleTrials, :), 'XData', [-4 7], [0 2])   
-    line(repmat([-4; 7], 1, length(sessionChanges)), [sessionChanges'; sessionChanges'], 'Parent', gca, 'Color', 'w', 'LineWidth', 1); % reversal lines    
-    line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
-    title('whisking');
-    
-    subplot(1,5,3);
-    [~, lh] = eventRasterFromTE(TE, csPlusExampleTrials, 'Port1In', 'trialNumbering', 'consecutive',...
+    hax = axesmatrix(2,3,1:6,params);
+    exampleTrials = Odor1Trials & ismember(TE.sessionIndex, session);
+    reversals = find(diff(TE.BlockNumber(exampleTrials, :))) + 1;
+    sessionChanges = find(diff(TE.sessionIndex(exampleTrials, :))) + 1;
+
+    climfactor = 3;
+    axes(hax(1));
+    [~, lh] = eventRasterFromTE(TE, exampleTrials, 'Port1In', 'trialNumbering', 'consecutive',...
         'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
     line(repmat([-4; 7], 1, length(sessionChanges)), [sessionChanges'; sessionChanges'], 'Parent', gca, 'Color', 'k', 'LineWidth', 1); % reversal lines    
     line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines       
-    set(gca, 'XLim', [-4 7]);
+    set(gca, 'XLim', [-4 7], 'XTick', []);
     set(lh, 'LineWidth', 0.3, 'Color', [0 0 0]);
     title('licking');
-%     xlabel('Time from odor (s)');
-    climfactor = 3;  
-    
-    subplot(1,5,4); phRasterFromTE(TE, csPlusExampleTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField); % 'CLimFactor', CLimFactor,
+    ylabel('Odor 1 trial number');
+
+    axes(hax(2));
+    phRasterFromTE(TE, exampleTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor,...
+        'FluorDataField', fdField, 'PhotometryField', photometryField); % 'CLimFactor', CLimFactor,
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
     tcolor = mycolors('chat');
+    set(gca, 'XTick', [], 'YTick', []);
     title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Ach.']);
     
-    subplot(1,5,5); phRasterFromTE(TE, csPlusExampleTrials, 2, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField); % 'CLimFactor', CLimFactor,
+    axes(hax(3));
+    phRasterFromTE(TE, exampleTrials, 2, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor,...
+        'FluorDataField', fdField, 'PhotometryField', photometryField); % 'CLimFactor', CLimFactor,
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
     tcolor = mycolors('dat');
+    set(gca, 'XTick', [], 'YTick', []);
     title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Dop.']);
-    axs = findobj(gcf, 'Type', 'axes');    
-    set(axs(1:end -1), 'YTick', []);
-    
-    formatFigurePublish('size', [4.5 2]);
-    if saveOn 
-        export_fig(fullfile(savepath, saveName), '-eps');
-    end
 
-%% plot csMinus Rasters for an example session
+    exampleTrials = Odor2Trials & ismember(TE.sessionIndex, session);
+    reversals = find(diff(TE.BlockNumber(exampleTrials, :))) + 1;
+    sessionChanges = find(diff(TE.sessionIndex(exampleTrials, :))) + 1;
 
-    
-    saveName = sprintf('example_allBehavior_csMinus_%s', animal); 
-    ensureFigure(saveName, 1);
-    
-    csPlusExampleTrials = Odor1Trials & ismember(TE.sessionIndex, [1]);
-    reversals = find(diff(TE.BlockNumber(csPlusExampleTrials, :))) + 1;
-    sessionChanges = find(diff(TE.sessionIndex(csPlusExampleTrials, :))) + 1;
-
-    
-    climfactor = 2;
-    subplot(1,5,1);       
-    CData = TE.pupil.pupDiameterNorm(csPlusExampleTrials, :) - nanmean(TE.pupil.pupDiameterNorm(csPlusExampleTrials, 1:bpX2pnt(0,20,-4)), 2);
-    image(CData, 'XData', [-4 7], 'CDataMapping', 'Scaled');
-    set(gca, 'CLim', [nanmean(CData(:)) - std(CData(:), 'omitnan') * climfactor, nanmean(CData(:)) + std(CData(:), 'omitnan') * climfactor]); 
-    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 2); % reversal lines    
-    colormap('parula');  
-%     title('pupil');  
-    ylabel('Odor 2 trial number');
-    
-    
-    subplot(1,5,2);
-%     CData = TE.Whisk.whiskNorm(csPlusExampleTrials, :) - nanmean(TE.Whisk.whiskNorm(csPlusExampleTrials, 1:bpX2pnt(0,20,-4)), 2);
-    imagesc(TE.Whisk.whiskNorm(csPlusExampleTrials, :), 'XData', [-4 7], [0 2])   
-    line(repmat([-4; 7], 1, length(sessionChanges)), [sessionChanges'; sessionChanges'], 'Parent', gca, 'Color', 'w', 'LineWidth', 1); % reversal lines    
-    line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
-%     title('whisking');
-    
-    subplot(1,5,3);
-    [~, lh] = eventRasterFromTE(TE, csPlusExampleTrials, 'Port1In', 'trialNumbering', 'consecutive',...
+    axes(hax(4));
+    [~, lh] = eventRasterFromTE(TE, exampleTrials, 'Port1In', 'trialNumbering', 'consecutive',...
         'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
     line(repmat([-4; 7], 1, length(sessionChanges)), [sessionChanges'; sessionChanges'], 'Parent', gca, 'Color', 'k', 'LineWidth', 1); % reversal lines    
     line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines       
     set(gca, 'XLim', [-4 7]);
     set(lh, 'LineWidth', 0.3, 'Color', [0 0 0]);
-%     title('licking');
+    ylabel('Odor 2 trial number');
+
+    axes(hax(5));
+    phRasterFromTE(TE, exampleTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor,...
+        'FluorDataField', fdField, 'PhotometryField', photometryField); % 'CLimFactor', CLimFactor,
+    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
     xlabel('Time from odor (s)');
-    climfactor = 3;  
+    set(gca, 'YTick', []);
     
-    subplot(1,5,4); phRasterFromTE(TE, csPlusExampleTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField); % 'CLimFactor', CLimFactor,
+    axes(hax(6));
+    phRasterFromTE(TE, exampleTrials, 2, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor,...
+        'FluorDataField', fdField, 'PhotometryField', photometryField); % 'CLimFactor', CLimFactor,
     line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
-    tcolor = mycolors('chat');
-%     title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Ach.']);
-    
-    subplot(1,5,5); phRasterFromTE(TE, csPlusExampleTrials, 2, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField); % 'CLimFactor', CLimFactor,
-    line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
-    tcolor = mycolors('dat');
-%     title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Dop.']);
-    axs = findobj(gcf, 'Type', 'axes');    
-    set(axs(1:end -1), 'YTick', []);
-    
-    formatFigurePublish('size', [4.5 2]);
+    set(gca, 'YTick', []);    
+
+
+
+
+    formatFigurePublish('size', [3 3]);
     if saveOn 
         export_fig(fullfile(savepath, saveName), '-eps');
     end
-        
+end
+
 %% averages
 
 fdField = 'ZS';

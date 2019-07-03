@@ -3,107 +3,15 @@ DB = dbLoadExperiment('reversals_noPunish_publish');
 savepath = fullfile(DB.path, 'pooled', filesep);
 smoothWindow = 1;
 saveOn = 1;
-%% create structure containing all reversals-  SKIPS DC_51
-AR = struct('csPlus', [], 'csMinus', [], 'csPlusReward', [], 'thirdOdor', []); % AR = all reversals
-for si = 1:length(DB.animals)    
-    animal = DB.animals{si};
-    if strcmp(animal, 'DC_51')
-        continue;
-    end
-    load(fullfile(DB.path, 'pooled', ['RE_' animal '.mat']));
-    for group = fieldnames(AR)'
-        sgroup = group{:};
-        for field = fieldnames(RE.(sgroup))'
-            sfield = field{:};          
-            if any(strcmp(sfield, {'trialsBefore', 'trialsAfter'})) % these are special fields that don't contain before and after data
-                continue
-            end
-            if si == 1
-                AR.(sgroup).(sfield).before = RE.(sgroup).(sfield).before;
-                AR.(sgroup).(sfield).after = RE.(sgroup).(sfield).after;
-            else
-                AR.(sgroup).(sfield).before = expandVertCat(AR.(sgroup).(sfield).before, RE.(sgroup).(sfield).before, 'right');
-                AR.(sgroup).(sfield).after = expandVertCat(AR.(sgroup).(sfield).after, RE.(sgroup).(sfield).after, 'left');
-            end
-        end
-    end
-end
+%%
 
-firstReversals = cellfun(@(x,y) ~strcmp(x(1:5), y(1:5)), AR.csPlus.filename.before(1:end-1,end), AR.csPlus.filename.before(2:end,end));
-firstReversals = [false; firstReversals];
-nReversals = size(AR.csPlus.globalTrialNumber.after, 1);
-% reversal #s
-revNumber = ones(nReversals,1);
-mouseNumber = ones(nReversals,1);
+exp.value = {'DC_44'  'DC_46'  'DC_47' 'DC_53'  'DC_54'  'DC_56'}; % exclude DC_51
+exp.valence = {'DC_17'  'DC_20'  'DC_35'  'DC_36'  'DC_37'  'DC_40'};
+exp.all = [exp.value exp.valence];
+expType = 'all';
 
-thisRev = 1;
-thisMouse = 1;
-for counter = 2:nReversals
-    if strcmp(AR.csPlus.filename.before{counter - 1,end}(1:5), AR.csPlus.filename.before{counter,end}(1:5))
-        thisRev = thisRev + 1;
-    else
-        thisRev = 1;
-        thisMouse = thisMouse + 1;
-    end
-    revNumber(counter) = thisRev;
-    mouseNumber(counter) = thisMouse;
-end
-sortVariable = revNumber;
-% sortVariable = auROC.phPeakMean_cs_ch1.after;
-[~, sortOrder] = sort(sortVariable);
-
-
-
-
-
-% quality control- calculate auROC and dPrime for relevent comparisons
-trialWindow = [-20 60];%?
-
-% initialize
-comp = {'licks_cs', 'phPeakMean_cs_ch1', 'phPeakMean_cs_ch2', 'pupil_csBaselined', 'whisk_csBaselined'}; % comparisons
-all_ways = struct(...
-    'before', zeros(nReversals, 1),... % compare cs- and cs+ before reversal
-    'after', zeros(nReversals, 1),... % compare cs- and cs+ after reversal
-    'acq', zeros(nReversals, 1),... % acquisition: compare cs- before and cs+ after reversal
-    'ext', zeros(nReversals, 1)...  % extinction: compare cs+ before and cs- after reversal
-    );
-% clear dPrime auROC
-for field = comp
-    dPrime.(field{:}) = all_ways;
-    auROC.(field{:}) = all_ways;
-end
-
-% calculate metrics
-for field = comp
-    for rev = 1:nReversals
-        % before
-        dPrime.(field{:}).before(rev) = dPrime_SNR(AR.csPlus.(field{:}).before(rev,trialWindow(1) + end + 1:end), AR.csMinus.(field{:}).before(rev,trialWindow(1) + end + 1:end));
-        auROC.(field{:}).before(rev) = rocarea(stripNaNs(AR.csPlus.(field{:}).before(rev,trialWindow(1) + end + 1:end)), stripNaNs(AR.csMinus.(field{:}).before(rev,trialWindow(1) + end + 1:end)), 'scale');
-        % after
-        dPrime.(field{:}).after(rev) = dPrime_SNR(AR.csPlus.(field{:}).after(rev,1:trialWindow(2)), AR.csMinus.(field{:}).after(rev,1:trialWindow(2)));
-        auROC.(field{:}).after(rev) = rocarea(stripNaNs(AR.csPlus.(field{:}).after(rev,1:trialWindow(2))), stripNaNs(AR.csMinus.(field{:}).after(rev,1:trialWindow(2))), 'scale');        
-        % acquisition
-        dPrime.(field{:}).acq(rev) = dPrime_SNR(AR.csPlus.(field{:}).after(rev,1:trialWindow(2)), AR.csMinus.(field{:}).before(rev,trialWindow(1) + end + 1:end));
-        auROC.(field{:}).acq(rev) = rocarea(stripNaNs(AR.csPlus.(field{:}).after(rev,1:trialWindow(2))), stripNaNs(AR.csMinus.(field{:}).before(rev,trialWindow(1) + end + 1:end)), 'scale');                
-        % extinction
-        dPrime.(field{:}).ext(rev) = dPrime_SNR(AR.csPlus.(field{:}).before(rev,trialWindow(1) + end + 1:end), AR.csMinus.(field{:}).after(rev,1:trialWindow(2)));
-        auROC.(field{:}).ext(rev) = rocarea(stripNaNs(AR.csPlus.(field{:}).before(rev,trialWindow(1) + end + 1:end)), stripNaNs(AR.csMinus.(field{:}).after(rev,1:trialWindow(2))), 'scale');
-    end    
-end
-
-% quality control % 2
-% detect when auROC values first exceed threshold
-rocThresh = 0.5;
-trialsToCriterion = NaN(nReversals, 1);
-% looping is just easier
-for counter = 1:nReversals    
-    thisRev = AR.csPlus.csLicksROC.after(counter, :);
-    thisRev = thisRev > rocThresh;
-    nt = find(thisRev, 1);
-    if ~isempty(nt)
-        trialsToCriterion(counter) = nt;
-    end
-end
+%%
+compile_reversal_data;
 
 
 
