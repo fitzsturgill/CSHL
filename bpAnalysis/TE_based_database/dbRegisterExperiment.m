@@ -5,7 +5,7 @@ function dbRegisterExperiment(experiment, path)
     % DB preference contains with fields containing cell arrays of size
     % nExperiments x 1
     % field experiments is requisite
-
+    
 
     % make sure path has trailing filsep
     path = fullfile([path filesep]);

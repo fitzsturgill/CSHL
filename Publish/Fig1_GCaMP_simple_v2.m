@@ -25,7 +25,7 @@ lateLickSessions = {'ChAT_22_SO_RewardPunish_odor_May15_2016_Session1.mat'}; % M
 
 %% make continuous early -> middle -> late phRaster
 
-figSize = [1.6 1];
+figSize = [1 1];
 climfactor = 3;  
 fdField = 'ZS';
 linewidth = 4;
@@ -50,9 +50,10 @@ line([window(2) + offset window(2) + offset], [theseTrials(1) theseTrials(end)],
 % set(gca, 'Visible', 'off');
 set(gca, 'YTick', [100 200 300 400], 'XTick', []);
 
-formatFigurePublish('size', figSize);
+formatFigurePublish('size', figSize, 'fontSize', 6);
 if saveOn 
-    export_fig(fullfile(savepath, saveName), '-eps');
+%     export_fig(fullfile(savepath, saveName), '-eps');
+    saveas(gcf, fullfile(savepath, [saveName '.epsc']));
 end
 
 %% align raster/ averages to odor onset vs lick onset, version #1

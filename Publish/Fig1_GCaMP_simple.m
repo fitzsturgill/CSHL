@@ -106,7 +106,7 @@ end
 
 %% make overlaid phAverages
 
-figSize = [2.2 1];
+figSize = [1 1];
 fdField = 'ZS';
 tcolors = [204 153 255; 153 51 255; 51 0 102]; tcolors = tcolors ./ 255; 
 
@@ -120,7 +120,7 @@ set(gca, 'YLim', [-1 2.5],  'YTickLabel', {});
 addStimulusPatch(gca, [-2 -1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
 ylabel('F(\fontsize{12}\sigma\fontsize{8}-baseline)');  set(gca, 'XLim', window);
 xlabel('Time from reinforcement (s)');
-formatFigurePublish('size', figSize);
+formatFigurePublish('size', figSize, 'fontSize', 6);
 if saveOn 
     export_fig(fullfile(savepath, saveName), '-eps');
 end    
