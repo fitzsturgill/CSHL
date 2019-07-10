@@ -290,6 +290,7 @@ xData = linspace(-2, 4, size([gAvg.phDelay.uncuedReward.data gAvg.phUs.uncuedRew
 for counter = 1:nAnimals
     subplot(nRows, nColumns, counter);
     plot(xData, [gAvg.phDelay.uncuedReward.data(counter * 2 - 1:counter*2,:) gAvg.phUs.uncuedReward.data(counter * 2 - 1:counter*2,:)]');
+    textBox(DB.animals{counter});
 end
 
 saveName = 'uncuedUs_avgs_puff';
@@ -297,6 +298,7 @@ ensureFigure(saveName, 1);
 for counter = 1:nAnimals
     subplot(nRows, nColumns, counter);
     plot(xData, [gAvg.phDelay.uncuedPuff.data(counter * 2 - 1:counter*2,:) gAvg.phUs.uncuedPuff.data(counter * 2 - 1:counter*2,:)]');
+    textBox(DB.animals{counter});
 end
 
 saveName = 'uncuedUs_avgs_shock';
@@ -304,6 +306,7 @@ ensureFigure(saveName, 1);
 for counter = 1:nAnimals
     subplot(nRows, nColumns, counter);
     plot(xData, [gAvg.phDelay.uncuedShock.data(counter * 2 - 1:counter*2,:) gAvg.phUs.uncuedShock.data(counter * 2 - 1:counter*2,:)]');
+    textBox(DB.animals{counter});
 end
 
 %% calculate latency, jitter, and reliability of uncued Us responses
@@ -329,7 +332,8 @@ s2 = struct(...
     'jitter_std', zeros(na, 2),...
     'jitter_avg', zeros(na, 2),...
     'jitter_tt50', [],... % cell array to hold distributions
-    'jitter_delta', []... % cell array to hold distributions
+    'jitter_delta', [],... % cell array to hold distributions
+    'Rnoise', zeros(na,1)... % noise correlations for each channel pair
     );
 
 us_pooled = struct(...
@@ -435,11 +439,62 @@ for counter = 1:length(DB.animals)
         us_pooled.(trialSet).jitter_std(counter, :) = nanstd(tt50);
         us_pooled.(trialSet).jitter_avg(counter, :) = nanmean(tt50);
         us_pooled.(trialSet).jitter_delta{counter} = deltaMax;    
+        us_pooled.(trialSet).Rnoise(counter) = corr(deltaMax(:,1), deltaMax(:,2));
     end
 end
 
 save(fullfile(savepath, 'us_pooled.mat'), 'us_pooled');
 disp(['*** saving: ' fullfile(savepath, 'us_pooled.mat') ' ***']);
+
+%% scatter plots for each animal of us responses
+
+%% plot the averages for each animal
+
+saveName = 'uncuedUs_scatter_rew';
+ensureFigure(saveName, 1);
+nAnimals = length(DB.animals);
+nRows = ceil(sqrt(nAnimals));
+nColumns = ceil(nAnimals/nRows);
+for counter = 1:nAnimals
+    subplot(nRows, nColumns, counter);
+    xData = us_pooled.rew.jitter_delta{counter}(:,1);
+    yData = us_pooled.rew.jitter_delta{counter}(:,2);
+    scatter(xData, yData, '.');
+    textBox({DB.animals{counter}, sprintf('Rsq=%.3g', corr(xData, yData)^2)});
+end
+fig = gcf;
+sameXYScale(fig.Children);
+
+saveName = 'uncuedUs_scatter_puff';
+ensureFigure(saveName, 1);
+nAnimals = length(DB.animals);
+nRows = ceil(sqrt(nAnimals));
+nColumns = ceil(nAnimals/nRows);
+for counter = 1:nAnimals
+    subplot(nRows, nColumns, counter);
+    xData = us_pooled.puff.jitter_delta{counter}(:,1);
+    yData = us_pooled.puff.jitter_delta{counter}(:,2);
+    scatter(xData, yData, '.');
+    textBox({DB.animals{counter}, sprintf('Rsq=%.3g', corr(xData, yData)^2)});
+end
+fig = gcf;
+sameXYScale(fig.Children);
+
+saveName = 'uncuedUs_scatter_shock';
+ensureFigure(saveName, 1);
+nAnimals = length(DB.animals);
+nRows = ceil(sqrt(nAnimals));
+nColumns = ceil(nAnimals/nRows);
+for counter = 1:nAnimals
+    subplot(nRows, nColumns, counter);
+    xData = us_pooled.shock.jitter_delta{counter}(:,1);
+    yData = us_pooled.shock.jitter_delta{counter}(:,2);
+    scatter(xData, yData, '.');
+    textBox({DB.animals{counter}, sprintf('Rsq=%.3g', corr(xData, yData)^2)});
+end
+fig = gcf;
+sameXYScale(fig.Children);
+
 
 %% plot scatter plots for reward and air puff of tt50 vs delta
 minDelta = 2; % minimum deltaF in baseline standard deviation units (ZS)
@@ -613,7 +668,7 @@ us_pooled.shock.avg_delta_norm = us_pooled.shock.avg_delta;% ./ (us_pooled.rew.a
 % scatter(us_pooled.rew.avg_delta(:,1) - us_pooled.rew.avg_delta(:,2), us_pooled.puff.avg_delta(:,1) - us_pooled.puff.avg_delta(:,2));
 
 
-% lets test whether within animal difference are smaller than expected by chance
+% lets test whether within animal differences are smaller than expected by chance
 
 nAnimals = length(DB.animals);
 titles = {'all', 'rew', 'puff', 'shock'};
@@ -653,7 +708,7 @@ figSize = [3.9 1.5];
 saveName = 'us_deltas_permutation_test_figure_pooled';
 fh = ensureFigure(saveName, 1);
 
-% first plot left vs right correlatoin
+% first plot left vs right correlation
 subplot(1,2,1); hold on;
 xData = [us_pooled.rew.avg_delta(:,1); us_pooled.puff.avg_delta(:,1); us_pooled.shock.avg_delta(:,1)];
 yData = [us_pooled.rew.avg_delta(:,2); us_pooled.puff.avg_delta(:,2); us_pooled.shock.avg_delta(:,2)];
@@ -677,6 +732,18 @@ title('Mean vs. sampling distribution');
 formatFigurePublish('size', figSize);
 if saveOn 
     export_fig(fullfile(figsavepath, saveName), '-eps');
+end
+%% signal correlations
+
+xData = [us_pooled.rew.avg_delta(:,1) us_pooled.puff.avg_delta(:,1) us_pooled.shock.avg_delta(:,1)];
+yData = [us_pooled.rew.avg_delta(:,2) us_pooled.puff.avg_delta(:,2) us_pooled.shock.avg_delta(:,2)];
+xData = xData';
+yData = yData';
+
+Rsignal = zeros(size(xData, 2),1);
+
+for counter = 1:size(xData, 2)
+    Rsignal(counter) = corr(xData(:, counter), yData(:, counter));
 end
 
 

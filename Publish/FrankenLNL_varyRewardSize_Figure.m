@@ -17,7 +17,6 @@ disp(['*** loading: ' fullfile(DB.path, 'pooled', 'us_pooled.mat') ' ***']);
 
 
 %% run stats
-% stats on changepoints
 
 
 comp = {'large_vs_medium'; 'medium_vs_small'};
