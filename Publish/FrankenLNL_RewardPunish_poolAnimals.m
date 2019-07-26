@@ -314,6 +314,7 @@ end
 minRewardLickRate = 2;
 bl_window = [-1 0];
 response_window = [0 3]; % must start at 0
+response_window_avg = [0 1];
 endTauOff = 0.8; % use up to n seconds after us delivery to fit tau off
 PhotometryField = 'PhotometryHF';
 na = length(DB.animals);
@@ -333,17 +334,23 @@ s2 = struct(...
     'jitter_avg', zeros(na, 2),...
     'jitter_tt50', [],... % cell array to hold distributions
     'jitter_delta', [],... % cell array to hold distributions
-    'Rnoise', zeros(na,1)... % noise correlations for each channel pair
+    'delta', [],... % less confusingly named cell array to hold delta distribution
+    'mean', [],... % instead of a peak measurement, a mean (~area under curve)
+    'Rnoise_peak', zeros(na,1),... % noise correlations for each channel pair based upon delta to peak
+    'Rnoise_mean', zeros(na,1),... % noise correlations for each channel pair based upon mean measurement
+    'Rnoise_bl', zeros(na, 1)... % noise correlations during baseline period for each channel pair
     );
 
 us_pooled = struct(...
     'rew', s2,...
-    'puff', s2...
+    'puff', s2,...
+    'shock', s2...
     );
+us_pooled.animals = DB.animals;
 
 trialSets = {'rew', 'puff', 'shock'};
-rewAvgDelta = NaN(length(DB.animals), 2); % hold average rew delta ZS of uncued reward trials
-puffAvgDelta = NaN(length(DB.animals), 2); % hold average rew delta ZS of uncued punish trials
+[rewAvgDelta, puffAvgDelta, shockAvgDelta] = deal(NaN(length(DB.animals), 2)); % hold average rew delta ZS of uncued reward trials
+
 for counter = 1:length(DB.animals)
     animal = DB.animals{counter}
     dbLoadAnimal(DB, animal);
@@ -358,11 +365,13 @@ for counter = 1:length(DB.animals)
             case 'shock'
                 theseTrials = find(shockTrials & uncuedTrials);
         end
-        [tt50, deltaMax] = deal(NaN(length(theseTrials), 2));
+        [tt50, deltaMax, deltaMean, bl_all] = deal(NaN(length(theseTrials), 2));
         for channel = 1:2
             [responseData, xData] = phAlignedWindow(TE, theseTrials, channel, 'zeroTimes', TE.Us, 'window', response_window, 'FluorDataField', 'ZS', 'PhotometryField', PhotometryField);
             [blData, blx] = phAlignedWindow(TE, theseTrials, channel, 'zeroTimes', TE.Us, 'window', bl_window, 'FluorDataField', 'ZS', 'PhotometryField', PhotometryField);
+            [meanData, ~] = phAlignedWindow(TE, theseTrials, channel, 'zeroTimes', TE.Us, 'window', response_window_avg, 'FluorDataField', 'ZS', 'PhotometryField', PhotometryField);
             bl = mean(blData, 2);
+            peakMean = mean(meanData, 2);
             response_avg = nanmean(responseData);
             % check if response is positive or negative
             if (max(response_avg) - mean(bl)) > (mean(bl) - min(response_avg))
@@ -385,7 +394,7 @@ for counter = 1:length(DB.animals)
                 us_pooled.(trialSet).tauOff(counter,channel) = fitobject.c;
                 us_pooled.(trialSet).tauObject{counter,channel} = fitobject;
                 us_pooled.(trialSet).tauData{counter,channel} = fitobject.a + fitobject.b * exp(-1/fitobject.c * (fitXData - fitXData(1)));
-                us_pooled.(trialSet).tauDataX{counter,channel} = fitXData;                
+                us_pooled.(trialSet).tauDataX{counter,channel} = fitXData;
             else
                 [peakVal, iAvg] = min(response_avg);
                 avgDelta = peakVal - mean(bl);
@@ -400,6 +409,8 @@ for counter = 1:length(DB.animals)
             us_pooled.(trialSet).avgData{counter,channel} = response_avg;
                                                                            
             deltaMax(:,channel) = M - bl;
+            deltaMean(:,channel) = peakMean - bl;
+            bl_all(:,channel) = bl;
             level50 = bl + deltaMax(:,channel) * 0.5;
             
             [ind, to] = crossing(response_avg, xData, mean(bl) + avgDelta/2);
@@ -423,7 +434,7 @@ for counter = 1:length(DB.animals)
             y1 = responseDataValid(sub2ind(size(responseDataValid), (1:length(theseCrossings))', theseCrossings - 1)); 
             m = (y2 - y1) ./ (x2 - x1);
             x = (level50(valid) - y1 + m .* x1) ./ m;
-            tt50(valid,channel) = x;       
+            tt50(valid,channel) = x;      
     %         ensureFigure('test', 1);
     %         trials = randperm(length(theseTrials), 16);
     %         for counter = 1:16
@@ -438,13 +449,21 @@ for counter = 1:length(DB.animals)
         us_pooled.(trialSet).jitter_tt50{counter} = tt50;
         us_pooled.(trialSet).jitter_std(counter, :) = nanstd(tt50);
         us_pooled.(trialSet).jitter_avg(counter, :) = nanmean(tt50);
-        us_pooled.(trialSet).jitter_delta{counter} = deltaMax;    
-        us_pooled.(trialSet).Rnoise(counter) = corr(deltaMax(:,1), deltaMax(:,2));
+        us_pooled.(trialSet).jitter_delta{counter} = deltaMax;
+        us_pooled.(trialSet).delta{counter} = deltaMax;
+        us_pooled.(trialSet).mean{counter} = deltaMean;
+        us_pooled.(trialSet).Rnoise_peak(counter) = corr(deltaMax(:,1), deltaMax(:,2));
+        us_pooled.(trialSet).Rnoise_mean(counter) = corr(deltaMean(:,1), deltaMean(:,2));
+        us_pooled.(trialSet).Rnoise_bl(counter) = corr(bl_all(:,1), bl_all(:,2));
     end
 end
 
 save(fullfile(savepath, 'us_pooled.mat'), 'us_pooled');
 disp(['*** saving: ' fullfile(savepath, 'us_pooled.mat') ' ***']);
+
+%%
+load(fullfile(savepath, 'us_pooled.mat'), 'us_pooled');
+disp(['*** loading: ' fullfile(savepath, 'us_pooled.mat') ' ***']);
 
 %% scatter plots for each animal of us responses
 

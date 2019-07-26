@@ -290,8 +290,7 @@ end
 
 
 return
-%% Development code below:
-%% normalize responses to punishment by those to reward and compare between left and right BLA
+%% Development code below: normalize responses to punishment by those to reward and compare between left and right BLA
 
 
 FluorField_us = 'phPeakMean_us';
@@ -305,8 +304,11 @@ animals = DB.animals;
 
 % xlims = [min(TE.phPeakMean_cs(2).data(allTrials)) max(TE.phPeakMean_cs(2).data(allTrials)); min(TE.phPeakMean_us(2).data(allTrials)) max(TE.phPeakMean_us(2).data(allTrials))];
 
+nCol = ceil(sqrt(length(animals)));
+nRow = ceil(length(animals) / nCol);
+
 for acounter = 1:length(animals)
-    subplot(2,3,acounter); hold on;
+    subplot(nCol, nRow,acounter); hold on;
     success = dbLoadAnimal(DB, animals{acounter}); % load TE and trial lookups
     title(animals{acounter}, 'Interpreter', 'none');
     % reward is first in the trialSets list, use it to normalize
@@ -371,6 +373,7 @@ for acounter = 1:length(animals)
 
     % ylabel('');   
 end
+
 
 
 

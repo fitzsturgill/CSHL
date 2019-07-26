@@ -45,7 +45,7 @@ rewards_chat = bsxfun(@minus, rewards_chat, bl_chat);
 rewards_chat = bsxfun(@rdivide, rewards_chat, bl_chat);
 % 
 
-ts_abs = TE.trialStartTimeStamp;
+ts_abs = TE.TrialStartTimestamp;
 
 iri_pre = [Inf; diff(ts_abs)];
 iri_post = [diff(ts_abs); Inf];
@@ -225,13 +225,13 @@ rewards_mean_phi_corrected = rewards_mean_phi - rewards_mean_phi_shuffled;
 
 
 % coherence as a function of time from reward
-TE.timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.trialStartTimeStamp, 'duration', baselineEnd + 1);
+TE.timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.TrialStartTimestamp, 'duration', baselineEnd + 1);
 % dc_cc - coherence output,    
 coherenceBand = [1 5]; % frequency range across which to pool coherence measurments
 coherenceBandIx = [find(dc_cc.f >= coherenceBand(1), 1) find(dc_cc.f <= coherenceBand(2), 1, 'last')];
 dc_C_corrected = dc_cc.(crossField) - allShuffled;
 dc_phi_corrected = dc_cc.phi - allShuffled_phi;
-C_timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.trialStartTimeStamp, 'dataTimes', dc_cc.t);
+C_timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.TrialStartTimestamp, 'dataTimes', dc_cc.t);
 C_timeFromReward = repmat(permute(C_timeFromReward, [2 3 1]), 1, size(dc_cc.(crossField), 2));
 
 bins = [0:0.1:1 2:10];
@@ -332,9 +332,9 @@ end
 
 channel = 1;
 ensureFigure(['annotated_' num2str(channel)], 1);
-for trial = 1:18
+for trial = 1:8
 
-    subplot(6,3,trial);
+    subplot(4,2,trial);
     trial = trial + 18 * 0;
     ydata = TE.Photometry.data(channel).raw(trial, :);    
     plot(TE.Photometry.xData, ydata, 'k'); hold on;
@@ -344,10 +344,10 @@ for trial = 1:18
 end
 
 %% cross correlation
-trial = 1;
+
 maxLagInSeconds = 10;
 maxLag = round(maxLagInSeconds * Fs);
-% [r, lags] = xcorr(data_chat(:,trial), data_dat(:,trial), maxLag);
+
 [r, shiftR, rawR, lags] = correctedXCorr(data_chat, data_dat, maxLag);
 ensureFigure('xcorr', 1);
 plot(lags * 1/Fs, r, 'k'); hold on;
@@ -367,6 +367,30 @@ end
 % 
 % TE = addPupilometryToTE(TE, 'duration', 30, 'zeroField', 'Baseline', 'startField', 'Baseline', 'frameRate', 60, 'frameRateNew', 20);
 
+
+% cross correlation, pre reward
+window = [-20 0];
+[data_dat_pr, ts, tn] = extractDataByTimeStamps(TE.Photometry.data(2).ZS, TE.Photometry.startTime, 20, TE.Reward, window);
+data_chat_pr = extractDataByTimeStamps(TE.Photometry.data(1).ZS, TE.Photometry.startTime, 20, TE.Reward, window);
+
+
+maxLagInSeconds = 5;
+maxLag = round(maxLagInSeconds * Fs);
+
+[r, shiftR, rawR, lags] = correctedXCorr(data_chat_pr, data_dat_pr, maxLag, 2);
+ensureFigure('xcorr_preReward', 1);
+plot(lags * 1/Fs, r, 'k'); hold on;
+plot(lags * 1/Fs, rawR, 'r');
+plot(lags * 1/Fs, shiftR, 'b');
+title('Xcorr, pre-reward');
+xlabel('Time (s)'); ylabel('ChAT x DAT XCorr'); 
+legend({'corrected', 'raw', 'shift predictor'});
+
+
+if saveOn
+    saveas(gcf, fullfile(savepath, 'xcorr_preReward.fig'));
+    saveas(gcf, fullfile(savepath, 'xcorr_preReward.jpg'));
+end
 %%
 
 maxLagInSeconds = 10;

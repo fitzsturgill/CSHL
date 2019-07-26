@@ -1451,6 +1451,7 @@ subplot(1,2,2); scatter(all_Licks, all_DAT, 8, '.'); ylabel('cue DAT'); textBox(
 
 
 linecolors = [1 0 0; 0 0 1; 0 1 1; 0 1 0; 1 1 0; 1 0 1];     
+linecolors = repmat(linecolors, 10,1);
 keepers = [1:6];
 
 nMice = max(mouseNumber);
@@ -1459,6 +1460,7 @@ ensureFigure(savename, 1);
 % allTrials = true; 
 ll = [];
 subplot(1,2,1); hold on; subplot(1,2,2); hold on;
+R_cs = zeros(nMice, 1);
 for counter = 1:nMice
 %     if ~ismember(counter, keepers)
 %         continue;
@@ -1469,6 +1471,7 @@ for counter = 1:nMice
     xData = all_ChAT(thisMouse); yData = all_DAT(thisMouse); 
 %     scatter(TE.phPeakMean_cs(2).data(trialSets{counter}), TE.phPeakMean_cs(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');
     scatter(xData, yData, 12, linecolors(counter, :), '.');
+    R_cs(counter) = corr(xData, yData);
     % fit for cs
     fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
     fob = fit(xData, yData, 'poly1', fo); 
@@ -1488,7 +1491,8 @@ for counter = 1:nMice
     set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :));    
 end
 
-subplot(1,2,1); legend(ll, DB.animals(keepers), 'Interpreter', 'none');
+% subplot(1,2,1); legend(ll, DB.animals(keepers), 'Interpreter', 'none');
+subplot(1,2,1); legend(ll, DB.animals, 'Interpreter', 'none');
 title('Cs'); ylabel('Dop.'); xlabel('ACh.');
 subplot(1,2,2);
 title('Us'); ylabel('Dop.'); xlabel('ACh.');
