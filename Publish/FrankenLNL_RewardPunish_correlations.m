@@ -48,4 +48,44 @@ saveName = 'cumHist_Rnoise_all';
 ensureFigure(saveName, 1);
 axes; hold on;
 plot(Rnoise.all.sorted, Rnoise.all.index, '-k');
-    
+
+%% signal correlations
+
+xData = [us_pooled.rew.avg_mean(:,1) us_pooled.puff.avg_mean(:,1) us_pooled.shock.avg_mean(:,1)];
+yData = [us_pooled.rew.avg_mean(:,2) us_pooled.puff.avg_mean(:,2) us_pooled.shock.avg_mean(:,2)];
+
+
+nAnimals = size(xData, 1);
+nPerm = 10000;
+xShuff = repmat(xData, nPerm, 1);
+yShuff = zeros(size(xShuff));
+for counter = 0:nPerm - 1
+    pix = randperm(size(yData, 1));
+    yShuff(1 + counter*nAnimals:nAnimals + counter*nAnimals, :) = yData(pix, :);
+end
+
+rs = zeros(size(xData, 2),1);
+
+for counter = 1:size(xData, 1)
+    rs(counter) = corr(xData(counter,:)', yData(counter, :)');
+end
+
+rs_shuff = zeros(size(xShuff, 1),1);
+for counter = 1:size(xShuff,1)
+    rs_shuff(counter) = corr(xShuff(counter,:)', yShuff(counter, :)');
+end
+
+Rsignal = cum(rs);
+Rsignal_shuff = cum(rs_shuff);
+%%
+saveName = 'cumHist_Rsignal';
+ensureFigure(saveName, 1);
+axes; hold on;
+plot(Rsignal.sorted, Rsignal.index, '-k');
+plot(Rsignal_shuff.sorted, Rsignal_shuff.index, 'Color', [0.8 0.8 0.8]);
+xlabel('Rsignal');
+formatFigurePublish('size', [1 1]);
+
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end

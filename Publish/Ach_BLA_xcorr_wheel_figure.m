@@ -23,7 +23,7 @@ plot(lags * 1/Fs, r, 'k'); hold on;
 xlabel('Time (s)'); ylabel('R'); 
 % legend({'corrected', 'raw', 'shift predictor'});
 
-formatFigurePublish('size', [1 0.8]);
+formatFigurePublish('size', [1.6 1]);
 
 if saveOn 
     export_fig(fullfile(savepath, saveName), '-eps');

@@ -314,7 +314,7 @@ end
 minRewardLickRate = 2;
 bl_window = [-1 0];
 response_window = [0 3]; % must start at 0
-response_window_avg = [0 1];
+response_window_avg = [-0.1 0.5]; % with respect to peak point in average
 endTauOff = 0.8; % use up to n seconds after us delivery to fit tau off
 PhotometryField = 'PhotometryHF';
 na = length(DB.animals);
@@ -322,7 +322,8 @@ na = length(DB.animals);
 s2 = struct(...
     'latency', zeros(na, 2),...
     'latencyY', zeros(na, 2),... % 1/2 max value
-    'avg_delta', zeros(na, 2),... % delta responsee from baseline
+    'avg_delta', zeros(na, 2),... % delta peak responsee from baseline
+    'avg_mean', zeros(na, 2),...  % delta avg response from baseline
     'avgMax', NaN(na, 2),... % maximum (or minimum) value of response
     'tauOff', NaN(na, 2),...
     'tauObject', [],...
@@ -369,9 +370,7 @@ for counter = 1:length(DB.animals)
         for channel = 1:2
             [responseData, xData] = phAlignedWindow(TE, theseTrials, channel, 'zeroTimes', TE.Us, 'window', response_window, 'FluorDataField', 'ZS', 'PhotometryField', PhotometryField);
             [blData, blx] = phAlignedWindow(TE, theseTrials, channel, 'zeroTimes', TE.Us, 'window', bl_window, 'FluorDataField', 'ZS', 'PhotometryField', PhotometryField);
-            [meanData, ~] = phAlignedWindow(TE, theseTrials, channel, 'zeroTimes', TE.Us, 'window', response_window_avg, 'FluorDataField', 'ZS', 'PhotometryField', PhotometryField);
             bl = mean(blData, 2);
-            peakMean = mean(meanData, 2);
             response_avg = nanmean(responseData);
             % check if response is positive or negative
             if (max(response_avg) - mean(bl)) > (mean(bl) - min(response_avg))
@@ -404,12 +403,12 @@ for counter = 1:length(DB.animals)
                 end
                 [M, I] = min(responseData, [], 2);                
             end
+
             
             us_pooled.(trialSet).avgDataX{counter,channel} = xData;
             us_pooled.(trialSet).avgData{counter,channel} = response_avg;
                                                                            
             deltaMax(:,channel) = M - bl;
-            deltaMean(:,channel) = peakMean - bl;
             bl_all(:,channel) = bl;
             level50 = bl + deltaMax(:,channel) * 0.5;
             
@@ -435,6 +434,14 @@ for counter = 1:length(DB.animals)
             m = (y2 - y1) ./ (x2 - x1);
             x = (level50(valid) - y1 + m .* x1) ./ m;
             tt50(valid,channel) = x;      
+            
+            
+            [meanData, ~] = phAlignedWindow(TE, theseTrials, channel, 'zeroTimes', cellfun(@(x) x(1) + xData(iAvg), TE.Us), 'window', response_window_avg, 'FluorDataField', 'ZS', 'PhotometryField', PhotometryField);            
+            peakMean = mean(meanData, 2);
+            avgMean = nanmean(peakMean);
+            us_pooled.(trialSet).avg_mean(counter, channel) = nanmean(peakMean - bl);
+            deltaMean(:,channel) = peakMean - bl;
+            
     %         ensureFigure('test', 1);
     %         trials = randperm(length(theseTrials), 16);
     %         for counter = 1:16
@@ -665,8 +672,8 @@ end
 %% are the reward-normalized punishment responses more similar within subjects or not?
 % normalize by rew
 
-us_pooled.puff.avg_delta_norm = us_pooled.puff.avg_delta;% ./ (us_pooled.rew.avg_delta + us_pooled.puff.avg_delta + us_pooled.shock.avg_delta);
-us_pooled.shock.avg_delta_norm = us_pooled.shock.avg_delta;% ./ (us_pooled.rew.avg_delta + us_pooled.puff.avg_delta + us_pooled.shock.avg_delta);
+% us_pooled.puff.avg_delta_norm = us_pooled.puff.avg_delta;% ./ (us_pooled.rew.avg_delta + us_pooled.puff.avg_delta + us_pooled.shock.avg_delta);
+% us_pooled.shock.avg_delta_norm = us_pooled.shock.avg_delta;% ./ (us_pooled.rew.avg_delta + us_pooled.puff.avg_delta + us_pooled.shock.avg_delta);
 
 % are responses correlated?
 % saveName = 'us_norm_correlations';
@@ -693,7 +700,7 @@ nAnimals = length(DB.animals);
 titles = {'all', 'rew', 'puff', 'shock'};
 us_deltas = [us_pooled.rew.avg_delta(:,1) - us_pooled.rew.avg_delta(:,2) us_pooled.puff.avg_delta(:,1) - us_pooled.puff.avg_delta(:,2) us_pooled.shock.avg_delta(:,1) - us_pooled.shock.avg_delta(:,2)];
 umd = zeros(1,4);
-umd(1) = mean(abs(us_deltas(:))); % us abs mean delta
+umd(1) = mean(abs(us_deltas(:))); % us abs delta delta
 umd(2:end) = mean(abs(us_deltas));
 allData = [us_pooled.rew.avg_delta(:) us_pooled.puff.avg_delta(:) us_pooled.shock.avg_delta(:)];
 nPerm =100000;
@@ -752,24 +759,64 @@ formatFigurePublish('size', figSize);
 if saveOn 
     export_fig(fullfile(figsavepath, saveName), '-eps');
 end
-%% signal correlations
 
-xData = [us_pooled.rew.avg_delta(:,1) us_pooled.puff.avg_delta(:,1) us_pooled.shock.avg_delta(:,1)];
-yData = [us_pooled.rew.avg_delta(:,2) us_pooled.puff.avg_delta(:,2) us_pooled.shock.avg_delta(:,2)];
-xData = xData';
-yData = yData';
+%% make scatter plot, with significant points highlighted in some way, also normalized to reward responses....
+% exclude 
+us_pooled.puff.avg_mean_norm = us_pooled.puff.avg_mean ./ us_pooled.rew.avg_mean;
+us_pooled.shock.avg_mean_norm = us_pooled.shock.avg_mean ./ us_pooled.rew.avg_mean;
+us_pooled.rew.avg_mean_norm = us_pooled.rew.avg_mean ./ us_pooled.rew.avg_mean; % duh
 
-Rsignal = zeros(size(xData, 2),1);
+us_pooled.puff.avg_delta_norm = us_pooled.puff.avg_delta ./ us_pooled.rew.avg_delta;
+us_pooled.shock.avg_delta_norm = us_pooled.shock.avg_delta ./ us_pooled.rew.avg_delta;
+us_pooled.rew.avg_delta_norm = us_pooled.rew.avg_delta ./ us_pooled.rew.avg_delta; % duh
 
-for counter = 1:size(xData, 2)
-    Rsignal(counter) = corr(xData(:, counter), yData(:, counter));
-end
+figSize = [3.9 1.5];
+saveName = 'us_scatter_norm';
+fh = ensureFigure(saveName, 1);
+
+% first plot left vs right correlation
+subplot(1,2,1); hold on; title('peakMean');
+xData = [us_pooled.rew.avg_mean_norm(:,1); us_pooled.puff.avg_mean_norm(:,1); us_pooled.shock.avg_mean_norm(:,1)];
+yData = [us_pooled.rew.avg_mean_norm(:,2); us_pooled.puff.avg_mean_norm(:,2); us_pooled.shock.avg_mean_norm(:,2)];
+colors = [repmat([0 0 1], size(us_pooled.rew.avg_mean_norm, 1), 1); repmat([1 0 0], size(us_pooled.puff.avg_mean_norm, 1), 1); repmat([0 1 0], size(us_pooled.shock.avg_mean_norm, 1), 1)];
+% plot([us_pooled.puff.avg_mean_norm(:,1) us_pooled.shock.avg_mean_norm(:,1)]', [us_pooled.puff.avg_mean_norm(:,2) us_pooled.shock.avg_mean_norm(:,2)]', 'Color', [0 0 0]);
+scatter(xData, yData, 10, colors, 'filled'); 
+
+% [fo, gof, output] = fit(xData, yData, 'poly1');
+% plot(fo, 'predfunc');
+% legend off;
+xlabel('left BLA'); ylabel('right BLA');
+addUnityLine;
+addOrginLines;
+textBox(sprintf('Rho=%.3g', corr(xData, yData)), [], [], 8);
+
+subplot(1,2,2); hold on; title('peakDelta');
+xData = [us_pooled.rew.avg_delta_norm(:,1); us_pooled.puff.avg_delta_norm(:,1); us_pooled.shock.avg_delta_norm(:,1)];
+yData = [us_pooled.rew.avg_delta_norm(:,2); us_pooled.puff.avg_delta_norm(:,2); us_pooled.shock.avg_delta_norm(:,2)];
+colors = [repmat([0 0 1], size(us_pooled.rew.avg_delta_norm, 1), 1); repmat([1 0 0], size(us_pooled.puff.avg_delta_norm, 1), 1); repmat([0 1 0], size(us_pooled.shock.avg_delta_norm, 1), 1)];
+plot([us_pooled.puff.avg_delta_norm(:,1) us_pooled.shock.avg_delta_norm(:,1)]', [us_pooled.puff.avg_delta_norm(:,2) us_pooled.shock.avg_delta_norm(:,2)]', 'Color', [0 0 0]);
+scatter(xData, yData, 10, colors, 'filled'); 
+
+% [fo, gof, output] = fit(xData, yData, 'poly1');
+% plot(fo, 'predfunc');
+% legend off;
+xlabel('left BLA'); ylabel('right BLA');
+addUnityLine;
+addOrginLines;
+textBox(sprintf('Rho=%.3g', corr(xData, yData)), [], [], 8);
+
+% have connecting lines
+
+
+
+
+
 
 
 
 %%
 % title('appetitive');
-% subplot(2,2,2); plot(nanmean([gAvgNorm.phCue.cuedReward.data gAvgNorm.phUs.cuedReward.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedReward.data gAvgNorm.phUs.uncuedReward.data]))
+% subplot(2,2,2); plot(nandelta([gAvgNorm.phCue.cuedReward.data gAvgNorm.phUs.cuedReward.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedReward.data gAvgNorm.phUs.uncuedReward.data]))
 % title('appetitive norm.');
 % subplot(2,2,3); plot(nanmean([gAvgNorm.phCue.cuedPuff.data gAvgNorm.phUs.cuedPuff.data])); hold on; plot(nanmean([gAvgNorm.phCue.uncuedPuff.data gAvgNorm.phUs.uncuedPuff.data]))
 % title('normPunish');
