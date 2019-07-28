@@ -381,6 +381,8 @@ end
 if saveOn 
     saveas(gcf, fullfile(savepath, [saveName '.jpg']));
     saveas(gcf, fullfile(savepath, [saveName '.fig']));
+
+    export_fig(gcf,fullfile(savepath, [saveName '.pdf']));  % write to pdf
 end
 
 

@@ -94,11 +94,11 @@ end
 
     
     
-h = waitbar(0, 'slowly writing avg pdfs');
-pdfavg = fullfile(DB.path, 'pooled', 'FrankenLNL_RewardPunish_avgsNorm_allAnimals.pdf');
+h = waitbar(0, 'slowly writing avg pdfs');pdfavg = fullfile(DB.path, 'pooled', 'FrankenLNL_RewardPunish_avgsNorm_allAnimals.pdf');
 for counter = 1:length(fha)    
     if counter == 1
         export_fig(fha(counter),pdfavg);  % write to pdf
+
     else
         export_fig(fha(counter),'-append',pdfavg);  % write to pdf
     end
