@@ -64,7 +64,7 @@ S = S(:)';
 S   = S - level;
 
 % first look for exact zeros
-ind0 = find( S == 0 ); 
+ind0 = find( S == 0 );
 
 % then look for zero crossings between data points
 S1 = S(1:end-1) .* S(2:end);
@@ -96,8 +96,26 @@ end
 % Addition:
 % Some people like to get the data points closest to the zero crossing,
 % so we return these as well
+
+% FS mod 2019, if crossing occurs between first and second points, you can't
+% look back to the point before
+if ind(1) == 1
+    ind = ind(2:end);
+    addNan = true;
+else
+    addNan = false;
+end
+%
+
 [CC,II] = min(abs([S(ind-1) ; S(ind) ; S(ind+1)]),[],1); 
 ind2 = ind + (II-2); %update indices 
 
 t0close = t(ind2);
 s0close = S(ind2);
+
+% FS mod 2019
+if addNan
+    t0close = [NaN t0close];
+    s0close = [NaN s0close];
+end
+%

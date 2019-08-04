@@ -20,31 +20,36 @@ sessionIndex = unique(TE.sessionIndex(matches));
 
 %% example traces
 % rewarding subset
-window = [-4 7];
+figSize = [0.7 0.4];
+nTraces = 1;
+window = [-3 7];
 showTheseR = find(Odor2Valve1Trials & rewardTrials & ismember(TE.sessionIndex, sessionIndex));
 [~, rixR] = sort(rand(size(showTheseR)));
 
-
-
-saveName = 'PE_BLA_exampleMouse_traces';  
+saveName = 'PE_BLA_exampleMouse_traces_LR';  
 fig = ensureFigure(saveName, 1);    
+ax = subplot(1,1,1); hold on;
+% trial 16 is a nice one for the figure
+rixR(1) = 16; % for now, use 16
+ch1Data = TE.Photometry.data(1).dFF(showTheseR(rixR(1:nTraces)), :)';
+ch2Data = TE.Photometry.data(2).dFF(showTheseR(rixR(1:nTraces)), :)' + range(ch1Data);
+set(gca, 'YLim', [min(ch1Data) - range(ch1Data) * 0.1 max(ch2Data) + range(ch1Data) * 0.1]);
+hp = addStimulusPatch(gca, [0 1], '', [0.8 0.8 0.8], 1); 
+hp = addStimulusPatch(gca, [2.9 3.1], '', [0.8 0.8 0.8], 1);
+plot(TE.Photometry.xData(21:end), ch1Data(21:end,:), 'k', 'LineWidth', 0.4); set(gca, 'XLim', window);
+plot(TE.Photometry.xData(21:end), ch2Data(21:end,:), 'k', 'LineWidth', 0.4); set(gca, 'XLim', window);
 
-
-ax = subplot(1,1,1);
-plot(TE.Photometry.xData, TE.Photometry.data(1).dFF(showTheseR(rixR(1:10)), :)', 'k', 'LineWidth', 0.15); set(gca, 'XLim', window);
-addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [2.9 3.1]);
-% set(gca, 'YTickLabel', {}); set(gca, 'XTickLabel', {}); 
 set(gca, 'Visible', 'off');
-% title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Left']);
+
+formatFigurePublish('size', figSize);
+
+if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg'])); 
+end
 
 
-% 
-% ax(2) = subplot(1,2,2);
-% plot(TE.Photometry.xData, TE.Photometry.data(2).dFF(showTheseR(rixR(1:10)), :)', 'k', 'LineWidth', 0.15); set(gca, 'XLim', window);
-% addStimulusPatch(gca, [0 1]); addStimulusPatch(gca, [2.9 3.1]);
-% % title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Left']);
-% % set(gca, 'YTickLabel', {}); set(gca, 'XTickLabel', {}); 
-% set(gca, 'Visible', 'off');
 
 %% 
 saveName = 'PE_BLA_exampleMouse_traces_uncued';  

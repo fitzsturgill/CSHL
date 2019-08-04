@@ -309,11 +309,12 @@ for counter = 1:nAnimals
     textBox(DB.animals{counter});
 end
 
-%% calculate latency, jitter, and reliability of uncued Us responses
+%% calculate latency, jitter, and reliability Us responses
 
 minRewardLickRate = 2;
-bl_window = [-1 0];
+bl_window = [-4 -3];
 response_window = [0 3]; % must start at 0
+maxPeakLatency = 1;  % peak must be reached in n seconds
 response_window_avg = [-0.1 0.5]; % with respect to peak point in average
 endTauOff = 0.8; % use up to n seconds after us delivery to fit tau off
 PhotometryField = 'PhotometryHF';
@@ -345,12 +346,15 @@ s2 = struct(...
 us_pooled = struct(...
     'rew', s2,...
     'puff', s2,...
-    'shock', s2...
+    'shock', s2,...
+    'rew_cued', s2,...
+    'puff_cued', s2,...
+    'shock_cued', s2...
     );
 us_pooled.animals = DB.animals;
 
-trialSets = {'rew', 'puff', 'shock'};
-[rewAvgDelta, puffAvgDelta, shockAvgDelta] = deal(NaN(length(DB.animals), 2)); % hold average rew delta ZS of uncued reward trials
+trialSets = {'rew', 'puff', 'shock', 'rew_cued', 'puff_cued', 'shock_cued'};
+% [rewAvgDelta, puffAvgDelta, shockAvgDelta, rewAvgDelta_cued, puffAvgDelta_cued, shockAvgDelta_cued] = deal(NaN(length(DB.animals), 2)); % hold average rew delta ZS of uncued reward trials
 
 for counter = 1:length(DB.animals)
     animal = DB.animals{counter}
@@ -360,21 +364,32 @@ for counter = 1:length(DB.animals)
         trialSet = trialSets{tscounter};
         switch trialSet
             case 'rew'
-                theseTrials = find(rewardTrials & uncuedTrials & (TE.licks_us.rate > minRewardLickRate));    
+                theseTrials = find(uncuedReward & (TE.licks_us.rate > minRewardLickRate) & ismember(TE.BlockNumber, [2 3]));    
             case 'puff'
                 theseTrials = find(punishTrials & uncuedTrials);   
             case 'shock'
                 theseTrials = find(shockTrials & uncuedTrials);
+            case 'rew_cued'
+                theseTrials = find(rewardTrials & Odor2Valve1Trials & (TE.licks_us.rate > minRewardLickRate) & (TE.licks_cs.rate > minCueLickRate) & ismember(TE.BlockNumber, [2 3])); % exclude shock or extinction days
+            case 'puff_cued'
+                theseTrials = find(punishTrials & Odor2Valve2Trials);
+            case 'shock_cued'
+                theseTrials = find(shockTrials & Odor2Valve2Trials);
         end
+             
+    
         [tt50, deltaMax, deltaMean, bl_all] = deal(NaN(length(theseTrials), 2));
         for channel = 1:2
             [responseData, xData] = phAlignedWindow(TE, theseTrials, channel, 'zeroTimes', TE.Us, 'window', response_window, 'FluorDataField', 'ZS', 'PhotometryField', PhotometryField);
             [blData, blx] = phAlignedWindow(TE, theseTrials, channel, 'zeroTimes', TE.Us, 'window', bl_window, 'FluorDataField', 'ZS', 'PhotometryField', PhotometryField);
             bl = mean(blData, 2);
             response_avg = nanmean(responseData);
-            % check if response is positive or negative
-            if (max(response_avg) - mean(bl)) > (mean(bl) - min(response_avg))
-                [peakVal, iAvg] = max(response_avg);
+            % check if response is positive or negative, assume positive
+            % for reward (so far this is correct)
+            minVal = min(response_avg(1:bpX2pnt(maxPeakLatency, Fs)));
+            maxVal = max(response_avg(1:bpX2pnt(maxPeakLatency, Fs)));
+            if any(ismember(trialSet, {'rew', 'rew_cued'})) || (maxVal - mean(bl)) > (mean(bl) - minVal)
+                [peakVal, iAvg] = max(response_avg(1:bpX2pnt(maxPeakLatency, Fs)));
                 avgDelta = peakVal - mean(bl);
                 direction = 1;
                 [M, I] = max(responseData, [], 2);                
@@ -395,7 +410,7 @@ for counter = 1:length(DB.animals)
                 us_pooled.(trialSet).tauData{counter,channel} = fitobject.a + fitobject.b * exp(-1/fitobject.c * (fitXData - fitXData(1)));
                 us_pooled.(trialSet).tauDataX{counter,channel} = fitXData;
             else
-                [peakVal, iAvg] = min(response_avg);
+                [peakVal, iAvg] = min(response_avg(1:bpX2pnt(maxPeakLatency, Fs)));
                 avgDelta = peakVal - mean(bl);
                 direction = -1;
                 if strcmp(trialSet, 'rew')
@@ -468,10 +483,84 @@ end
 save(fullfile(savepath, 'us_pooled.mat'), 'us_pooled');
 disp(['*** saving: ' fullfile(savepath, 'us_pooled.mat') ' ***']);
 
+
+
+
+%% similar, but for cue period
+
+minRewardLickRate = 2;
+bl_window = [-1 0];
+
+response_window = [0 2]; % must start at 0
+% maxPeakLatency = 1;  % peak must be reached in n seconds
+% response_window_avg = [-0.1 0.5]; % with respect to peak point in average
+% endTauOff = 0.8; % use up to n seconds after us delivery to fit tau off
+PhotometryField = 'PhotometryHF';
+na = length(DB.animals);
+
+s2 = struct(...   
+    'avg_mean', zeros(na, 2),...  % delta avg response from baseline   
+    'avgData', [],...
+    'avgDataX', [],...        
+    'mean', [],... % instead of a peak measurement, a mean (~area under curve)    
+    'Rnoise_mean', zeros(na,1),... % noise correlations for each channel pair based upon mean measurement
+    'Rnoise_bl', zeros(na, 1)... % noise correlations during baseline period for each channel pair
+    );
+
+cs_pooled = struct(...
+    'CSplus', s2,...
+    'CSminus', s2,...
+    'CSminus_shock', s2...
+    );
+
+cs_pooled.animals = DB.animals;
+
+trialSets = {'CSplus', 'CSminus', 'CSminus_shock'};
+% [rewAvgDelta, puffAvgDelta, shockAvgDelta, rewAvgDelta_cued, puffAvgDelta_cued, shockAvgDelta_cued] = deal(NaN(length(DB.animals), 2)); % hold average rew delta ZS of uncued reward trials
+
+for counter = 1:length(DB.animals)
+    animal = DB.animals{counter}
+    dbLoadAnimal(DB, animal);
+    Fs = TE.(PhotometryField).sampleRate;
+    for tscounter = 1:length(trialSets)
+        trialSet = trialSets{tscounter};
+        switch trialSet
+            case 'CSplus'
+                theseTrials = Odor2Valve1Trials & ismember(TE.BlockNumber, [2 3]);
+            case 'CSminus'
+                theseTrials = Odor2Valve2Trials & (TE.BlockNumber == 3);   
+            case 'CSminus_shock'
+                theseTrials = Odor2Valve2Trials & (TE.BlockNumber == 4);           
+        end
+                 
+        [bl_all, deltaMean] = deal(NaN(sum(theseTrials), 2));
+        for channel = 1:2
+            [responseData, xData] = phAlignedWindow(TE, theseTrials, channel, 'zeroTimes', TE.Cue2, 'window', response_window, 'FluorDataField', 'ZS', 'PhotometryField', PhotometryField);
+            [blData, blx] = phAlignedWindow(TE, theseTrials, channel, 'zeroTimes', TE.Cue2, 'window', bl_window, 'FluorDataField', 'ZS', 'PhotometryField', PhotometryField);
+            bl = mean(blData, 2);
+            response_avg = nanmean(responseData);
+            
+            cs_pooled.(trialSet).avgDataX{counter,channel} = xData;
+            cs_pooled.(trialSet).avgData{counter,channel} = response_avg;
+                                                                                                 
+            peakMean = mean(responseData, 2);
+            avgMean = nanmean(peakMean);
+            cs_pooled.(trialSet).avg_mean(counter, channel) = nanmean(peakMean - bl);
+            deltaMean(:,channel) = peakMean - bl;
+
+        end               
+        cs_pooled.(trialSet).mean{counter} = deltaMean;
+        cs_pooled.(trialSet).Rnoise_mean(counter) = corr(deltaMean(:,1), deltaMean(:,2));
+        cs_pooled.(trialSet).Rnoise_bl(counter) = corr(bl_all(:,1), bl_all(:,2));
+    end
+end
+
+save(fullfile(savepath, 'cs_pooled.mat'), 'cs_pooled');
+disp(['*** saving: ' fullfile(savepath, 'cs_pooled.mat') ' ***']);
+
 %%
 load(fullfile(savepath, 'us_pooled.mat'), 'us_pooled');
 disp(['*** loading: ' fullfile(savepath, 'us_pooled.mat') ' ***']);
-
 %% scatter plots for each animal of us responses
 
 %% plot the averages for each animal

@@ -11,6 +11,8 @@
     omitTrials = filterTE(TE, 'trialOutcome', 3, 'reject', 0);
     trialTypes = 1:9;
     trialsByType = cell(size(trialTypes));
-    for counter = 1:length(trialTypes)
-        trialsByType{counter} = filterTE(TE, 'trialType', trialTypes(counter), 'reject', 0);
+    for COUNTER = 1:length(trialTypes)
+        trialsByType{COUNTER} = filterTE(TE, 'trialType', trialTypes(COUNTER), 'reject', 0);
     end
+    
+    clear COUNTER;

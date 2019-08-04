@@ -1,6 +1,6 @@
 % CuedOutcome_QPE_examples
 DB = dbLoadExperiment('cuedOutcome');
-savepath = fullfile(DB.path, ['pooled' filesep 'figure']);
+savepath = fullfile(DB.path, 'figure');
 ensureDirectory(savepath);
 saveOn = 1;
 
@@ -41,30 +41,31 @@ success = dbLoadAnimal(DB, animal); % load TE and trial lookups
     window = [-1.5 5];
     ensureFigure(saveName, 1); 
         varargin = {'window', [window(1) 3], 'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording',...
-        'linespec', {'b', 'r', 'g'}};
+        'linespec', {'m', 'b', 'c'}};
     lickAvg = eventAverageFromTE(TE, {highValueTrials & rewardTrials, lowValueTrials & rewardTrials, uncuedTrials & rewardTrials}, 'Port1In', varargin{:});
     ax = axes; hold on; yyaxis right
     ll = plot(lickAvg.xData, lickAvg.Avg(1,:), '--k');
-    plot(lickAvg.xData, lickAvg.Avg(1,:), '--b', lickAvg.xData, lickAvg.Avg(2,:), '--r', lickAvg.xData, lickAvg.Avg(3,:), '--g');
-    ax.YColor = [0 0 0]; ylabel('Lick rate (Hz)');
-    set(gca, 'YLim', [-1 7]);
+    plot(lickAvg.xData, lickAvg.Avg(1,:), '--m', lickAvg.xData, lickAvg.Avg(2,:), '--b', lickAvg.xData, lickAvg.Avg(3,:), '--c');
+    ax.YColor = [0 0 0]; ylabel('Licks/s');
+%     set(gca, 'YLim', [-1 7]);
     yyaxis left; ax.YColor = [0 0 0]; 
     [ha, hl] = phPlotAverageFromTE(TE, {highValueTrials & rewardTrials, lowValueTrials & rewardTrials, uncuedTrials & rewardTrials}, 1,...
-        'window', window, 'linespec', {'b', 'r', 'g'}, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue, 'alpha', 0);
+        'window', window, 'linespec', {'m', 'b', 'c'}, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue, 'alpha', 0);
 %     set(hl, 'LineWidth', 2);    
-    set(gca, 'XLim', window, 'YLim', [-1 3]);
-    addStimulusPatch(gca, [0 1], '', [0.8 0.8 0.8], 0.5) 
-    addStimulusPatch(gca, [2.9 3.1], '', [0.8 0.8 0.8], 0.5) 
+    set(gca, 'XLim', window);
+    addStimulusPatch(gca, [0 1], '', [0.8 0.8 0.8], 0.5);
+    addStimulusPatch(gca, [2.9 3.1], '', [0.8 0.8 0.8], 0.5); 
 %     legend([hl ll(1)], {'\color{blue} high value', '\color{red} low value', '\color{green} uncued', ...
-%         'licking'}, 'Location', 'northwest', 'FontSize', 20, 'Interpreter', 'tex'); legend('boxoff');
-    ylabel('Fluor. (\sigma-baseline)'); xlabel('Time from cue (s)');
-    formatFigurePublish('size', [1.7 1.5]);    
+%         'licking'}, 'Location', 'northwest', 'FontSize', 7, 'Interpreter', 'tex'); legend('boxoff');
+    ylabel('Fluor. (\sigma-bl.)'); xlabel('Time from cue (s)');
+    formatFigurePublish('size', [2 1]);    
 
 if saveOn
-    export_fig(fullfile(savepath, saveName), '-eps');
+%     export_fig(fullfile(savepath, saveName), '-transparent', '-pdf');
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     saveas(gcf, fullfile(savepath, [saveName '.fig']));
     saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
-%     saveas(gcf, fullfile(savepath, [saveName '.epsc']));   
+    saveas(gcf, fullfile(savepath, [saveName '.epsc']));   
 end    
 
 
@@ -88,7 +89,7 @@ ensureDirectory(savepath);
 xwindow = [-2 5];
 
 saveName = sprintf('%s_lickAligned_rasters_%s_%s', animal, photometryField, fdField);  
-fh(end + 1) =ensureFigure(saveName, 1); 
+ensureFigure(saveName, 1); 
 
 lickOnsets = TE.lickLatency_cs(highValueTrials & rewardTrials);
 lickOnsets = sort(lickOnsets);    
@@ -119,10 +120,85 @@ axs = findobj(gcf, 'Type', 'axes');
 set(axs, 'FontSize', fontsize);
 set(axs([1 3]), 'YTick', []);
 
-formatFigurePublish('size', [4 2]);
+formatFigurePublish('size', [4 1.2]);
 
 if saveOn
     export_fig(fullfile(savepath, saveName), '-eps');
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+end  
+
+%% lick-aligned rasters from ChAT_42:  VERSION #2
+% only show high value
+animal = 'ChAT_42';
+success = dbLoadAnimal(DB, animal); % load TE and trial lookups
+
+photometryField = 'Photometry';
+fdField = 'ZS';
+saveOn = 1;
+channels = [1];
+climfactor = 2;
+lickTickLineWidth = 0.1; % 0.3 works well when printed out given current sizing
+
+fontsize = 7;
+
+savepath = fullfile(DB.path, 'figure', filesep);
+ensureDirectory(savepath);
+
+xwindow = [-2 5];
+
+saveName = sprintf('%s_lickAligned_rasters_%s_%s', animal, photometryField, fdField);  
+ensureFigure(saveName, 1); 
+
+lickOnsets = TE.lickLatency_cs(highValueTrials & rewardTrials);
+lickOnsets = sort(lickOnsets);    
+subplot(1,2,1);
+eventRasterFromTE(TE, highValueTrials & rewardTrials, 'Port1In', 'trialNumbering', 'consecutive',...
+    'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording', 'sortValues', TE.lickLatency_cs, 'LineWidth', lickTickLineWidth);
+set(gca, 'XLim', xwindow);
+% title('high value'); 
+ylabel('# sorted');
+xlabel('Time from odor (s)');
+
+subplot(1,2,2);
+phRasterFromTE(TE, highValueTrials & rewardTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'sortValues', TE.lickLatency_cs, 'zeroTimes', TE.Cue, 'window', xwindow); % 'CLimFactor', CLimFactor,
+line(lickOnsets, (1:sum(highValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'r', 'LineWidth', 1);    
+xlabel('Time from odor (s)');
+set(gca, 'YTick', []);
+% lickOnsets = TE.lickLatency_cs(lowValueTrials & rewardTrials);
+% lickOnsets = sort(lickOnsets);        
+% subplot(1,3,3);
+% phRasterFromTE(TE, lowValueTrials & rewardTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'sortValues', TE.lickLatency_cs, 'zeroTimes', TE.Cue, 'window', xwindow); % 'CLimFactor', CLimFactor,             
+% line(lickOnsets, (1:sum(lowValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'r', 'LineWidth', 1);
+% set(gca, 'YTick', [0 100 200]);
+
+
+
+formatFigurePublish('size', [2.2 0.7]);
+
+if saveOn
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+end  
+
+
+%% reward and punishment response examples for ChAT_26 (only other possibility being ChAT_39)
+animal = 'ChAT_26';
+success = dbLoadAnimal(DB, animal); % load TE and trial lookups
+figSize = [1 1];
+saveName = 'RewardPunish_example_avg';
+ensureFigure(saveName, 1);
+window = [-1 4];
+[ha, hl] = phPlotAverageFromTE(TE, {uncuedTrials & rewardTrials, uncuedTrials & punishTrials}, 1,...
+        'window', window, 'linespec', {'b', 'r'}, 'FluorDataField', 'ZS', 'zeroTimes', TE.Us);
+xlabel('Time (s)');
+ylabel('Fl. (\sigma-bl.)');
+set(gca, 'XLim', window);
+formatFigurePublish('size', figSize);    
+
+if saveOn
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     saveas(gcf, fullfile(savepath, [saveName '.fig']));
     saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
 end  

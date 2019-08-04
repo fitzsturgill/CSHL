@@ -40,15 +40,19 @@ rewardSize_stats
 
 %% plot and bar graph
 
+figSize = [1 1];
 saveName = 'varyRewardSize_pooled_barGraph';
 ensureFigure(saveName, 1);
 data = [us_pooled.large.phPeakMean(:) us_pooled.medium.phPeakMean(:) us_pooled.small.phPeakMean(:)];
-errorbar(1:3, mean(data), std(data) / size(data, 1));
-set(gca, 'XLim', [.5 3.5], 'XTick', [1 2 3], 'XTickLabel', {'10uL', '5uL', '2uL'});
-xlabel('Reward size (uL)'); ylabel('Fluor. (\sigma-baseline)');
+errorbar(3:-1:1, mean(data), std(data) / size(data, 1), 'k');
+set(gca, 'YLim', [0.75 2]);
+set(gca, 'XLim', [.5 3.5], 'XTick', [1 2 3], 'XTickLabel', fliplr({'10uL', '5uL', '2uL'}), 'YTick', [1 2]);
+xlabel('Rew. size (uL)'); ylabel('Fluor. (\sigma-bl.)');
 
-formatFigurePublish('size', [0.5 1], 'fontSize', 6);
+formatFigurePublish('size', figSize);
 
 if saveOn 
-    export_fig(fullfile(savepath, saveName), '-eps');
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
 end

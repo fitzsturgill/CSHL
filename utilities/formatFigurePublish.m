@@ -3,7 +3,7 @@ function formatFigurePublish(varargin)
         'aspect', [2 1];... % aspect ratio w x h (i believe)
         'scaleFactor', 1;...
         'size', [];...
-        'fontSize', 8;...
+        'fontSize', 7;...
         };
 
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
@@ -31,7 +31,7 @@ function formatFigurePublish(varargin)
     set(gcf, 'PaperUnits', paperUnits, 'Units', screenUnits, 'ToolBar', 'none', 'MenuBar', 'none', 'DockControls', 'off');
     set(gcf, 'defaultAxesTickDir', 'out', 'defaultAxesLineWidth', 1, 'defaultAxesFontName', 'Arial', 'defaultAxesFontSize', s.fontSize, 'defaultLegendBox', 'off');    
     set(axs, 'TickDir', 'out', 'LineWidth', 1, 'FontName', 'Arial', 'FontSize', s.fontSize, 'defaultLegendBox', 'off', 'Box', 'off');
-    set(gcf, 'Position', screenPosition, 'PaperPosition', paperPosition, 'Color', [1 1 1]);    
+    set(gcf, 'PaperSize', screenPosition(3:4), 'Position', screenPosition, 'PaperPosition', paperPosition, 'Color', [1 1 1]);    
     for counter = 1:nax
         set(axs(counter), 'YLim', ylims{counter}); set(axs(counter), 'XLim', xlims{counter});
     end

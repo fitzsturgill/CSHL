@@ -19,3 +19,4 @@ function success = dbLoadAnimal(DB, animal, varargin)
         ME.message
         success = 0;
     end
+    disp(['*** Loaded: ' animal ' ***']);        
