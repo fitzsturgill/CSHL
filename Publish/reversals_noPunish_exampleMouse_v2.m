@@ -111,6 +111,8 @@ end
 
 %% averages
 
+animal = 'DC_56';
+success = dbLoadAnimal(DB, animal); % load TE and trial lookups
 fdField = 'ZS';
 saveName = sprintf('%s_phAvgs_%s', animal, fdField);  
 h=ensureFigure(saveName, 1); 

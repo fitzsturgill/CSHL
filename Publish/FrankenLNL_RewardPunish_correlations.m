@@ -25,7 +25,7 @@ disp(['*** loading: ' fullfile(savePath, 'cs_pooled.mat') ' ***']);
 %% plot cum hists of noise correlations expressed as R
 
 % point out 2 example mice with vertical dotted lines
-figSize = [2 1];
+figSize = [2 0.7];
 examples = {'ACh_15', 'ACh_7'};
 ix = find(ismember(DB.animals, examples));
 
@@ -111,7 +111,7 @@ for counter = 1:size(xData, 1)
     slopes1(counter) = fo.a;
     cvd = cov(fitx, fity);
     cvd = cvd(2); % off diagonal
-    slope = covData + mean(fitx) * mean(fity) / (var(fitx) + mean(fitx)^2);
+    slope = cvd + mean(fitx) * mean(fity) / (var(fitx) + mean(fitx)^2);
     slopes2(counter) = slope;
     rsq(counter) = gof.rsquare;
 end
@@ -127,15 +127,23 @@ end
 
 Rsignal = cum(rs);
 Rsignal_shuff = cum(rs_shuff);
-%
+%% Rsignal cumulative histogram
+figSize = [0.8 0.6];
 saveName = 'cumHist_Rsignal';
 ensureFigure(saveName, 1);
 axes; hold on;
 plot(Rsignal.sorted, Rsignal.index, '-k');
 plot(Rsignal_shuff.sorted, Rsignal_shuff.index, 'Color', [0.8 0.8 0.8]);
-xlabel('Rsignal');
-formatFigurePublish('size', [1 1]);
+% xlabel('Rsignal');
+set(gca, 'YTick', [0 1], 'XTick', [0 0.5 1]);%, 'XTickLabel', {});
+formatFigurePublish('size', figSize);
+if saveOn    
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+    saveas(gcf, fullfile(figPath, [saveName '.fig']));
+    saveas(gcf, fullfile(figPath, [saveName '.jpg']));
+end
 
+%%
 Rsq_signal = cum(rsq);
 Rsq_signal_shuff = cum(rsq_shuff);
 saveName = 'cumHist_Rsq_LineThroughOrigin_signal';
@@ -147,9 +155,9 @@ xlabel('Rsq');
 formatFigurePublish('size', [1 1]);
 
 if saveOn 
-    export_fig(fullfile(savePath, saveName), '-eps');
+    export_fig(fullfile(figPath, saveName), '-eps');
 end
-%% show distributions and means in an array for all mice
+%% show distributions and means in an array for all mice, normalize to uncued reward
 
 FluorField_us = 'phPeakMean_us';
 
@@ -181,12 +189,12 @@ for acounter = 1:length(animals)
         setField = trialSets{counter};
         xData = us_pooled.(setField).mean{acounter}(:,1); yData = us_pooled.(setField).mean{acounter}(:,2); 
         
-%         if counter == 1
-%             xDenom = nanmean(xData);
-%             yDenom = nanmean(yData);
-%         end
-%         xData = xData ./ xDenom;
-%         yData = yData ./ yDenom;
+        if counter == 1
+            xDenom = nanmean(xData);
+            yDenom = nanmean(yData);
+        end
+        xData = xData ./ xDenom;
+        yData = yData ./ yDenom;
 
         h(end + 1) = scatter(xData, yData, 20, linecolors(counter, :), '.', 'MarkerFaceColor', 'flat');%, 'MarkerFaceAlpha', 0.3, 'MarkerEdgeAlpha', 0.3);
 
@@ -374,6 +382,179 @@ b = bar(binCenters, [accepted_counts'  rejected_counts'], 'stacked');
 b(1).FaceColor = 'w';
 b(2).FaceColor = 'k';
 
+%% let's normalize us and cs responses to uncued reward, excluding ACh_17 for which there is basically no signal in one side of the brain
+goodOnes = find(~ismember(DB.animals, 'ACh_17'));
+nSub = length(goodOnes); 
+nBoot = 1000;
+alpha = 0.01;
+
+linecolors = [1 0 1; 0 1 0; 0 0 1; 1 0 0; 0 0.5 0; 0 0 0.5; 0 0 0.5];         
+trialSets = {'puff', 'shock', 'rew_cued', 'puff_cued', 'shock_cued', 'CSplus', 'CSminus_shock'};
+trialSetNames = {'Air Puff', 'Shock', 'Reward cued', 'Puff cued', 'Shock cued', 'Cs+', 'CS-'};
+% linecolors = [1 0 0; 0 0.5 0; 0 0 0.5; 0 0 0.5];         
+% trialSets = {'puff_cued', 'shock_cued', 'CSplus', 'CSminus_shock'};
+% trialSetNames = {'Puff cued', 'Shock cued', 'Cs+', 'CS-'};
+
+allData = cell(nSub, length(trialSets));
+allData_means = zeros(nSub, length(trialSets), 2);
+allData_colors = repmat(linecolors, 1, 1, nSub);
+allData_colors = permute(allData_colors, [3 1 2]); % put animal dimension first, then trial set dimension next, for sorting purposes later...
+[allData_p, allData_h, allData_d] = deal(zeros(nSub, length(trialSets))); % p values, hypothesis, normalized auROC
+
+
+denominator = us_pooled.rew.avg_mean(goodOnes,:);
+
+% collect all the data
+for acounter = 1:length(goodOnes)
+    thisMouse = goodOnes(acounter);
+    for counter = 1:length(trialSets)    
+        trialSet = trialSets{counter};
+        if ~ismember(trialSet, {'CSplus', 'CSminus_shock'})
+            xData = us_pooled.(trialSets{counter}).mean{thisMouse}(:,1) ./ denominator(acounter,1);
+            yData = us_pooled.(trialSets{counter}).mean{thisMouse}(:,2) ./ denominator(acounter,2);
+        else
+            xData = cs_pooled.(trialSets{counter}).mean{thisMouse}(:,1) ./ denominator(acounter,1);
+            yData = cs_pooled.(trialSets{counter}).mean{thisMouse}(:,2) ./ denominator(acounter,2);
+        end
+        allData_means(acounter, counter, 1) = nanmean(xData);
+        allData_means(acounter, counter, 2) = nanmean(yData);
+        allData{acounter, counter}(:,1) = xData;
+        allData{acounter, counter}(:,2) = yData;
+%         [D, P] = rocarea(xData, yData, 'boot', nBoot, 'scale');
+        % altenatively, run a T test, and calculate Dprime yield effect
+        % sizes
+        D = abs(mean(xData) - mean(yData)) / sqrt((std(xData)^2 + std(yData)^2)/2);
+        [~, P] = ttest(xData, yData);
+        allData_p(acounter, counter) = P;
+        allData_d(acounter, counter) = D;
+    end
+end
+
+% let's do the Benjamini-Hochberg stepdown procedure to control false
+% discovery rate to be < alpha
+
+% rejected = slopes.auROC(slopes.p < 0.05);
+% accepted = slopes.auROC(slopes.p >= 0.05);
+[p_sorted, I] = sort(allData_p(:));
+% auROC_sorted = auROC_all(I);
+nComp = numel(allData_p);
+alpha_adjusted = (1:nComp)' ./ nComp * alpha;
+h_sorted = p_sorted >= alpha_adjusted;
+
+allData_means = reshape(allData_means, [nComp, 2]);
+allData_means = allData_means(I,:);
+allData_colors = reshape(allData_colors, [nComp, 3]);
+allData_colors = allData_colors(I,:);
+allData_d = allData_d(:);
+allData_d = allData_d(I);
+
+%% first the scatter plot
+figSize = [1.2 1];
+saveName = 'all_us_cs_norm_scatter';
+ensureFigure(saveName, 1);
+axes; hold on;
+set(gca, 'XLim', [min(allData_means(:)) max(allData_means(:))], 'YLim', [min(allData_means(:)) max(allData_means(:))]); 
+addUnityLine;
+% addOrginLines;
+scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 10 + abs(allData_d(~h_sorted)) * 50, allData_colors(~h_sorted, :), '.'); % filled ones are significant
+scatter(allData_means(h_sorted, 1), allData_means(h_sorted, 2), 10 + abs(allData_d(h_sorted)) * 50, allData_colors(h_sorted, :), '.');
+% scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 20, 'y', 'o'); 
+% scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 10, allData_colors(~h_sorted, :), 'o', 'filled'); 
+% scatter(allData_means(h_sorted, 1), allData_means(h_sorted, 2), 10, allData_colors(h_sorted, :), 'o');
+
+xlabel('Left norm.');
+ylabel('Right norm.');
+formatFigurePublish('size', figSize);
+
+if saveOn 
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+    saveas(gcf, fullfile(figPath, [saveName '.fig']));
+    saveas(gcf, fullfile(figPath, [saveName '.jpg']));
+end
+
+%% first the scatter plot
+figSize = [1.2 1];
+saveName = 'all_us_cs_norm_scatter';
+ensureFigure(saveName, 1);
+axes; hold on;
+set(gca, 'XLim', [min(allData_means(:)) max(allData_means(:))], 'YLim', [min(allData_means(:)) max(allData_means(:))]); 
+addUnityLine;
+% addOrginLines;
+scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 10 + abs(allData_d(~h_sorted)) * 50, allData_colors(~h_sorted, :), '.'); % filled ones are significant
+scatter(allData_means(h_sorted, 1), allData_means(h_sorted, 2), 10 + abs(allData_d(h_sorted)) * 50, allData_colors(h_sorted, :), '.');
+% scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 20, 'y', 'o'); 
+% scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 10, allData_colors(~h_sorted, :), 'o', 'filled'); 
+% scatter(allData_means(h_sorted, 1), allData_means(h_sorted, 2), 10, allData_colors(h_sorted, :), 'o');
+
+xlabel('Left norm.');
+ylabel('Right norm.');
+formatFigurePublish('size', figSize);
+
+if saveOn 
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+    saveas(gcf, fullfile(figPath, [saveName '.fig']));
+    saveas(gcf, fullfile(figPath, [saveName '.jpg']));
+end
+%% Bias histogram (effect size expressed as D')
+figSize = [0.9 0.8];
+
+binEdges = 0:0.2:ceil(max(allData_d));
+binCenters = binEdges(1:end-1) + (binEdges(2) - binEdges(1));
+saveName = 'Bias_histogram_effectSize';
+ensureFigure(saveName, 1);
+ax = axes; hold on;
+[rejected_counts, ~] = histcounts(allData_d(h_sorted), binEdges);
+[accepted_counts, ~] = histcounts(allData_d(~h_sorted), binEdges);
+rejected_counts = rejected_counts ./ numel(allData_d);
+accepted_counts = accepted_counts ./ numel(allData_d);
+
+b = bar(binCenters, [rejected_counts' accepted_counts'], 'stacked');
+b(1).FaceColor = 'k';
+b(2).FaceColor = 'w';
+xlabel('Effect size (D'')');
+% set(gca, 'YTick', []);
+ax.YAxis.Visible = 'on';
+%%%%%%%%%%%%%%%%
+formatFigurePublish('size', figSize);
+
+if saveOn 
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+    saveas(gcf, fullfile(figPath, [saveName '.fig']));
+    saveas(gcf, fullfile(figPath, [saveName '.jpg']));
+end
+
+%% example biased and non-biased mice in terms of reward and punishment responses
+
+animal = 'ACh_7';
+ix = find(ismember(DB.animals, animal));
+figSize = [1 0.7];
+saveName = 'bias_examples';
+ensureFigure(saveName, 1);
+
+xData = us_pooled.rew.avgDataX{1,1};
+ax=axes; hold on;
+vert_offset = max(us_pooled.rew.avgData{ix,2}) + 2;
+offset = 0.1;
+plot(xData, us_pooled.rew.avgData{ix,2}, 'b');
+plot(xData, us_pooled.rew.avgData{ix,1} + vert_offset, 'b');
+x2 = xData(end);
+
+plot(xData + x2 + offset, us_pooled.puff.avgData{ix,2}, 'r');
+plot(xData + x2 + offset, us_pooled.puff.avgData{ix,1} + vert_offset, 'r');
+plot(xData + x2*2 + offset, us_pooled.shock.avgData{ix,2}, 'g');
+plot(xData + x2*2 + offset, us_pooled.shock.avgData{ix,1} + vert_offset, 'g');
+xData = cs_pooled.CSplus.avgDataX{1,1};
+plot(xData + x2*3 + offset, cs_pooled.CSplus.avgData{ix,2}, 'Color', [0 0 0.5]);
+plot(xData + x2*3 + offset, cs_pooled.CSplus.avgData{ix,1} + vert_offset, 'Color', [0 0 0.5]);
+ax.YAxis.Visible = 'off'; ax.XAxis.Visible = 'off';
+formatFigurePublish('size', figSize);
+
+if saveOn 
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+    saveas(gcf, fullfile(figPath, [saveName '.fig']));
+    saveas(gcf, fullfile(figPath, [saveName '.jpg']));
+end
+
 
 %% lets fit the mean centered us responses for each mouse to a line, then use the slope to align the us means across reinforcements.  visualization of how divergent are the us responses
 
@@ -391,25 +572,29 @@ nRow = ceil(nAnimals / nCol);
 all_slopes = zeros(nAnimals, 1);
 
 trialSets = {'rew', 'puff', 'shock', 'rew_cued', 'puff_cued', 'shock_cued'};
+Rsquare = zeros(nAnimals, 1);
 for counter = 1:nAnimals
     [ch1Data, ch2Data] = deal([]);
     for tscounter = 1:length(trialSets)
         ts = trialSets{tscounter};
-        ch1Data = [ch1Data; us_pooled.(ts).mean{counter}(:,1)];% - us_pooled.(ts).avg_mean(counter,1)];
-        ch2Data = [ch2Data; us_pooled.(ts).mean{counter}(:,2)];% - us_pooled.(ts).avg_mean(counter,2)];
+        ch1Data = [ch1Data; us_pooled.(ts).mean{counter}(:,1) - us_pooled.(ts).avg_mean(counter,1)];
+        ch2Data = [ch2Data; us_pooled.(ts).mean{counter}(:,2) - us_pooled.(ts).avg_mean(counter,2)];
     end
     % line fit
-    model = 'a*x'; % has to pass through origin
-    ft = fittype(model);
-    fo = fitoptions('Method', 'LinearLeastSquares',...
-        'Upper', Inf,...
-        'Lower', -Inf ...
-    );
-    fo = fit(ch1Data, ch2Data, ft);
-    all_slopes(counter) = fo.a;
+%     model = 'a*x'; % has to pass through origin
+%     ft = fittype(model);
+%     fo = fitoptions('Method', 'LinearLeastSquares',...
+%         'Upper', Inf,...
+%         'Lower', -Inf ...
+%     );
+    [fo, gof, output] = fit(ch1Data, ch2Data, 'poly1');
+    
+    all_slopes(counter) = fo.p1;
+    Rsquare(counter) = gof.rsquare;
     subplot(nCol, nRow, counter); hold on;
     scatter(ch1Data, ch2Data, 20, 'k', '.');
     plot(fo, 'predfunc'); legend off;
+    textBox({DB.animals{counter}, sprintf('CV=%.3g', gof.rsquare)});
     setXYsameLimit;
     addOrginLines;
 end

@@ -7,21 +7,93 @@ saveOn = 1;
 
 
 
-%% initialize table to hold correlation coefficients for each animal
+%% initialize table to hold correlation coefficients for each animal, forget the US for now
 
-comp = {'Lick_vs_ACh'; 'Lick_vs_Dop'; 'ACh_vs_Dop'};
-acq_p = zeros(3,1);
-ext_p = zeros(3,1);
-cp_stats = table(comp, acq_p, ext_p);
-cp_stats.acq_p(1) = signrank(all_cps(:,1), all_cps(:,2));
-cp_stats.acq_p(2) = signrank(all_cps(:,1), all_cps(:,3));
-cp_stats.acq_p(3) = signrank(all_cps(:,2), all_cps(:,3));
-cp_stats.ext_p(1) = signrank(all_cps(:,4), all_cps(:,5));
-cp_stats.ext_p(2) = signrank(all_cps(:,4), all_cps(:,6));
-cp_stats.ext_p(3) = signrank(all_cps(:,5), all_cps(:,6));
+animals = cell(length(DB.animals), 1);
+[Rcue, Rcue_expFit, auROC_cue1, auROC_cue2] = deal(zeros(length(DB.animals),1));
+Rcue_separate = cell(length(DB.animals), 1);
+Rnoise = table(animals, Rcue, Rcue_expFit, auROC_cue1,...
+    auROC_cue2, Rcue_separate);
 
+saveName = 'Rnoise_tiled';
+% ensureFigure
 
+for counter = 1:length(DB.animals)
+    animal = DB.animals{counter};
+    dbLoadAnimal(DB, animal);
+    Rnoise.animals{counter} = animal;
+    
+    [allCue1, allUs1, allCue_expFit1, allUs_expFit1, allCue2, allUs2, allCue_expFit2, allUs_expFit2] = deal([]);
+    trialSets = [csPlusTrials & hitTrials, csMinusTrials & CRTrials];
+    
+    for tcounter = 1:size(trialSets, 2)
+        new1 = TE.phPeakMean_optimize_cs(1).data(trialSets(:, tcounter)) - nanmean(TE.phPeakMean_optimize_cs(1).data(trialSets(:, tcounter)));
+        new2 = TE.phPeakMean_optimize_cs(2).data(trialSets(:, tcounter)) - nanmean(TE.phPeakMean_optimize_cs(2).data(trialSets(:, tcounter)));
+        allCue1 = [allCue1; new1];
+        allCue2 = [allCue2; new2];
+        Rnoise.Rcue_separate{counter}(tcounter) = corr(new1, new2);
+%         allUs1 = [allUs1; TE.phPeakMean_us(1).data(trialSets(:, tcounter)) - nanmean(TE.phPeakMean_us(1).data(trialSets(:, tcounter)))];
+%         allUs2 = [allUs2; TE.phPeakMean_us(2).data(trialSets(:, tcounter)) - nanmean(TE.phPeakMean_us(2).data(trialSets(:, tcounter)))];
 
+        allCue_expFit1 = [allCue_expFit1; TE.phPeakMean_cs_expFit(1).data(trialSets(:, tcounter)) - nanmean(TE.phPeakMean_cs_expFit(1).data(trialSets(:, tcounter)))];
+        allCue_expFit2 = [allCue_expFit2; TE.phPeakMean_cs_expFit(2).data(trialSets(:, tcounter)) - nanmean(TE.phPeakMean_cs_expFit(2).data(trialSets(:, tcounter)))];
+%         allUs_expFit1 = [allUs_expFit1; TE.phPeakMean_us_expFit(1).data(trialSets(:, tcounter)) - nanmean(TE.phPeakMean_us_expFit(1).data(trialSets(:, tcounter)))];
+%         allUs_expFit2 = [allUs_expFit2; TE.phPeakMean_us_expFit(2).data(trialSets(:, tcounter)) - nanmean(TE.phPeakMean_us_expFit(2).data(trialSets(:, tcounter)))];
+    end
+    Rnoise.Rcue(counter) = corr(allCue1, allCue2);
+%     Rnoise.Rus(counter) = corr(allUs1, allUs2);
+    Rnoise.Rcue_expFit(counter) = corr(allCue_expFit1, allCue_expFit2);
+%     Rnoise.Rus_expFit(counter) = corr(allUs_expFit1, allUs_expFit2);
+    Rnoise.auROC_cue1(counter) = TE.phPeakMean_optimize_cs(1).settings.optimumWindow_auROCMax;
+    Rnoise.auROC_cue2(counter) = TE.phPeakMean_optimize_cs(2).settings.optimumWindow_auROCMax;    
+end
 
+%% plot some things to check data- looks like using making sure that auROC_cue_ch1 and auROC_cue_ch1 > 0.45 selects for experiments with at least some level of noise correlations
 
+saveName = 'Rnoise_diagnostics';
+ensureFigure(saveName, 1);
+colormap jet;
+mcPortraitFigSetup(gcf);
 
+subplot(2,2,1);
+scatter(Rnoise.Rcue, Rnoise.Rcue_expFit, 20, 1:length(DB.animals)); addUnityLine;
+xlabel('R cue'); ylabel('R cue expFit');
+
+subplot(2,2,2);
+scatter(Rnoise.Rcue.^2, Rnoise.Rcue_expFit.^2, 20, 1:length(DB.animals)); addUnityLine;
+xlabel('CV cue'); ylabel('CV cue expFit');
+
+subplot(2,2,3);
+scatter(min(Rnoise.auROC_cue1, Rnoise.auROC_cue2), Rnoise.Rcue.^2, 20, 1:length(DB.animals)); 
+xlabel('min cue auROC ch1&2');  ylabel('CV cue');
+set(gca, 'YLim', [0 0.25]);
+subplot(2,2,4);
+scatter(min(Rnoise.auROC_cue1, Rnoise.auROC_cue2), Rnoise.Rcue_expFit.^2, 20, 1:length(DB.animals)); 
+xlabel('min cue auROC ch1&2'); ylabel('CV cue expFit');
+set(gca, 'YLim', [0 0.25]);
+
+% subplot(3,2,5);
+% scatter(min(Rnoise.auROC_cue1, Rnoise.auROC_cue2), Rnoise.Rus.^2); 
+% xlabel('min cue auROC ch1&2'); ylabel('CV us');
+% 
+% subplot(3,2,6);
+% scatter(min(Rnoise.auROC_cue1, Rnoise.auROC_cue2), Rnoise.Rus_expFit.^2); 
+% xlabel('min cue auROC ch1&2'); ylabel('CV us expFit');
+
+fig = gcf;
+axs = fig.Children;
+set(axs,  'XGrid', 'on', 'XMinorGrid', 'on');%, 'XLim', [0 1], 'YLim', [0 1]);
+
+%% histogram of noise correlations for cue period
+binEdges = [-1:0.1:1];
+ensureFigure('noiseHist', 1); 
+histogram(Rnoise.Rcue, binEdges);
+
+cum_all = cum(Rnoise.Rcue);
+cum_t1 = cum(cellfun(@(x) x(1), Rnoise.Rcue_separate));
+cum_t2 = cum(cellfun(@(x) x(2), Rnoise.Rcue_separate));
+
+% cumulative histogram
+ensureFigure('noise_cumHist', 1);
+subplot(1,2,1); plot(cum_all.sorted, cum_all.index);
+subplot(1,2,2); plot(cum_t1.sorted, cum_t1.index); hold on; plot(cum_t2.sorted, cum_t2.index);

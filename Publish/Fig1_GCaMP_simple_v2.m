@@ -25,7 +25,7 @@ lateLickSessions = {'ChAT_22_SO_RewardPunish_odor_May15_2016_Session1.mat'}; % M
 
 %% make continuous early -> middle -> late phRaster
 
-figSize = [1 1];
+figSize = [1.66 0.68];
 climfactor = 3;  
 fdField = 'ZS';
 linewidth = 4;
@@ -53,6 +53,7 @@ set(gca, 'YTick', [100 200 300 400], 'XTick', []);
 formatFigurePublish('size', figSize, 'fontSize', 6);
 if saveOn 
 %     export_fig(fullfile(savepath, saveName), '-eps');
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     saveas(gcf, fullfile(savepath, [saveName '.epsc']));
 end
 
@@ -146,4 +147,5 @@ plot([0 0], yData, '--k');
 formatFigurePublish('size', figSize);
 if saveOn 
     export_fig(fullfile(savepath, saveName), '-eps');
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
 end

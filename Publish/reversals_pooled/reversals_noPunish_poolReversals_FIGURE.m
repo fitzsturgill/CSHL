@@ -330,7 +330,7 @@ set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', []);
 axes(hax(2)); hold on;
 cData = aligned_licks(ix, :);
 imagesc('XData', xData, 'CData', cData, clim);
-plot(reversalPoints(ix), 1:sum(goodOnes), ':w', 'LineWidth', lineWidth);
+plot(reversalPoints(ix), 1:sum(goodOnes), ':r', 'LineWidth', lineWidth);
 set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', []);
 
 axes(hax(3)); hold on;
@@ -345,7 +345,7 @@ set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', []);
 axes(hax(4)); hold on;
 cData = aligned_ch1(ix, :);
 imagesc('XData', xData, 'CData', cData, clim);
-plot(reversalPoints(ix), 1:sum(goodOnes), ':w', 'LineWidth', lineWidth); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', []);
+plot(reversalPoints(ix), 1:sum(goodOnes), ':r', 'LineWidth', lineWidth); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', []);
 
 axes(hax(5)); hold on;
 ylabel('Dop.', 'Color', mycolors('DAT'));
@@ -360,7 +360,7 @@ xlabel('Trials from rev.');
 axes(hax(6)); hold on;
 cData = aligned_ch2(ix, :);
 imagesc('XData', xData, 'CData', cData, clim);
-plot(reversalPoints(ix), 1:sum(goodOnes), ':w', 'LineWidth', lineWidth); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', [-10 0 10]);
+plot(reversalPoints(ix), 1:sum(goodOnes), ':r', 'LineWidth', lineWidth); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', [-10 0 10]);
 xlabel('Trials from c.p.');
 
 formatFigurePublish('size', figSize, 'fontSize', 6);
@@ -368,6 +368,7 @@ if saveOn
     saveas(gcf, fullfile(savepath, [savename '.fig']));
     saveas(gcf, fullfile(savepath, [savename '.jpg']));   
     saveas(gcf, fullfile(savepath, [savename '.epsc']));
+    print(gcf, '-dpdf', fullfile(savepath, [savename '.pdf']));
 %     export_fig(fullfile(savepath, savename), '-eps');
 end
 

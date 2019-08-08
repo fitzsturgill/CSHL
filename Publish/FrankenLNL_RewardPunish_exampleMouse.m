@@ -1,7 +1,7 @@
 % FrankenLNL_RewardPunish_exampleMouse
 
 DB = dbLoadExperiment('FrankenLNL_RewardPunish');
-savepath = fullfile(DB.path, ['pooled' filesep 'figure']);
+savepath = fullfile(DB.path, ['figure' filesep animal]);
 ensureDirectory(savepath);
 smoothWindow = 1;
 saveOn = 1;

@@ -222,7 +222,7 @@ disp(['*** saving: ' fullfile(savepath, 'grandAverages.mat') ' ***']);
 save(fullfile(savepath, 'grandAveragesNorm.mat'), 'gAvgNorm');
 disp(['*** saving: ' fullfile(savepath, 'grandAveragesNorm.mat') ' ***']);
 
-
+figSize = [1.7 0.9];
 saveName = 'grandAverage_appetitive_simple';
 ensureFigure(saveName, 1); 
 linecolors = [0 0 1; 0 0 0; 0 1 1];     
@@ -241,12 +241,13 @@ bData = permute([gAvg.phCue.cuedReward.SEM gAvg.phUs.cuedReward.SEM;...
 set(gca, 'XLim', window);
 addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
 % legend(hl, {'cued', 'omit', 'uncued'}, 'Location', 'best'); legend('boxoff');
-ylabel('F(\fontsize{12}\sigma\fontsize{8}-baseline)');  set(gca, 'XLim', window);
+ylabel('F(\fontsize{10}\sigma\fontsize{7}-baseline)');  set(gca, 'XLim', window);
 xlabel('Time from reinforcement (s)');
 
-formatFigurePublish('size', [2 1]);
+formatFigurePublish('size', figSize);
 
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(figsavepath, saveName), '-eps');
 end
 

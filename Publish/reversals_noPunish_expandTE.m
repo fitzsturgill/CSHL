@@ -100,6 +100,12 @@ for counter = 1:length(DB.animals)
         TE.phPeakPercentile_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, csWindow, TE.Cue, 'method', 'percentile', 'percentile', percentValue, 'phField', 'ZS');
         TE.phPeakPercentile_us(channel) = bpCalcPeak_dFF(TE.Photometry, channel, usWindow, TE.Us, 'method', 'percentile', 'percentile', percentValue, 'phField', 'ZS');
         
+        TE.phPeakMean_cs_expFit(channel) = bpCalcPeak_dFF(TE.PhotometryExpFit, channel, csWindow, TE.Cue, 'method', 'mean', 'phField', 'ZS');
+        TE.phPeakMean_us_expFit(channel) = bpCalcPeak_dFF(TE.PhotometryExpFit, channel, usWindow, TE.Us, 'method', 'mean', 'phField', 'ZS');
+        TE.phPeakMean_baseline_expFit(channel) = bpCalcPeak_dFF(TE.PhotometryExpFit, channel, [1 4], [], 'method', 'mean', 'phField', 'ZS');
+        TE.phPeakPercentile_cs_expFit(channel) = bpCalcPeak_dFF(TE.PhotometryExpFit, channel, csWindow, TE.Cue, 'method', 'percentile', 'percentile', percentValue, 'phField', 'ZS');
+        TE.phPeakPercentile_us_expFit(channel) = bpCalcPeak_dFF(TE.PhotometryExpFit, channel, usWindow, TE.Us, 'method', 'percentile', 'percentile', percentValue, 'phField', 'ZS');
+        
         TE.phPeakMean_cs_deconv(channel) = bpCalcPeak_dFF(TE.Photometry, channel, csWindow, TE.Cue, 'method', 'mean', 'phField', 'ZSdeconv');
         TE.phPeakMean_us_deconv(channel) = bpCalcPeak_dFF(TE.Photometry, channel, usWindow, TE.Us, 'method', 'mean', 'phField', 'ZSdeconv');
         TE.phPeakMean_baseline_deconv(channel) = bpCalcPeak_dFF(TE.Photometry, channel, [1 4], [], 'method', 'mean', 'phField', 'ZSdeconv');
@@ -110,77 +116,43 @@ for counter = 1:length(DB.animals)
     %% find best window for cue response, by discriminability of CS+ and CS-
     % responses ("hit" vs "correct rejection")
 %     spacing = 0.1; % 0.1s steps to determine optimum window
-
-    saveName = sprintf('LNL_reversals_optimize_windows_Cue_%s', animal);     
-    fhc(end + 1) = ensureFigure(saveName, 1);
-    mcLandscapeFigSetup(gcf);
+    minWindow = 0.5;
+    maxWindow = 2;
+    window = [0 2];
+   
     
-    assert(Fs == 20, 'Sample rate assumed to be 20');
-    commonCueWindow = [0 min(csWindow(:,2))]; % in case you've changed the delay across sessions, base windows upon smallest delay
-
-    
-    % collect phWindow for commonCuewindow for each channel
     
     optPlusTrials = csPlusTrials & hitTrials;
     % substitute bottom quintile of cs licks to account for fact that
     % complete absence of licks (CRTrials) is likely to be an overly
     % sensitive measure of low reward expectation       
     optMinusTrials = csMinusTrials & (TE.licks_cs.count <= percentile(TE.licks_cs.count, 0.2));
-    for channel = 1:2  
-        
-    %     find peak cs response
-        avgData = phAverageFromTE(TE, csPlusTrials & hitTrials, channel, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue, 'window', commonCueWindow); %high value, reward
-        [mv, mix] = max(avgData.Avg);
-        % if there is no peak, use point 2/3 way into window
-        if (mix > 0.9 * length(avgData.Avg))
-            mix = round(1/3 * length(avgData.Avg));
-            mv = avgData.Avg(mix);
-        end
-        prePoints = (1:2:mix)';
-        postPoints = mix+1:2:bpX2pnt(commonCueWindow(2), 20, 0);
-        % make matrix of pre, post points, and auROC, scaled for each pairing
-        preMatrix = repmat(prePoints, 1, length(postPoints));
-        postMatrix = repmat(postPoints, length(prePoints), 1);
-        window_auROC = zeros(length(prePoints), length(postPoints));    
-        [phData_plus, ~] = phAlignedWindow(TE, optPlusTrials, channel, 'zeroTimes', TE.Cue, 'window', commonCueWindow, 'FluorDataField', 'ZS'); 
-        [phData_minus, ~] = phAlignedWindow(TE, optMinusTrials, channel, 'zeroTimes', TE.Cue, 'window', commonCueWindow, 'FluorDataField', 'ZS');
-        for pcounter = 1:numel(preMatrix)
-            [D, P] = rocarea(nanmean(phData_plus(:,preMatrix(pcounter):postMatrix(pcounter)), 2), nanmean(phData_minus(:,preMatrix(pcounter):postMatrix(pcounter)), 2), 'scale');
-            window_auROC(pcounter) = D;
-        end
-        [m, mwix] = max(window_auROC(:));
-        csWindowOptIx = [preMatrix(mwix) postMatrix(mwix)];
-        csWindowOpt = [bpPnt2x(csWindowOptIx(1), Fs) bpPnt2x(csWindowOptIx(2), Fs)];
-        TE.phPeakMean_optimize_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, csWindowOpt, TE.Cue, 'method', 'mean', 'phField', 'ZS');
-        TE.phPeakMean_optimize_cs(channel).settings.optimumWindowIx = csWindowOptIx; % in points from Cue onset
-        TE.phPeakMean_optimize_cs(channel).settings.optimumWindow = csWindowOpt; % in seconds
-        TE.phPeakMean_optimize_cs(channel).settings.optimumWindow_avg = avgData.Avg;
-        TE.phPeakMean_optimize_cs(channel).settings.optimumWindow_avgX = avgData.xData;
-        TE.phPeakMean_optimize_cs(channel).settings.optimumWindow_watershedPoint = mix;  
-        TE.phPeakMean_optimize_cs(channel).settings.optimumWindow_StartPointMatrix = avgData.xData(preMatrix);
-        TE.phPeakMean_optimize_cs(channel).settings.optimumWindow_StopPointMatrix = avgData.xData(postMatrix);
-        TE.phPeakMean_optimize_cs(channel).settings.optimumWindow_auROC = window_auROC;
-        TE.phPeakMean_optimize_cs(channel).settings.optimumWindow_auROCMax = window_auROC(mwix);
+    
+    % standard Photometry field
+    saveName = sprintf('LNL_reversals_optimize_windows_Cue_%s', animal);
+    fhc(end + 1) = ensureFigure(saveName, 1);     
+    TE.phPeakMean_optimize_cs = bpCalcPeak_optimumWindow_dFF(TE, optPlusTrials, optMinusTrials,...
+        'plot', true, 'PhotometryField', 'Photometry', 'window', window, 'zeroTimes', TE.Cue, 'minWindow', minWindow, 'maxWindow', maxWindow, 'fig', gcf);
+    title(gca, sprintf('%s: channel %u', animal, channel), 'Interpreter', 'none');        
+    if saveOn
+        saveas(gcf, fullfile(animalpath, [saveName '.fig']));
+        saveas(gcf, fullfile(animalpath, [saveName '.jpg']));   
+    end       
+    
+    % expFit Photometry field
+    saveName = sprintf('LNL_reversals_optimize_windows_Cue_expFit_%s', animal);
+    fhc(end + 1) = ensureFigure(saveName, 1);     
+    TE.phPeakMean_optimize_cs = bpCalcPeak_optimumWindow_dFF(TE, optPlusTrials, optMinusTrials,...
+        'plot', true, 'PhotometryField', 'PhotometryExpFit', 'window', window, 'zeroTimes', TE.Cue, 'minWindow', minWindow, 'maxWindow', maxWindow, 'fig', gcf);
+    title(gca, sprintf('ExpFit: %s: channel %u', animal, channel), 'Interpreter', 'none');        
+    if saveOn
+        saveas(gcf, fullfile(animalpath, [saveName '.fig']));
+        saveas(gcf, fullfile(animalpath, [saveName '.jpg']));   
+    end       
+    
 
-        subplot(2,2,channel);  surf(TE.phPeakMean_optimize_cs(channel).settings.optimumWindow_StartPointMatrix,...
-            TE.phPeakMean_optimize_cs(channel).settings.optimumWindow_StopPointMatrix,...
-            window_auROC); hold on; 
-        plot3(avgData.xData(preMatrix(mwix)), avgData.xData(postMatrix(mwix)), window_auROC(mwix), 'o', 'MarkerFaceColor', 'r', 'MarkerSize', 10);
-        title(sprintf('%s: channel %u', animal, channel), 'Interpreter', 'none');        
-        xlabel('time from cue (s)'); ylabel('time from cue (s)');
-        subplot(2,2,channel + 2);
-        plot(avgData.xData, avgData.Avg); hold on;
-        stem(avgData.xData(mix), avgData.Avg(mix), 'k');
-        ylabel('ZS'); xlabel('time from cue (s)');
-        addStimulusPatch(gca, [csWindowOpt 0 0.75], sprintf('auROC=%.2f, Nplus=%u, Nminus=%u', window_auROC(mwix),...
-            sum(optPlusTrials), sum(optMinusTrials)), [1 0 0]);
-        
-        if saveOn
-            saveas(gcf, fullfile(animalpath, [saveName '.fig']));
-            saveas(gcf, fullfile(animalpath, [saveName '.jpg']));   
-        end        
-    end
-        
+
+
     dbSaveAnimal(DB, animal);        
 end
 h = waitbar(0, 'slowly writing pdfs');

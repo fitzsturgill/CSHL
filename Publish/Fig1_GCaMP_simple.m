@@ -39,6 +39,7 @@ phRasterFromTE(TE, rewardOdorTrials & rewardTrials & ismember(TE.filename, early
 set(gca, 'YTick', [1 round(2/3 * sum(rewardOdorTrials & rewardTrials & ismember(TE.filename, earlySessions))/10)*10], 'XTick', []);
 formatFigurePublish('size', figSize);
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end    
 
@@ -50,6 +51,7 @@ phRasterFromTE(TE, rewardOdorTrials & rewardTrials & ismember(TE.filename, midSe
 set(gca, 'YTick', [1 round(2/3 * sum(rewardOdorTrials & rewardTrials & ismember(TE.filename, midSessions))/10)*10], 'XTick', []);
 formatFigurePublish('size', figSize);
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
@@ -61,6 +63,7 @@ phRasterFromTE(TE, rewardOdorTrials & rewardTrials & ismember(TE.filename, lateS
 set(gca, 'YTick', [1 round(0.6 * sum(rewardOdorTrials & rewardTrials & ismember(TE.filename, lateSessions))/10)*10], 'XTick', []);
 formatFigurePublish('size', figSize);
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
@@ -79,6 +82,7 @@ set(gca, 'YLim', [-1 2.5], 'XTickLabel', {},  'YTickLabel', {});
 addStimulusPatch(gca, [-2 -1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
 formatFigurePublish('size', figSize);
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end    
 
@@ -90,6 +94,7 @@ set(gca, 'YLim', [-1 2.5], 'XTickLabel', {},  'YTickLabel', {});
 addStimulusPatch(gca, [-2 -1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
 formatFigurePublish('size', figSize);
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end    
 
@@ -101,12 +106,13 @@ set(gca, 'YLim', [-1 2.5], 'XTickLabel', {},  'YTickLabel', {});
 addStimulusPatch(gca, [-2 -1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
 formatFigurePublish('size', figSize);
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end    
 
 %% make overlaid phAverages
 
-figSize = [1 1];
+figSize = [1.66 0.9];
 fdField = 'ZS';
 tcolors = [204 153 255; 153 51 255; 51 0 102]; tcolors = tcolors ./ 255; 
 
@@ -122,13 +128,14 @@ ylabel('F(\fontsize{12}\sigma\fontsize{8}-baseline)');  set(gca, 'XLim', window)
 xlabel('Time from reinforcement (s)');
 formatFigurePublish('size', figSize, 'fontSize', 6);
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end    
 
 
 %% phAverages, cued, uncued, omission
 
-figSize = [2 1];
+figSize = [1.48 0.76];
 saveName = ['phAvg_complete_' animal];
 ensureFigure(saveName, 1);
 trialSets = {...
@@ -143,12 +150,13 @@ ylabel('F(\fontsize{12}\sigma\fontsize{8}-baseline)');  set(gca, 'XLim', window)
 xlabel('Time from reinforcement (s)');
 formatFigurePublish('size', figSize);
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end    
 
 %% lick averages, cued, uncued, omission
 
-figSize = [2 1];
+figSize = [1.48 0.76];
 tcolor = mycolors('chat');
 
 saveName = ['lickAvgs_complete_' animal];
@@ -166,5 +174,6 @@ ylabel('Licks (1/s)');  set(gca, 'XLim', window);
 xlabel('Time from reinforcement (s)');
 formatFigurePublish('size', figSize);
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end    

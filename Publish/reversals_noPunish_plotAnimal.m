@@ -2,7 +2,7 @@
 
 DB = dbLoadExperiment('reversals_noPunish_publish');
 
-photometryField = 'Photometry';
+photometryField = 'PhotometryExpFit';
 fdField = 'ZS';
 saveOn = 1;
 channels = [1 2];

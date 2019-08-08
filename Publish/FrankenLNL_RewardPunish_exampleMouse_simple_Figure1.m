@@ -2,7 +2,7 @@
 
 DB = dbLoadExperiment('FrankenLNL_RewardPunish');
 animal = 'ACh_3';
-savepath = fullfile(DB.path, ['pooled' filesep 'figure' filesep animal]);
+savepath = fullfile(DB.path, ['figure' filesep animal]);
 ensureDirectory(savepath);
 smoothWindow = 1;
 saveOn = 1;
@@ -75,12 +75,13 @@ end
 formatFigurePublish('size', [1.6 1.1] * 3);
 
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
 %% Choose a good example trace set and plot them for the figure
 
-
+figSize = [1.6 0.6];
 sessionIndex = 2;
 whichOne = 7;
 rixR = exampleArray(whichOne, :);
@@ -96,9 +97,10 @@ addStimulusPatch(gca, [-2 -1]); addStimulusPatch(gca, [-0.1 0.1]);
 set(gca, 'YColor', 'none', 'YTick', [], 'XTickLabel', []);
 set(gca, 'YLim', [-0.1 0.3]);
 
-formatFigurePublish('size', [2 0.8]);
+formatFigurePublish('size', figSize);
 
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
@@ -117,9 +119,10 @@ addStimulusPatch(gca, [-0.1 0.1]);
 set(gca, 'YColor', 'none', 'YTick', [], 'XTickLabel', []);
 set(gca, 'YLim', [-0.1 0.3]);
 
-formatFigurePublish('size', [2 0.8]);
+formatFigurePublish('size', figSize);
 
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
@@ -131,7 +134,7 @@ fdField = 'ZS';
 tcolor = mycolors('chat');
 sessionIndices = [2 3];
 hitTrials = TE.licks_cs.rate > 0;
-figSize = [2 1];
+figSize = [1.6 0.81];
 saveName = 'PE_BLA_exampleMouse_Appetitive_Rasters_cuedLicks';  
 ensureFigure(saveName, 1);
 subplot(1,1,1);
@@ -142,6 +145,7 @@ set(gca, 'YTick', [1 50]);
 % ylabel('Trial #');
 formatFigurePublish('size', figSize);
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end        
 
@@ -154,6 +158,7 @@ subplot(1,1,1); phRasterFromTE(TE, trialsByType{1} & hitTrials & ismember(TE.ses
 set(gca, 'YTick', [1 50]);
 formatFigurePublish('size', figSize);
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end        
 
@@ -165,10 +170,11 @@ set(gca, 'YTick', [1 30]);
 formatFigurePublish('size', figSize);
 
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end        
 %% averages, appetitive, one side only (left side, ch = 1)
-
+figSize = [1.7 0.9];
 fdField = 'ZS';
 saveName = 'PE_BLA_exampleMouse_avgs_simple';  
 h=ensureFigure(saveName, 1); 
@@ -183,13 +189,14 @@ tcolor = mycolors('chat');
 [ha, hl] = phPlotAverageFromTE(TE, {trialsByType{1} & ismember(TE.sessionIndex, sessionIndices), trialsByType{2} & ismember(TE.sessionIndex, sessionIndices), trialsByType{5} & ismember(TE.sessionIndex, sessionIndices)}, 1,...
     'zeroTimes', TE.Us, 'FluorDataField', fdField, 'window', window, 'cmap', linecolors, 'alpha', 1); %high value, reward
 addStimulusPatch(gca, [-2 -1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
-legend(hl, {'omit', 'cued', 'uncued'}, 'Location', 'best'); legend('boxoff');
-ylabel('F(\fontsize{12}\sigma\fontsize{8}-baseline)');  set(gca, 'XLim', window);
+% legend(hl, {'omit', 'cued', 'uncued'}, 'Location', 'best'); legend('boxoff');
+ylabel('F(\fontsize{10}\sigma\fontsize{7}-baseline)');  set(gca, 'XLim', window);
 xlabel('Time from reinforcement (s)');
 
-formatFigurePublish('size', [2 1]);
+formatFigurePublish('size', figSize);
 
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
@@ -232,6 +239,7 @@ xlabel('reinforcement (s)'); set(gca, 'XLim', window);
 formatFigurePublish('size', [3 1]);
 
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
@@ -284,6 +292,7 @@ addOrginLines;
 formatFigurePublish('size', [2.5 1.1]);
 
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
@@ -337,6 +346,7 @@ ylabel('');
 formatFigurePublish('size', [2.5 1.1]);
 
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
@@ -413,8 +423,8 @@ if saveOn
 end
 
 %% dev, fano factor, skew, kurtosis
-
-
+sessionIndices = [2 3];
+hitTrials = TE.licks_cs.rate > 0;
 
 [cuedData, xData] = phAlignedWindow(TE, trialsByType{1} & hitTrials & ismember(TE.sessionIndex, sessionIndices), 1,...
     'zeroField', 'Us', 'FluorDataField', 'raw', 'PhotometryField', 'Photometry', 'zeroTimes', TE.Us, 'window', [-2 2]);
@@ -422,15 +432,16 @@ end
 
 data_std = std(cuedData, 0, 1);
 data_mean = mean(cuedData);
+data_skew = skewness(cuedData, 1);
 
 data_cv = data_std ./ data_mean;
-data_fano = data_std.^2;
+data_fano = data_std.^2 ./ data_mean;
 
 ensureFigure('test', 1); 
-subplot(2,2,1); plot(xData, data_cv);
+subplot(2,2,1); plot(xData, data_mean);
 subplot(2,2,2); plot(xData, data_std);
-subplot(2,2,3); plot(xData, data_mean);
-subplot(2,2,4); plot(xData, data_fano);
+subplot(2,2,3); plot(xData, data_skew);
+subplot(2,2,4); plot(xData, data_cv);
 
 %%
 ensureFigure('test2', 1);
@@ -448,15 +459,15 @@ grid on;
 
 data_std = std(cuedData, 0, 1);
 data_mean = mean(cuedData);
-
+data_skew = skewness(cuedData, 1);
 data_cv = data_std ./ data_mean;
 data_fano = data_std.^2;
 
 ensureFigure('test', 1); 
-subplot(2,2,1); plot(xData, data_cv);
+subplot(2,2,1); plot(xData, data_mean);
 subplot(2,2,2); plot(xData, data_std);
-subplot(2,2,3); plot(xData, data_mean);
-subplot(2,2,4); plot(xData, data_fano);
+subplot(2,2,3); plot(xData, data_skew);
+subplot(2,2,4); plot(xData, data_cv);
 
 %%
 ensureFigure('test2', 1);
