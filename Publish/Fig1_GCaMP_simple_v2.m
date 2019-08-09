@@ -97,7 +97,7 @@ xlabel('time from response (s)');
 
 %% align raster/ averages to odor onset vs lick onset, version #2
 
-figSize = [2.5 3];
+figSize = [2.5 1.7] * 1.2;
 
 TE.lickLatency_cs = calcEventLatency(TE, 'Port1In', TE.Cue, TE.usZeros);
 lickZeros = TE.lickLatency_cs + cellfun(@(x) x(1), TE.Cue);
@@ -146,6 +146,6 @@ plot([0 0], yData, '--k');
 
 formatFigurePublish('size', figSize);
 if saveOn 
-    export_fig(fullfile(savepath, saveName), '-eps');
+%     export_fig(fullfile(savepath, saveName), '-eps');
     print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
 end

@@ -28,6 +28,7 @@ success = dbLoadAnimal(DB, animal); % load TE and trial lookups
     
     formatFigurePublish('size', [2 1.1]);
     if saveOn 
+        print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
         export_fig(fullfile(savepath, saveName), '-eps');
     end    
     
@@ -69,7 +70,7 @@ if saveOn
 end    
 
 
-%% lick-aligned rasters from ChAT_42
+%% lick-aligned rasters from ChAT_42 version #1
 
 animal = 'ChAT_42';
 success = dbLoadAnimal(DB, animal); % load TE and trial lookups
@@ -88,7 +89,7 @@ ensureDirectory(savepath);
 
 xwindow = [-2 5];
 
-saveName = sprintf('%s_lickAligned_rasters_%s_%s', animal, photometryField, fdField);  
+saveName = sprintf('%s_lickAligned_rasters_%s_%s_v1', animal, photometryField, fdField);  
 ensureFigure(saveName, 1); 
 
 lickOnsets = TE.lickLatency_cs(highValueTrials & rewardTrials);
@@ -123,7 +124,8 @@ set(axs([1 3]), 'YTick', []);
 formatFigurePublish('size', [4 1.2]);
 
 if saveOn
-    export_fig(fullfile(savepath, saveName), '-eps');
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+%     export_fig(fullfile(savepath, saveName), '-eps');
     saveas(gcf, fullfile(savepath, [saveName '.fig']));
     saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
 end  
