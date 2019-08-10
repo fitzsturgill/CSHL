@@ -1,11 +1,11 @@
 % FrankenLNL_RewardPunish_exampleMouse
-
+animal = 'ACh_7';
 DB = dbLoadExperiment('FrankenLNL_RewardPunish');
 savepath = fullfile(DB.path, ['figure' filesep animal]);
 ensureDirectory(savepath);
 smoothWindow = 1;
 saveOn = 1;
-animal = 'ACh_7';
+
 
 photometryField = 'Photometry';
 fdField = 'ZS';
@@ -141,7 +141,8 @@ set(gca, 'XLim', window);
 formatFigurePublish('size', [3 1]);
 
 if saveOn 
-    export_fig(fullfile(savepath, saveName), '-eps');
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+%     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
 %% averages, aversive, airpuff, also add uncued shock
@@ -183,7 +184,8 @@ xlabel('reinforcement (s)'); set(gca, 'XLim', window);
 formatFigurePublish('size', [3 1]);
 
 if saveOn 
-    export_fig(fullfile(savepath, saveName), '-eps');
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+%     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
 %% SIGNAL CORRELATIONS: show that cue and  and reward responses are correlated on a trial-by-trial basis between let and right BLA
