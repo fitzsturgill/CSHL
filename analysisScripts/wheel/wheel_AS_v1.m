@@ -172,7 +172,7 @@ end
 % and ChAT correlations with reward and without but doesn't have nice pupil
 % diameter
 % good trials with pupil traces that needed gap filling: 12
-trial = 1; % 7;
+trial = 4; % 7;
 ensureFigure('examples', 1);
 subplot(5,1,1);
 ydata = TE.Photometry.data(1).raw(trial, :);    
@@ -201,6 +201,9 @@ try
 catch
 end
 subplot(5,1,5); plot(TE.Wheel.xData, TE.Wheel.data.V(trial, :)); ylabel('Velocity');
+tf = gcf;
+axs = tf.Children;
+set(axs, 'XLim', [min(TE.Photometry.xData) max(TE.Photometry.xData)]);
 
 if saveOn
     saveas(gcf, fullfile(savepath, 'examples.fig'));

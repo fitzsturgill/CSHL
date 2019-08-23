@@ -120,6 +120,9 @@ function TE = addPupilometryToTE(TE, varargin)
         % ith element of correctedIx_dm contains trial index matching the ith
         % pupil.mat file
         outlierITI = 14 + s.duration;
+        if s.duration > 60
+            outlierITI = 60 + s.duration; % kludge for wheel experiments
+        end
         correctedIx_dm = 1:length(dmDelta);
         if numFileDifference < 0 % there are missing pupil files            
             startingIndex = 1; 

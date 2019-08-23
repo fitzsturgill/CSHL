@@ -50,7 +50,17 @@ Rnoise.reward_cued = cum(rewData_cued);
 Rnoise.puff_cued = cum(puffData_cued);
 Rnoise.shock_cued = cum(shockData_cued);
 Rnoise.bl = cum(blData);
-Rnoise.all = cum([rewData; puffData; shockData; rewData_cued; puffData_cued; shockData_cued; blData]);
+% Rnoise.all = cum([rewData; puffData; shockData; rewData_cued; puffData_cued; shockData_cued; blData]);
+Rnoise.all = cum([rewData; puffData; shockData; rewData_cued; puffData_cued; shockData_cued]);
+Rnoise.all_shift = cum([...
+    us_pooled.rew.Rnoise_mean_shift;
+    us_pooled.puff.Rnoise_mean_shift;
+    us_pooled.shock.Rnoise_mean_shift;
+    us_pooled.rew_cued.Rnoise_mean_shift;
+    us_pooled.puff_cued.Rnoise_mean_shift;
+    us_pooled.shock_cued.Rnoise_mean_shift;...
+    ]);
+
 Rnoise.csPlus = cum(csPlusData);
 Rnoise.csMinus = cum(csMinusData);
 
@@ -78,11 +88,14 @@ if saveOn
     saveas(gcf, fullfile(figPath, [saveName '.fig']));
     saveas(gcf, fullfile(figPath, [saveName '.jpg']));
 end
-
+%%
 saveName = 'cumHist_Rnoise_all';
 ensureFigure(saveName, 1);
 axes; hold on;
-plot(Rnoise.all.sorted, Rnoise.all.index, '-k');
+plot(Rnoise.all.sorted, Rnoise.all.index, '-k'); hold on;
+plot(Rnoise.all_shift.sorted, Rnoise.all_shift.index, 'Color', [0.7 0.7 0.7]); hold on;
+xlabel('Noise Correlations');
+legend({'', 'shift by 1 trial'}, 'Location', 'best'); legend boxoff;
 
 %% signal correlations
 

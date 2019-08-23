@@ -330,17 +330,18 @@ end
 
 %% plot individual trials with reward times annotated
 
-channel = 1;
-ensureFigure(['annotated_' num2str(channel)], 1);
-for trial = 1:8
+for channel = 1:2    
+    ensureFigure(['annotated_' num2str(channel)], 1);
+    for trial = 1:8
 
-    subplot(4,2,trial);
-    trial = trial + 18 * 0;
-    ydata = TE.Photometry.data(channel).raw(trial, :);    
-    plot(TE.Photometry.xData, ydata, 'k'); hold on;
-    tsx = repmat(TE.Reward{trial}(:,1), 1, 2)';
-    tsy = [repmat(min(min(ydata)), 1, size(tsx, 2)); repmat(max(max(ydata)), 1, size(tsx, 2))];    
-    plot(tsx, tsy, 'r');
+        subplot(4,2,trial);
+        trial = trial + 18 * 0;
+        ydata = TE.Photometry.data(channel).raw(trial, :);    
+        plot(TE.Photometry.xData, ydata, 'k'); hold on;
+        tsx = repmat(TE.Reward{trial}(:,1), 1, 2)';
+        tsy = [repmat(min(min(ydata)), 1, size(tsx, 2)); repmat(max(max(ydata)), 1, size(tsx, 2))];    
+        plot(tsx, tsy, 'r');
+    end
 end
 
 %% cross correlation

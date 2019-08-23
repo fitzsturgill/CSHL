@@ -52,7 +52,7 @@ end
 
 
 function [R, lags] = avgXCorr(x, y, maxlag)
-    allR = zeros(maxlag*2+1, size(x,2));
+    allR = NaN(maxlag*2+1, size(x,2));
     lags = -maxlag:maxlag;
 
     for column = 1:size(x, 2)
@@ -63,6 +63,9 @@ function [R, lags] = avgXCorr(x, y, maxlag)
             disp('wtf');
         end
         [theseR, lags] = xcorr(thisX, thisY, maxlag, 'coeff');
+        if isempty(theseR)
+            continue
+        end
         allR(:,column) = theseR;
     end
     R = nanmean(allR, 2);

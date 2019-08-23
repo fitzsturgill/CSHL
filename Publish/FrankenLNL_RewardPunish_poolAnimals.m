@@ -50,7 +50,7 @@ gAvg = struct(...
     );
     
 for counter = 1:length(DB.animals)
-    animal = DB.animals{counter}
+    animal = DB.animals{counter};
 %     if strcmp(animal, 'ACh_3')
 %         continue;
 %     end
@@ -341,7 +341,10 @@ s2 = struct(...
     'mean', [],... % instead of a peak measurement, a mean (~area under curve)
     'Rnoise_peak', zeros(na,1),... % noise correlations for each channel pair based upon delta to peak
     'Rnoise_mean', zeros(na,1),... % noise correlations for each channel pair based upon mean measurement
-    'Rnoise_bl', zeros(na, 1)... % noise correlations during baseline period for each channel pair
+    'Rnoise_bl', zeros(na, 1),... % noise correlations during baseline period for each channel pair
+    'Rnoise_peak_shift', zeros(na,1),... % noise correlations for each channel pair based upon delta to peak
+    'Rnoise_mean_shift', zeros(na,1),... % noise correlations for each channel pair based upon mean measurement
+    'Rnoise_bl_shift', zeros(na, 1)... % noise correlations during baseline period for each channel pair    
     );
 
 us_pooled = struct(...
@@ -358,7 +361,7 @@ trialSets = {'rew', 'puff', 'shock', 'rew_cued', 'puff_cued', 'shock_cued'};
 % [rewAvgDelta, puffAvgDelta, shockAvgDelta, rewAvgDelta_cued, puffAvgDelta_cued, shockAvgDelta_cued] = deal(NaN(length(DB.animals), 2)); % hold average rew delta ZS of uncued reward trials
 
 for counter = 1:length(DB.animals)
-    animal = DB.animals{counter}
+    animal = DB.animals{counter};
     dbLoadAnimal(DB, animal);
     Fs = TE.(PhotometryField).sampleRate;
     for tscounter = 1:length(trialSets)
@@ -478,6 +481,9 @@ for counter = 1:length(DB.animals)
         us_pooled.(trialSet).Rnoise_peak(counter) = corr(deltaMax(:,1), deltaMax(:,2));
         us_pooled.(trialSet).Rnoise_mean(counter) = corr(deltaMean(:,1), deltaMean(:,2));
         us_pooled.(trialSet).Rnoise_bl(counter) = corr(bl_all(:,1), bl_all(:,2));
+        us_pooled.(trialSet).Rnoise_peak_shift(counter) = corr(deltaMax(:,1), circshift(deltaMax(:,2), 1));
+        us_pooled.(trialSet).Rnoise_mean_shift(counter) = corr(deltaMean(:,1), circshift(deltaMean(:,2), 1));
+        us_pooled.(trialSet).Rnoise_bl_shift(counter) = corr(bl_all(:,1), circshift(bl_all(:,2), 1));        
     end
 end
 
