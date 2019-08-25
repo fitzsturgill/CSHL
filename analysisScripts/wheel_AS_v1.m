@@ -30,8 +30,8 @@ catch
     baselineEnd = 119;
 end
         
-TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial',...
-    'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 baselineEnd], 'startField', 'Baseline', 'downsample', 305);
+TE.Photometry = processTrialAnalysis_Photometry_expFitConcat(sessions, 'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 baselineEnd], 'startField', 'Baseline', 'downsample', 305);
+TE.PhotometryHF = processTrialAnalysis_Photometry_expFitConcat(sessions, 'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 baselineEnd], 'startField', 'Baseline', 'downsample', 10);
 
 %%
 TE.Wheel = processTrialAnalysis_Wheel(sessions, 'duration', baselineEnd + 1, 'Fs', 20, 'startField', 'Start');
@@ -149,7 +149,7 @@ end
 % and ChAT correlations with reward and without but doesn't have nice pupil
 % diameter
 % good trials with pupil traces that needed gap filling: 12
-trial = 5; % 7;
+trial = 3; % 7;
 ensureFigure('examples', 1);
 subplot(4,1,1);
 ydata = TE.Photometry.data(1).raw(trial, :);    

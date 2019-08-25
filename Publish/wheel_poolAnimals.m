@@ -26,8 +26,6 @@ Rnoise = struct(...
 for counter = 1:na
     animal = DB.animals{counter};
     dbLoadAnimal(DB, animal);
-
-
         
     r1 = extractDataByTimeStamps(TE.Photometry.data(1).ZS, TE.Photometry.startTime, 20, TE.Reward, window);
     if strcmp(animal, 'DC_36') % kludge to deal with weird delayed reward response for DC_36
