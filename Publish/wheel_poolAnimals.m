@@ -2,6 +2,7 @@
 
 DB = dbLoadExperiment('wheel');
 saveOn = 1;
+savepath = fullfile(DB.path, filesep, 'pooled', filesep);
 
 na = length(DB.animals);
 %%
@@ -19,8 +20,7 @@ Rnoise = struct(...
     'rew', NaN(na, 1),...
     'rew_shift', NaN(na, 1),...
     'rew_delta', NaN(na, 1),...
-    'rew_delta_shift', NaN(na, 1),...
-    'rew_delta_xcorr', NaN(maxLag*2 + 1, na)...
+    'rew_delta_shift', NaN(na, 1)...
     );
 
 for counter = 1:na
@@ -30,7 +30,6 @@ for counter = 1:na
     r1 = extractDataByTimeStamps(TE.Photometry.data(1).ZS, TE.Photometry.startTime, 20, TE.Reward, window);
     if strcmp(animal, 'DC_36') % kludge to deal with weird delayed reward response for DC_36
         r2 = extractDataByTimeStamps(TE.Photometry.data(2).ZS, TE.Photometry.startTime, 20, TE.Reward, window + 0.5); 
-        disp('hello');
     else
         r2 = extractDataByTimeStamps(TE.Photometry.data(2).ZS, TE.Photometry.startTime, 20, TE.Reward, window);
     end
@@ -54,9 +53,84 @@ for counter = 1:na
     Rnoise.rew(counter) = corr(r1_noise, r2_noise);
     Rnoise.rew_shift(counter) = corr(r1_noise, circshift(r2_noise, 1));
     Rnoise.rew_delta(counter) = corr(d1, d2);
-    Rnoise.rew_delta_shift(counter) = corr(d1, circshift(d2, 1));
-    Rnoise.rew_delta_xcorr(:,counter) = xcorr(d1, d2, maxLag, 'coeff');
+    Rnoise.rew_delta_shift(counter) = corr(d1, circshift(d2, 1));   
 end
+
+%%
+Photometry = 'PhotometryHF';
+xcWindow = [-2 10];
+movingWin = [5 0.5];
+tapers = [3 5];
+fpass = [0 10];
+saveName = 'coherence';
+ensureFigure(saveName, 1); 
+mcLandscapeFigSetup(gcf);
+for counter = 1:length(DB.animals)
+    animal = DB.animals{counter};
+    dbLoadAnimal(DB, animal);
+        
+    r1 = extractDataByTimeStamps(TE.(Photometry).data(1).ZS, TE.(Photometry).startTime, TE.(Photometry).sampleRate, TE.Reward, xcWindow);
+    r2 = extractDataByTimeStamps(TE.(Photometry).data(2).ZS, TE.(Photometry).startTime, TE.(Photometry).sampleRate, TE.Reward, xcWindow);
+%     r1 = diff(r1, 1, 2);
+%     r2 = diff(r2, 1, 2);
+    cxcg = bpCalcCrossCoherence(r1', r2', TE.(Photometry).sampleRate, 'trialave', false, 'tapers', tapers, 'fpass', fpass, 'movingwin', movingWin, 'whiten', false);
+    cxcg_shift = bpCalcCrossCoherence(circshift(r1, 1, 1)', r2', TE.(Photometry).sampleRate, 'trialave', false, 'tapers', tapers, 'fpass', fpass, 'movingwin', movingWin, 'whiten', false);
+    if counter == 1
+        [cxcg_all, cxcg_shift_all, phase_all, phase_shift_all] = deal(NaN(size(cxcg.C, 2), size(cxcg.C, 1), length(DB.animals)));
+    end
+    cxcg_all(:,:,counter) = squeeze(nanmean(cxcg.C, 3))';
+    cxcg_shift_all(:,:,counter) = squeeze(nanmean(cxcg_shift.C, 3))';
+    phase_all(:,:,counter) = squeeze(nanmean(cxcg.phi, 3))';
+    phase_shift_all(:,:,counter) = squeeze(nanmean(cxcg_shift.phi, 3))';
+    subplot(2,3,counter); title(animal);
+    imagesc([cxcg.t(1) cxcg.t(end)],[cxcg.f(1) cxcg.f(end)], squeeze(nanmean(cxcg.C, 3))', [0 1]);
+    textBox(animal);
+    set(gca, 'YDir', 'normal');
+    ylabel('Frequency'); xlabel('Time from rew. (s)');   
+end
+
+if saveOn    
+%     print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));
+end
+
+%% 
+ensureFigure('test4', 1);
+mn = 2;
+subplot(2,2,1); imagesc(squeeze(cxcg_all(:,:,mn)));
+subplot(2,2,2); imagesc(squeeze(phase_all(:,:,mn)));
+subplot(2,2,3); imagesc(squeeze(cxcg_shift_all(:,:,mn)));
+subplot(2,2,4); imagesc(squeeze(phase_shift_all(:,:,mn)));
+%%
+figSize = [2 1];
+clim = [0.3 1];
+saveName = 'coherencegram_pooled';
+ensureFigure(saveName, 1);
+imagesc([cxcg.t(1) cxcg.t(end)],[cxcg.f(1) cxcg.f(end)], squeeze(nanmean(cxcg_all, 3)), clim);
+xlabel('time from rew. (s)');
+ylabel('F (hz)');
+set(gca, 'YDir', 'normal'); 
+set(gca, 'YLim', [0 6]);
+colorbar;
+formatFigurePublish('size', figSize);
+if saveOn    
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));    
+end
+
+saveName = 'coherencegram_pooled_shifted';
+ensureFigure(saveName, 1);
+imagesc([cxcg_shift.t(1) cxcg_shift.t(end)],[cxcg_shift.f(1) cxcg_shift.f(end)], squeeze(nanmean(cxcg_shift_all, 3)), clim);
+xlabel('time from rew. (s)');
+ylabel('F (hz)');
+set(gca, 'YDir', 'normal'); 
+set(gca, 'YLim', [0 6]);
+colorbar;
+formatFigurePublish('size', figSize);
+if saveOn    
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));    
+end
+
 
 %% plot rasters for each mouse and save them together in a pdf
 climfactor = 2;
@@ -91,6 +165,8 @@ for counter = 1:na
     waitbar(counter/na);
 end
 close(h);
+
+
 
 
 

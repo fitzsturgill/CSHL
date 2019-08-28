@@ -4,7 +4,7 @@ function timeMatrix = bpCalcTimeFromEvent(TE, event, varargin)
     %% optional parameters, first set defaults
     defaults = {...
         'uniformOutput', 1;...            % not currently implemented, idea is to set to 0 if acqs are going to be variable in length (store data in cell array)
-        'trialStartField', 'trialStartTimeStamp';... % option A: supply TE field containing trial start times
+        'trialStartField', 'TrialStartTimestamp';... % option A: supply TE field containing trial start times
         'trialStart', [];...                         % option B: suppply trial start times directly
         'dataStartField', 'Start';...                % option A: supply TE field containing data start times
         'dataStart', [];...                          % option B: supply data start times directly
@@ -17,7 +17,7 @@ function timeMatrix = bpCalcTimeFromEvent(TE, event, varargin)
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
     nTrials = length(TE.filename);
     if isempty(s.dataTimes)
-        nSamples = s.duration * s.Fs;
+        nSamples = round(s.duration * s.Fs);
     else
         nSamples = length(s.dataTimes);
     end

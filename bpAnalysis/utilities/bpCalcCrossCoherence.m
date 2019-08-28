@@ -3,27 +3,27 @@ function cxcg = bpCalcCrossCoherence(data1, data2, Fs, varargin)
     % data 1 and 2-   (in form samples x trials)
     %% optional parameters, first set defaults
     defaults = {...
-        'trialave', 0;... % 8/28/2016- changed channels default from [] to 1
+        'trialave', false;... % 8/28/2016- changed channels default from [] to 1
         'err', [2 0.05];...
         'tapers', [5 9];... 
-        'pad', 1;... 
+        'pad', true;... 
         'fpass', [0 20];...
         'movingwin', [5 1];...
-        'uniformOutput', 1;...            % not currently implemented, idea is to set to 0 if acqs are going to be variable in length (data in cell array)
-        'whiten', [1];...      % 1 = calculate cross spectrogram of temporal derivatives of signals, other options reserved for future (e.g. detrend, zscore, etc.)
+        'whiten', false;...    % 1 = calculate cross spectrogram of temporal derivatives of signals, other options reserved for future (e.g. detrend, zscore, etc.)
+        'uniformOutput', true;...            % not currently implemented, idea is to set to 0 if acqs are going to be variable in length (data in cell array)
         };
     [s, ~] = parse_args(defaults, varargin{:}); % combine default and passed (via varargin) parameter settings
     if ~all(size(data1) == size(data2))
         error('data must be equal in size');
     end
+    
     switch s.whiten
-        case 1
+        case true
             data1 = diff(data1, 1, 1);
             data2 = diff(data2, 1, 1);
         otherwise
     end
-
-
+    
     params.Fs = Fs;
     params.trialave = s.trialave;
     params.err = s.err;
@@ -42,6 +42,5 @@ function cxcg = bpCalcCrossCoherence(data1, data2, Fs, varargin)
         'settings', s,...
         'Fs', Fs...
         );
-
 
     [cxcg.C, cxcg.phi, cxcg.S12, cxcg.S1, cxcg.S2, cxcg.t, cxcg.f] = cohgramc(data1, data2, s.movingwin, params);

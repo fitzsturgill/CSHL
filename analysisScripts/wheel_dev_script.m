@@ -204,6 +204,7 @@ allShuffled = repmat(NaN(size(dc_cc.(crossField))), 1, 1, 1, nShuffles);
 allShuffled_phi = allShuffled;
 nTrials = length(TE.filename);
 h = waitbar(0, 'Processing Shuffled Coherence');   
+% IT MIGHT BE BETTER TO JUST SHIFT THE DATA BY ONE TRIAL
 for counter = 1:nShuffles
     idx = randperm(nTrials);
     data2 = circshift(TE.(Photometry).data(2).ZS(idx, :)', lagp, 1);

@@ -1,6 +1,15 @@
-formatFigurePublish('size', figSize);
-if saveOn    
-    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
-    saveas(gcf, fullfile(savepath, [saveName '.fig']));
-    saveas(gcf, fullfile(savepath, [saveName '.jpg']));
-end
+    window = [-2 6];
+    [rewards_dat, ts, tn] = extractDataByTimeStamps(TE.Photometry.data(2).ZS, TE.Photometry.startTime, 20, TE.Reward, window);
+    rewards_chat = extractDataByTimeStamps(TE.Photometry.data(1).ZS, TE.Photometry.startTime, 20, TE.Reward, window);
+    rewards_pupil = extractDataByTimeStamps(TE.pupil.pupDiameterNorm, TE.Photometry.startTime, 20, TE.Reward, window);
+    fh(counter) = ensureFigure(sprintf('rasters2_%s', animal), 1);     
+    mcPortraitFigSetup(fh(counter));
+    subplot(3,2,1); triggeredEventRasterFromTE(TE, 'Port1In', TE.Reward); textBox(animal, [], [], 16);
+    subplot(3,2,2); image(rewards_pupil, 'XData', window, 'CDataMapping', 'Scaled'); set(gca, 'CLim', [nanmean(rewards_pupil(:)) - nanstd(rewards_pupil(:)) * climfactor nanmean(rewards_pupil(:)) + nanstd(rewards_pupil(:)) * climfactor]); colormap('parula');  title('Pupil');    
+    subplot(3,2,3); image(rewards_chat, 'XData', window, 'CDataMapping', 'Scaled'); set(gca, 'CLim', [nanmean(rewards_chat(:)) - nanstd(rewards_chat(:)) * climfactor nanmean(rewards_chat(:)) + nanstd(rewards_chat(:)) * climfactor]); colormap('parula');  title('ChAT');
+    subplot(3,2,4); image(rewards_dat, 'XData', window,  'CDataMapping', 'Scaled'); set(gca, 'CLim', [nanmean(rewards_dat(:)) - nanstd(rewards_dat(:)) * climfactor nanmean(rewards_dat(:)) + nanstd(rewards_dat(:)) * climfactor]); colormap('parula');    title('DAT');
+    xdata = linspace(window(1), window(2), size(rewards_chat, 2));
+    subplot(3,2,5); plot(xdata, nanmean(rewards_chat));
+    xlabel('time from reward (s)');
+    subplot(3,2,6); plot(xdata, nanmean(rewards_dat));
+    xlabel('time from reward (s)');

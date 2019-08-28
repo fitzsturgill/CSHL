@@ -21,10 +21,12 @@ Photometry = 'PhotometryHF';
 
 
 data_chat = TE.(Photometry).data(1).ZS';
+% data_chat = diff(data_chat, 1, 1);
 % data_chat = data_chat(:,2:end) - data_chat(:,1:end-1); % whiten
 % data_chat = nanzscore2(data_chat); % standardize
 % data_chat = nanzscore(data_chat); % standardize
 data_dat = TE.(Photometry).data(2).ZS';
+% data_dat = diff(data_dat, 1, 1);
 % data_dat = data_dat(:,2:end) - data_dat(:,1:end-1); % whiten
 % data_dat = nanzscore2(data_dat); % standardize
 % data_dat = nanzscore(data_dat); % standardize
@@ -42,9 +44,12 @@ params.fpass = [1/duration 20];
 f(1) = eps; % for log scale, you can't show zero
 % scramble trial labels
 si = randperm(size(data_dat, 2));
-[C_scram,phi_scram,S12_scram,S1_scram,S2_scram,f_scram,confC_scram, phistd_scram, Cerr_scram] = coherencyc(data_chat(:,si), data_dat, params);
-f_scram(1) = eps;
 
+% [C_scram,phi_scram,S12_scram,S1_scram,S2_scram,f_scram,confC_scram, phistd_scram, Cerr_scram] = coherencyc(data_chat(:,si), data_dat, params);
+% f_scram(1) = eps;
+
+[C_scram,phi_scram,S12_scram,S1_scram,S2_scram,f_scram,confC_scram, phistd_scram, Cerr_scram] = coherencyc(circshift(data_chat, 1, 2), data_dat, params);
+f_scram(1) = eps;
 
 %
 saveName = 'wheel_noRewards_coherence';
@@ -57,12 +62,7 @@ boundedline(f, C, Cerr(1,:)' - C, 'b');%, 'alpha');
 % plot(f, C, 'b');%, 'alpha');
 % plot(f, Cerr', 'Color', [0 0 0.8]);
 
-
-
-
 set(gca, 'XScale', 'log', 'XLim', params.fpass);
-
-
 
 xlabel('Frequency');
 ylabel('Coherence');

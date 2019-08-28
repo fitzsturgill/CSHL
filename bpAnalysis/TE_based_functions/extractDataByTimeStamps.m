@@ -33,11 +33,13 @@ function varargout = extractDataByTimeStamps(data, startTimes, Fs, TS, window, t
     
     dT = 1/Fs;    
     eventCounter = 1;
+    trialWindow = [NaN NaN];
     validTrials = intersect(find(validTrials), trials);
     validTrials = validTrials(:)';
     timeStamps = zeros(nWindows, 1);
     trialNumbers = zeros(nWindows, 1);
-    for trial = validTrials
+    for tcounter = 1:length(validTrials)
+        trial = validTrials(tcounter);
         startTime = startTimes(trial);
         if iscell(data)
             warning('Take a look at code below, do I need to use shiftdim, why do I use a colon in the 3rd dimension?');
@@ -51,18 +53,29 @@ function varargout = extractDataByTimeStamps(data, startTimes, Fs, TS, window, t
         nPoints = size(trialData, 2);
         stamps = (TS{trial}(:,1)); % use first column of time stamps (in case you are using output of bpAddStateAsTrialEvent);
         stamps = stamps(:)'; % ensure row
-        for stamp = stamps
-            rs = stamp - startTime; % rs, Relative time Stamp
-            trialWindow = window + rs;
+
+
+        stamps = stamps - startTime;
+        for counter = 1:length(stamps)
+            stamp = stamps(counter);
+%             rs = stamp - startTime; % rs, Relative time Stamp
+            trialWindow(1) = window(1) + stamp;
+            if counter < length(stamps)
+                trialWindow(2) = min(window(2) + stamp, stamps(counter + 1));
+            else
+                trialWindow(2) = window(2) + stamp;
+            end
             startP = round(1 + trialWindow(1)/dT); % see bpX2Pnt
-            sourcePoints = startP:startP + (samplesPerWindow - 1);
+            subSamples = floor(diff(trialWindow) * Fs);
+            sourcePoints = startP:startP + (subSamples - 1);
             destPoints = find(sourcePoints >= 1 & sourcePoints <= nPoints);
-            eventData(eventCounter, destPoints, :) = trialData(1, sourcePoints(destPoints), :);
+            eventData(eventCounter, destPoints, :) = trialData(1, sourcePoints(destPoints), :);            
             timeStamps(eventCounter) = stamp;
             trialNumbers(eventCounter) = trial;
             eventCounter = eventCounter + 1;
         end
     end
+
             
     if nargout > 0
         varargout{1} = eventData;
