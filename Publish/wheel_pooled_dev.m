@@ -1,4 +1,6 @@
-%% different strategy, cross spectrogram for all the data, don't average then unwrap relative to time from most recent reward
+%{ 
+See wheel_pooled_coherence
+%}
 
 DB = dbLoadExperiment('wheel');
 saveOn = 1;
@@ -9,8 +11,6 @@ na = length(DB.animals);
 Photometry = 'PhotometryHF';
     animalnumber = 1;
     animal = DB.animals{animalnumber};
-
-    
     
 movingWin = [5 0.5]; % 10 0.5
 tapers = [3 5]; % 5 9
@@ -19,7 +19,6 @@ fpass_avg = [0.2 3];
 maxTime = 40;
 
 whiten = true;
-
 
 ensureFigure('binned_coherence', 1);
 for counter = 1:na

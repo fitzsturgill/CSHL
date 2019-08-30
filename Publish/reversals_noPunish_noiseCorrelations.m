@@ -23,7 +23,6 @@ Xcorrs = zeros(maxLag * 2 + 1, na);
 
 
 % ensureFigure 
-
 for counter = 1:na
     animal = DB.animals{counter};
     dbLoadAnimal(DB, animal);
@@ -114,12 +113,18 @@ cum_t1 = cum(cellfun(@(x) x(1), Rnoise.Rcue_separate));
 cum_t2 = cum(cellfun(@(x) x(2), Rnoise.Rcue_separate));
 
 % cumulative histogram
-ensureFigure('noise_cumHist', 1);
-subplot(1,2,1); plot(cum_all.sorted, cum_all.index, 'k'); hold on;
+saveName = 'reversals_noise_cumHist';
+ensureFigure(saveName, 1);
+axes; plot(cum_all.sorted, cum_all.index, 'k'); hold on;
 plot(cum_all_shift.sorted, cum_all_shift.index, 'Color', [0.7 0.7 0.7]);
-% subplot(1,2,2); plot(cum_t1.sorted, cum_t1.index); hold on; plot(cum_t2.sorted, cum_t2.index);
-% legend({'CS+', 'CS-'}, 'Location', 'northwest'); legend boxoff;
-%
+xlabel('Rnoise');
+formatFigurePublish('size', [0.8 1]);
+if saveOn    
+    print(gcf, '-dpdf', fullfile(savepath, filesep, 'figure', filesep, [saveName '.pdf']));
+    saveas(gcf, fullfile(savepath, filesep, 'figure', filesep, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, filesep, 'figure', filesep, [saveName '.jpg']));
+end
+    
 % plot cs+ vs cs- correlations versus each other in a scatterplot
 ensureFigure('test2', 1);
 scatter(cellfun(@(x) x(1), Rnoise.Rcue_separate), cellfun(@(x) x(2), Rnoise.Rcue_separate));

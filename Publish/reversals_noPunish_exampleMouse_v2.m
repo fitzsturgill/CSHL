@@ -129,7 +129,8 @@ addStimulusPatch(gca, [0 1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [2.
     'FluorDataField', fdField, 'window', [-4, 7], 'cmap', linecolors); %high value, reward
 
 % legend(hl, {'omit', 'cued', 'uncued'}, 'Location', 'northwest'); legend('boxoff');
-ylabel('\fontsize{8}Fluor. (\fontsize{12}\sigma\fontsize{8}-baseline)'); xlabel('time from cue (s)'); set(gca, 'XLim', [-4 7]);
+% ylabel('\fontsize{8}Fluor. (\fontsize{12}\sigma\fontsize{8}-bl.)'); 
+xlabel('time from cue (s)'); set(gca, 'XLim', [-4 7]);
 
 
 
@@ -141,11 +142,13 @@ addStimulusPatch(gca, [0 1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [2.
 [ha, hl] = phPlotAverageFromTE(TE, {neutralTrials & csPlusTrials & hitTrials, rewardTrials & csPlusTrials & hitTrials, csMinusTrials & CRTrials & rewardTrials, uncuedReward}, 2,...
     'FluorDataField', fdField, 'window', [-4, 7], 'cmap', linecolors); %high value, reward
 % legend(hl, {'omit', 'cued', 'uncued'}, 'Location', 'northoutside'); legend('boxoff');
-ylabel('\fontsize{8}Fluor. (\fontsize{12}\sigma\fontsize{8}-baseline)'); xlabel('time from cue (s)'); set(gca, 'XLim', [-4 7]);
+% ylabel('\fontsize{8}Fluor. (\fontsize{12}\sigma\fontsize{8}-bl.)'); 
+xlabel('time from cue (s)'); set(gca, 'XLim', [-4 7]);
 
-formatFigurePublish('size', [3 1.1]);
+formatFigurePublish('size', [2 1]);
 
 if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
@@ -274,6 +277,54 @@ formatFigurePublish('size', [2.5 1.1]);
 if saveOn 
     export_fig(fullfile(savepath, saveName), '-eps');
 end
+
+%% NOISE CORRELATIONS #2: cue and reward combined on one figure
+linecolors = [1 0 0; 0 0 1; 0 1 1; 0 1 0];       
+markerSize = 4;
+figSize = [1 1];
+saveName = 'CBF_VTA_NOISEcorrelations_reversals_v2';
+ensureFigure(saveName, 1);
+trialSets = [neutralTrials & csPlusTrials & hitTrials, rewardTrials & csPlusTrials & hitTrials, csMinusTrials & CRTrials & rewardTrials, uncuedReward];
+allTrials = sum(trialSets, 2) ~= 0;
+xlims = [min(TE.phPeakMean_cs(2).data(allTrials)) max(TE.phPeakMean_cs(2).data(allTrials)); min(TE.phPeakMean_us(2).data(allTrials)) max(TE.phPeakMean_us(2).data(allTrials))];
+ylims = [min(TE.phPeakMean_cs(1).data(allTrials)) max(TE.phPeakMean_cs(1).data(allTrials)); min(TE.phPeakMean_us(1).data(allTrials)) max(TE.phPeakMean_us(1).data(allTrials))];
+
+% allTrials = true; 
+axes; hold on;
+set(gca, 'XLim', xlims(1,:)); set(gca, 'YLim', ylims(1,:));
+for counter = 1:size(trialSets, 2)
+
+%     allTrials = allTrials | trialSets{counter};
+    xData = TE.phPeakMean_cs(2).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_cs(2).data(trialSets(:, counter))); yData = TE.phPeakMean_cs(1).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_cs(1).data(trialSets(:, counter))); 
+%     scatter(TE.phPeakMean_cs(2).data(trialSets{counter}), TE.phPeakMean_cs(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');
+    scatter(xData, yData, markerSize, linecolors(counter, :), '.');
+    % fit for cs
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(xData, yData, 'poly1', fo); 
+    fph=plot(fob); legend off; %,'predfunc'); legend off;
+    set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :), 'LineStyle', '--');
+    
+    xData = TE.phPeakMean_us(2).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_us(2).data(trialSets(:, counter))); yData = TE.phPeakMean_us(1).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_us(1).data(trialSets(:, counter))); 
+%     scatter(TE.phPeakMean_us(2).data(trialSets{counter}), TE.phPeakMean_us(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');    
+    scatter(xData, yData, markerSize, linecolors(counter, :), '.');
+    % fit for us
+    fo = fitoptions('poly1');%, 'Exclude', TE.csLicks.count(cuedRewardTrials) > 50);%, 'Upper', [0, Inf], 'Lower', [-Inf, 0]);
+    fob = fit(xData, yData, 'poly1', fo); 
+    fph=plot(fob); legend off;% ,'predfunc'); legend off;
+    set(fph, 'LineWidth', 0.5, 'Color', linecolors(counter, :));
+end
+setXYsameLimit;
+xlabel('\fontsize{8}Dop. (\fontsize{12}\sigma\fontsize{8}-bl)');
+ylabel('\fontsize{8}Ach. (\fontsize{12}\sigma\fontsize{8}-bl)');
+formatFigurePublish('size', figSize);
+
+if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+    export_fig(fullfile(savepath, saveName), '-eps');
+end
+
+
+
 
 
 

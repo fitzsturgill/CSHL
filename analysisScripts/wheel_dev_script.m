@@ -72,6 +72,9 @@ end
 
 
 %% spectrogram-  spectra calculated across moving window
+%   NOTE!!! MOVING WINDOW NEEDS TO BE SUBSTANTIALLY LARGER THAN WAVELENGTH
+%   OF COHERENCE!!!!  BE WARY OF CROSS SPECTROGRAMS AND ASSOCIATED DATA
+%   GENERATED PRIOR TO 8/2019 WITH NARROWER MOVING WINDOW
 
 % assume that photometry channels are consistent across sessions, bleach
 % fit dFF for GCaMP6f (ch1) and simple dFF for jRGECO1a (ch2)
@@ -162,7 +165,7 @@ crossField = 'C';
 % crossField = 'S12';
 lag = 0;
 lagp = round(lag * Fs);
-movingwin = [1 0.1]; % 1 .1
+movingwin = [5 0.5]; % formerly 1 .1
 tapers = [3 5];     %3 5
 dc_cc = bpCalcCrossCoherence(TE.(Photometry).data(1).ZS', circshift(TE.(Photometry).data(2).ZS', lagp, 1), Fs, 'movingwin', movingwin, 'whiten', 0, 'tapers', tapers);
 
