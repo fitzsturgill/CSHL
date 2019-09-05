@@ -243,7 +243,7 @@ cp_stats
 
 % csPlus
 minLogit = 3;
-trialWindow = [-20 20];
+trialWindow = [-30 30];
 cpField = 'licks_cs';
 cLimFactor = 3;
 trialWindow_rev = [-10 30];
@@ -548,4 +548,84 @@ if saveOn
     saveas(gcf, fullfile(savepath, [savename '.epsc']));
 %     export_fig(fullfile(savepath, savename), '-eps');
 end
+
+
+
+%% zscored averages
+expType = 'all';
+smoothWindow = 3;
+compile_reversal_data;
+
+
+trialWindow = [-30 30];
+ylim = [-1 2];
+figsize = [1.4 1.2];
+% new cs plus
+% common = sum(~isnan(newCsPlus.licks_cs)) > 3;
+common = newCsPlus.firstRevTrial + trialWindow(1):newCsPlus.firstRevTrial + trialWindow(2) - 1;
+savename = 'reversals_newCsPlus_zscored_all';
+ensureFigure(savename, 1);
+hla = zeros(1,3);
+[hl, hp] = boundedline(newCsPlus.trialNumber(common), nanmean(nanzscore(newCsPlus.licks_cs(goodReversals, common),0,2)), nanSEM(nanzscore(newCsPlus.licks_cs(goodReversals, common),0,2))',...
+    'cmap', mycolors('licks'), 'nan', 'gap');
+hla(1) = hl;
+[hl, hp] = boundedline(newCsPlus.trialNumber(common), nanmean(nanzscore(newCsPlus.phPeakMean_cs_ch2(goodReversals, common),0,2)), nanSEM(nanzscore(newCsPlus.phPeakMean_cs_ch2(goodReversals, common),0,2))',...
+    'cmap', mycolors('dat'), 'nan', 'gap'); hold on
+hla(2) = hl;
+[hl, hp] = boundedline(newCsPlus.trialNumber(common), nanmean(nanzscore(newCsPlus.phPeakMean_cs_ch1(goodReversals, common),0,2)), nanSEM(nanzscore(newCsPlus.phPeakMean_cs_ch1(goodReversals, common),0,2))',...
+    'cmap', mycolors('chat'), 'nan', 'gap');
+hla(3) = hl;
+
+
+set(hla, 'LineWidth', 1);
+set(gca, 'XLim', trialWindow);%, 'YLim', ylim);
+h  = addOrginLines;
+set(h, 'LineWidth', 1);
+legend(hla, { '\bf\color[rgb]{0.5,0.5,0.5}Licks', '\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.'},...
+    'Location', 'northwest', 'FontSize', 6, 'Interpreter', 'tex', 'Box', 'off');
+
+title('New Cs+');
+xlabel('Odor presentations from rev.');
+ylabel('Cue response');
+
+formatFigurePublish('size', figsize, 'fontSize', 6);
+if saveOn 
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));
+end   
+
+
+% new cs minus
+% common = sum(~isnan(newCsMinus.licks_cs)) > 3;
+common = newCsMinus.firstRevTrial + trialWindow(1):newCsMinus.firstRevTrial + trialWindow(2) - 1;
+
+savename = 'reversals_newCsMinus_zscored_all';
+ensureFigure(savename, 1);
+hla = zeros(1,3);
+[hl, hp] = boundedline(newCsMinus.trialNumber(common), nanmean(nanzscore(newCsMinus.licks_cs(goodReversals, common),0,2)), nanSEM(nanzscore(newCsMinus.licks_cs(goodReversals, common),0,2))',...
+    'cmap', mycolors('licks'));
+hla(1) = hl;
+[hl, hp] = boundedline(newCsMinus.trialNumber(common), nanmean(nanzscore(newCsMinus.phPeakMean_cs_ch2(goodReversals, common),0,2)), nanSEM(nanzscore(newCsMinus.phPeakMean_cs_ch2(goodReversals, common),0,2))',...
+    'cmap', mycolors('dat')); hold on
+hla(2) = hl;
+[hl, hp] = boundedline(newCsMinus.trialNumber(common), nanmean(nanzscore(newCsMinus.phPeakMean_cs_ch1(goodReversals, common),0,2)), nanSEM(nanzscore(newCsMinus.phPeakMean_cs_ch1(goodReversals, common),0,2))',...
+    'cmap', mycolors('chat'));
+hla(3) = hl;
+
+set(hla, 'LineWidth', 1);
+set(gca, 'XLim', trialWindow);%, 'YLim', ylim);    
+h  = addOrginLines;
+set(h, 'LineWidth', 1);
+legend(hla, {'\bf\color[rgb]{0.5,0.5,0.5}Licks', '\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.'},...
+            'Location', 'northeast', 'FontSize', 6, 'Interpreter', 'tex', 'Box', 'off');
+title('New Cs-');
+xlabel('Odor presentations from rev.');
+ylabel('Cue response');    
+formatFigurePublish('size', figsize, 'fontSize', 6);
+if saveOn 
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    saveas(gcf, fullfile(savepath, [savename '.epsc']));
+end   
 
