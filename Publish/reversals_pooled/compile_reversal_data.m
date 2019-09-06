@@ -17,7 +17,7 @@ expType = 'all';
 %}
 
 %% create structure containing all reversals
-AR = struct('csPlus', [], 'csMinus', [], 'csPlusReward', [], 'thirdOdor', []); % AR = all reversals
+AR = struct('csPlus', [], 'csMinus', [], 'csPlusReward', [], 'thirdOdor', [], 'allTrials', []); % AR = all reversals
 for si = 1:length(exp.(expType))    
     animal = exp.(expType){si};
 %     if strcmp(animal, 'DC_51')
