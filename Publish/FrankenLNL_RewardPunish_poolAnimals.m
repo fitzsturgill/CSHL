@@ -16,7 +16,7 @@ ensureDirectory(savepath);
 figsavepath = fullfile(DB.path, ['pooled' filesep 'figure']);
 ensureDirectory(figsavepath);
 
-%% Goal 1: Grand Averages
+%% Goal 1: Grand Averages and statistics for reward outcome, cued vs uncued
 % data and associated descriptors for each data type, trial set combination
 s3 = struct(...
     'data', [],...
@@ -48,6 +48,8 @@ gAvg = struct(...
     'ph', s2,...
     'phUs', s2...
     );
+
+    
     
 for counter = 1:length(DB.animals)
     animal = DB.animals{counter};
@@ -165,16 +167,16 @@ normVectorPh = max(gAvg.phUs.uncuedReward.data(:,1:bpX2pnt(1, 20)), [], 2);
 for tcounter = 1:size(trialSets, 1)
     label = trialSets{tcounter, 1};
     gAvg.phCue.(label).Avg = nanmean(gAvg.phCue.(label).data);
-    gAvg.phCue.(label).SEM = nanstd(gAvg.phCue.(label).data, 0, 1) ./ sum(isfinite(gAvg.phCue.(label).data), 1);
+    gAvg.phCue.(label).SEM = nanstd(gAvg.phCue.(label).data, 0, 1) ./ sqrt(sum(isfinite(gAvg.phCue.(label).data), 1));
     gAvg.phCue.(label).xData = (0:(size(gAvg.phCue.(label).data, 2) - 1)) * 1/20 - 7;
     gAvg.phDelay.(label).Avg = nanmean(gAvg.phDelay.(label).data);
-    gAvg.phDelay.(label).SEM = nanstd(gAvg.phDelay.(label).data, 0, 1) ./ sum(isfinite(gAvg.phDelay.(label).data), 1);
+    gAvg.phDelay.(label).SEM = nanstd(gAvg.phDelay.(label).data, 0, 1) ./ sqrt(sum(isfinite(gAvg.phDelay.(label).data), 1));
     gAvg.phDelay.(label).xData = (0:(size(gAvg.phDelay.(label).data, 2) - 1)) * 1/20 - 2;    
     gAvg.ph.(label).Avg = nanmean(gAvg.ph.(label).data);
-    gAvg.ph.(label).SEM = nanstd(gAvg.ph.(label).data, 0, 1) ./ sum(isfinite(gAvg.ph.(label).data), 1);
-    gAvg.ph.(label).xData = (0:(size(gAvg.phCue.(label).data, 2) - 1)) * 1/20 - (size(gAvg.phCue.(label).data, 2)/20 - 4);
+    gAvg.ph.(label).SEM = nanstd(gAvg.ph.(label).data, 0, 1) ./ sqrt(sum(isfinite(gAvg.ph.(label).data), 1));
+    gAvg.ph.(label).xData = (0:(size(gAvg.ph.(label).data, 2) - 1)) * 1/20 - (size(gAvg.ph.(label).data, 2)/20 - 4);
     gAvg.phUs.(label).Avg = nanmean(gAvg.phUs.(label).data);
-    gAvg.phUs.(label).SEM = nanstd(gAvg.phUs.(label).data, 0, 1) ./ sum(isfinite(gAvg.phUs.(label).data), 1);    
+    gAvg.phUs.(label).SEM = nanstd(gAvg.phUs.(label).data, 0, 1) ./ sqrt(sum(isfinite(gAvg.phUs.(label).data), 1));    
     gAvg.phUs.(label).xData = (0:(size(gAvg.phUs.(label).data, 2) - 1)) * 1/20;
     
     gAvgNorm.phCue.(label).data = gAvg.phCue.(label).data ./ normVectorPh;
@@ -183,16 +185,16 @@ for tcounter = 1:size(trialSets, 1)
     gAvgNorm.phUs.(label).data = gAvg.phUs.(label).data ./ normVectorPh;
     
     gAvgNorm.phCue.(label).Avg = nanmean(gAvgNorm.phCue.(label).data);
-    gAvgNorm.phCue.(label).SEM = nanstd(gAvgNorm.phCue.(label).data, 0, 1) ./ sum(isfinite(gAvgNorm.phCue.(label).data), 1);
+    gAvgNorm.phCue.(label).SEM = nanstd(gAvgNorm.phCue.(label).data, 0, 1) ./ sqrt(sum(isfinite(gAvgNorm.phCue.(label).data), 1));
     gAvgNorm.phCue.(label).xData = (0:(size(gAvgNorm.phCue.(label).data, 2) - 1)) * 1/20 - 7;
     gAvgNorm.phDelay.(label).Avg = nanmean(gAvg.phDelay.(label).data);
-    gAvgNorm.phDelay.(label).SEM = nanstd(gAvg.phDelay.(label).data, 0, 1) ./ sum(isfinite(gAvg.phDelay.(label).data), 1);
+    gAvgNorm.phDelay.(label).SEM = nanstd(gAvg.phDelay.(label).data, 0, 1) ./ sqrt(sum(isfinite(gAvg.phDelay.(label).data), 1));
     gAvgNorm.phDelay.(label).xData = (0:(size(gAvg.phDelay.(label).data, 2) - 1)) * 1/20 - 2;        
     gAvgNorm.ph.(label).Avg = nanmean(gAvgNorm.ph.(label).data);
-    gAvgNorm.ph.(label).SEM = nanstd(gAvgNorm.ph.(label).data, 0, 1) ./ sum(isfinite(gAvgNorm.ph.(label).data), 1);
-    gAvgNorm.ph.(label).xData = (0:(size(gAvgNorm.phCue.(label).data, 2) - 1)) * 1/20 - (size(gAvgNorm.phCue.(label).data, 2)/20 - 4);
+    gAvgNorm.ph.(label).SEM = nanstd(gAvgNorm.ph.(label).data, 0, 1) ./ sqrt(sum(isfinite(gAvgNorm.ph.(label).data), 1));
+    gAvgNorm.ph.(label).xData = (0:(size(gAvgNorm.ph.(label).data, 2) - 1)) * 1/20 - (size(gAvgNorm.ph.(label).data, 2)/20 - 4);
     gAvgNorm.phUs.(label).Avg = nanmean(gAvgNorm.phUs.(label).data);
-    gAvgNorm.phUs.(label).SEM = nanstd(gAvgNorm.phUs.(label).data, 0, 1) ./ sum(isfinite(gAvgNorm.phUs.(label).data), 1);    
+    gAvgNorm.phUs.(label).SEM = nanstd(gAvgNorm.phUs.(label).data, 0, 1) ./ sqrt(sum(isfinite(gAvgNorm.phUs.(label).data), 1));    
     gAvgNorm.phUs.(label).xData = (0:(size(gAvgNorm.phUs.(label).data, 2) - 1)) * 1/20;
     
 %     gAvgNorm.lickCue(label).data = gAvgNorm.lickCue(label).data ./ normVectorLick;
@@ -214,8 +216,7 @@ load(fullfile(savepath, 'grandAveragesNorm.mat'), 'gAvgNorm');
 disp(['*** loading: ' fullfile(savepath, 'grandAveragesNorm.mat') ' ***']);
 
 
-%% plot grand Averages
-
+%% plot grand Averages and statistics for cued vs uncued reward response
 
 save(fullfile(savepath, 'grandAverages.mat'), 'gAvg');
 disp(['*** saving: ' fullfile(savepath, 'grandAverages.mat') ' ***']);
@@ -251,6 +252,13 @@ if saveOn
     export_fig(fullfile(figsavepath, saveName), '-eps');
 end
 
+%% stats
+statWindow = [0.1 0.8];
+statIx = [crossing(gAvg.phUs.uncuedReward.xData, 1:length(gAvg.phUs.uncuedReward.xData), statWindow(1)) crossing(gAvg.phUs.uncuedReward.xData, 1:length(gAvg.phUs.uncuedReward.xData), statWindow(2))];
+
+test1 = nanmean(gAvg.phUs.uncuedReward.data(:,statIx(1):statIx(2)), 2);
+test2 = nanmean(gAvg.phUs.cuedReward.data(:,statIx(1):statIx(2)), 2);
+[h, p] = ttest(test1 - test2)
 
 %% make avg rasters
 % STUB

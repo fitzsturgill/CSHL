@@ -42,16 +42,16 @@ success = dbLoadAnimal(DB, animal); % load TE and trial lookups
     window = [-1.5 5];
     ensureFigure(saveName, 1); 
         varargin = {'window', [window(1) 3], 'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording',...
-        'linespec', {'m', 'b', 'c'}};
-    lickAvg = eventAverageFromTE(TE, {highValueTrials & rewardTrials, lowValueTrials & rewardTrials, uncuedTrials & rewardTrials}, 'Port1In', varargin{:});
+        'linespec', {'m', 'b'}};
+    lickAvg = eventAverageFromTE(TE, {highValueTrials & rewardTrials, lowValueTrials & rewardTrials}, 'Port1In', varargin{:});
     ax = axes; hold on; yyaxis right
     ll = plot(lickAvg.xData, lickAvg.Avg(1,:), '--k');
-    plot(lickAvg.xData, lickAvg.Avg(1,:), '--m', lickAvg.xData, lickAvg.Avg(2,:), '--b', lickAvg.xData, lickAvg.Avg(3,:), '--c');
+    plot(lickAvg.xData, lickAvg.Avg(1,:), '--m', lickAvg.xData, lickAvg.Avg(2,:), '--b');
     ax.YColor = [0 0 0]; ylabel('Licks/s');
 %     set(gca, 'YLim', [-1 7]);
     yyaxis left; ax.YColor = [0 0 0]; 
-    [ha, hl] = phPlotAverageFromTE(TE, {highValueTrials & rewardTrials, lowValueTrials & rewardTrials, uncuedTrials & rewardTrials}, 1,...
-        'window', window, 'linespec', {'m', 'b', 'c'}, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue, 'alpha', 0);
+    [ha, hl] = phPlotAverageFromTE(TE, {highValueTrials & rewardTrials, lowValueTrials & rewardTrials}, 1,...
+        'window', window, 'linespec', {'m', 'b'}, 'FluorDataField', 'ZS', 'zeroTimes', TE.Cue, 'alpha', 0);
 %     set(hl, 'LineWidth', 2);    
     set(gca, 'XLim', window);
     addStimulusPatch(gca, [0 1], '', [0.8 0.8 0.8], 0.5);

@@ -67,17 +67,17 @@ Rnoise.csMinus = cum(csMinusData);
 saveName = 'cumHist_Rnoise';
 ensureFigure(saveName, 1);
 axes; hold on;
-line(exData_rew, exData_y, 'Color', [0 1 1], 'LineStyle', '--');
-line(exData_rewCued, exData_y, 'Color', [0 0 1], 'LineStyle', '--');
+line(exData_rew, exData_y, 'Color', [0 114 178]/255, 'LineStyle', '--');
+line(exData_rewCued, exData_y, 'Color', [86 180 233]/255, 'LineStyle', '--');
 plot(Rnoise.bl.sorted, Rnoise.bl.index, 'Color', 'k');
-plot(Rnoise.reward.sorted, Rnoise.reward.index, 'Color', 'c');
-plot(Rnoise.puff.sorted, Rnoise.puff.index, 'Color', 'm');
-plot(Rnoise.shock.sorted, Rnoise.shock.index, 'Color', 'g');
-plot(Rnoise.reward_cued.sorted, Rnoise.reward_cued.index, 'Color', 'b');
-plot(Rnoise.puff_cued.sorted, Rnoise.puff_cued.index, 'Color', 'r');
-plot(Rnoise.shock_cued.sorted, Rnoise.shock_cued.index, 'Color', [0 0.5 0]);
-plot(Rnoise.csPlus.sorted, Rnoise.csPlus.index, ':b');
-plot(Rnoise.csMinus.sorted, Rnoise.csMinus.index, ':r');
+plot(Rnoise.reward.sorted, Rnoise.reward.index, 'Color', mycolors('reward')); % blue   0   44.7059   69.8039
+plot(Rnoise.puff.sorted, Rnoise.puff.index, 'Color', mycolors('puff')); % vermillion       83.5294   36.8627   0
+plot(Rnoise.shock.sorted, Rnoise.shock.index, 'Color', mycolors('shock')); % blueish green  0   61.9608   45.0980
+plot(Rnoise.reward_cued.sorted, Rnoise.reward_cued.index, 'Color', mycolors('reward_cued')); % sky blue   33.7255   70.5882   91.3725
+plot(Rnoise.puff_cued.sorted, Rnoise.puff_cued.index, 'Color', mycolors('puff_cued')); % reddish purple
+plot(Rnoise.shock_cued.sorted, Rnoise.shock_cued.index, 'Color', mycolors('shock')); % blueish green
+plot(Rnoise.csPlus.sorted, Rnoise.csPlus.index, 'LineStyle', ':', 'Color', mycolors('reward_cued')); % sky blue
+plot(Rnoise.csMinus.sorted, Rnoise.csMinus.index, 'LineStyle', ':', 'Color', mycolors('puff_cued')); % reddish purple
 xlabel('Rnoise');
 set(gca, 'XLim', [-1 1], 'YTick', [0 1]);
 % legend({'bl.', 'rew.', 'puff', 'shock'}, 'Location', 'northwest'); legend boxoff;
@@ -401,7 +401,9 @@ nSub = length(goodOnes);
 nBoot = 1000;
 alpha = 0.01;
 
-linecolors = [1 0 1; 0 1 0; 0 0 1; 1 0 0; 0 0.5 0; 0 0 0.5; 0 0 0.5];         
+% linecolors = [1 0 1; 0 1 0; 0 0 1; 1 0 0; 0 0.5 0; 0 0 0.5; 0 0 0.5];         
+linecolors = [mycolors('puff'); mycolors('shock'); mycolors('reward'); mycolors('puff'); mycolors('shock'); mycolors('reward_cued'); mycolors('puff_cued')];
+lineshapes = {'o'; 'o'; 's'; 's'; 's'; 'd'; 'd'};
 trialSets = {'puff', 'shock', 'rew_cued', 'puff_cued', 'shock_cued', 'CSplus', 'CSminus_shock'};
 trialSetNames = {'Air Puff', 'Shock', 'Reward cued', 'Puff cued', 'Shock cued', 'Cs+', 'CS-'};
 % linecolors = [1 0 0; 0 0.5 0; 0 0 0.5; 0 0 0.5];         
@@ -413,6 +415,9 @@ allData_means = zeros(nSub, length(trialSets), 2);
 allData_colors = repmat(linecolors, 1, 1, nSub);
 allData_colors = permute(allData_colors, [3 1 2]); % put animal dimension first, then trial set dimension next, for sorting purposes later...
 [allData_p, allData_h, allData_d] = deal(zeros(nSub, length(trialSets))); % p values, hypothesis, normalized auROC
+
+allData_markers = repmat(lineshapes, 1, nSub);
+allData_markers = permute(allData_markers, [2 1]);
 
 
 denominator = us_pooled.rew.avg_mean(goodOnes,:);
@@ -458,9 +463,42 @@ allData_means = reshape(allData_means, [nComp, 2]);
 allData_means = allData_means(I,:);
 allData_colors = reshape(allData_colors, [nComp, 3]);
 allData_colors = allData_colors(I,:);
+allData_markers = reshape(allData_markers, [nComp, 1]);
+allData_markers = allData_markers(I);
 allData_d = allData_d(:);
 allData_d = allData_d(I);
 
+% %% first the scatter plot, old and/or degenerate version
+% figSize = [1.2 1];
+% saveName = 'all_us_cs_norm_scatter';
+% ensureFigure(saveName, 1);
+% axes; hold on;
+% set(gca, 'XLim', [min(allData_means(:)) max(allData_means(:))], 'YLim', [min(allData_means(:)) max(allData_means(:))]); 
+% addUnityLine;
+% % addOrginLines;
+% % kludge- you can't specify marker type for individual points on a scatter
+% % plot, loop through different marker types
+% uniqueMarkers = unique(allData_markers);
+% for counter = 1:length(uniqueMarkers)
+%     thisMarker = uniqueMarkers{counter};
+%     theseOnes = strcmp(allData_markers, thisMarker);    
+%     scatter(allData_means(theseOnes, 1), allData_means(theseOnes, 2), 10 + abs(allData_d(theseOnes)) * 50, allData_colors(theseOnes, :), thisMarker, 'filled'); % filled ones are significant
+% %     scatter(allData_means(h_sorted, 1), allData_means(h_sorted, 2), 10 + abs(allData_d(h_sorted)) * 50, allData_colors(h_sorted, :), allData_markers(~h_sorted));
+% end
+% % scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 20, 'y', 'o'); 
+% % scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 10, allData_colors(~h_sorted, :), 'o', 'filled'); 
+% % scatter(allData_means(h_sorted, 1), allData_means(h_sorted, 2), 10, allData_colors(h_sorted, :), 'o');
+% 
+% xlabel('Left norm.');
+% ylabel('Right norm.');
+% formatFigurePublish('size', figSize);
+% 
+% if saveOn 
+%     print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+%     saveas(gcf, fullfile(figPath, [saveName '.fig']));
+%     saveas(gcf, fullfile(figPath, [saveName '.jpg']));
+% end
+
 %% first the scatter plot
 figSize = [1.2 1];
 saveName = 'all_us_cs_norm_scatter';
@@ -469,32 +507,17 @@ axes; hold on;
 set(gca, 'XLim', [min(allData_means(:)) max(allData_means(:))], 'YLim', [min(allData_means(:)) max(allData_means(:))]); 
 addUnityLine;
 % addOrginLines;
-scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 10 + abs(allData_d(~h_sorted)) * 50, allData_colors(~h_sorted, :), '.'); % filled ones are significant
-scatter(allData_means(h_sorted, 1), allData_means(h_sorted, 2), 10 + abs(allData_d(h_sorted)) * 50, allData_colors(h_sorted, :), '.');
-% scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 20, 'y', 'o'); 
-% scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 10, allData_colors(~h_sorted, :), 'o', 'filled'); 
-% scatter(allData_means(h_sorted, 1), allData_means(h_sorted, 2), 10, allData_colors(h_sorted, :), 'o');
-
-xlabel('Left norm.');
-ylabel('Right norm.');
-formatFigurePublish('size', figSize);
-
-if saveOn 
-    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
-    saveas(gcf, fullfile(figPath, [saveName '.fig']));
-    saveas(gcf, fullfile(figPath, [saveName '.jpg']));
+% kludge- you can't specify marker type for individual points on a scatter
+% plot, loop through different marker types
+uniqueMarkers = unique(allData_markers);
+for counter = 1:length(uniqueMarkers)
+    thisMarker = uniqueMarkers{counter};
+    theseOnes = strcmp(allData_markers, thisMarker);    
+    scatter(allData_means(theseOnes, 1), allData_means(theseOnes, 2), 1 + abs(allData_d(theseOnes)) * 5, allData_colors(theseOnes, :), thisMarker, 'filled'); % filled ones are significant
+%     scatter(allData_means(h_sorted, 1), allData_means(h_sorted, 2), 10 + abs(allData_d(h_sorted)) * 50, allData_colors(h_sorted, :), allData_markers(~h_sorted));
 end
-
-%% first the scatter plot
-figSize = [1.2 1];
-saveName = 'all_us_cs_norm_scatter';
-ensureFigure(saveName, 1);
-axes; hold on;
-set(gca, 'XLim', [min(allData_means(:)) max(allData_means(:))], 'YLim', [min(allData_means(:)) max(allData_means(:))]); 
-addUnityLine;
-% addOrginLines;
-scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 10 + abs(allData_d(~h_sorted)) * 50, allData_colors(~h_sorted, :), '.'); % filled ones are significant
-scatter(allData_means(h_sorted, 1), allData_means(h_sorted, 2), 10 + abs(allData_d(h_sorted)) * 50, allData_colors(h_sorted, :), '.');
+% scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 10 + abs(allData_d(~h_sorted)) * 50, allData_colors(~h_sorted, :), '.'); % filled ones are significant
+% scatter(allData_means(h_sorted, 1), allData_means(h_sorted, 2), 10 + abs(allData_d(h_sorted)) * 50, allData_colors(h_sorted, :), '.');
 % scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 20, 'y', 'o'); 
 % scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 10, allData_colors(~h_sorted, :), 'o', 'filled'); 
 % scatter(allData_means(h_sorted, 1), allData_means(h_sorted, 2), 10, allData_colors(h_sorted, :), 'o');
@@ -548,17 +571,17 @@ xData = us_pooled.rew.avgDataX{1,1};
 ax=axes; hold on;
 vert_offset = max(us_pooled.rew.avgData{ix,2}) + 2;
 offset = 0.1;
-plot(xData, us_pooled.rew.avgData{ix,2}, 'b');
-plot(xData, us_pooled.rew.avgData{ix,1} + vert_offset, 'b');
+plot(xData, us_pooled.rew.avgData{ix,2}, 'Color', mycolors('reward'));
+plot(xData, us_pooled.rew.avgData{ix,1} + vert_offset, 'Color', mycolors('reward'));
 x2 = xData(end);
 
-plot(xData + x2 + offset, us_pooled.puff.avgData{ix,2}, 'r');
-plot(xData + x2 + offset, us_pooled.puff.avgData{ix,1} + vert_offset, 'r');
-plot(xData + x2*2 + offset, us_pooled.shock.avgData{ix,2}, 'g');
-plot(xData + x2*2 + offset, us_pooled.shock.avgData{ix,1} + vert_offset, 'g');
+plot(xData + x2 + offset, us_pooled.puff.avgData{ix,2}, 'Color', mycolors('puff'));
+plot(xData + x2 + offset, us_pooled.puff.avgData{ix,1} + vert_offset, 'Color', mycolors('puff'));
+plot(xData + x2*2 + offset, us_pooled.shock.avgData{ix,2}, 'Color', mycolors('shock'));
+plot(xData + x2*2 + offset, us_pooled.shock.avgData{ix,1} + vert_offset, 'Color', mycolors('shock'));
 xData = cs_pooled.CSplus.avgDataX{1,1};
-plot(xData + x2*3 + offset, cs_pooled.CSplus.avgData{ix,2}, 'Color', [0 0 0.5]);
-plot(xData + x2*3 + offset, cs_pooled.CSplus.avgData{ix,1} + vert_offset, 'Color', [0 0 0.5]);
+plot(xData + x2*3 + offset, cs_pooled.CSplus.avgData{ix,2}, 'Color', mycolors('reward_cued'));
+plot(xData + x2*3 + offset, cs_pooled.CSplus.avgData{ix,1} + vert_offset, 'Color', mycolors('reward_cued'));
 ax.YAxis.Visible = 'off'; ax.XAxis.Visible = 'off';
 formatFigurePublish('size', figSize);
 
