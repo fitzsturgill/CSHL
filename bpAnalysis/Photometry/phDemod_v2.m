@@ -33,8 +33,8 @@ function demod = phDemod_v2(rawData, refData, refChannel, sampleRate, varargin)
     pad = 1; % kludge, always pad
     if pad
         if refData.freq(chix)
-            paddedData_0 = processedData_0(1:sampleRate, 1); % AGV sez: pad with 1s of data, should be in phase as period should be an integer factor of 1 second
-            paddedData_90 = processedData_90(1:sampleRate, 1); % AGV sez: pad with 1s of data, should be in phase as period should be an integer factor of 1 second        
+            paddedData_0 = processedData_0(1:min(size(processedData_0, 1),sampleRate), 1); % AGV sez: pad with 1s of data, should be in phase as period should be an integer factor of 1 second
+            paddedData_90 = processedData_90(1:min(size(processedData_90, 1),sampleRate), 1); % AGV sez: pad with 1s of data, should be in phase as period should be an integer factor of 1 second        
             % HOWEVER- an additional problem is that there is a hardware onset
             %% 
             % transient when the LED turns on
