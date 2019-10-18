@@ -7,6 +7,8 @@
     omitTrials = filterTE(TE, 'trialOutcome', [2 4 7], 'reject', 0);
     trialTypes = 1:7;
     trialsByType = cell(size(trialTypes));
-    for counter = 1:length(trialTypes)
-        trialsByType{counter} = filterTE(TE, 'trialType', trialTypes(counter), 'reject', 0);
+    for sss = 1:length(trialTypes)
+        trialsByType{sss} = filterTE(TE, 'trialType', trialTypes(sss), 'reject', 0);
     end
+    
+    clear sss

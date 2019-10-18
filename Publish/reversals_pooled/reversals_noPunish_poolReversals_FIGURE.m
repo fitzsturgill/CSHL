@@ -10,6 +10,87 @@ exp.value = {'DC_44'  'DC_46'  'DC_47' 'DC_53'  'DC_54'  'DC_56'}; % exclude DC_
 exp.valence = {'DC_17'  'DC_20'  'DC_35'  'DC_36'  'DC_37'  'DC_40'};
 exp.all = [exp.value exp.valence];
 
+
+
+
+%% averages, value (supplementary figure)
+expType = 'value';
+smoothWindow = 3;
+compile_reversal_data;
+
+
+trialWindow = [-30 30];
+ylim = [-1 2];
+figsize = [2 1.5];
+% new cs plus
+% common = sum(~isnan(newCsPlus.licks_cs)) > 3;
+common = newCsPlus.firstRevTrial + trialWindow(1):newCsPlus.firstRevTrial + trialWindow(2) - 1;
+savename = 'reversals_newCsPlus';
+ensureFigure(savename, 1);
+hla = zeros(1,3);
+[hl, hp] = boundedline(newCsPlus.trialNumber(common), nanmean(newCsPlus.licks_cs(goodReversals, common)), nanSEM(newCsPlus.licks_cs(goodReversals, common))',...
+    'cmap', mycolors('licks'), 'nan', 'gap');
+hla(1) = hl;
+[hl, hp] = boundedline(newCsPlus.trialNumber(common), nanmean(newCsPlus.phPeakMean_cs_ch2(goodReversals, common)), nanSEM(newCsPlus.phPeakMean_cs_ch2(goodReversals, common))',...
+    'cmap', mycolors('dat'), 'nan', 'gap'); hold on
+hla(2) = hl;
+[hl, hp] = boundedline(newCsPlus.trialNumber(common), nanmean(newCsPlus.phPeakMean_cs_ch1(goodReversals, common)), nanSEM(newCsPlus.phPeakMean_cs_ch1(goodReversals, common))',...
+    'cmap', mycolors('chat'), 'nan', 'gap');
+hla(3) = hl;
+
+
+set(hla, 'LineWidth', 1);
+set(gca, 'XLim', trialWindow);%, 'YLim', ylim);
+h  = addOrginLines;
+set(h, 'LineWidth', 1);
+% legend(hla, { '\bf\color[rgb]{0.5,0.5,0.5}Licks', '\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.'},...
+%     'Location', 'northwest', 'FontSize', 6, 'Interpreter', 'tex', 'Box', 'off');
+
+% title('New Cs+');
+xlabel('Odor presentations from rev.');
+ylabel('Cue response');
+
+formatFigurePublish('size', figsize);%, 'fontSize', 6);
+if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [savename '.pdf']));
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));      
+end   
+
+
+% new cs minus
+% common = sum(~isnan(newCsMinus.licks_cs)) > 3;
+common = newCsMinus.firstRevTrial + trialWindow(1):newCsMinus.firstRevTrial + trialWindow(2) - 1;
+
+savename = 'reversals_newCsMinus';
+ensureFigure(savename, 1);
+hla = zeros(1,3);
+[hl, hp] = boundedline(newCsMinus.trialNumber(common), nanmean(newCsMinus.licks_cs(goodReversals, common)), nanSEM(newCsMinus.licks_cs(goodReversals, common))',...
+    'cmap', mycolors('licks'));
+hla(1) = hl;
+[hl, hp] = boundedline(newCsMinus.trialNumber(common), nanmean(newCsMinus.phPeakMean_cs_ch2(goodReversals, common)), nanSEM(newCsMinus.phPeakMean_cs_ch2(goodReversals, common))',...
+    'cmap', mycolors('dat')); hold on
+hla(2) = hl;
+[hl, hp] = boundedline(newCsMinus.trialNumber(common), nanmean(newCsMinus.phPeakMean_cs_ch1(goodReversals, common)), nanSEM(newCsMinus.phPeakMean_cs_ch1(goodReversals, common))',...
+    'cmap', mycolors('chat'));
+hla(3) = hl;
+
+set(hla, 'LineWidth', 1);
+set(gca, 'XLim', trialWindow);%, 'YLim', ylim);    
+h  = addOrginLines;
+set(h, 'LineWidth', 1);
+% legend(hla, {'\bf\color[rgb]{0.5,0.5,0.5}Licks', '\bf\color[rgb]{0.9258,0.4883,0.1914}Dop.', '\bf\color[rgb]{0.6680,0.2148,0.8359}Ach.'},...
+%             'Location', 'northeast', 'FontSize', 6, 'Interpreter', 'tex', 'Box', 'off');
+% title('New Cs-');
+xlabel('Odor presentations from rev.');
+ylabel('Cue response');    
+formatFigurePublish('size', figsize);%, 'fontSize', 6);
+if saveOn 
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));   
+    print(gcf, '-dpdf', fullfile(savepath, [savename '.pdf']));
+end   
+
 %% averages
 expType = 'valence';
 smoothWindow = 3;
@@ -243,14 +324,14 @@ cp_stats
 
 % csPlus
 minLogit = 3;
-trialWindow = [-30 30];
+trialWindow = [-20 20];
 cpField = 'licks_cs';
 cLimFactor = 3;
 trialWindow_rev = [-10 30];
-markerSize = 3;
+markerSize = 5;
 lineWidth = 2;
-avgfigSize = [1.2 1.2];
-figSize = [1.6 1.2];
+avgfigSize = [1.7 1.6];
+figSize = [2.4 1.6];
 
 
 % first new csPlus (acquisition)
@@ -319,13 +400,13 @@ params.cellmargin = [0.025 0.025 0.025 0.025];
 hax = axesmatrix(3,2,1:6,params);
 
 axes(hax(1)); hold on;
-ylabel('Cue licks');
+% ylabel('Cue licks');
 cData = good_licks;
 % use same clim for all images in each row
 clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
 imagesc('XData', newCsPlus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
 scatter(cp_rev, 1:sum(goodOnes), markerSize, [1 1 1], 'filled');
-set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', []);
+set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', [], 'YTick', [1 30]);
 
 axes(hax(2)); hold on;
 cData = aligned_licks(ix, :);
@@ -334,13 +415,13 @@ plot(reversalPoints(ix), 1:sum(goodOnes), ':r', 'LineWidth', lineWidth);
 set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', []);
 
 axes(hax(3)); hold on;
-ylabel('ACh.', 'Color', mycolors('ChAT'));
+% ylabel('ACh.', 'Color', mycolors('ChAT'));
 cData = good_ch1;
 % use same clim for all images in each row
 clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
 imagesc('XData', newCsPlus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
 scatter(cp_rev, 1:sum(goodOnes), markerSize, [1 1 1], 'filled');
-set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', []);
+set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', [], 'YTick', [1 30]);
 
 axes(hax(4)); hold on;
 cData = aligned_ch1(ix, :);
@@ -348,13 +429,13 @@ imagesc('XData', xData, 'CData', cData, clim);
 plot(reversalPoints(ix), 1:sum(goodOnes), ':r', 'LineWidth', lineWidth); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', []);
 
 axes(hax(5)); hold on;
-ylabel('Dop.', 'Color', mycolors('DAT'));
+% ylabel('Dop.', 'Color', mycolors('DAT'));
 cData = good_ch2;
 % use same clim for all images in each row
 clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
 imagesc('XData', newCsPlus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
 scatter(cp_rev, 1:sum(goodOnes), markerSize, [1 1 1], 'filled');
-set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', [0 10 20]);
+set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', [0 10 20], 'YTick', [1 30]);
 xlabel('Trials from rev.');
 
 axes(hax(6)); hold on;
@@ -363,7 +444,7 @@ imagesc('XData', xData, 'CData', cData, clim);
 plot(reversalPoints(ix), 1:sum(goodOnes), ':r', 'LineWidth', lineWidth); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', [-10 0 10]);
 xlabel('Trials from c.p.');
 
-formatFigurePublish('size', figSize, 'fontSize', 6);
+formatFigurePublish('size', figSize);
 if saveOn 
     saveas(gcf, fullfile(savepath, [savename '.fig']));
     saveas(gcf, fullfile(savepath, [savename '.jpg']));   
@@ -384,15 +465,15 @@ axes; hold on;
 [hl, hp] = boundedline(xData, [nanmean(aligned_ch1)' nanmean(aligned_ch2)'], permute([nanSEM(aligned_ch1)' nanSEM(aligned_ch2)'], [1 3 2]),...
     'cmap', [mycolors('chat'); mycolors('dat')], 'nan', 'gap');
 set(gca, 'YLim', yLim);
-ylabel('Cue response (z-score)');
+ylabel('Cue response (ZS)');
 xlabel('Trials from lick c.p.');
 
-formatFigurePublish('size', avgfigSize, 'fontSize', 6);
+formatFigurePublish('size', avgfigSize);
 if saveOn 
     saveas(gcf, fullfile(savepath, [savename '.fig']));
     saveas(gcf, fullfile(savepath, [savename '.jpg']));   
     saveas(gcf, fullfile(savepath, [savename '.epsc']));
-%     export_fig(fullfile(savepath, savename), '-eps');
+    print(gcf, '-dpdf', fullfile(savepath, [savename '.pdf']));
 end
 
 % now csMinus
@@ -401,10 +482,7 @@ end
 minLogit = 3;
 trialWindow = [-20 20];
 cpField = 'licks_cs';
-cLimFactor = 3;
 trialWindow_rev = [-10 30];
-markerSize = 3;
-lineWidth = 2;
 
 
 
@@ -474,56 +552,56 @@ params.cellmargin = [0.025 0.025 0.025 0.025];
 hax = axesmatrix(3,2,1:6,params);
 
 axes(hax(1)); hold on;
-ylabel('Cue licks');
+% ylabel('Cue licks');
 cData = good_licks;
 % use same clim for all images in each row
 clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
 imagesc('XData', newCsMinus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
 scatter(cp_rev, 1:sum(goodOnes), markerSize, [1 1 1], 'filled');
-set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', []);
+set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', [], 'YTick', [1 40]);
 
 axes(hax(2)); hold on;
 cData = aligned_licks(ix, :);
 imagesc('XData', xData, 'CData', cData, clim);
-plot(reversalPoints(ix), 1:sum(goodOnes), ':w', 'LineWidth', lineWidth);
+plot(reversalPoints(ix), 1:sum(goodOnes), ':r', 'LineWidth', lineWidth);
 set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', []);
 
 axes(hax(3)); hold on;
-ylabel('ACh.', 'Color', mycolors('ChAT'));
+% ylabel('ACh.', 'Color', mycolors('ChAT'));
 cData = good_ch1;
 % use same clim for all images in each row
 clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
 imagesc('XData', newCsMinus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
 scatter(cp_rev, 1:sum(goodOnes), markerSize, [1 1 1], 'filled');
-set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', []);
+set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', [], 'YTick', [1 40]);
 
 axes(hax(4)); hold on;
 cData = aligned_ch1(ix, :);
 imagesc('XData', xData, 'CData', cData, clim);
-plot(reversalPoints(ix), 1:sum(goodOnes), ':w', 'LineWidth', lineWidth); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', []);
+plot(reversalPoints(ix), 1:sum(goodOnes), ':r', 'LineWidth', lineWidth); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', []);
 
 axes(hax(5)); hold on;
-ylabel('Dop.', 'Color', mycolors('DAT'));
+% ylabel('Dop.', 'Color', mycolors('DAT'));
 cData = good_ch2;
 % use same clim for all images in each row
 clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
 imagesc('XData', newCsMinus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
 scatter(cp_rev, 1:sum(goodOnes), markerSize, [1 1 1], 'filled');
-set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', [0 10 20]);
+set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', [0 10 20], 'YTick', [1 40]);
 xlabel('Trials from rev.');
 
 axes(hax(6)); hold on;
 cData = aligned_ch2(ix, :);
 imagesc('XData', xData, 'CData', cData, clim);
-plot(reversalPoints(ix), 1:sum(goodOnes), ':w', 'LineWidth', lineWidth); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', [-10 0 10]);
+plot(reversalPoints(ix), 1:sum(goodOnes), ':r', 'LineWidth', lineWidth); set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', [-10 0 10]);
 xlabel('Trials from c.p.');
 
-formatFigurePublish('size', figSize, 'fontSize', 6);
+formatFigurePublish('size', figSize);
 if saveOn 
     saveas(gcf, fullfile(savepath, [savename '.fig']));
     saveas(gcf, fullfile(savepath, [savename '.jpg']));   
     saveas(gcf, fullfile(savepath, [savename '.epsc']));
-%     export_fig(fullfile(savepath, savename), '-eps');
+    print(gcf, '-dpdf', fullfile(savepath, [savename '.pdf']));
 end
 
 %  averages
@@ -538,15 +616,15 @@ axes; hold on;
 [hl, hp] = boundedline(xData, [nanmean(aligned_ch1)' nanmean(aligned_ch2)'], permute([nanSEM(aligned_ch1)' nanSEM(aligned_ch2)'], [1 3 2]),...
     'cmap', [mycolors('chat'); mycolors('dat')], 'nan', 'gap');
 set(gca, 'YLim', yLim);
-ylabel('Cue response (z-score)');
+ylabel('Cue response (ZS)');
 xlabel('Trials from lick c.p.');
 
-formatFigurePublish('size', avgfigSize, 'fontSize', 6);
+formatFigurePublish('size', avgfigSize);
 if saveOn 
     saveas(gcf, fullfile(savepath, [savename '.fig']));
     saveas(gcf, fullfile(savepath, [savename '.jpg']));   
     saveas(gcf, fullfile(savepath, [savename '.epsc']));
-%     export_fig(fullfile(savepath, savename), '-eps');
+    print(gcf, '-dpdf', fullfile(savepath, [savename '.pdf']));
 end
 
 

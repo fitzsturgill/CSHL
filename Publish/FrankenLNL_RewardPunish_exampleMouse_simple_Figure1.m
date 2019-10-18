@@ -128,8 +128,6 @@ end
 
 %% cued reward rasters, cued and uncued for photometry
 
-
-
 fdField = 'ZS';
 tcolor = mycolors('chat');
 sessionIndices = [2 3];
@@ -173,6 +171,7 @@ if saveOn
     print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end        
+
 %% averages, appetitive, one side only (left side, ch = 1)
 figSize = [1.7 0.9];
 fdField = 'ZS';

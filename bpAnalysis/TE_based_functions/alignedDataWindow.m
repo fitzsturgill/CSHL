@@ -42,7 +42,7 @@ function [data, xData] = alignedDataWindow(inputData, trials, varargin)
         end        
     else
         zeroTimes = s.zeroTimes; 
-    end
+    end    
     
     zeroTimes = zeroTimes(:); 
     assert(length(zeroTimes) == totalTrials, 'zeroTimes for all trials (typically length TE), not just the subset of trials, must be supplied');
@@ -51,7 +51,12 @@ function [data, xData] = alignedDataWindow(inputData, trials, varargin)
         s.window = repmat(s.window, totalTrials, 1);
     end
     
-    zeroTimes = zeroTimes - s.startTimes; % redefine zero times relative to photometry start
+    if iscell(s.startTimes)
+        startTimes = cellfun(@(x) x(1), s.startTimes); % returns vector
+    else
+        startTimes = s.startTimes;
+    end
+    zeroTimes = zeroTimes - startTimes; % redefine zero times relative to photometry start
     
 %% initalize data array padded to maximum window size
     samplesPerWindow = ceil((max(s.window(:,2)) - min(s.window(:,1))) * Fs); 

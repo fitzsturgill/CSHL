@@ -130,10 +130,45 @@ formatFigurePublish('size', figSize, 'fontSize', 6);
 if saveOn 
     print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
-end    
+end
 
 
-%% phAverages, cued, uncued, omission
+%% phRasters, cued, uncued, omission, example #1
+figSize = [1.6 0.81];
+window = [-4 4];
+tcolor = mycolors('chat');
+trialSets = {...
+    rewardOdorTrials & rewardTrials & ismember(TE.filename, lateSessions),...
+    uncuedTrials & rewardTrials & ismember(TE.filename, lateSessions),...
+    rewardOdorTrials & ~rewardTrials & ismember(TE.filename, lateSessions)...
+    };
+
+saveName= ['phRasters_complete_' animal '_cued'];
+ensureFigure(saveName, 1);
+climfactor = 3;  
+axes;
+phRasterFromTE(TE, rewardOdorTrials & rewardTrials & ismember(TE.filename, lateSessions), 1, 'trialNumbering', 'consecutive',...
+    'CLimFactor', climfactor, 'FluorDataField', 'ZS', 'PhotometryField', 'Photometry', 'zeroTimes', TE.Reward, 'window', window, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
+set(gca, 'YTick', [1 50 100], 'YTickLabel', {'1', '50', ''});
+formatFigurePublish('size', figSize);
+if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+end        
+
+saveName= ['phRasters_complete_' animal '_uncued'];
+ensureFigure(saveName, 1);
+climfactor = 3;  
+axes;
+phRasterFromTE(TE, uncuedTrials & rewardTrials & ismember(TE.filename, lateSessions), 1, 'trialNumbering', 'consecutive',...
+    'CLimFactor', climfactor, 'FluorDataField', 'ZS', 'PhotometryField', 'Photometry', 'zeroTimes', TE.Reward, 'window', window, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
+set(gca, 'YTick', [1 50 100], 'YTickLabel', {'1', '50', ''});
+formatFigurePublish('size', figSize);
+if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+end       
+
+
+%% phAverages, cued, uncued, omission, example #1
 
 figSize = [1.48 0.76];
 saveName = ['phAvg_complete_' animal];
@@ -176,4 +211,30 @@ formatFigurePublish('size', figSize);
 if saveOn 
     print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
+end    
+
+%% phAverages, cued, uncued, omission, example #2
+animal = 'ChAT_26';
+success = dbLoadAnimal(DB, animal);
+
+% set savepath
+savepath = fullfile(DB.path, ['figure1' filesep animal]);
+ensureDirectory(savepath);
+
+figSize = [1.48 0.76];
+saveName = ['phAvg_complete_' animal];
+ensureFigure(saveName, 1);
+trialSets = {...
+    rewardOdorTrials & rewardTrials,...
+    uncuedTrials & rewardTrials,...
+    rewardOdorTrials & ~rewardTrials...
+    };
+[ha, hl] = phPlotAverageFromTE(TE, trialSets, 1,...
+    'zeroTimes', TE.usZeros, 'FluorDataField', fdField, 'window', window, 'linespec', {'b', 'c', 'k'}, 'alpha', 1); % cued reward
+addStimulusPatch(gca, [-2 -1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
+ylabel('F(\fontsize{12}\sigma\fontsize{8}-baseline)');  set(gca, 'XLim', window);
+xlabel('Time from reinforcement (s)');
+formatFigurePublish('size', figSize);
+if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
 end    

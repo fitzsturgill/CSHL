@@ -25,11 +25,11 @@ ph_p = zeros(2,1);
 licks_p = zeros(2,1);
 licks_n = zeros(2,1);
 rewardSize_stats = table(comp, ph_p, ph_n, licks_p, licks_n);
-rewardSize_stats.ph_p(1) = signrank(us_pooled.large.phPeakMean(:), us_pooled.medium.phPeakMean(:));
-rewardSize_stats.ph_p(2) = signrank(us_pooled.medium.phPeakMean(:), us_pooled.small.phPeakMean(:));
+[~, rewardSize_stats.ph_p(1)] = ttest(us_pooled.large.phPeakMean(:), us_pooled.medium.phPeakMean(:));
+[~, rewardSize_stats.ph_p(2)] = ttest(us_pooled.medium.phPeakMean(:), us_pooled.small.phPeakMean(:));
 rewardSize_stats.ph_n(:) = numel(us_pooled.large.phPeakMean);
-rewardSize_stats.licks_p(1) = signrank(us_pooled.large.lickRate(:), us_pooled.medium.lickRate(:));
-rewardSize_stats.licks_p(2) = signrank(us_pooled.medium.lickRate(:), us_pooled.small.lickRate(:));
+[~, rewardSize_stats.licks_p(1)] = ttest(us_pooled.large.lickRate(:), us_pooled.medium.lickRate(:));
+[~, rewardSize_stats.licks_p(2)] = ttest(us_pooled.medium.lickRate(:), us_pooled.small.lickRate(:));
 rewardSize_stats.licks_n(:) = numel(us_pooled.large.lickRate);
 
 if saveOn

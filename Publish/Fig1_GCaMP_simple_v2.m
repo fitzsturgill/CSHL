@@ -120,7 +120,7 @@ ylabel ('trial # sorted'); set(gca, 'YTick', [100 300 500], 'XTick', []);
 subplot(2,2,2); hold on;
 phRasterFromTE(TE, rewardOdorTrials, 1, 'trialNumbering', 'consecutive',...
     'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry',...
-    'zeroTimes', lickZeros, 'window', specialWindow, 'sortValues', TE.lickLatency_cs, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
+    'zeroTimes', lickZeros, 'window', specialWindow, 'showSessionBreaks', 0, 'sortValues', TE.lickLatency_cs); % 'CLimFactor', CLimFactor,
 plot(0 - lickTimes_sorted, 1:sum(rewardOdorTrials), '--k');
  set(gca, 'YTick', [], 'XTick', []);
 

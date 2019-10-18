@@ -26,6 +26,7 @@ fdField = 'ZS';
 
     
 %% plot odor 1 and odor 2 Rasters for an example session
+    figSize = [4 4];
 % Define the positions of different axes matrices on the figure
     % params.matpos defines position of axesmatrix [LEFT TOP WIDTH HEIGHT].    
     params = struct();    
@@ -103,9 +104,10 @@ for counter = 1:length(animals)
 
 
 
-    formatFigurePublish('size', [3 3]);
+    formatFigurePublish('size', figSize);
     if saveOn 
-        export_fig(fullfile(savepath, saveName), '-eps');
+        print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+%         export_fig(fullfile(savepath, saveName), '-eps');
     end
 end
 

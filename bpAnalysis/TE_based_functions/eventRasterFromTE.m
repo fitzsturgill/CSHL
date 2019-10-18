@@ -29,7 +29,7 @@ function [ax, lh] = eventRasterFromTE(TE, trials, event, varargin)
 
     [eventTimes, eventTrials] = extractEventTimesFromTE(TE, trials, event, varargin{:});
     lh = linecustommarker(eventTimes, eventTrials, [], [], s.ax);
-    set(lh, 'LineWidth', s.LineWidth);
+    set(lh, 'LineWidth', s.LineWidth, 'Color', [0 0 0]);
     ax = s.ax;
     switch s.trialNumbering
         case 'consecutive'

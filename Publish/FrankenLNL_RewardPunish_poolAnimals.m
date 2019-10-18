@@ -262,30 +262,31 @@ test2 = nanmean(gAvg.phUs.cuedReward.data(:,statIx(1):statIx(2)), 2);
 
 %% make avg rasters
 % STUB
-
+clim = [-1 1];
+figSize = [4 2];
 saveName = 'uncuedUs_avgRasters_rewNorm';
 ensureFigure(saveName, 1);
-clim = [-1 4];
+
 xData = [-2 4]; yData = [1 length(DB.animals) + 0.5];
 subplot(1,3,1); imagesc(xData, yData, [gAvgNorm.phDelay.uncuedReward.data gAvgNorm.phUs.uncuedReward.data], clim); title('reward'); ylabel('Mouse #');
 subplot(1,3,2); imagesc(xData, yData, [gAvgNorm.phDelay.uncuedPuff.data gAvgNorm.phUs.uncuedPuff.data], clim); title('air puff'); set(gca, 'YTickLabel', {});
 xlabel('Time from reinforcment (s)');
 subplot(1,3,3); imagesc(xData, yData, [gAvgNorm.phDelay.uncuedShock.data gAvgNorm.phUs.uncuedShock.data], clim); title('shock'); set(gca, 'YTickLabel', {});
-formatFigurePublish('size', [2 1]);
+formatFigurePublish('size', figSize);
 if saveOn 
-    export_fig(fullfile(figsavepath, saveName), '-eps');
+    print(gcf, '-dpdf', fullfile(figsavepath, [saveName '.pdf']));    
 end
 
 saveName = 'uncuedUs_avgRasters_rew';
 ensureFigure(saveName, 1);
-clim = [-1 10];
+clim = [-1 3];
 subplot(1,3,1); imagesc(xData, yData, [gAvg.phDelay.uncuedReward.data gAvg.phUs.uncuedReward.data], clim); title('reward'); ylabel('Mouse #');
 subplot(1,3,2); imagesc(xData, yData, [gAvg.phDelay.uncuedPuff.data gAvg.phUs.uncuedPuff.data], clim); title('air puff'); set(gca, 'YTickLabel', {});
 xlabel('Time from reinforcment (s)');
 subplot(1,3,3); imagesc(xData, yData, [gAvg.phDelay.uncuedShock.data gAvg.phUs.uncuedShock.data], clim); title('shock'); set(gca, 'YTickLabel', {});
-formatFigurePublish('size', [2 1]);
+formatFigurePublish('size', figSize);
 if saveOn 
-    export_fig(fullfile(figsavepath, saveName), '-eps');
+    print(gcf, '-dpdf', fullfile(figsavepath, [saveName '.pdf']));
 end
 
 %% plot the averages for each animal

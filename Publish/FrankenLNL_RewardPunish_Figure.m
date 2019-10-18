@@ -13,6 +13,7 @@ figSize = [2 1];
 
 photometryField = 'Photometry';
 fdField = 'ZS';
+boundField = 'SEM';
 window = [-6.5 4];
 linecolors = [mycolors('reward'); mycolors('reward_cued')];
 lineWidth = 0.25;
@@ -33,9 +34,9 @@ offset = rch(1) + rch(2) * 0.25;
 xData = avgData1.xData(1,:);
 
 subplot(1,2,2); hold on;
-[thisHl, thisHp] = boundedline(xData, avgData1.Avg, permute(avgData1.SEM, [2 3 1]), gca, 'cmap', linecolors, 'alpha', 'nan', 'gap');
+[thisHl, thisHp] = boundedline(xData, avgData1.Avg, permute(avgData1.(boundField), [2 3 1]), gca, 'cmap', linecolors, 'alpha', 'nan', 'gap');
 set(thisHl, 'LineWidth', lineWidth);
-[thisHl, thisHp] = boundedline(xData, avgData2.Avg + offset, permute(avgData2.SEM, [2 3 1]), gca, 'cmap', linecolors, 'alpha', 'nan', 'gap');
+[thisHl, thisHp] = boundedline(xData, avgData2.Avg + offset, permute(avgData2.(boundField), [2 3 1]), gca, 'cmap', linecolors, 'alpha', 'nan', 'gap');
 set(thisHl, 'LineWidth', lineWidth);
 addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
 set(gca, 'XLim', window);
@@ -48,16 +49,16 @@ avgData1 = phAverageFromTE(TE, {trialsByType{1} & ismember(TE.sessionIndex, sess
     'zeroTimes', TE.Us, 'FluorDataField', fdField, 'window', window);
 avgData2 = phAverageFromTE(TE, {trialsByType{1} & ismember(TE.sessionIndex, sessionIndexList), trialsByType{5} & ismember(TE.sessionIndex, sessionIndexList)}, 2,...
     'zeroTimes', TE.Us, 'FluorDataField', fdField, 'window', window);
-avgData1.Avg = avgData1.Avg * 3;
-avgData1.SEM = avgData1.SEM * 3;
+avgData1.Avg = avgData1.Avg * 1;
+avgData1.(boundField) = avgData1.(boundField) * 1;
 rch = [max(range(avgData1.Avg')) max(range(avgData2.Avg'))];
 offset = rch(1) + rch(2) * 0.25;
 xData = avgData1.xData(1,:);
 
 subplot(1,2,1); hold on;
-[thisHl, thisHp] = boundedline(xData, avgData1.Avg, permute(avgData1.SEM, [2 3 1]), gca, 'cmap', linecolors, 'alpha', 'nan', 'gap');
+[thisHl, thisHp] = boundedline(xData, avgData1.Avg, permute(avgData1.(boundField), [2 3 1]), gca, 'cmap', linecolors, 'alpha', 'nan', 'gap');
 set(thisHl, 'LineWidth', lineWidth);
-[thisHl, thisHp] = boundedline(xData, avgData2.Avg + offset, permute(avgData2.SEM, [2 3 1]), gca, 'cmap', linecolors, 'alpha', 'nan', 'gap');
+[thisHl, thisHp] = boundedline(xData, avgData2.Avg + offset, permute(avgData2.(boundField), [2 3 1]), gca, 'cmap', linecolors, 'alpha', 'nan', 'gap');
 set(thisHl, 'LineWidth', lineWidth);
 addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
 set(gca, 'XLim', window);

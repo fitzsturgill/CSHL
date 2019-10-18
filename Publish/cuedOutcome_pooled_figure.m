@@ -14,11 +14,13 @@ savePath = fullfile(DB.path, 'pooled');
 ensureDirectory(savePath);
 figPath = fullfile(DB.path, 'figure');
 ensureDirectory(savePath);
+nAnimals = length(DB.animals);
 
+%%
 % compile cue and outcome responses for high value, low value, and null,
 % reward and punish
 
-nAnimals = length(DB.animals);
+
 s2 = struct(...
     'data', [],...
     'avg', zeros(nAnimals, 1),...
@@ -70,6 +72,12 @@ disp(['*** saving: ' fullfile(savePath, 'us_pooled.mat') ' ***']);
 save(fullfile(savePath, 'cs_pooled.mat'), 'cs_pooled');
 disp(['*** saving: ' fullfile(savePath, 'cs_pooled.mat') ' ***']);
 
+%%
+load(fullfile(savePath, 'us_pooled.mat'), 'us_pooled');
+disp(['*** loading: ' fullfile(savePath, 'us_pooled.mat') ' ***']);
+load(fullfile(savePath, 'cs_pooled.mat'), 'cs_pooled');
+disp(['*** loading: ' fullfile(savePath, 'cs_pooled.mat') ' ***']);
+
 %% us scatter plot
 
 % Us scatter plot 
@@ -96,6 +104,10 @@ if saveOn
     saveas(gcf, fullfile(figPath, [saveName '.fig']));
     saveas(gcf, fullfile(figPath, [saveName '.jpg']));   
 end  
+%%
+[p, h] = ttest(us_pooled.reward.avg)
+
+[p, h] = ttest(us_pooled.punish.avg)
 
 %% cs scatter plot
     % cs scatter plot
@@ -119,5 +131,419 @@ if saveOn
     saveas(gcf, fullfile(figPath, [saveName '.fig']));
     saveas(gcf, fullfile(figPath, [saveName '.jpg']));   
 end  
+
+[p, h] = ttest(cs_pooled.low.avg, cs_pooled.high.avg)
+
+
+%% grand averages aligned to cue and licking
+
+s2 = struct(...
+    'xData', [],...
+    'Avg', [],...
+    'SEM', []...
+    );
+cue = struct(...
+    'high', s2,...
+    'low', s2,...
+    'cued', s2,...
+    'uncued', s2...
+    );
+outcome = struct(...
+    'reward', cue,... % uncued
+    'punish', cue,...  % uncued
+    'omit', cue...
+    );
+
+[cueAligned, lickAligned] = deal(outcome);
+
+
+w1 = [-2 5];
+w2 = [-2 5];
+
+for counter = 1:nAnimals
+    animal = DB.animals{counter};
+    dbLoadAnimal(DB, animal);
     
+    ordering = {...
+        'reward', 'high', highValueTrials & rewardTrials;...
+        'reward', 'low', lowValueTrials & rewardTrials;...
+        'reward', 'cued', ~uncuedTrials & rewardTrials;...
+        'reward', 'uncued', uncuedTrials & rewardTrials;...
+        'punish', 'high', highValueTrials & punishTrials;...
+        'punish', 'low', lowValueTrials & punishTrials;...
+        'punish', 'cued', ~uncuedTrials & punishTrials;...        
+        'punish', 'uncued', uncuedTrials & punishTrials;...        
+        'omit', 'high', highValueTrials & omitTrials;...
+        'omit', 'low', lowValueTrials & omitTrials;...
+        'omit', 'cued', ~uncuedTrials & omitTrials;...        
+        'omit', 'uncued', uncuedTrials & omitTrials;...                
+        };
     
+    for c2 = 1:size(ordering,1)
+        v1 = {'FluorDataField', 'ZS', 'window', w1, 'zeroTimes', TE.Cue, 'PhotometryField', 'Photometry'};
+        avgData = phAverageFromTE(TE, ordering{c2,3}, 1, v1{:});
+        cueAligned.(ordering{c2,1}).(ordering{c2,2}).Avg(counter,:) = avgData.Avg;
+        cueAligned.(ordering{c2,1}).(ordering{c2,2}).SEM(counter,:) = avgData.SEM;
+        cueAligned.(ordering{c2,1}).(ordering{c2,2}).xData(counter,:) = avgData.xData;
+        
+        v2 = {'FluorDataField', 'ZS', 'window', w2, 'zeroTimes', TE.lickLatency_cs + cellfun(@(x) x(1), TE.Cue), 'PhotometryField', 'Photometry'};
+        avgData = phAverageFromTE(TE, ordering{c2,3}, 1, v2{:});
+        lickAligned.(ordering{c2,1}).(ordering{c2,2}).Avg(counter,:) = avgData.Avg;
+        lickAligned.(ordering{c2,1}).(ordering{c2,2}).SEM(counter,:) = avgData.SEM;
+        lickAligned.(ordering{c2,1}).(ordering{c2,2}).xData(counter,:) = avgData.xData;
+    end
+end
+
+%% example rasters cue and lick aligned to accompany averages
+animal = 'ChAT_42';
+success = dbLoadAnimal(DB, animal); % load TE and trial lookups
+figSize = [1.7 1.5];
+photometryField = 'Photometry';
+fdField = 'ZS';
+saveOn = 1;
+channels = [1];
+climfactor = 2;
+lickTickLineWidth = 0.3; % 0.3 works well when printed out given current sizing
+markerSize = 1;
+fontsize = 10;
+
+
+xwindow = [-2 5];
+
+
+lickOnsets = TE.lickLatency_cs(highValueTrials & rewardTrials);
+lickOnsets = sort(lickOnsets);    
+lickZeros = TE.lickLatency_cs + cellfun(@(x) x(1), TE.Cue);
+
+saveName = 'lickAligned_highValue_rasters_left';  
+ensureFigure(saveName, 1); 
+eventRasterFromTE(TE, highValueTrials & rewardTrials, 'Port1In', 'trialNumbering', 'consecutive',...
+    'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording', 'sortValues', TE.lickLatency_cs, 'LineWidth', lickTickLineWidth);
+set(gca, 'XLim', xwindow);
+set(gca, 'YTickLabel', {});
+xlabel('Time frome odor (s)');
+formatFigurePublish('size', figSize);
+if saveOn
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+end  
+
+saveName = 'lickAligned_highValue_rasters_middle';  
+ensureFigure(saveName, 1); 
+phRasterFromTE(TE, highValueTrials & rewardTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'zeroTimes', TE.Cue, 'window', xwindow, 'sortValues', TE.lickLatency_cs); % 'CLimFactor', CLimFactor,
+line(lickOnsets, (1:sum(highValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'r', 'LineWidth', 1);    
+set(gca, 'YTickLabel', {});
+xlabel('Time frome odor (s)');
+formatFigurePublish('size', figSize);
+if saveOn
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+end  
+
+saveName = 'lickAligned_highValue_rasters_right';  
+ensureFigure(saveName, 1); 
+axes; hold on;
+phRasterFromTE(TE, highValueTrials & rewardTrials, 1, 'zeroTimes', lickZeros, 'window', xwindow,...
+    'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'showSessionBreaks', 0);%, 'sortValues', TE.lickLatency_cs); % 'CLimFactor', CLimFactor,
+% scatter(-1 * TE.lickLatency_cs(highValueTrials & rewardTrials), 1:sum(highValueTrials & rewardTrials), markerSize, [1 1 1], 'filled');
+xlabel('Time frome lick (s)');
+set(gca, 'YTickLabel', {});
+formatFigurePublish('size', figSize);
+if saveOn
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+end  
+
+
+
+lickOnsets = TE.lickLatency_cs(lowValueTrials & rewardTrials);
+lickOnsets = sort(lickOnsets);    
+lickZeros = TE.lickLatency_cs + cellfun(@(x) x(1), TE.Cue);
+
+saveName = 'lickAligned_lowValue_rasters_left';  
+ensureFigure(saveName, 1); 
+eventRasterFromTE(TE, lowValueTrials & rewardTrials, 'Port1In', 'trialNumbering', 'consecutive',...
+    'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording', 'sortValues', TE.lickLatency_cs, 'LineWidth', lickTickLineWidth);
+set(gca, 'XLim', xwindow);
+set(gca, 'YTickLabel', {});
+xlabel('Time frome odor (s)');
+formatFigurePublish('size', figSize);
+if saveOn
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+end  
+
+saveName = 'lickAligned_lowValue_rasters_middle';  
+ensureFigure(saveName, 1); 
+phRasterFromTE(TE, lowValueTrials & rewardTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'zeroTimes', TE.Cue, 'window', xwindow, 'sortValues', TE.lickLatency_cs); % 'CLimFactor', CLimFactor,
+line(lickOnsets, (1:sum(lowValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'r', 'LineWidth', 1);    
+set(gca, 'YTickLabel', {});
+xlabel('Time frome odor (s)');
+formatFigurePublish('size', figSize);
+if saveOn
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+end  
+
+saveName = 'lickAligned_lowValue_rasters_right';  
+ensureFigure(saveName, 1); 
+axes; hold on;
+phRasterFromTE(TE, lowValueTrials & rewardTrials, 1, 'zeroTimes', lickZeros, 'window', xwindow,...
+    'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'showSessionBreaks', 0);%, 'sortValues', TE.lickLatency_cs); % 'CLimFactor', CLimFactor,
+% scatter(-1 * TE.lickLatency_cs(lowValueTrials & rewardTrials), 1:sum(lowValueTrials & rewardTrials), markerSize, [1 1 1], 'filled');
+xlabel('Time frome lick (s)');
+set(gca, 'YTickLabel', {});
+formatFigurePublish('size', figSize);
+if saveOn
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+end  
+
+%% corresponding averages
+
+ylim = [-1 2];
+figSize = [1.66 0.5];
+saveName = 'lickAligned_highValue_avgs_middle';  
+ensureFigure(saveName, 1); 
+phPlotAverageFromTE(TE, highValueTrials & rewardTrials, 1, 'zeroTimes', TE.Cue, 'window', xwindow, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'cmap', [1 0 1]);
+set(gca, 'XTick', [0], 'YTick', [0 1], 'YLim', ylim, 'YTickLabel', {}, 'XTickLabel', {});
+addStimulusPatch(gca, [0 1], '', [0.8 0.8 0.8], 0.5);
+formatFigurePublish('size', figSize);
+if saveOn
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+end  
+
+saveName = 'lickAligned_highValue_avgs_right';  
+ensureFigure(saveName, 1); 
+phPlotAverageFromTE(TE, highValueTrials & rewardTrials, 1, 'zeroTimes', TE.lickLatency_cs + cellfun(@(x) x(1), TE.Cue), 'window', xwindow, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'cmap', [1 0 1]);
+set(gca, 'XTick', [0], 'YTick', [0 1], 'YLim', ylim, 'YTickLabel', {}, 'XTickLabel', {});
+formatFigurePublish('size', figSize);
+if saveOn
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+end  
+
+saveName = 'lickAligned_lowValue_avgs_middle';  
+ensureFigure(saveName, 1); 
+phPlotAverageFromTE(TE, lowValueTrials & rewardTrials, 1, 'zeroTimes', TE.Cue, 'window', xwindow, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'cmap', [0 0 1]);
+set(gca, 'XTick', [0], 'YTick', [0 1], 'YLim', ylim, 'YTickLabel', {}, 'XTickLabel', {});
+addStimulusPatch(gca, [0 1], '', [0.8 0.8 0.8], 0.5);
+formatFigurePublish('size', figSize);
+if saveOn
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+end  
+
+saveName = 'lickAligned_lowValue_avgs_right';  
+ensureFigure(saveName, 1); 
+phPlotAverageFromTE(TE, lowValueTrials & rewardTrials, 1, 'zeroTimes', TE.lickLatency_cs + cellfun(@(x) x(1), TE.Cue), 'window', xwindow, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'cmap', [0 0 1]);
+set(gca, 'XTick', [0], 'YTick', [0 1], 'YLim', ylim, 'YTickLabel', {}, 'XTickLabel', {});
+formatFigurePublish('size', figSize);
+if saveOn
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+end  
+
+%% subtract off cue-aligned mean just for fun
+
+saveName = 'test';  
+ensureFigure(saveName, 1); 
+axes; hold on;
+
+ts = highValueTrials & rewardTrials;
+predata = TE.Photometry.data.ZS(ts, :);
+predata = predata - nanmean(predata);
+cdata = alignedDataWindow(predata, true(size(predata, 1), 1), 'zeroTimes', lickZeros(ts), 'window', xwindow, 'Fs', 20, 'startTimes', TE.Photometry.startTime(ts));
+imagesc(cdata, [-2 2]); % 'CLimFactor', CLimFactor,
+
+xlabel('Time frome lick (s)');
+set(gca, 'YTickLabel', {});
+% formatFigurePublish('size', figSize);
+if saveOn
+    print(gcf, '-dpdf', fullfile(savePath, [saveName '.pdf']));
+end  
+
+
+%%
+
+
+lickOnsets = TE.lickLatency_cs(lowValueTrials & rewardTrials);
+lickOnsets = sort(lickOnsets);        
+subplot(1,4,3);
+eventRasterFromTE(TE, lowValueTrials & rewardTrials, 'Port1In', 'trialNumbering', 'consecutive',...
+    'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording', 'sortValues', TE.lickLatency_cs, 'LineWidth', lickTickLineWidth);
+set(gca, 'XLim', xwindow);
+% title('low value');
+
+subplot(1,4,4);
+phRasterFromTE(TE, lowValueTrials & rewardTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'sortValues', TE.lickLatency_cs, 'zeroTimes', TE.Cue, 'window', xwindow); % 'CLimFactor', CLimFactor,             
+line(lickOnsets, (1:sum(lowValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'r', 'LineWidth', 1);
+axs = findobj(gcf, 'Type', 'axes');
+set(axs, 'FontSize', fontsize);
+set(axs([1 3]), 'YTick', []);
+
+formatFigurePublish('size', [4 1.2]);
+
+if saveOn
+    print(gcf, '-dpdf', fullfile(savePath, [saveName '.pdf']));
+%     export_fig(fullfile(savePath, saveName), '-eps');
+    saveas(gcf, fullfile(savePath, [saveName '.fig']));
+    saveas(gcf, fullfile(savePath, [saveName '.jpg']));   
+end  
+
+
+
+%% plot grand averages conditioned on cue responses
+
+saveName = 'grandAverages_cuedOutcome';
+ensureFigure(saveName, 1);
+figSize = [2 1];
+ylim = [-0.2 2];
+axes;
+yData = [nanmean(cueAligned.reward.high.Avg)' nanmean(cueAligned.reward.low.Avg)'];
+bData = [nanSEM2(cueAligned.reward.high.Avg)' nanSEM2(cueAligned.reward.low.Avg)'];
+bData = permute(bData, [1 3 2]);
+cmap = [1 0 1; 0 0 1];
+boundedline(cueAligned.reward.cued.xData(1,:)', yData, bData, 'cmap', cmap);
+addStimulusPatch(gca, [0 1], '', [0.8 0.8 0.8], 0.5);
+addStimulusPatch(gca, [2.9 3.1], '', [0.8 0.8 0.8], 0.5); 
+xlabel('time from odor (s)'); ylabel('Fluor. (\sigma-bl.)');
+set(gca, 'XLim', w1, 'YLim', ylim);
+formatFigurePublish('size', figSize);    
+
+if saveOn
+    print(gcf, '-dpdf', fullfile(savePath, [saveName '.pdf']));
+end
+
+saveName = 'grandAverages_cuedOutcome_lickAligned';
+ensureFigure(saveName, 1);
+
+axes;
+yData = [nanmean(lickAligned.reward.high.Avg)' nanmean(lickAligned.reward.low.Avg)'];
+bData = [nanSEM2(lickAligned.reward.high.Avg)' nanSEM2(lickAligned.reward.low.Avg)'];
+bData = permute(bData, [1 3 2]);
+cmap = [1 0 1; 0 0 1];
+boundedline(lickAligned.reward.cued.xData(1,:)', yData, bData, 'cmap', cmap);
+addStimulusPatch(gca, [0 1], '', [0.8 0.8 0.8], 0.5);
+addStimulusPatch(gca, [2.9 3.1], '', [0.8 0.8 0.8], 0.5); 
+xlabel('time from first lick (s)'); ylabel('Fluor. (\sigma-bl.)');
+set(gca, 'XLim', w1, 'YLim', ylim);
+formatFigurePublish('size', figSize);    
+
+if saveOn
+    print(gcf, '-dpdf', fullfile(savePath, [saveName '.pdf']));
+end
+
+
+%% Hacky deconvolved version:
+% deconvolved
+
+% goals: summary data for cue and outcome responses
+
+
+DB = dbLoadExperiment('cuedOutcome');
+
+photometryField = 'Photometry';
+fdField = 'ZSdeconv';
+saveOn = 1;
+ch = 1;
+
+savePath = fullfile(DB.path, 'pooled');
+ensureDirectory(savePath);
+figPath = fullfile(DB.path, 'figure');
+ensureDirectory(savePath);
+nAnimals = length(DB.animals);
+
+
+% grand averages aligned to cue and licking
+
+s2 = struct(...
+    'xData', [],...
+    'Avg', [],...
+    'SEM', []...
+    );
+cue = struct(...
+    'high', s2,...
+    'low', s2,...
+    'cued', s2,...
+    'uncued', s2...
+    );
+outcome = struct(...
+    'reward', cue,... % uncued
+    'punish', cue,...  % uncued
+    'omit', cue...
+    );
+
+[cueAligned, lickAligned] = deal(outcome);
+
+
+w1 = [-2 5];
+w2 = [-2 5];
+
+for counter = 1:nAnimals
+    animal = DB.animals{counter};
+    dbLoadAnimal(DB, animal);
+    
+    ordering = {...
+        'reward', 'high', highValueTrials & rewardTrials;...
+        'reward', 'low', lowValueTrials & rewardTrials;...
+        'reward', 'cued', ~uncuedTrials & rewardTrials;...
+        'reward', 'uncued', uncuedTrials & rewardTrials;...
+        'punish', 'high', highValueTrials & punishTrials;...
+        'punish', 'low', lowValueTrials & punishTrials;...
+        'punish', 'cued', ~uncuedTrials & punishTrials;...        
+        'punish', 'uncued', uncuedTrials & punishTrials;...        
+        'omit', 'high', highValueTrials & omitTrials;...
+        'omit', 'low', lowValueTrials & omitTrials;...
+        'omit', 'cued', ~uncuedTrials & omitTrials;...        
+        'omit', 'uncued', uncuedTrials & omitTrials;...                
+        };
+    
+    for c2 = 1:size(ordering,1)
+        v1 = {'FluorDataField', fdField, 'window', w1, 'zeroTimes', TE.Cue, 'PhotometryField', 'Photometry'};
+        avgData = phAverageFromTE(TE, ordering{c2,3}, 1, v1{:});
+        cueAligned.(ordering{c2,1}).(ordering{c2,2}).Avg(counter,:) = avgData.Avg;
+        cueAligned.(ordering{c2,1}).(ordering{c2,2}).SEM(counter,:) = avgData.SEM;
+        cueAligned.(ordering{c2,1}).(ordering{c2,2}).xData(counter,:) = avgData.xData;
+        
+        v2 = {'FluorDataField', fdField, 'window', w2, 'zeroTimes', TE.lickLatency_cs + cellfun(@(x) x(1), TE.Cue), 'PhotometryField', 'Photometry'};
+        avgData = phAverageFromTE(TE, ordering{c2,3}, 1, v2{:});
+        lickAligned.(ordering{c2,1}).(ordering{c2,2}).Avg(counter,:) = avgData.Avg;
+        lickAligned.(ordering{c2,1}).(ordering{c2,2}).SEM(counter,:) = avgData.SEM;
+        lickAligned.(ordering{c2,1}).(ordering{c2,2}).xData(counter,:) = avgData.xData;
+    end
+end
+
+
+
+% plot grand averages conditioned on cue responses
+
+saveName = 'grandAverages_cuedOutcome_deconv';
+ensureFigure(saveName, 1);
+figSize = [2 1];
+ylim = [-0.2 2];
+axes;
+yData = [nanmean(cueAligned.reward.high.Avg)' nanmean(cueAligned.reward.low.Avg)'];
+bData = [nanSEM2(cueAligned.reward.high.Avg)' nanSEM2(cueAligned.reward.low.Avg)'];
+bData = permute(bData, [1 3 2]);
+cmap = [1 0 1; 0 0 1];
+boundedline(cueAligned.reward.cued.xData(1,:)', yData, bData, 'cmap', cmap);
+addStimulusPatch(gca, [0 1], '', [0.8 0.8 0.8], 0.5);
+addStimulusPatch(gca, [2.9 3.1], '', [0.8 0.8 0.8], 0.5); 
+xlabel('time from odor (s)'); ylabel('Fluor. (\sigma-bl.)');
+set(gca, 'XLim', w1, 'YLim', ylim);
+formatFigurePublish('size', figSize);    
+
+if saveOn
+    print(gcf, '-dpdf', fullfile(savePath, [saveName '.pdf']));
+end
+
+saveName = 'grandAverages_cuedOutcome_lickAligned_deconv';
+ensureFigure(saveName, 1);
+
+axes;
+yData = [nanmean(lickAligned.reward.high.Avg)' nanmean(lickAligned.reward.low.Avg)'];
+bData = [nanSEM2(lickAligned.reward.high.Avg)' nanSEM2(lickAligned.reward.low.Avg)'];
+bData = permute(bData, [1 3 2]);
+cmap = [1 0 1; 0 0 1];
+boundedline(lickAligned.reward.cued.xData(1,:)', yData, bData, 'cmap', cmap);
+addStimulusPatch(gca, [0 1], '', [0.8 0.8 0.8], 0.5);
+addStimulusPatch(gca, [2.9 3.1], '', [0.8 0.8 0.8], 0.5); 
+xlabel('time from first lick (s)'); ylabel('Fluor. (\sigma-bl.)');
+set(gca, 'XLim', w1, 'YLim', ylim);
+formatFigurePublish('size', figSize);    
+
+if saveOn
+    print(gcf, '-dpdf', fullfile(savePath, [saveName '.pdf']));
+end
