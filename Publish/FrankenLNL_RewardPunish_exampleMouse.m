@@ -392,7 +392,68 @@ if saveOn
     export_fig(gcf,fullfile(savepath, [saveName '.pdf']));  % write to pdf
 end
 
+%% Rasters aligned by lick onset
 
+animal = 'Ach_13';
+success = dbLoadAnimal(DB, animal); % load TE and trial lookups
+%%
+figSize = [1.7 1.5] * 2;
+photometryField = 'Photometry';
+fdField = 'ZS';
+saveOn = 0;
+channels = [1 2];
+climfactor = 2;
+lickTickLineWidth = 0.3; % 0.3 works well when printed out given current sizing
+markerSize = 1;
+fontsize = 10;
+
+
+xwindow = [-2 5];
+
+clo
+lickOnsets = TE.lickLatency_cs(rewardTrials & (TE.BlockNumber == 3) & Odor2Valve1Trials);
+lickOnsets = sort(lickOnsets);    
+lickZeros = TE.lickLatency_cs + cellfun(@(x) x(1), TE.Cue2);
+
+for counter = 1:length(channels)
+    ch = channels(counter)
+    saveName = sprintf('lickAligned_highValue_rasters_left_%i', ch);  
+    ensureFigure(saveName, 1); 
+    eventRasterFromTE(TE, rewardTrials & (TE.BlockNumber == 3) & Odor2Valve1Trials, 'Port1In', 'trialNumbering', 'consecutive',...
+        'zeroField', 'Cue2', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording', 'sortValues', TE.lickLatency_cs, 'LineWidth', lickTickLineWidth);
+    set(gca, 'XLim', xwindow);
+    set(gca, 'YTickLabel', {});
+    xlabel('Time frome odor (s)');
+    formatFigurePublish('size', figSize);
+    if saveOn
+        print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+    end  
+
+    saveName = sprintf('lickAligned_cuedReward_rasters_middle_%i', ch)' ;  
+    ensureFigure(saveName, 1); 
+    phRasterFromTE(TE, rewardTrials & (TE.BlockNumber == 3) & Odor2Valve1Trials, ch, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField,...
+        'PhotometryField', photometryField, 'zeroTimes', TE.Cue2, 'window', xwindow, 'sortValues', TE.lickLatency_cs); % 'CLimFactor', CLimFactor,
+    line(lickOnsets, (1:sum(rewardTrials & (TE.BlockNumber == 3) & Odor2Valve1Trials))', 'Parent', gca, 'Color', 'r', 'LineWidth', 1);    
+    set(gca, 'YTickLabel', {});
+    xlabel('Time frome odor (s)');
+    formatFigurePublish('size', figSize);
+    if saveOn
+        print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+    end  
+
+    saveName = sprintf('lickAligned_highValue_rasters_right_%i', ch);  
+    ensureFigure(saveName, 1); 
+    axes; hold on;
+    phRasterFromTE(TE, rewardTrials & (TE.BlockNumber == 3) & Odor2Valve1Trials, ch, 'zeroTimes', lickZeros, 'window', xwindow,...
+        'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'showSessionBreaks', 0, 'sortValues', TE.lickLatency_cs);%, 'sortValues', TE.lickLatency_cs); % 'CLimFactor', CLimFactor,
+    % scatter(-1 * TE.lickLatency_cs(highValueTrials & rewardTrials), 1:sum(highValueTrials & rewardTrials), markerSize, [1 1 1], 'filled');
+    xlabel('Time frome lick (s)');
+    set(gca, 'YTickLabel', {});
+    formatFigurePublish('size', figSize);
+    if saveOn
+        print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+    end  
+end
 
 %% scrap:
 
