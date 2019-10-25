@@ -223,6 +223,8 @@ end
 expType = 'all';
 smoothWindow = 1; % smoothing ruins cross correlation validity, also problematic for permutation test
 compile_reversal_data;
+isValue_acq = any(isfinite(newCsPlus.csLicksROC), 2);
+isValue_ext = any(isfinite(newCsMinus.csLicksROC), 2);
 minLogit = 3;
 
 baselineTrials = 20;
@@ -292,23 +294,29 @@ if saveOn
 end
 
 % stats on changepoints
-
-
 comp = {'Lick_vs_ACh'; 'Lick_vs_Dop'; 'ACh_vs_Dop'};
 acq_p = zeros(3,1);
 acq_n = zeros(3,1);
+acq_nValue = zeros(3,1);
+acq_nValence = zeros(3,1);
 ext_p = zeros(3,1);
 ext_n = zeros(3,1);
-cp_stats = table(comp, acq_p, acq_n, ext_p, ext_n);
+ext_nValue = zeros(3,1);
+ext_nValence = zeros(3,1);
+cp_stats = table(comp, acq_p, acq_n, ext_p, ext_n, acq_nValue, acq_nValence, ext_nValue, ext_nValence);
 cp_stats.acq_p(1) = signrank(cp.csPlus.licks_cs.index(goodPlus), cp.csPlus.phPeakMean_cs_ch1.index(goodPlus));
 cp_stats.acq_p(2) = signrank(cp.csPlus.licks_cs.index(goodPlus), cp.csPlus.phPeakMean_cs_ch2.index(goodPlus));
 cp_stats.acq_p(3) = signrank(cp.csPlus.phPeakMean_cs_ch1.index(goodPlus), cp.csPlus.phPeakMean_cs_ch2.index(goodPlus));
 cp_stats.acq_n(:) = sum(goodPlus);
+cp_stats.acq_nValue(:) = sum(isValue_acq(goodPlus));
+cp_stats.acq_nValence(:) = sum(~isValue_acq(goodPlus));
 
 cp_stats.ext_p(1) = signrank(cp.csMinus.licks_cs.index(goodMinus), cp.csMinus.phPeakMean_cs_ch1.index(goodMinus));
 cp_stats.ext_p(2) = signrank(cp.csMinus.licks_cs.index(goodMinus), cp.csMinus.phPeakMean_cs_ch2.index(goodMinus));
 cp_stats.ext_p(3) = signrank(cp.csMinus.phPeakMean_cs_ch1.index(goodMinus), cp.csMinus.phPeakMean_cs_ch2.index(goodMinus));
 cp_stats.ext_n(:) = sum(goodMinus);
+cp_stats.ext_nValue(:) = sum(isValue_ext(goodMinus));
+cp_stats.ext_nValence(:) = sum(~isValue_ext(goodMinus));
 
 
 if saveOn

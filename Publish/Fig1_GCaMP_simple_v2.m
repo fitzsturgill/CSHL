@@ -48,8 +48,8 @@ theseTrials = find(ismember(allTrials, lateSessions));
 line([window(2) + offset window(2) + offset], [theseTrials(1) theseTrials(end)], 'Color', tcolors(3,:), 'LineWidth', linewidth);
 
 % set(gca, 'Visible', 'off');
-set(gca, 'YTick', [100 200 300 400], 'XTick', []);
-
+set(gca, 'YTick', [100 300], 'XTick', []);
+colorbar;
 formatFigurePublish('size', figSize, 'fontSize', 6);
 if saveOn 
 %     export_fig(fullfile(savepath, saveName), '-eps');
