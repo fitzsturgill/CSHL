@@ -197,10 +197,12 @@ end
 %% example rasters cue and lick aligned to accompany averages
 animal = 'ChAT_42';
 success = dbLoadAnimal(DB, animal); % load TE and trial lookups
+
 figSize = [1.7 1.5];
 photometryField = 'Photometry';
 fdField = 'ZS';
 saveOn = 1;
+%%
 channels = [1];
 climfactor = 2;
 lickTickLineWidth = 0.3; % 0.3 works well when printed out given current sizing
@@ -230,7 +232,7 @@ end
 saveName = 'lickAligned_highValue_rasters_middle';  
 ensureFigure(saveName, 1); 
 phRasterFromTE(TE, highValueTrials & rewardTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'zeroTimes', TE.Cue, 'window', xwindow, 'sortValues', TE.lickLatency_cs); % 'CLimFactor', CLimFactor,
-line(lickOnsets, (1:sum(highValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'r', 'LineWidth', 1);    
+line(lickOnsets, (1:sum(highValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'r', 'LineWidth', 1, 'LineStyle', '--');    
 set(gca, 'YTickLabel', {});
 xlabel('Time frome odor (s)');
 formatFigurePublish('size', figSize);
@@ -242,7 +244,8 @@ saveName = 'lickAligned_highValue_rasters_right';
 ensureFigure(saveName, 1); 
 axes; hold on;
 phRasterFromTE(TE, highValueTrials & rewardTrials, 1, 'zeroTimes', lickZeros, 'window', xwindow,...
-    'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'showSessionBreaks', 0);%, 'sortValues', TE.lickLatency_cs); % 'CLimFactor', CLimFactor,
+    'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'showSessionBreaks', 0, 'sortValues', TE.lickLatency_cs); % 'CLimFactor', CLimFactor,
+line(-1 * lickOnsets, (1:sum(highValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'k', 'LineWidth', 1, 'LineStyle', '--');    
 % scatter(-1 * TE.lickLatency_cs(highValueTrials & rewardTrials), 1:sum(highValueTrials & rewardTrials), markerSize, [1 1 1], 'filled');
 xlabel('Time frome lick (s)');
 set(gca, 'YTickLabel', {});
@@ -272,7 +275,7 @@ end
 saveName = 'lickAligned_lowValue_rasters_middle';  
 ensureFigure(saveName, 1); 
 phRasterFromTE(TE, lowValueTrials & rewardTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'zeroTimes', TE.Cue, 'window', xwindow, 'sortValues', TE.lickLatency_cs); % 'CLimFactor', CLimFactor,
-line(lickOnsets, (1:sum(lowValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'r', 'LineWidth', 1);    
+line(lickOnsets, (1:sum(lowValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'r', 'LineWidth', 1, 'LineStyle', '--');    
 set(gca, 'YTickLabel', {});
 xlabel('Time frome odor (s)');
 formatFigurePublish('size', figSize);
@@ -284,8 +287,8 @@ saveName = 'lickAligned_lowValue_rasters_right';
 ensureFigure(saveName, 1); 
 axes; hold on;
 phRasterFromTE(TE, lowValueTrials & rewardTrials, 1, 'zeroTimes', lickZeros, 'window', xwindow,...
-    'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'showSessionBreaks', 0);%, 'sortValues', TE.lickLatency_cs); % 'CLimFactor', CLimFactor,
-% scatter(-1 * TE.lickLatency_cs(lowValueTrials & rewardTrials), 1:sum(lowValueTrials & rewardTrials), markerSize, [1 1 1], 'filled');
+    'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'showSessionBreaks', 0, 'sortValues', TE.lickLatency_cs); % 'CLimFactor', CLimFactor,
+line(-1 * lickOnsets, (1:sum(lowValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'k', 'LineWidth', 1, 'LineStyle', '--');    
 xlabel('Time frome lick (s)');
 set(gca, 'YTickLabel', {});
 formatFigurePublish('size', figSize);

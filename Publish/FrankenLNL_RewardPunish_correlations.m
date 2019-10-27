@@ -414,7 +414,7 @@ allData = cell(nSub, length(trialSets));
 allData_means = zeros(nSub, length(trialSets), 2);
 allData_colors = repmat(linecolors, 1, 1, nSub);
 allData_colors = permute(allData_colors, [3 1 2]); % put animal dimension first, then trial set dimension next, for sorting purposes later...
-[allData_p, allData_h, allData_d] = deal(zeros(nSub, length(trialSets))); % p values, hypothesis, normalized auROC
+[allData_p, allData_h, allData_d, allData_dsigned] = deal(zeros(nSub, length(trialSets))); % p values, hypothesis, normalized auROC
 
 allData_markers = repmat(lineshapes, 1, nSub);
 allData_markers = permute(allData_markers, [2 1]);
@@ -441,10 +441,11 @@ for acounter = 1:length(goodOnes)
 %         [D, P] = rocarea(xData, yData, 'boot', nBoot, 'scale');
         % altenatively, run a T test, and calculate Dprime yield effect
         % sizes
-        D = abs(mean(xData) - mean(yData)) / sqrt((std(xData)^2 + std(yData)^2)/2);
+        D = mean(xData) - mean(yData) / sqrt((std(xData)^2 + std(yData)^2)/2);
         [~, P] = ttest(xData, yData);
         allData_p(acounter, counter) = P;
-        allData_d(acounter, counter) = D;
+        allData_d(acounter, counter) = abs(D);
+        allData_dsigned(acounter, counter) = D;
     end
 end
 
@@ -467,6 +468,8 @@ allData_markers = reshape(allData_markers, [nComp, 1]);
 allData_markers = allData_markers(I);
 allData_d = allData_d(:);
 allData_d = allData_d(I);
+allData_dsigned = allData_dsigned(:);
+allData_dsigned = allData_dsigned(I);
 
 % %% first the scatter plot, old and/or degenerate version
 % figSize = [1.2 1];
@@ -500,7 +503,7 @@ allData_d = allData_d(I);
 % end
 
 %% first the scatter plot
-figSize = [1.2 1];
+figSize = [3.6 3];
 saveName = 'all_us_cs_norm_scatter';
 ensureFigure(saveName, 1);
 axes; hold on;
@@ -513,7 +516,7 @@ uniqueMarkers = unique(allData_markers);
 for counter = 1:length(uniqueMarkers)
     thisMarker = uniqueMarkers{counter};
     theseOnes = strcmp(allData_markers, thisMarker);    
-    scatter(allData_means(theseOnes, 1), allData_means(theseOnes, 2), 1 + abs(allData_d(theseOnes)) * 5, allData_colors(theseOnes, :), thisMarker, 'filled'); % filled ones are significant
+    scatter(allData_means(theseOnes, 1), allData_means(theseOnes, 2), 2 + abs(allData_d(theseOnes)) * 20, allData_colors(theseOnes, :), thisMarker, 'filled'); % filled ones are significant
 %     scatter(allData_means(h_sorted, 1), allData_means(h_sorted, 2), 10 + abs(allData_d(h_sorted)) * 50, allData_colors(h_sorted, :), allData_markers(~h_sorted));
 end
 % scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 10 + abs(allData_d(~h_sorted)) * 50, allData_colors(~h_sorted, :), '.'); % filled ones are significant
@@ -531,6 +534,84 @@ if saveOn
     saveas(gcf, fullfile(figPath, [saveName '.fig']));
     saveas(gcf, fullfile(figPath, [saveName '.jpg']));
 end
+
+%% version with discontinuities
+% break at 3, then scale everything between 3 and 14 between 3 and 4
+
+discont = 3; % discontinuity starts here
+yxMax = 14; % maximum data range shown on graph
+shrinkTo = 1;  % shrink range after discontinuity to 1 unit
+figSize = [3.6 3];
+saveName = 'all_us_cs_norm_scatter_discontinuity';
+ensureFigure(saveName, 1);
+axes; hold on;
+set(gca, 'XLim', [min(allData_means(:)) discont + shrinkTo], 'YLim', [min(allData_means(:)) discont + shrinkTo]); 
+addUnityLine;
+% addOrginLines;
+% kludge- you can't specify marker type for individual points on a scatter
+% plot, loop through different marker types
+
+for counter = 1:length(uniqueMarkers)
+    thisMarker = uniqueMarkers{counter};
+    theseOnes = strcmp(allData_markers, thisMarker);    
+    uniqueMarkers = unique(allData_markers);
+    spX = allData_means(theseOnes, 1);
+    spX(spX > discont) = discont + (spX(spX > discont) - discont) ./ (yxMax - discont);
+    spY = allData_means(theseOnes, 2);
+    spY(spY > discont) = discont + (spY(spY > discont) - discont) ./ (yxMax - discont);    
+    scatter(spX, spY, 10 + abs(allData_d(theseOnes)) * 20, allData_colors(theseOnes, :), thisMarker, 'filled'); % filled ones are significant
+%     scatter(allData_means(h_sorted, 1), allData_means(h_sorted, 2), 10 + abs(allData_d(h_sorted)) * 50, allData_colors(h_sorted, :), allData_markers(~h_sorted));
+end
+% scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 10 + abs(allData_d(~h_sorted)) * 50, allData_colors(~h_sorted, :), '.'); % filled ones are significant
+% scatter(allData_means(h_sorted, 1), allData_means(h_sorted, 2), 10 + abs(allData_d(h_sorted)) * 50, allData_colors(h_sorted, :), '.');
+% scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 20, 'y', 'o'); 
+% scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 10, allData_colors(~h_sorted, :), 'o', 'filled'); 
+% scatter(allData_means(h_sorted, 1), allData_means(h_sorted, 2), 10, allData_colors(h_sorted, :), 'o');
+
+xlabel('Left norm.');
+ylabel('Right norm.');
+formatFigurePublish('size', figSize);
+
+if saveOn 
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+    saveas(gcf, fullfile(figPath, [saveName '.fig']));
+    saveas(gcf, fullfile(figPath, [saveName '.jpg']));
+end
+
+%% Bias histogram (distance from unity line), marginal distribution
+figSize = [2.5 0.8];
+
+allData_marginals = allData_means(:,1) - allData_means(:,2);
+% binEdges = linspace(-1 * max(abs(allData_marginals)), max(abs(allData_marginals)), 50);
+binEdges = linspace(-2, 2, 20);
+binCenters = binEdges(1:end-1) + (binEdges(2) - binEdges(1));
+saveName = 'Bias_histogram_marginals';
+ensureFigure(saveName, 1);
+ax = axes; hold on;
+% [rejected_counts, ~] = histcounts(allData_d(h_sorted), binEdges);
+% [accepted_counts, ~] = histcounts(allData_d(~h_sorted), binEdges);
+% rejected_counts = rejected_counts ./ numel(allData_d);
+% accepted_counts = accepted_counts ./ numel(allData_d);
+[all_counts, ~] = histcounts(allData_marginals, binEdges);
+
+b = bar(binCenters, all_counts, 'stacked');
+b(1).FaceColor = 'k';
+% b(2).FaceColor = 'w';
+% xlabel('Effect size (D'')');
+% set(gca, 'YTick', []);
+ax.YAxis.Visible = 'on';
+set(gca, 'XLim', [-2 2], 'XTick', [-2 -1 0 1 2], 'XTickLabel', {});
+%%%%%%%%%%%%%%%%
+formatFigurePublish('size', figSize);
+
+if saveOn 
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+%     saveas(gcf, fullfile(figPath, [saveName '.fig']));
+%     saveas(gcf, fullfile(figPath, [saveName '.jpg']));
+end
+
+
+
 %% Bias histogram (effect size expressed as D')
 figSize = [0.9 0.8];
 
@@ -559,6 +640,35 @@ if saveOn
     saveas(gcf, fullfile(figPath, [saveName '.jpg']));
 end
 
+
+%% Bias histogram (effect size expressed as D'), SYMMETRICAL
+figSize = [2 1.2];
+
+binEdges = -1 * ceil(max(allData_d)):0.2:ceil(max(allData_d));
+binCenters = binEdges(1:end-1) + (binEdges(2) - binEdges(1));
+saveName = 'Bias_histogram_effectSize_symmetrical';
+ensureFigure(saveName, 1);
+ax = axes; hold on;
+[rejected_counts, ~] = histcounts(allData_dsigned(h_sorted), binEdges);
+[accepted_counts, ~] = histcounts(allData_dsigned(~h_sorted), binEdges);
+rejected_counts = rejected_counts ./ numel(allData_d);
+accepted_counts = accepted_counts ./ numel(allData_d);
+
+b = bar(binCenters, [rejected_counts' accepted_counts'], 'stacked');
+b(1).FaceColor = 'k';
+b(2).FaceColor = 'w';
+xlabel('Effect size (D'')');
+% set(gca, 'YTick', []);
+ax.YAxis.Visible = 'on';
+set(gca, 'XLim', [binEdges(1) - 0 binEdges(end) + 0]);
+%%%%%%%%%%%%%%%%
+formatFigurePublish('size', figSize);
+
+if saveOn 
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+%     saveas(gcf, fullfile(figPath, [saveName '.fig']));
+%     saveas(gcf, fullfile(figPath, [saveName '.jpg']));
+end
 %% example biased and non-biased mice in terms of reward and punishment responses
 
 animal = 'ACh_7';
