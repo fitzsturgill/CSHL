@@ -527,7 +527,7 @@ set(gca, 'XLim', [-5 3]);
 ylabel('Cholinergic (\fontsize{20}\sigma\fontsize{16}-baseline)'); xlabel('Time from reinforcement (s)');
 
 formatFigureTalk([4 3]);
-if saveOn
+if saveOnh
     saveas(gcf, fullfile(savepath, [saveName '.fig']));
     saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
     saveas(gcf, fullfile(savepath, [saveName '.emf']));   

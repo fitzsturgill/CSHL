@@ -539,7 +539,7 @@ end
 % break at 3, then scale everything between 3 and 14 between 3 and 4
 
 discont = 3; % discontinuity starts here
-yxMax = 14; % maximum data range shown on graph
+yxMax = 14;  % 14 maximum data range shown on graph
 shrinkTo = 1;  % shrink range after discontinuity to 1 unit
 figSize = [3.6 3];
 saveName = 'all_us_cs_norm_scatter_discontinuity';
@@ -645,6 +645,7 @@ end
 figSize = [2 1.2];
 
 binEdges = -1 * ceil(max(allData_d)):0.2:ceil(max(allData_d));
+% binEdges = linspace(-1 * ceil(max(allData_d)), ceil(max(allData_d)), 30);
 binCenters = binEdges(1:end-1) + (binEdges(2) - binEdges(1));
 saveName = 'Bias_histogram_effectSize_symmetrical';
 ensureFigure(saveName, 1);
