@@ -36,6 +36,7 @@ us_pooled = struct(...
     'punish', s2...  % uncued
     );
 
+
 for counter = 1:nAnimals
     animal = DB.animals{counter};
     dbLoadAnimal(DB, animal);        
@@ -64,6 +65,54 @@ for counter = 1:nAnimals
     us_pooled.punish.data{counter} = thisData;
     us_pooled.punish.avg(counter) = nanmean(thisData);
     us_pooled.punish.SEM(counter) = nanSEM(thisData);        
+end
+
+%% also gather baselined us responses
+
+s2 = struct(...
+    'data', cell(1,1),...
+    'avg', zeros(nAnimals, 1),...
+    'SEM', zeros(nAnimals, 1)...
+    );
+cue = struct(...
+    'high', s2,...
+    'low', s2,...
+    'cued', s2,...
+    'uncued', s2...
+    );
+us_pooled_bl = struct(...
+    'reward', cue,...
+    'punish', cue,...
+    'omit', cue...
+    );
+
+
+for counter = 1:nAnimals
+    animal = DB.animals{counter};
+    dbLoadAnimal(DB, animal);        
+        
+    ordering = {...
+        'reward', 'high', highValueTrials & rewardTrials;...
+        'reward', 'low', lowValueTrials & rewardTrials;...
+        'reward', 'cued', ~uncuedTrials & rewardTrials;...
+        'reward', 'uncued', uncuedTrials & rewardTrials;...
+        'punish', 'high', highValueTrials & punishTrials;...
+        'punish', 'low', lowValueTrials & punishTrials;...
+        'punish', 'cued', ~uncuedTrials & punishTrials;...        
+        'punish', 'uncued', uncuedTrials & punishTrials;...        
+        'omit', 'high', highValueTrials & omitTrials;...
+        'omit', 'low', lowValueTrials & omitTrials;...
+        'omit', 'cued', ~uncuedTrials & omitTrials;...        
+        'omit', 'uncued', uncuedTrials & omitTrials;...                
+        };
+    
+        for c2 = 1:size(ordering,1)
+            thisData = TE.phPeak_us.data(ordering{c2, 3}) - TE.phPeak_preUs.data(ordering{c2, 3});
+            us_pooled_bl.(ordering{c2,1}).(ordering{c2,2}).data{counter,:} = thisData;
+            us_pooled_bl.(ordering{c2,1}).(ordering{c2,2}).avg(counter,:) = nanmean(thisData);
+            us_pooled_bl.(ordering{c2,1}).(ordering{c2,2}).SEM(counter,:) = nanSEM(thisData);            
+        end
+    
 end
 
 %%
@@ -113,16 +162,16 @@ end
     % cs scatter plot
 saveName = 'CuedOutcome_Cs_scatterPlot';
 ensureFigure(saveName, 1); 
-figSize = [1 1];
+figSize = [1 1.2];
 
 scatter(cs_pooled.low.avg,cs_pooled.high.avg, 36, [0 0 0], 'filled');
 errorbar(cs_pooled.low.avg,cs_pooled.high.avg, -cs_pooled.high.SEM, cs_pooled.high.SEM,...
     -cs_pooled.low.SEM, cs_pooled.low.SEM, '.', 'Color', [0 0 0]);
 % xlabel('Low Value (\fontsize{20}\sigma\fontsize{16}-baseline)'); ylabel('High Value (\fontsize{20}\sigma\fontsize{16}-baseline)');
 
-set(gca, 'YLim', [0 1]); set(gca, 'XLim', [0 0.5]);
-% setXYsameLimit;
-set(gca, 'XTick', [0 0.5 1], 'YTick', [0 1]);
+% set(gca, 'YLim', [0 1]); set(gca, 'XLim', [0 1]);
+setXYsameLimit;
+set(gca, 'XTick', [0 1], 'YTick', [0 1]);
 addUnityLine(gca, [0.7 0.7 0.7]);
 xlabel('Low value'); ylabel('High value');
 formatFigurePublish('size', figSize);
@@ -133,7 +182,51 @@ if saveOn
 end  
 
 [p, h] = ttest(cs_pooled.low.avg, cs_pooled.high.avg)
+%% us bl scatter plot
 
+% Us scatter plot 
+figSize = [1 1.2];
+% savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk\Adam\';
+saveName = 'delta_Us_scatterPlot';
+ensureFigure(saveName, 1); 
+
+% scatter(sumData.phReward_mean_bl.avg,sumData.phPunish_mean_bl.avg, 42, [0.6680, 0.2148, 0.8359], 'filled');
+errorbar(us_pooled_bl.reward.low.avg, us_pooled_bl.reward.high.avg, -us_pooled_bl.reward.high.SEM, us_pooled_bl.reward.high.SEM,...
+    -us_pooled_bl.reward.low.SEM, us_pooled_bl.reward.low.SEM, '.', 'Color', [0 0 0]);
+
+% xlabel('Reward (\fontsize{20}\sigma\fontsize{16}-baseline)'); ylabel('Punish (\fontsize{20}\sigma\fontsize{16}-baseline)'); 
+% xlabel('Reward (\sigma-baseline)'); ylabel('Punish (\sigma-baseline)'); 
+% ylim = get(gca, 'YLim'); xlim = get(gca, 'XLim');
+% set(gca, 'XTick', [0 1], 'YTick', [0 2], 'YLim', [-0.5 ylim(2)], 'XLim', [-0.5 xlim(2)]);
+% addOrginLines(gca, [0.7 0.7 0.7]);
+setXYsameLimit;
+addUnityLine(gca, [0.7 0.7 0.7]);
+set(gca, 'XTick', [0 1], 'YTick', [0 1]);
+xlabel('Low value'); ylabel('High value');
+formatFigurePublish('size', figSize);
+if saveOn
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+    saveas(gcf, fullfile(figPath, [saveName '.fig']));
+    saveas(gcf, fullfile(figPath, [saveName '.jpg']));   
+end  
+
+
+%% us bl bar plot
+% Us scatter plot 
+figSize = [1.2 1.1];
+% savepath = 'C:\Users\Adam\Dropbox\KepecsLab\_Fitz\CCN\CCN_Talk\Adam\';
+saveName = 'delta_Us_barPlot';
+ensureFigure(saveName, 1);
+yData = [nanmean(us_pooled_bl.reward.uncued.avg) nanmean(us_pooled_bl.reward.low.avg) nanmean(us_pooled_bl.reward.high.avg)];
+bData = [nanSEM(us_pooled_bl.reward.uncued.avg) nanSEM(us_pooled_bl.reward.low.avg) nanSEM(us_pooled_bl.reward.high.avg)];
+
+errorbar([1 2 3], yData, bData, 'k');
+set(gca, 'XLim', [0.5 3.5], 'YLim', [0 1.1], 'XTickLabel', {'', 'low', 'high'});
+
+formatFigurePublish('size', figSize);
+if saveOn
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+end
 
 %% grand averages aligned to cue and licking
 
@@ -154,11 +247,13 @@ outcome = struct(...
     'omit', cue...
     );
 
-[cueAligned, lickAligned] = deal(outcome);
+[cueAligned, lickAligned, outcomes] = deal(outcome);
 
 
 w1 = [-2 5];
 w2 = [-2 5];
+wPre = [-0.5 0];
+wOutcome = [-0.5 3];
 
 for counter = 1:nAnimals
     animal = DB.animals{counter};
@@ -191,6 +286,15 @@ for counter = 1:nAnimals
         lickAligned.(ordering{c2,1}).(ordering{c2,2}).Avg(counter,:) = avgData.Avg;
         lickAligned.(ordering{c2,1}).(ordering{c2,2}).SEM(counter,:) = avgData.SEM;
         lickAligned.(ordering{c2,1}).(ordering{c2,2}).xData(counter,:) = avgData.xData;
+        
+        vPre = {'FluorDataField', 'ZS', 'window', wPre, 'zeroTimes', TE.Us, 'PhotometryField', 'Photometry'};
+        avgData_pre = phAverageFromTE(TE, ordering{c2,3}, 1, vPre{:});        
+        
+        vOutcome = {'FluorDataField', 'ZS', 'window', wOutcome, 'zeroTimes', TE.Us, 'PhotometryField', 'Photometry'};
+        avgData_outcome = phAverageFromTE(TE, ordering{c2,3}, 1, vOutcome{:});
+        outcomes.(ordering{c2,1}).(ordering{c2,2}).Avg(counter,:) = avgData_outcome.Avg - nanmean(avgData_pre.Avg);
+        outcomes.(ordering{c2,1}).(ordering{c2,2}).SEM(counter,:) = avgData_outcome.SEM;
+        outcomes.(ordering{c2,1}).(ordering{c2,2}).xData(counter,:) = avgData_outcome.xData;        
     end
 end
 
@@ -202,7 +306,7 @@ figSize = [1.7 1.5];
 photometryField = 'Photometry';
 fdField = 'ZS';
 saveOn = 1;
-%%
+%
 channels = [1];
 climfactor = 2;
 lickTickLineWidth = 0.3; % 0.3 works well when printed out given current sizing
@@ -427,6 +531,48 @@ formatFigurePublish('size', figSize);
 if saveOn
     print(gcf, '-dpdf', fullfile(savePath, [saveName '.pdf']));
 end
+
+%% re-baselined outcome responses to argue for surprise modulation from GCaMP
+
+
+saveName = 'grandAverages_reward_bl';
+ensureFigure(saveName, 1);
+figSize = [2 1];
+% ylim = [-0.2 2];
+axes;
+yData = [nanmean(outcomes.reward.high.Avg)' nanmean(outcomes.reward.low.Avg)' nanmean(outcomes.reward.uncued.Avg)'];
+bData = [nanSEM2(outcomes.reward.high.Avg)' nanSEM2(outcomes.reward.low.Avg)' nanSEM2(outcomes.reward.uncued.Avg)'];
+bData = permute(bData, [1 3 2]);
+cmap = [1 0 1; 0 0 1; 0 0 0];
+boundedline(outcomes.reward.cued.xData(1,:)', yData, bData, 'cmap', cmap);
+addStimulusPatch(gca, [-0.1 0.1], '', [0.8 0.8 0.8], 0.5);
+xlabel('Time from reward (s)'); ylabel('Fluor. (\sigma-bl.)');
+% set(gca, 'XLim', w1, 'YLim', ylim);
+formatFigurePublish('size', figSize);    
+
+if saveOn
+%     print(gcf, '-dpdf', fullfile(savePath, [saveName '.pdf']));
+end
+
+saveName = 'grandAverages_punish_bl';
+ensureFigure(saveName, 1);
+figSize = [2 1];
+% ylim = [-0.2 2];
+axes;
+yData = [nanmean(outcomes.punish.high.Avg)' nanmean(outcomes.punish.low.Avg)' nanmean(outcomes.punish.uncued.Avg)'];
+bData = [nanSEM2(outcomes.punish.high.Avg)' nanSEM2(outcomes.punish.low.Avg)' nanSEM2(outcomes.punish.uncued.Avg)'];
+bData = permute(bData, [1 3 2]);
+cmap = [1 0 1; 0 0 1; 0 0 0];
+boundedline(outcomes.punish.cued.xData(1,:)', yData, bData, 'cmap', cmap);
+addStimulusPatch(gca, [-0.1 0.1], '', [0.8 0.8 0.8], 0.5);
+xlabel('Time from punish(s)'); ylabel('Fluor. (\sigma-bl.)');
+% set(gca, 'XLim', w1, 'YLim', ylim);
+formatFigurePublish('size', figSize);    
+
+if saveOn
+%     print(gcf, '-dpdf', fullfile(savePath, [saveName '.pdf']));
+end
+
 
 
 %% Hacky deconvolved version:

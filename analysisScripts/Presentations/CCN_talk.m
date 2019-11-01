@@ -11,7 +11,7 @@ saveOn = 1;
 
  % cue types
     varargin = {'trialNumbering', 'consecutive',...
-        'window', [-6 4], 'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording',...
+        'window', [-6 4], 'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording',...a
         'linespec', {'b', 'r', 'g'}};
 
     ensureFigure('Lick_Hist_CCN', 1); axes;

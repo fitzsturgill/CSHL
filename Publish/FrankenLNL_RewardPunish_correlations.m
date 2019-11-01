@@ -279,9 +279,12 @@ animals = {'ACh_7'};
 
 nCol = ceil(sqrt(length(animals)));
 nRow = ceil(length(animals) / nCol);
-linecolors = [0 1 1; 1 0 1; 0 1 0; 0 0 1; 1 0 0; 0 0.5 0];         
-trialSets = {'rew', 'puff', 'shock', 'rew_cued', 'puff_cued', 'shock_cued'};
-trialSetNames = {'Reward', 'Air Puff', 'Shock', 'Reward cued', 'Puff cued', 'Shock cued'};   
+% linecolors = [0 1 1; 1 0 1; 0 1 0; 0 0 1; 1 0 0; 0 0.5 0];         
+% trialSets = {'rew', 'puff', 'shock', 'rew_cued', 'puff_cued', 'shock_cued'};
+% trialSetNames = {'Reward', 'Air Puff', 'Shock', 'Reward cued', 'Puff cued', 'Shock cued'};
+linecolors = [mycolors('reward'); mycolors('reward_cued')];
+trialSets = {'rew', 'rew_cued'};
+trialSetNames = {'Reward', 'Reward cued'};   
 for acounter = 1:length(animals)
     subplot(nCol, nRow,acounter); hold on;        
     % reward is first in the trialSets list, use it to normalize
@@ -300,15 +303,16 @@ for acounter = 1:length(animals)
 
     h = [];
     for counter = 1:size(trialSets, 2)
-        plot([0 xMean(counter)], [0 yMean(counter)], 'Color', linecolors(counter, :), 'Linewidth', 2);
+%         plot([0 xMean(counter)], [0 yMean(counter)], 'Color', linecolors(counter, :), 'Linewidth', 2);
         
-        scatter(xMean(counter), yMean(counter), 40, linecolors(counter, :), 'o', 'MarkerFaceAlpha', 0, 'MarkerFaceColor', 'flat', 'MarkerEdgeColor', 'none');            
-%         h(end + 1) = plot(xMean(counter), yMean(counter), '-o', 'Color', linecolors(counter, :));
+        scatter(xMean(counter), yMean(counter), 40, linecolors(counter, :), 'o', 'MarkerFaceAlpha', 1, 'MarkerFaceColor', 'flat', 'MarkerEdgeColor', 'none');            
+%         h(end + 1) = scatter(xMean(counter), yMean(counter), 40,  linecolors(counter, :), 'o');
     end
     
 
 %     sameXYScale(gca);
-    addOrginLines(gca);
+%     addOrginLines(gca);
+addUnityLine(gca);
 %     legend(h, trialSetNames, 'Location', 'Best'); legend('boxoff'); 
     % subplot(1,2,1);
     % textBox('Cue', [], [0.5 0.95], 8);
@@ -701,6 +705,24 @@ if saveOn
     saveas(gcf, fullfile(figPath, [saveName '.fig']));
     saveas(gcf, fullfile(figPath, [saveName '.jpg']));
 end
+
+%% plot reward responses + means
+
+saveName = 'means_and_residuals';
+ensureFigure(saveName, 1);
+xData = us_pooled.rew.avgDataX{1,1};
+ax=axes; hold on;
+vert_offset = max(us_pooled.rew.avgData{ix,2}) + 4;
+offset = 0.1;
+nShow = 10; % n traces to show
+nt = size(us_pooled.rew.Data{ix,1}, 1);
+tix = randperm(nt, nShow);
+plot(xData, us_pooled.rew.Data{ix,2}(tix,:)', 'Color', [0.5 0.5 0.5], 'LineWidth', 0.5);
+plot(xData, us_pooled.rew.avgData{ix,2}, 'Color', mycolors('reward'), 'LineWidth', 2);
+plot(xData, us_pooled.rew.Data{ix,1}(tix,:)' + vert_offset', 'Color', [0.5 0.5 0.5], 'LineWidth', 0.5);
+plot(xData, us_pooled.rew.avgData{ix,1} + vert_offset, 'Color', mycolors('reward'), 'LineWidth', 2);
+
+
 
 
 %% lets fit the mean centered us responses for each mouse to a line, then use the slope to align the us means across reinforcements.  visualization of how divergent are the us responses

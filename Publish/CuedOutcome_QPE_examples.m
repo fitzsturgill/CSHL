@@ -165,6 +165,7 @@ xlabel('Time from odor (s)');
 subplot(1,2,2);
 phRasterFromTE(TE, highValueTrials & rewardTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'sortValues', TE.lickLatency_cs, 'zeroTimes', TE.Cue, 'window', xwindow); % 'CLimFactor', CLimFactor,
 line(lickOnsets, (1:sum(highValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'r', 'LineWidth', 1);    
+% colorbar;
 xlabel('Time from odor (s)');
 set(gca, 'YTick', []);
 % lickOnsets = TE.lickLatency_cs(lowValueTrials & rewardTrials);

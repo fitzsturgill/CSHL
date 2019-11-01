@@ -86,6 +86,7 @@ for counter = 1:length(DB.animals)
     
     plot(xData', yData'); set(gca, 'XLim', xlim);
     sameYScale(ah(1,:)); sameYScale(ah(2,:)); sameYScale(ah(3,:));
+        
 
 end
 
