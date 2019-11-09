@@ -1,6 +1,6 @@
 % cuedOutcome_pooled_figure
 
-% goals: summary data for cue and outcome responses
+% goals: asummary data for cue and outcome responses
 
 
 DB = dbLoadExperiment('cuedOutcome');

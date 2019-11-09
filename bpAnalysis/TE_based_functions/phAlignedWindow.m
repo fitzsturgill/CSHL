@@ -87,6 +87,10 @@ function [data, xData] = phAlignedWindow(TE, trials, ch, varargin)
         d1 = zeroPoint - (szero - s1);
         d2 = zeroPoint + (s2 - szero);
         % add trial data to padded array
+        if length(trialData(s1:s2)) == (size(data,2) + 1) % kludge for rounding issues
+            s2 = s2 - 1;
+            d2 = d2 - 1;
+        end
         data(counter, d1:d2) = trialData(s1:s2);
     end
     

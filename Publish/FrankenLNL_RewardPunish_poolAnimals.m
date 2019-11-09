@@ -49,6 +49,7 @@ gAvg = struct(...
     'phUs', s2...
     );
 
+
     
     
 for counter = 1:length(DB.animals)
@@ -207,6 +208,53 @@ disp(['*** saving: ' fullfile(savepath, 'grandAverages.mat') ' ***']);
 save(fullfile(savepath, 'grandAveragesNorm.mat'), 'gAvgNorm');
 disp(['*** saving: ' fullfile(savepath, 'grandAveragesNorm.mat') ' ***']);
 
+
+%% omitReward, aligned by next lick, if present
+window = [-2 2];
+nSamples = diff(window) * 20;
+nSites = length(DB.animals) * 2;
+
+omitReward_lickAligned = struct(...
+    'avgData', NaN(nSites, nSamples),...
+    'semData', NaN(nSites, nSamples),...
+    'xData', [],...
+    'animal', [],...
+    'ch', []...
+    );
+
+
+for counter = 1:length(DB.animals)
+    animal = DB.animals{counter};
+
+    dbLoadAnimal(DB, animal);
+    
+    % omitReward
+    trials = neutralTrials & Odor2Valve1Trials & ismember(TE.BlockNumber, [2 3]);          
+    for ch = 1:length(TE.Photometry.data)
+        thisSite = (counter - 1)*2 + ch;
+        avgData = phAverageFromTE(TE, trials, ch, 'zeroTimes', cellfun(@(x) x(1), TE.Outcome) + TE.lickLatency_us, 'window', window, 'FluorDataField', 'ZS');
+        omitReward_lickAligned.avgData(thisSite,:) = avgData.Avg;
+        omitReward_lickAligned.semData(thisSite,:) = avgData.SEM;
+        if isempty(omitReward_lickAligned.xData)
+            omitReward_lickAligned.xData = avgData.xData;
+        end
+    end
+end
+
+
+%% plot the lick aligned ommissions
+
+saveName = 'lickAligned_rewardOmit_tiled';
+ensureFigure(saveName, 1);
+nAnimals = length(DB.animals);
+for counter = 1:nAnimals
+    
+    ix = (counter - 1) * 2 + (1:2);
+    subplot(3,4,counter); hold on;
+    textBox(DB.animals{counter});a
+    boundedline(omitReward_lickAligned.xData', omitReward_lickAligned.avgData(ix,:)', permute(omitReward_lickAligned.semData(ix,:), [2 3 1]));
+end
+    
 
 %%
 savepath = fullfile(DB.path, ['pooled' filesep]);

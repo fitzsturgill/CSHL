@@ -42,7 +42,7 @@ for counter = 1:length(DB.animals)
     TE.licks_us = countEventFromTE(TE, 'Port1In', usWindow, TE.Us);
     TE.licks_baseline = countEventFromTE(TE, 'Port1In', [0 4], TE.PreCsRecording);
     TE.lickIntervals_us = eventIntervalsFromTE(TE, 'Port1In', usWindow, TE.Outcome);
-    TE.lickLatency_us = calcEventLatency(TE, 'Port1In', TE.Outcome);
+    TE.lickLatency_us = calcEventLatency(TE, 'Port1In', cellfun(@(x) x(1), TE.Outcome) + 0.2, cellfun(@(x) x(1), TE.Outcome) + 2);
     
     for channel = channels
         TE.phPeakMean_cs(channel) = bpCalcPeak_dFF(TE.Photometry, channel, csWindow, TE.Cue2, 'method', 'mean', 'phField', 'ZS');
