@@ -39,7 +39,7 @@ hp = addStimulusPatch(gca, [2.9 3.1], '', [0.8 0.8 0.8], 1);
 plot(TE.Photometry.xData(21:end), ch1Data(21:end,:), 'k', 'LineWidth', 0.4); set(gca, 'XLim', window);
 plot(TE.Photometry.xData(21:end), ch2Data(21:end,:), 'k', 'LineWidth', 0.4); set(gca, 'XLim', window);
 
-set(gca, 'Visible', 'off');
+% set(gca, 'Visible', 'off');
 
 formatFigurePublish('size', figSize);
 

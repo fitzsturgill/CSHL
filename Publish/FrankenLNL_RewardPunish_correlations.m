@@ -262,79 +262,153 @@ if saveOn
 end
 
 
-%% show example distribution
+%% show example distribution, signals, then noise, same xy scale
 
 FluorField_us = 'phPeakMean_us';
-
-saveName = sprintf('LeftRight_Distributions_example_%s', FluorField_us);
-ensureFigure(saveName, 1);
-mcPortraitFigSetup(gcf);
-% formatFigurePublish('size', [4 2], 'fontSize', 8);
-% animals = {'ACh_7', 'ACh_3'};
-animals = {'ACh_7'};
-
-
-
-% xlims = [min(TE.phPeakMean_cs(2).data(allTrials)) max(TE.phPeakMean_cs(2).data(allTrials)); min(TE.phPeakMean_us(2).data(allTrials)) max(TE.phPeakMean_us(2).data(allTrials))];
-
-nCol = ceil(sqrt(length(animals)));
-nRow = ceil(length(animals) / nCol);
+noiseMarkerSize = 10;
+animal = {'ACh_7'};
+acounter = find(strcmp(DB.animals, animal));
+xylims = [-1 2];
+sigLims = [-3 7];
+linecolors = [mycolors('reward'); mycolors('puff'); mycolors('shock'); mycolors('reward'); mycolors('puff'); mycolors('shock'); mycolors('reward')];
 % linecolors = [0 1 1; 1 0 1; 0 1 0; 0 0 1; 1 0 0; 0 0.5 0];         
-% trialSets = {'rew', 'puff', 'shock', 'rew_cued', 'puff_cued', 'shock_cued'};
-% trialSetNames = {'Reward', 'Air Puff', 'Shock', 'Reward cued', 'Puff cued', 'Shock cued'};
-linecolors = [mycolors('reward'); mycolors('reward_cued')];
-trialSets = {'rew', 'rew_cued'};
-trialSetNames = {'Reward', 'Reward cued'};   
-for acounter = 1:length(animals)
-    subplot(nCol, nRow,acounter); hold on;        
-    % reward is first in the trialSets list, use it to normalize
+trialSets_us = {...
+    'rew', mycolors('reward'), 'o';...
+    'puff', mycolors('puff'), 'o';...
+    'shock', mycolors('shock'), 'o';...
+    'rew_cued', mycolors('reward'), 's';...
+    'puff_cued', mycolors('puff'), 's';...
+    'shock_cued', mycolors('reward'), 's';...
+    };
+trialSets_cs = {...
+    'CSplus', mycolors('reward'), 'd';...
+    'CSminus', mycolors('puff'), 'd';...
+    'CSminus_shock', mycolors('shock'), 'd';...
+    };
 
-    xDataStruct = struct('Mean', cell(size(trialSets, 2), 1), 'SEM', cell(size(trialSets, 2), 1));
-    yDataStruct = struct('Mean', cell(size(trialSets, 2), 1), 'SEM', cell(size(trialSets, 2), 1));
-    h=[];   
-    [xMean, yMean] = deal(zeros(length(trialSets), 1));
-    for counter = 1:length(trialSets)       
-        setField = trialSets{counter};
-        xData = us_pooled.(setField).mean{acounter}(:,1); yData = us_pooled.(setField).mean{acounter}(:,2); 
-        h(end + 1) = scatter(xData, yData, 2, linecolors(counter, :), '.', 'MarkerFaceColor', 'flat', 'MarkerFaceAlpha', 0.2);%, 'MarkerFaceAlpha', 0.3, 'MarkerEdgeAlpha', 0.3);
-        xMean(counter) = nanmean(xData);
-        yMean(counter) = nanmean(yData);
-    end
-
-    h = [];
-    for counter = 1:size(trialSets, 2)
-%         plot([0 xMean(counter)], [0 yMean(counter)], 'Color', linecolors(counter, :), 'Linewidth', 2);
-        
-        scatter(xMean(counter), yMean(counter), 40, linecolors(counter, :), 'o', 'MarkerFaceAlpha', 1, 'MarkerFaceColor', 'flat', 'MarkerEdgeColor', 'none');            
-%         h(end + 1) = scatter(xMean(counter), yMean(counter), 40,  linecolors(counter, :), 'o');
-    end
+% linecolors = [mycolors('reward'); mycolors('reward_cued')];
+% trialSets = {'rew', 'rew_cued'};
+% trialSetNames = {'Reward', 'Reward cued'};   
+saveName_signal = sprintf('LeftRight_Signal_example_%s', FluorField_us);
+ensureFigure(saveName, 1);
+axes; hold on;     
+set(gca, 'XLim', xylims, 'YLim', xylims);
+% addOrginLines;
+% reward is first in the trialSets list, use it to normalize
+% 
+xDataStruct = struct('Mean', cell(size(trialSets_us, 2), 1), 'SEM', cell(size(trialSets_us, 2), 1));
+yDataStruct = struct('Mean', cell(size(trialSets_us, 2), 1), 'SEM', cell(size(trialSets_us, 2), 1));
+h=[];   
+[xMean, yMean] = deal(zeros(size(trialSets_us, 1), 1));
+for counter = 1:size(trialSets_us, 1)       
+    setField = trialSets_us{counter, 1};    
+    xData = us_pooled.(setField).mean{acounter}(:,1); yData = us_pooled.(setField).mean{acounter}(:,2);     
+%     h(end + 1) = scatter(xData, yData, noiseMarkerSize, trialSets_us{counter, 2}, '.', 'MarkerEdgeColor', 'flat', 'MarkerEdgeAlpha', .4);%, 'MarkerFaceAlpha', 0.3, 'MarkerEdgeAlpha', 0.3);
     
-
-%     sameXYScale(gca);
-%     addOrginLines(gca);
-addUnityLine(gca);
-%     legend(h, trialSetNames, 'Location', 'Best'); legend('boxoff'); 
-    % subplot(1,2,1);
-    % textBox('Cue', [], [0.5 0.95], 8);
-    % xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
-%     ylabel('\fontsize{8}Right (\fontsize{12}\sigma\fontsize{8}-baseline)');
-    ylabel('Right');
-    % subplot(1,2,2);
-    % textBox('Outcome', [], [0.5 0.95], 8);
-%     xlabel('\fontsize{8}Left (\fontsize{12}\sigma\fontsize{8}-baseline)');
-    xlabel('Left');
-
-    % ylabel('');   
+    xMean(counter) = nanmean(xData);
+    yMean(counter) = nanmean(yData);
+end
+[xMean_cs, yMean_cs] = deal(zeros(size(trialSets_cs, 1), 1));
+for counter = 1:size(trialSets_cs, 1)       
+    setField = trialSets_cs{counter, 1};
+    xData = cs_pooled.(setField).mean{acounter}(:,1); yData = cs_pooled.(setField).mean{acounter}(:,2); 
+%     h(end + 1) = scatter(xData, yData, noiseMarkerSize, trialSets_cs{counter, 2}, '.', 'MarkerEdgeColor', 'flat', 'MarkerEdgeAlpha', .4);%, 'MarkerFaceAlpha', 0.3, 'MarkerEdgeAlpha', 0.3);
+    xMean_cs(counter) = nanmean(xData);
+    yMean_cs(counter) = nanmean(yData);
 end
 
+
+% sig_fit = fit([xMean; xMean_cs], [yMean; yMean_cs], 'poly1');
+% sig_line = sig_fit.p1 * sigLims + sig_fit.p2;
+% plot(sigLims, sig_line, 'LineWidth', 2, 'Color', [0.5 0.5 0.5]);
+h = [];
+for counter = 1:size(trialSets_us, 1)
+%         plot([0 xMean(counter)], [0 yMean(counter)], 'Color', linecolors(counter, :), 'Linewidth', 2);
+    % normalize by reward         
+    scatter(xMean(counter)/xMean(1), yMean(counter)/yMean(1), 40, trialSets_us{counter, 2}, trialSets_us{counter, 3}, 'MarkerFaceAlpha', 1, 'MarkerFaceColor', 'flat', 'MarkerEdgeColor', 'none');            
+%         h(end + 1) = scatter(xMean(counter), yMean(counter), 40,  linecolors(counter, :), 'o');
+end
+for counter = 1:size(trialSets_cs, 1)
+%         plot([0 xMean(counter)], [0 yMean(counter)], 'Color', linecolors(counter, :), 'Linewidth', 2);
+
+    scatter(xMean_cs(counter)/xMean(1), yMean_cs(counter)/yMean(1), 40, trialSets_cs{counter, 2}, trialSets_cs{counter, 3}, 'MarkerFaceAlpha', 1, 'MarkerFaceColor', 'flat', 'MarkerEdgeColor', 'none');            
+%         h(end + 1) = scatter(xMean(counter), yMean(counter), 40,  linecolors(counter, :), 'o');
+end
+% addOrginLines;
+xlim = get(gca, 'XLim'); ylim = get(gca, 'YLim');
+line([1 1], ylim, 'Color', [0.7 0.7 0.7]);
+line(xlim, [1 1], 'Color', [0.7 0.7 0.7]);
+sigLims = get(gca, 'XLim');
+sig_fit = fit([xMean; xMean_cs]./xMean(1), [yMean; yMean_cs]./yMean(1), 'poly1');
+sig_line = sig_fit.p1 * sigLims + sig_fit.p2;
+plot(sigLims, sig_line, 'LineWidth', 2, 'Color', [0.5 0.5 0.5]);
+h = [];
+
+% formatFigurePublish('size', [1 1.5]);
+formatFigurePublish('size', [1 1.1]);
+
+if saveOn 
+    print(gcf, '-dpdf', fullfile(savePath, [saveName_signal '.pdf']));
+%     export_fig(fullfile(savePath, saveName), '-eps');
+end
+
+%% %%%%%%%%%%%%%
+xylims = [-5 10];
+noiseMarkerSize = 10;
+saveName_noise = sprintf('LeftRight_Noise_example_%s', FluorField_us);
+ensureFigure(saveName, 1);
+axes; hold on;
+set(gca, 'YLim', xylims, 'XLim', xylims);
+addOrginLines;
+h=[];   
+
+
+noiseLims = [-5 5];
+allX = []; allY = [];
+for counter = 1:size(trialSets_us, 1)       
+    setField = trialSets_us{counter, 1};
+    xData = us_pooled.(setField).mean{acounter}(:,1) - xMean(counter); yData = us_pooled.(setField).mean{acounter}(:,2) - yMean(counter); 
+    allX = [allX; xData]; allY = [allY; yData];
+    h(end + 1) = scatter(xData, yData, noiseMarkerSize, trialSets_us{counter, 2}, '.', 'MarkerEdgeColor', 'flat', 'MarkerEdgeAlpha', 1);%, 'MarkerFaceAlpha', 0.3, 'MarkerEdgeAlpha', 0.3);                
+%     sig_fit = fit(xData, yData, 'poly1');
+%     sig_line = sig_fit.p1 * noiseLims + sig_fit.p2;
+%     plot(noiseLims, sig_line, 'LineWidth', 1, 'Color', trialSets_us{counter, 2});
+end
+
+for counter = 1:size(trialSets_cs, 1)      
+    setField = trialSets_cs{counter, 1};
+    xData = cs_pooled.(setField).mean{acounter}(:,1) - xMean_cs(counter); yData = cs_pooled.(setField).mean{acounter}(:,2) - yMean_cs(counter); 
+    allX = [allX; xData]; allY = [allY; yData];
+    h(end + 1) = scatter(xData, yData, noiseMarkerSize, trialSets_cs{counter, 2}, '.', 'MarkerEdgeColor', 'flat', 'MarkerEdgeAlpha', 1);%, 'MarkerFaceAlpha', 0.3, 'MarkerEdgeAlpha', 0.3);    
+%     sig_fit = fit(xData, yData, 'poly1');
+%     sig_line = sig_fit.p1 * noiseLims + sig_fit.p2;
+%     plot(noiseLims, sig_line, 'LineWidth', 1, 'Color', trialSets_us{counter, 2});
+end
+sig_fit = fit(allX, allY, 'poly1');
+sig_line = sig_fit.p1 * noiseLims + sig_fit.p2;
+plot(noiseLims, sig_line, 'LineWidth', 2, 'Color', [0.5 0.5 0.5]);
+
+for counter = 1:size(trialSets_us, 1)
+%         plot([0 xMean(counter)], [0 yMean(counter)], 'Color', linecolors(counter, :), 'Linewidth', 2);
+
+%     scatter(xMean(counter), yMean(counter), 40, trialSets_us{counter, 2}, trialSets_us{counter, 3}, 'MarkerFaceAlpha', 0.2, 'MarkerFaceColor', 'none', 'MarkerEdgeColor', 'flat');            
+scatter(0, 0, 40, trialSets_us{counter, 2}, trialSets_us{counter, 3}, 'MarkerFaceAlpha', 0.4, 'MarkerFaceColor', 'flat', 'MarkerEdgeColor', 'flat');            
+%         h(end + 1) = scatter(xMean(counter), yMean(counter), 40,  linecolors(counter, :), 'o');
+end
+for counter = 1:size(trialSets_cs, 1)
+%         plot([0 xMean(counter)], [0 yMean(counter)], 'Color', linecolors(counter, :), 'Linewidth', 2);
+
+%     scatter(xMean_cs(counter), yMean_cs(counter), 40, trialSets_cs{counter, 2}, trialSets_cs{counter, 3}, 'MarkerFaceAlpha', 0.2, 'MarkerFaceColor', 'none', 'MarkerEdgeColor', 'flat');            
+scatter(0, 0, 40, trialSets_cs{counter, 2}, trialSets_cs{counter, 3}, 'MarkerFaceAlpha', 0.4, 'MarkerFaceColor', 'flat', 'MarkerEdgeColor', 'flat');            
+%         h(end + 1) = scatter(xMean(counter), yMean(counter), 40,  linecolors(counter, :), 'o');
+end
 
 formatFigurePublish('size', [1.5 1.5]);
 
 if saveOn 
-    export_fig(fullfile(savePath, saveName), '-eps');
+    print(gcf, '-dpdf', fullfile(savePath, [saveName_noise '.pdf']));
+%     export_fig(fullfile(savePath, saveName), '-eps');
 end
-
-
 
 %% calculate auROC
 % assuming that a linear relationship describes response of both L and R
@@ -545,7 +619,7 @@ end
 discont = 3; % discontinuity starts here
 yxMax = 14;  % 14 maximum data range shown on graph
 shrinkTo = 1;  % shrink range after discontinuity to 1 unit
-figSize = [3.6 3];
+figSize = [3.4 3] * 0.7;
 saveName = 'all_us_cs_norm_scatter_discontinuity';
 ensureFigure(saveName, 1);
 axes; hold on;
@@ -572,8 +646,8 @@ end
 % scatter(allData_means(~h_sorted, 1), allData_means(~h_sorted, 2), 10, allData_colors(~h_sorted, :), 'o', 'filled'); 
 % scatter(allData_means(h_sorted, 1), allData_means(h_sorted, 2), 10, allData_colors(h_sorted, :), 'o');
 
-xlabel('Left norm.');
-ylabel('Right norm.');
+% xlabel('Left norm.');
+% ylabel('Right norm.');
 formatFigurePublish('size', figSize);
 
 if saveOn 
@@ -676,36 +750,52 @@ if saveOn
 end
 %% example biased and non-biased mice in terms of reward and punishment responses
 
-animal = 'ACh_7';
-ix = find(ismember(DB.animals, animal));
-figSize = [1 0.7];
-saveName = 'bias_examples';
-ensureFigure(saveName, 1);
+animals = {'ACh_7', 'ACh_12'};
+for counter = 1:length(animals)
+    animal = animals{counter};
+    ix = find(ismember(DB.animals, animal));
+    figSize = [1 1];
+    xlims = [0 11];
+    saveName = sprintf('bias_examples_%s', animal);
+    ensureFigure(saveName, 1);
 
-xData = us_pooled.rew.avgDataX{1,1};
-ax=axes; hold on;
-vert_offset = max(us_pooled.rew.avgData{ix,2}) + 2;
-offset = 0.1;
-plot(xData, us_pooled.rew.avgData{ix,2}, 'Color', mycolors('reward'));
-plot(xData, us_pooled.rew.avgData{ix,1} + vert_offset, 'Color', mycolors('reward'));
-x2 = xData(end);
+    xData = us_pooled.rew.avgDataX{1,1};
+    ax=axes; hold on;
+    X = repmat(xlims', 1, 4);
+    Y = repmat([0 1 1.5 2.5], 2, 1);
+    line(X, Y, 'Color', [0.5 0.5 0.5], 'LineWidth', 1);
+%     vert_offset = max(us_pooled.rew.avgData{ix,2}) + 2;
+    vert_offset = [1.5 1.5];
+    offset = 0.1;
+    rewDeltas = us_pooled.rew.avg_delta(ix,:);
+    yData = us_pooled.rew.avgData{ix,2}; yData(yData < -Inf) = NaN;
+    plot(xData, yData / rewDeltas(2), 'Color', mycolors('reward'));
+    yData = us_pooled.rew.avgData{ix,1}; yData(yData < -Inf) = NaN;
+    plot(xData, yData / rewDeltas(1) + vert_offset(counter), 'Color', mycolors('reward'));
+    x2 = xData(end);
+    
+    yData = us_pooled.puff.avgData{ix,2}; yData(yData < -Inf) = NaN;
+    plot(xData + x2 + offset, yData / rewDeltas(2), 'Color', mycolors('puff'));
+    yData = us_pooled.puff.avgData{ix,1}; yData(yData < -Inf) = NaN;
+    plot(xData + x2 + offset, yData / rewDeltas(1) + vert_offset(counter), 'Color', mycolors('puff'));
+    yData = us_pooled.shock.avgData{ix,2}; yData(yData < -Inf) = NaN;
+    plot(xData + x2*2 + offset, yData / rewDeltas(2), 'Color', mycolors('shock'));
+    yData = us_pooled.shock.avgData{ix,1}; yData(yData < -Inf) = NaN;
+    plot(xData + x2*2 + offset, yData / rewDeltas(1) + vert_offset(counter), 'Color', mycolors('shock'));
+    xData = cs_pooled.CSplus.avgDataX{1,1};
+    yData = cs_pooled.CSplus.avgData{ix,2}; yData(yData < -Inf) = NaN;
+    plot(xData + x2*3 + offset, yData / rewDeltas(2), 'Color', mycolors('reward_cued'));
+    yData = cs_pooled.CSplus.avgData{ix,1}; yData(yData < -Inf) = NaN;
+    plot(xData + x2*3 + offset, yData / rewDeltas(1) + vert_offset(counter), 'Color', mycolors('reward_cued'));
+    ax.YAxis.Visible = 'off'; ax.XAxis.Visible = 'off';
+    formatFigurePublish('size', figSize);
 
-plot(xData + x2 + offset, us_pooled.puff.avgData{ix,2}, 'Color', mycolors('puff'));
-plot(xData + x2 + offset, us_pooled.puff.avgData{ix,1} + vert_offset, 'Color', mycolors('puff'));
-plot(xData + x2*2 + offset, us_pooled.shock.avgData{ix,2}, 'Color', mycolors('shock'));
-plot(xData + x2*2 + offset, us_pooled.shock.avgData{ix,1} + vert_offset, 'Color', mycolors('shock'));
-xData = cs_pooled.CSplus.avgDataX{1,1};
-plot(xData + x2*3 + offset, cs_pooled.CSplus.avgData{ix,2}, 'Color', mycolors('reward_cued'));
-plot(xData + x2*3 + offset, cs_pooled.CSplus.avgData{ix,1} + vert_offset, 'Color', mycolors('reward_cued'));
-ax.YAxis.Visible = 'off'; ax.XAxis.Visible = 'off';
-formatFigurePublish('size', figSize);
-
-if saveOn 
-    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
-    saveas(gcf, fullfile(figPath, [saveName '.fig']));
-    saveas(gcf, fullfile(figPath, [saveName '.jpg']));
+    if saveOn 
+        print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+        saveas(gcf, fullfile(figPath, [saveName '.fig']));
+        saveas(gcf, fullfile(figPath, [saveName '.jpg']));
+    end
 end
-
 %% plot reward responses + means
 
 saveName = 'means_and_residuals';
