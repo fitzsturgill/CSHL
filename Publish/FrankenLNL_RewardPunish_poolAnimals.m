@@ -251,7 +251,7 @@ for counter = 1:nAnimals
     
     ix = (counter - 1) * 2 + (1:2);
     subplot(3,4,counter); hold on;
-    textBox(DB.animals{counter});a
+    textBox(DB.animals{counter});
     boundedline(omitReward_lickAligned.xData', omitReward_lickAligned.avgData(ix,:)', permute(omitReward_lickAligned.semData(ix,:), [2 3 1]));
 end
     
@@ -264,12 +264,7 @@ load(fullfile(savepath, 'grandAveragesNorm.mat'), 'gAvgNorm');
 disp(['*** loading: ' fullfile(savepath, 'grandAveragesNorm.mat') ' ***']);
 
 
-%% plot grand Averages and statistics for cued vs uncued reward response
-
-save(fullfile(savepath, 'grandAverages.mat'), 'gAvg');
-disp(['*** saving: ' fullfile(savepath, 'grandAverages.mat') ' ***']);
-save(fullfile(savepath, 'grandAveragesNorm.mat'), 'gAvgNorm');
-disp(['*** saving: ' fullfile(savepath, 'grandAveragesNorm.mat') ' ***']);
+%% APPETITIVE plot grand Averages and statistics for cued vs uncued reward response
 
 figSize = [1.7 0.9];
 saveName = 'grandAverage_appetitive_simple';
@@ -298,6 +293,121 @@ formatFigurePublish('size', figSize);
 if saveOn 
     print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(figsavepath, saveName), '-eps');
+end
+
+%% AVERSIVE plot grand Averages and statistics for cued vs uncued air puff response
+
+figSize = [1.7 0.9];
+saveName = 'grandAverage_puff_simple';
+ensureFigure(saveName, 1); 
+linecolors = [0 0 1; 0 0 0; 0 1 1];     
+window = [-5 3];
+axes; hold on;
+% xData = [gAvg.phCue.cuedPuff.xData gAvg.phUs.cuedPuff.xData;...
+%     gAvg.phCue.omitPuff.xData gAvg.phUs.omitPuff.xData;...
+%     gAvg.phCue.uncuedPuff.xData gAvg.phUs.uncuedPuff.xData]';
+% yData = [gAvg.phCue.cuedPuff.Avg gAvg.phUs.cuedPuff.Avg;...
+%     gAvg.phCue.omitPuff.Avg gAvg.phUs.omitPuff.Avg;...
+%     gAvg.phCue.uncuedPuff.Avg gAvg.phUs.uncuedPuff.Avg]';
+% bData = permute([gAvg.phCue.cuedPuff.SEM gAvg.phUs.cuedPuff.SEM;...
+%     gAvg.phCue.omitPuff.SEM gAvg.phUs.omitPuff.SEM;...
+%     gAvg.phCue.uncuedPuff.SEM gAvg.phUs.uncuedPuff.SEM], [2 3 1]);
+xData = [gAvg.ph.cuedPuff.xData;...
+    gAvg.ph.omitPuff.xData;...
+    gAvg.ph.uncuedPuff.xData]';
+yData = [gAvg.ph.cuedPuff.Avg;...
+    gAvg.ph.omitPuff.Avg;...
+    gAvg.ph.uncuedPuff.Avg]';
+bData = permute([gAvg.ph.cuedPuff.SEM;...
+    gAvg.ph.omitPuff.SEM;...
+    gAvg.ph.uncuedPuff.SEM], [2 3 1]);
+[hl, hp] = boundedline(xData, yData, bData, 'cmap', linecolors);
+set(gca, 'XLim', window);
+addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
+% legend(hl, {'cued', 'omit', 'uncued'}, 'Location', 'best'); legend('boxoff');
+% ylabel('F(\fontsize{10}\sigma\fontsize{7}-baseline)');  set(gca, 'XLim', window);
+xlabel('Time from puff (s)');
+
+formatFigurePublish('size', figSize);
+
+if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+    export_fig(fullfile(figsavepath, saveName), '-eps');
+end
+
+saveName = 'grandAverage_shock_simple';
+ensureFigure(saveName, 1); 
+linecolors = [0 0 1; 0 0 0; 0 1 1];     
+window = [-5 3];
+axes; hold on;
+% xData = [gAvg.phCue.cuedShock.xData gAvg.phUs.cuedShock.xData;...
+%     gAvg.phCue.omitShock.xData gAvg.phUs.omitShock.xData;...
+%     gAvg.phCue.uncuedShock.xData gAvg.phUs.uncuedShock.xData]';
+% yData = [gAvg.phCue.cuedShock.Avg gAvg.phUs.cuedShock.Avg;...
+%     gAvg.phCue.omitShock.Avg gAvg.phUs.omitShock.Avg;...
+%     gAvg.phCue.uncuedShock.Avg gAvg.phUs.uncuedShock.Avg]';
+% bData = permute([gAvg.phCue.cuedShock.SEM gAvg.phUs.cuedShock.SEM;...
+%     gAvg.phCue.omitShock.SEM gAvg.phUs.omitShock.SEM;...
+%     gAvg.phCue.uncuedShock.SEM gAvg.phUs.uncuedShock.SEM], [2 3 1]);
+xData = [gAvg.ph.cuedShock.xData;...
+    gAvg.ph.omitShock.xData;...
+    gAvg.ph.uncuedShock.xData]';
+yData = [gAvg.ph.cuedShock.Avg;...
+    gAvg.ph.omitShock.Avg;...
+    gAvg.ph.uncuedShock.Avg]';
+bData = permute([gAvg.ph.cuedShock.SEM;...
+    gAvg.ph.omitShock.SEM;...
+    gAvg.ph.uncuedShock.SEM], [2 3 1]);
+[hl, hp] = boundedline(xData, yData, bData, 'cmap', linecolors);
+set(gca, 'XLim', window);
+addStimulusPatch(gca, [-2 -1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
+% legend(hl, {'cued', 'omit', 'uncued'}, 'Location', 'best'); legend('boxoff');
+% ylabel('F(\fontsize{10}\sigma\fontsize{7}-baseline)');  set(gca, 'XLim', window);
+xlabel('Time from shock (s)');
+
+formatFigurePublish('size', figSize);
+
+if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+    export_fig(fullfile(figsavepath, saveName), '-eps');
+end
+
+%% for Figure 1 of paper
+saveName = 'grandAverage_aversive_combined';
+ensureFigure(saveName, 1); 
+linecolors = [mycolors('puff'); mycolors('shock')];     
+window = [-3 3];
+axes; hold on;
+xData = [gAvg.phCue.cuedReward.xData(61:end-21)+1 gAvg.phUs.cuedReward.xData(1:end-19);...
+    gAvg.phCue.cuedPuff.xData(61:end-21)+1 gAvg.phUs.cuedPuff.xData(1:end-19);...    
+    gAvg.phCue.cuedShock.xData(61:end-21)+1 gAvg.phUs.cuedShock.xData(1:end-19)]';
+yData = [gAvg.phCue.cuedReward.Avg(61:end-21) gAvg.phUs.cuedReward.Avg(1:end-19);...
+    gAvg.phCue.cuedPuff.Avg(61:end-21) gAvg.phUs.cuedPuff.Avg(1:end-19);...
+    gAvg.phCue.cuedShock.Avg(61:end-21) gAvg.phUs.cuedShock.Avg(1:end-19)]';
+bData = permute([gAvg.phCue.cuedReward.SEM(61:end-21) gAvg.phUs.cuedReward.SEM(1:end-19);...
+    gAvg.phCue.cuedPuff.SEM(61:end-21) gAvg.phUs.cuedPuff.SEM(1:end-19);...
+    gAvg.phCue.cuedShock.SEM(61:end-21) gAvg.phUs.cuedShock.SEM(1:end-19)], [2 3 1]);
+% xData = [gAvg.ph.cuedShock.xData;...
+%     gAvg.ph.omitShock.xData;...
+%     gAvg.ph.uncuedShock.xData]';
+% yData = [gAvg.ph.cuedShock.Avg;...
+%     gAvg.ph.omitShock.Avg;...
+%     gAvg.ph.uncuedShock.Avg]';
+% bData = permute([gAvg.ph.cuedShock.SEM;...
+%     gAvg.ph.omitShock.SEM;...
+%     gAvg.ph.uncuedShock.SEM], [2 3 1]);
+[hl, hp] = boundedline(xData, yData, bData, 'cmap', linecolors);
+set(gca, 'XTick', [-3 0 3], 'XLim', [-3 3]);
+addStimulusPatch(gca, [-2 -1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
+% legend(hl, {'cued', 'omit', 'uncued'}, 'Location', 'best'); legend('boxoff');
+% ylabel('F(\fontsize{10}\sigma\fontsize{7}-baseline)');  set(gca, 'XLim', window);
+xlabel('Time from shock (s)');
+
+formatFigurePublish('size', figSize);
+
+if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+%     export_fig(fullfile(figsavepath, saveName), '-eps');
 end
 
 %% stats

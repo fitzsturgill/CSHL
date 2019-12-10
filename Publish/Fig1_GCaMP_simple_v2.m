@@ -9,7 +9,7 @@ DB = dbLoadExperiment('SO_RewardPunish_odor');
 photometryField = 'Photometry';
 saveOn = 1;
 climfactor = 2;
-window = [-4 4];
+window = [-3 3];
 
 animal = 'ChAT_22';
 success = dbLoadAnimal(DB, animal);
@@ -29,10 +29,10 @@ figSize = [1.66 0.68];
 climfactor = 3;  
 fdField = 'ZS';
 linewidth = 4;
-window = [-4 3.9];
+window = [-3 3];
 offset = -0.1;
-tcolors = [204 153 255; 153 51 255; 51 0 102]; tcolors = tcolors ./ 255; 
-
+% tcolors = [204 153 255; 153 51 255; 51 0 102]; tcolors = tcolors ./ 255; 
+tcolors = [0 0 0; 0.8 0.8 0.8; 0.6 0.6 0.6];
 saveName = ['acquisition_phRaster_' animal];
 ensureFigure(saveName, 1); axes; hold on;
 phRasterFromTE(TE, rewardOdorTrials & rewardTrials, 1, 'trialNumbering', 'consecutive',...

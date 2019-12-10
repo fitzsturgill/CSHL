@@ -3,7 +3,7 @@
 saveOn = 0;
 %%
 saveOn = 1;
-%%
+%%av
 sessions = bpLoadSessions; % load sessions
 %% 
 TE = makeTE_wheel_v1(sessions); % make TE structure
@@ -92,15 +92,15 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'scatter.jpg'));
 end
 %%
-window = [-2 2];
-fs = 20; % sample rate
+window = [-4 2];
+fs = 100; % sample rate
 blSamples = (0 - window(1)) * fs;
     
 
 
 % local dFF
 if ismember(2, channels)
-    [rewards_dat, ts, tn] = extractDataByTimeStamps(TE.Photometry.data(2).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2]);
+    [rewards_dat, ts, tn] = extractDataByTimeStamps(TE.PhotometryHF.data(2).raw, TE.PhotometryHF.startTime, 100, TE.Reward, window);
     bl_dat = nanmean(rewards_dat(:,1:blSamples), 2);
     rewards_dat = bsxfun(@minus, rewards_dat, bl_dat);
     rewards_dat = bsxfun(@rdivide, rewards_dat, bl_dat);
@@ -108,7 +108,7 @@ if ismember(2, channels)
 end
 
 if ismember(1, channels)
-    [rewards_chat, ts, tn] = extractDataByTimeStamps(TE.Photometry.data(1).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2]);
+    [rewards_chat, ts, tn] = extractDataByTimeStamps(TE.PhotometryHF.data(1).raw, TE.PhotometryHF.startTime, 100, TE.Reward, window);
     bl_chat = nanmean(rewards_chat(:,1:blSamples), 2);
     rewards_chat = bsxfun(@minus, rewards_chat, bl_chat);
     rewards_chat = bsxfun(@rdivide, rewards_chat, bl_chat);
@@ -125,7 +125,7 @@ iri_post = [diff(ts_abs); Inf];
 
 [~, I] = sort(iri_pre);
 iri_pre_sorted = iri_pre(I);
-climFactor = 6;
+climFactor = 3;
 ensureFigure('random_rewards', 1); 
 if ismember(2, channels)
     rewards_dat_sorted = rewards_dat(I, :);

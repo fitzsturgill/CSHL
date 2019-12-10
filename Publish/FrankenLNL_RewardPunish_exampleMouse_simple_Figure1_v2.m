@@ -8,7 +8,7 @@ smoothWindow = 1;
 saveOn = 1;
 window = [-3 3];
 
-photometryField = 'Photometry';
+photometryField = 'PhotometryHF';
 fdField = 'ZS';
 
 success = dbLoadAnimal(DB, animal); % load TE and trial lookups
@@ -19,112 +19,7 @@ matches = ismember(TE.filename, sessionNames);
 sessionList = unique(TE.sessionIndex(matches));
 
 
-%% make array of best example traces to choose 1 to show
 
-% rewarding subset
-
-% showTheseR = find(Odor2Valve1Trials & rewardTrials & ismember(TE.sessionIndex, sessionIndex));
-% [~, rixR] = sort(rand(size(showTheseR)));
-%{
-Good rixRs for example traces
-sessionIndex = 1
- 55    27    49    33    25    14    31     2     5    13
-62    51     6    29    15     4    43    31    37    55
-65    26     2    49    16    38    14    55    64    35    40    12    41    57    23     7    59    18    37     
-
-sessionIndex = 2
-4     1     7    16    26    21    23    34    12     2
- 5    21    24    26    22     6     4    16    10    28
- 28    12    23    35    26    32     4    22    21    14
-  6     2    32    21    25    11    26    15     7    10
-
-sessionIndex = 3
- 21     6    12    17     4    31    14    16    18    34
- 14    15    12    30     9    34    18    10    21     3
-25     5    26     7     4    31    27    18    14     1
-%}
-
-exampleArray = [ 55    27    49    33    25    14    31     2     5    13;...
-    62    51     6    29    15     4    43    31    37    55;...
-    65    26     2    49    16    38    14    55    64    35;...
-    4     1     7    16    26    21    23    34    12     2;...
-    5    21    24    26    22     6     4    16    10    28;...
-    28    12    23    35    26    32     4    22    21    14;...
-    6     2    32    21    25    11    26    15     7    10;...
-    21     6    12    17     4    31    14    16    18    34;...
-    14    15    12    30     9    34    18    10    21     3;...
-    25     5    26     7     4    31    27    18    14     1];
-
-exampleArraySessionKey = [1 1 1 2 2 2 2 3 3 3];
-    
-    
-
-
-saveName = 'PE_BLA_exampleMouse_traces_array';  
-fig = ensureFigure(saveName, 1);    
-
-for counter = 1:length(exampleArraySessionKey)
-    showTheseR = find(Odor2Valve1Trials & rewardTrials & ismember(TE.sessionIndex, exampleArraySessionKey(counter)));
-    ax = subplot(2,5,counter);
-    plot(TE.PhotometryHF.xData - 2, TE.PhotometryHF.data(1).dFF(showTheseR(exampleArray(counter, :)), :)', 'k', 'LineWidth', 0.15); set(gca, 'XLim', window);
-    addStimulusPatch(gca, [-2 -1]); addStimulusPatch(gca, [-0.1 0.1]);
-    % set(gca, 'YTickLabel', {}); set(gca, 'XTickLabel', {}); 
-    set(gca, 'Visible', 'off');
-end
-
-formatFigurePublish('size', [1.6 1.1] * 3);
-
-if saveOn 
-    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
-    export_fig(fullfile(savepath, saveName), '-eps');
-end
-
-%% Choose a good example trace set and plot them for the figure
-
-figSize = [1.6 0.6];
-sessionIndex = 2;
-whichOne = 7;
-rixR = exampleArray(whichOne, :);
-showTheseR = find(Odor2Valve1Trials & rewardTrials & ismember(TE.sessionIndex, sessionIndex));
-
-saveName = ['PE_BLA_exampleMouse_traces' num2str(whichOne) '_cued'];  
-fig = ensureFigure(saveName, 1);    
-
-ax = subplot(1,1,1);
-plot(TE.PhotometryHF.xData - 2, TE.PhotometryHF.data(1).dFF(showTheseR(rixR(1:10)), :)', 'k', 'LineWidth', 0.15); set(gca, 'XLim', window); % xscale shifted relative to reinforcement
-addStimulusPatch(gca, [-2 -1]); addStimulusPatch(gca, [-0.1 0.1]);
-% set(gca, 'YTickLabel', {}); set(gca, 'XTickLabel', {}); 
-set(gca, 'YColor', 'none', 'YTick', [], 'XTickLabel', []);
-set(gca, 'YLim', [-0.1 0.3]);
-
-formatFigurePublish('size', figSize);
-
-if saveOn 
-    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
-%     export_fig(fullfile(savepath, saveName), '-eps');
-end
-
-
-% also an uncued Example
-sessionIndex = 2;
-showTheseU = find(uncuedReward & ismember(TE.sessionIndex, sessionIndex));
-rixU = [ 7    15    19     1    10     4    18    11     6     8];
-saveName = ['PE_BLA_exampleMouse_traces' num2str(whichOne) '_uncued'];  
-fig = ensureFigure(saveName, 1);    
-
-ax = subplot(1,1,1);
-plot(TE.PhotometryHF.xData - 2, TE.PhotometryHF.data(1).dFF(showTheseU(rixU(1:10)), :)', 'k', 'LineWidth', 0.15); set(gca, 'XLim', window); % xscale shifted relative to reinforcement
-addStimulusPatch(gca, [-0.1 0.1]);
-% set(gca, 'YTickLabel', {}); set(gca, 'XTickLabel', {}); 
-set(gca, 'YColor', 'none', 'YTick', [], 'XTickLabel', []);
-set(gca, 'YLim', [-0.1 0.3]);
-
-formatFigurePublish('size', figSize);
-
-if saveOn 
-    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
-%     export_fig(fullfile(savepath, saveName), '-eps');
-end
 
 %% cued reward rasters, cued and uncued for photometry
 
@@ -133,38 +28,28 @@ tcolor = mycolors('chat');
 sessionIndices = [2 3];
 hitTrials = TE.licks_cs.rate > 0;
 figSize = [1.6 0.81];
-saveName = 'PE_BLA_exampleMouse_Appetitive_Rasters_cuedLicks';  
-ensureFigure(saveName, 1);
-subplot(1,1,1);
-[~, lh] = eventRasterFromTE(TE, trialsByType{1} & hitTrials & ismember(TE.sessionIndex, sessionIndices), 'Port1In', 'trialNumbering', 'consecutive',...
-    'zeroField', 'Us', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
-set(gca, 'XLim', window, 'XTick', [-3 0 3]);
-set(gca, 'YTick', [1 50]);
-% ylabel('Trial #');
-formatFigurePublish('size', figSize);
-if saveOn 
-    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
-    export_fig(fullfile(savepath, saveName), '-eps');
-end        
+nTrials = 30;
 
 
-saveName = 'PE_BLA_exampleMouse_Appetitive_Rasters_cued';  
+saveName = 'Fig1_Sensor_cuedRasters';  
 ensureFigure(saveName, 1);
 climfactor = 3;  
-subplot(1,1,1); phRasterFromTE(TE, trialsByType{1} & hitTrials & ismember(TE.sessionIndex, sessionIndices), 1, 'trialNumbering', 'consecutive',...
-    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry', 'zeroTimes', TE.Us, 'window', window, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
-set(gca, 'YTick', [1 50], 'XLim', window, 'XTick', [-3 0 3]);
+trials = find(trialsByType{1} & hitTrials & ismember(TE.sessionIndex, sessionIndices));
+subplot(1,1,1); phRasterFromTE(TE, trials(1:nTrials), 1, 'trialNumbering', 'consecutive',...
+    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'zeroTimes', TE.Us, 'window', window, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
+set(gca, 'YTick', [nTrials], 'XLim', window, 'XTick', [-3 0 3], 'XTickLabel', {});
 formatFigurePublish('size', figSize);
 if saveOn 
     print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
     export_fig(fullfile(savepath, saveName), '-eps');
 end        
 
-saveName = 'PE_BLA_exampleMouse_Appetitive_Rasters_uncued';  
+saveName = 'Fig1_Sensor_uncuedRasters';  
 ensureFigure(saveName, 1);
-subplot(1,1,1); phRasterFromTE(TE, uncuedReward & hitTrials & ismember(TE.sessionIndex, sessionIndices), 1, 'trialNumbering', 'consecutive',...
-    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry', 'zeroTimes', TE.Us, 'window', window, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
-set(gca, 'YTick', [1 30], 'XLim', window, 'XTick', [-3 0 3]);
+trials = find(uncuedReward & hitTrials & ismember(TE.sessionIndex, sessionIndices));
+subplot(1,1,1); phRasterFromTE(TE, trials(1:nTrials), 1, 'trialNumbering', 'consecutive',...
+    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'zeroTimes', TE.Us, 'window', window, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
+set(gca, 'YTick', [nTrials], 'XLim', window, 'XTick', [-3 0 3], 'XTickLabel', {});
 formatFigurePublish('size', figSize);
 
 if saveOn 
@@ -554,21 +439,3 @@ grid on;
 % % if saveOn 
 % %     export_fig(fullfile(savepath, saveName), '-eps');
 % % end
-
-
-% also an uncued Example
-sessionIndex = 2;
-showTheseU = find(uncuedReward & ismember(TE.sessionIndex, sessionIndex));
-rixU = [ 7    15    19     1    10     4    18    11     6     8];
-% rixU = [
-saveName = 'test';  
-fig = ensureFigure(saveName, 1);    
-
-ax = subplot(1,1,1);
-plot(TE.PhotometryHF.xData - 2, TE.PhotometryHF.data(1).dFF(showTheseU(rixU(1:10)), :)' + 0.15 * (1:10), 'k', 'LineWidth', 0.15); set(gca, 'XLim', window); % xscale shifted relative to reinforcement
-addStimulusPatch(gca, [-0.1 0.1]);
-% set(gca, 'YTickLabel', {}); set(gca, 'XTickLabel', {}); 
-set(gca, 'YColor', 'none', 'YTick', [], 'XTickLabel', []);
-% set(gca, 'YLim', [-0.1 0.3]);
-
-formatFigurePublish('size', figSize);

@@ -440,6 +440,54 @@ set(gca, 'XTick', [0], 'YTick', [0 1], 'YLim', ylim, 'YTickLabel', {}, 'XTickLab
 formatFigurePublish('size', figSize);
 if saveOn
     print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+end
+
+%% just high value, reward aligned, for figure 1 to match time scale of spike data
+
+animal = 'ChAT_42';
+success = dbLoadAnimal(DB, animal); % load TE and trial lookups
+
+figSize = [1.7 1];
+photometryField = 'Photometry';
+fdField = 'ZS';
+saveOn = 1;
+%
+channels = [1];
+climfactor = 2;
+lickTickLineWidth = 0.3; % 0.3 works well when printed out given current sizing
+markerSize = 1;
+fontsize = 10;
+
+
+xwindow = [-4 3];
+
+
+lickOnsets = TE.lickLatency_cs(highValueTrials & rewardTrials) - 3; % rezero to reward
+lickOnsets = sort(lickOnsets);    
+% lickZeros = TE.lickLatency_cs + cellfun(@(x) x(1), TE.Cue);
+
+saveName = 'highValue_phRaster_lickSorted_figure1';  
+ensureFigure(saveName, 1); 
+phRasterFromTE(TE, highValueTrials & rewardTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'zeroTimes', TE.Us, 'window', xwindow, 'sortValues', TE.lickLatency_cs); % 'CLimFactor', CLimFactor,
+line(lickOnsets, (1:sum(highValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'r', 'LineWidth', 1, 'LineStyle', '-');    
+set(gca, 'YTickLabel', {}, 'XTick', [-3 0 3], 'YTick', [0 200 400], 'XLim', xwindow);
+% xlabel('Time frome odor (s)');
+formatFigurePublish('size', figSize);
+if saveOn
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+end  
+
+ylim = [-1 2];
+figSize = [1.66 0.5];a
+saveName = 'highValue_phAverages_lickSorted_figure1';  
+ensureFigure(saveName, 1); 
+phPlotAverageFromTE(TE, highValueTrials & rewardTrials, 1, 'zeroTimes', TE.Us, 'window', xwindow, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'cmap', [1 0 1]);
+set(gca, 'XTick', [0], 'YTick', [0 1], 'YLim', ylim, 'YTickLabel', {}, 'XTickLabel', {});
+addStimulusPatch(gca, [-3 -2], '', [0.8 0.8 0.8], 0.5);
+addStimulusPatch(gca, [-0.1 0.1], '', [0.8 0.8 0.8], 0.5);
+formatFigurePublish('size', figSize);
+if saveOn
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
 end  
 
 %% subtract off cue-aligned mean just for fun

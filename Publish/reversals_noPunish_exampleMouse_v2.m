@@ -325,6 +325,55 @@ if saveOn
     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
+%% noise correlations #3, mimic noise correlations shown in figure 2B (Ach3.0 sensor experiment in BLA)
+% linecolors = [1 0 0; 0 0 1; 0 1 1; 0 1 0];       
+markerSize = 10;
+figSize = [1.2 1.2];
+saveName = 'CBF_VTA_NOISEcorrelations_reversals_v3';
+ensureFigure(saveName, 1);
+trialSets = [neutralTrials & csPlusTrials & hitTrials, rewardTrials & csPlusTrials & hitTrials, csMinusTrials & CRTrials & rewardTrials, uncuedReward];
+allTrials = sum(trialSets, 2) ~= 0;
+xlims = [min(TE.phPeakMean_cs(2).data(allTrials)) max(TE.phPeakMean_cs(2).data(allTrials)); min(TE.phPeakMean_us(2).data(allTrials)) max(TE.phPeakMean_us(2).data(allTrials))];
+ylims = [min(TE.phPeakMean_cs(1).data(allTrials)) max(TE.phPeakMean_cs(1).data(allTrials)); min(TE.phPeakMean_us(1).data(allTrials)) max(TE.phPeakMean_us(1).data(allTrials))];
+
+% allTrials = true; 
+axes; hold on;
+set(gca, 'XLim', xlims(1,:)); set(gca, 'YLim', ylims(1,:));
+[allX, allY] = deal([]);
+for counter = 1:size(trialSets, 2)
+
+%     allTrials = allTrials | trialSets{counter};
+    xData = TE.phPeakMean_cs(2).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_cs(2).data(trialSets(:, counter))); yData = TE.phPeakMean_cs(1).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_cs(1).data(trialSets(:, counter))); 
+    allX = [allX; xData]; allY = [allY; yData];
+%     scatter(TE.phPeakMean_cs(2).data(trialSets{counter}), TE.phPeakMean_cs(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');
+    scatter(xData, yData, markerSize, linecolors(counter, :), '.');
+
+    
+    xData = TE.phPeakMean_us(2).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_us(2).data(trialSets(:, counter))); yData = TE.phPeakMean_us(1).data(trialSets(:, counter)) - nanmean(TE.phPeakMean_us(1).data(trialSets(:, counter))); 
+    allX = [allX; xData]; allY = [allY; yData];
+    %     scatter(TE.phPeakMean_us(2).data(trialSets{counter}), TE.phPeakMean_us(1).data(trialSets{counter}), 8, linecolors(counter, :), '.');    
+    scatter(xData, yData, markerSize, linecolors(counter, :), '.');
+end
+xylims = [-6 6];
+set(gca, 'XLim', xylims, 'XTick', [-4 0 4], 'YLim', xylims, 'YTick', [-4 0 4]); 
+% set(gca, 'XTick', [-4 0 4],'YTick', [-4 0 4]);
+setXYsameLimit;
+addOrginLines;
+
+xlims = get(gca, 'XLim');
+sig_fit = fit(allX, allY, 'poly1');
+sig_line = sig_fit.p1 * xlims + sig_fit.p2;
+plot(xlims, sig_line, 'LineWidth', 2, 'Color', [0.5 0.5 0.5]);
+
+
+xlabel('DA');
+ylabel('ACh');
+formatFigurePublish('size', figSize);
+
+if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+%     export_fig(fullfile(savepath, saveName), '-eps');
+end
 
 
 

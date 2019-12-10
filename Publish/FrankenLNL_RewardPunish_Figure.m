@@ -97,7 +97,9 @@ s3 = struct(...
 s2 = struct(...
     'cuedReward', s3,...
     'uncuedReward', s3,...
-    'omitReward', s3...
+    'omitReward', s3,...
+    'cuedShock', s3,...
+    'cuedPuff', s3...
     );
 
 % s1
@@ -138,6 +140,14 @@ for counter = 1:length(DB.animals)
     trialSets{end,2} = neutralTrials & Odor2Valve1Trials & ismember(TE.BlockNumber, [2])...
         & (round(cellfun(@(x) diff(x), TE.Trace2)) == 1);        
     trialSets{end,3} = 2;    
+    % cuedShock
+    trialSets{end+1, 1} = 'cuedShock';
+    trialSets{end,2} = shockTrials & Odor2Valve2Trials;
+    trialSets{end,3} = 2;    
+    % cuedPuff
+    trialSets{end+1, 1} = 'cuedPuff';
+    trialSets{end,2} = punishTrials & Odor2Valve2Trials;
+    trialSets{end,3} = 2;        
    
     
     for tcounter = 1:size(trialSets, 1)
@@ -146,7 +156,8 @@ for counter = 1:length(DB.animals)
         fullBlock = trialSets{tcounter, 3};
         % windows
         % baseline, cue, and delay period: allow for variable trace 2 duration, relative to cue onset        
-        cueWindow = [zeros(size(TE.filename)) - 4 cellfun(@(x,y) y(end) - x(1), TE.Cue2, TE.Trace2)]; 
+%         cueWindow = [zeros(size(TE.filename)) - 4 cellfun(@(x,y) y(end) - x(1), TE.Cue2, TE.Trace2)]; 
+        cueWindow = [-4 2]; 
         % just the delay period, relative to outcome
         delayWindow = [zeros(size(TE.filename)) - cellfun(@(x) x(end) - x(1), TE.Trace2) zeros(size(TE.filename))];
         window = [-7 4]; % relative to outcome
@@ -252,7 +263,7 @@ figSize = [1.7 0.9];
 saveName = 'grandAverage_appetitive_simple';
 ensureFigure(saveName, 1); 
 linecolors = [mycolors('reward'); 0 0 0; mycolors('reward_cued')];     
-window = [-4 4];
+window = [-3 3];
 axes; hold on;
 % xData = [gAvg.phCue.cuedReward.xData gAvg.phUs.cuedReward.xData;...
 %     gAvg.phCue.omitReward.xData gAvg.phUs.omitReward.xData;...
@@ -275,12 +286,12 @@ bData = permute([gAvg.ph.cuedReward.SEM;...
     gAvg.ph.uncuedReward.SEM], [2 3 1]);
 
 [hl, hp] = boundedline(xData, yData, bData, 'cmap', linecolors);
-% set(gca, 'XLim', window);
+set(gca, 'XLim', window, 'XTick', [-3 0 3]);
 set(gca, 'YLim', [-0.8 2.5]);
 addStimulusPatch(gca, [-2 -1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
 % legend(hvl, {'cued', 'omit', 'uncued'}, 'Location', 'best'); legend('boxoff');
-ylabel('F(\fontsize{10}\sigma\fontsize{7}-baseline)');  set(gca, 'XLim', window);
-xlabel('Time from reinforcement (s)');
+% ylabel('F(\fontsize{10}\sigma\fontsize{7}-baseline)');  set(gca, 'XLim', window);
+% xlabel('Time from reinforcement (s)');
 
 formatFigurePublish('size', figSize);
 
@@ -289,7 +300,49 @@ if saveOn
     export_fig(fullfile(figsavepath, saveName), '-eps');
 end
 
+%% see FrankenLNL_RewardPunish_poolAnimals for combined aversive averages, search "Figure 1"
+%% plot aversive grand averages
 
+figSize = [1.7 0.9];
+saveName = 'grandAverage_combined';
+ensureFigure(saveName, 1); 
+linecolors = [mycolors('reward'); mycolors('puff'); mycolors('shock')];     
+window = [-3 3];
+axes; hold on;
+% xData = [gAvg.phCue.cuedReward.xData gAvg.phUs.cuedReward.xData;...
+%     gAvg.phCue.omitReward.xData gAvg.phUs.omitReward.xData;...
+%     gAvg.phCue.uncuedReward.xData gAvg.phUs.uncuedReward.xData]';
+% yData = [gAvg.phCue.cuedReward.Avg gAvg.phUs.cuedReward.Avg;...
+%     gAvg.phCue.omitReward.Avg gAvg.phUs.omitReward.Avg;
+%     gAvg.phCue.uncuedReward.Avg gAvg.phUs.uncuedReward.Avg]';
+% bData = permute([gAvg.phCue.cuedReward.SEM gAvg.phUs.cuedReward.SEM;...
+%     gAvg.phCue.omitReward.SEM gAvg.phUs.omitReward.SEM;...
+%     gAvg.phCue.uncuedReward.SEM gAvg.phUs.uncuedReward.SEM], [2 3 1]);
+
+xData = [gAvg.phCue.cuedReward.xData + 1 gAvg.phUs.cuedReward.xData;...
+    gAvg.phCue.cuedPuff.xData + 1 gAvg.phUs.cuedPuff.xData;...
+    gAvg.phCue.cuedShock.xData + 1 gAvg.phUs.cuedShock.xData]';
+yData = [gAvg.phCue.cuedReward.Avg gAvg.phUs.cuedReward.Avg;...
+    gAvg.phCue.cuedPuff.Avg gAvg.phUs.cuedPuff.Avg;
+    gAvg.phCue.cuedShock.Avg gAvg.phUs.cuedShock.Avg]';
+bData = permute([gAvg.phCue.cuedReward.SEM gAvg.phUs.cuedReward.SEM;...
+    gAvg.phCue.cuedPuff.SEM gAvg.phUs.cuedPuff.SEM;...
+    gAvg.phCue.cuedShock.SEM gAvg.phUs.cuedShock.SEM], [2 3 1]);
+
+[hl, hp] = boundedline(xData, yData, bData, 'cmap', linecolors);
+set(gca, 'XLim', window, 'XTick', [-3 0 3]);
+% set(gca, 'YLim', [-0.8 2.5]);
+addStimulusPatch(gca, [-2 -1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
+% legend(hvl, {'cued', 'omit', 'uncued'}, 'Location', 'best'); legend('boxoff');
+% ylabel('F(\fontsize{10}\sigma\fontsize{7}-baseline)');  set(gca, 'XLim', window);
+% xlabel('Time from reinforcement (s)');
+
+formatFigurePublish('size', figSize);
+
+if saveOn 
+    print(gcf, '-dpdf', fullfile(figsavepath, [saveName '.pdf']));
+    export_fig(fullfile(figsavepath, saveName), '-eps');
+end
 
 
 

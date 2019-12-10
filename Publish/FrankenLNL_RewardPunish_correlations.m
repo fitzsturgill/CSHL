@@ -69,16 +69,18 @@ ensureFigure(saveName, 1);
 axes; hold on;
 line(exData_rew, exData_y, 'Color', [0 114 178]/255, 'LineStyle', '--');
 line(exData_rewCued, exData_y, 'Color', [86 180 233]/255, 'LineStyle', '--');
-plot(Rnoise.bl.sorted, Rnoise.bl.index, 'Color', 'k');
+% plot(Rnoise.bl.sorted, Rnoise.bl.index, 'Color', 'k');
 plot(Rnoise.reward.sorted, Rnoise.reward.index, 'Color', mycolors('reward')); % blue   0   44.7059   69.8039
 plot(Rnoise.puff.sorted, Rnoise.puff.index, 'Color', mycolors('puff')); % vermillion       83.5294   36.8627   0
 plot(Rnoise.shock.sorted, Rnoise.shock.index, 'Color', mycolors('shock')); % blueish green  0   61.9608   45.0980
 plot(Rnoise.reward_cued.sorted, Rnoise.reward_cued.index, 'Color', mycolors('reward_cued')); % sky blue   33.7255   70.5882   91.3725
 plot(Rnoise.puff_cued.sorted, Rnoise.puff_cued.index, 'Color', mycolors('puff_cued')); % reddish purple
 plot(Rnoise.shock_cued.sorted, Rnoise.shock_cued.index, 'Color', mycolors('shock')); % blueish green
-plot(Rnoise.csPlus.sorted, Rnoise.csPlus.index, 'LineStyle', ':', 'Color', mycolors('reward_cued')); % sky blue
-plot(Rnoise.csMinus.sorted, Rnoise.csMinus.index, 'LineStyle', ':', 'Color', mycolors('puff_cued')); % reddish purple
-xlabel('Rnoise');
+% plot(Rnoise.csPlus.sorted, Rnoise.csPlus.index, 'LineStyle', ':', 'Color', mycolors('reward_cued')); % sky blue
+% plot(Rnoise.csMinus.sorted, Rnoise.csMinus.index, 'LineStyle', ':', 'Color', mycolors('puff_cued')); % reddish purple
+% plot(Rnoise.all.sorted, Rnoise.all.index, '-k', 'LineWidth', 1); hold on;
+% plot(Rnoise.all_shift.sorted, Rnoise.all_shift.index, 'LineStyle', '-', 'Color', [0.7 0.7 0.7], 'LineWidth', 1); hold on;
+% xlabel('Rnoise');
 set(gca, 'XLim', [-1 1], 'YTick', [0 1]);
 % legend({'bl.', 'rew.', 'puff', 'shock'}, 'Location', 'northwest'); legend boxoff;
 formatFigurePublish('size', figSize);
@@ -94,8 +96,15 @@ ensureFigure(saveName, 1);
 axes; hold on;
 plot(Rnoise.all.sorted, Rnoise.all.index, '-k'); hold on;
 plot(Rnoise.all_shift.sorted, Rnoise.all_shift.index, 'Color', [0.7 0.7 0.7]); hold on;
-xlabel('Noise Correlations');
-legend({'', 'shift by 1 trial'}, 'Location', 'best'); legend boxoff;
+% xlabel('Noise Correlations');
+% legend({'', 'shift by 1 trial'}, 'Location', 'best'); legend boxoff;
+set(gca, 'XLim', [-1 1], 'YTick', [0 1], 'XTick', [-1 -0.5 0 0.5 1]);
+formatFigurePublish('size', figSize);
+if saveOn 
+    print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
+    saveas(gcf, fullfile(figPath, [saveName '.fig']));
+    saveas(gcf, fullfile(figPath, [saveName '.jpg']));
+end
 
 %% signal correlations
 
@@ -266,6 +275,7 @@ end
 
 FluorField_us = 'phPeakMean_us';
 noiseMarkerSize = 10;
+figSize = [1 1.1];
 animal = {'ACh_7'};
 acounter = find(strcmp(DB.animals, animal));
 xylims = [-1 2];
@@ -345,7 +355,7 @@ plot(sigLims, sig_line, 'LineWidth', 2, 'Color', [0.5 0.5 0.5]);
 h = [];
 
 % formatFigurePublish('size', [1 1.5]);
-formatFigurePublish('size', [1 1.1]);
+formatFigurePublish('size', figSize);
 
 if saveOn 
     print(gcf, '-dpdf', fullfile(savePath, [saveName_signal '.pdf']));
@@ -358,16 +368,19 @@ noiseMarkerSize = 10;
 saveName_noise = sprintf('LeftRight_Noise_example_%s', FluorField_us);
 ensureFigure(saveName, 1);
 axes; hold on;
-set(gca, 'YLim', xylims, 'XLim', xylims);
-addOrginLines;
+% set(gca, 'YLim', xylims, 'XLim', xylims);
+
 h=[];   
 
 
-noiseLims = [-5 5];
+
 allX = []; allY = [];
 for counter = 1:size(trialSets_us, 1)       
     setField = trialSets_us{counter, 1};
-    xData = us_pooled.(setField).mean{acounter}(:,1) - xMean(counter); yData = us_pooled.(setField).mean{acounter}(:,2) - yMean(counter); 
+    xData = us_pooled.(setField).mean{acounter}(:,1) / xMean(1); % normalize to reward
+    xData = xData  - nanmean(xData);  % mean center
+    yData = us_pooled.(setField).mean{acounter}(:,2) / yMean(1); % normalize to reward
+    yData = yData  - nanmean(yData);  % mean center    
     allX = [allX; xData]; allY = [allY; yData];
     h(end + 1) = scatter(xData, yData, noiseMarkerSize, trialSets_us{counter, 2}, '.', 'MarkerEdgeColor', 'flat', 'MarkerEdgeAlpha', 1);%, 'MarkerFaceAlpha', 0.3, 'MarkerEdgeAlpha', 0.3);                
 %     sig_fit = fit(xData, yData, 'poly1');
@@ -378,12 +391,20 @@ end
 for counter = 1:size(trialSets_cs, 1)      
     setField = trialSets_cs{counter, 1};
     xData = cs_pooled.(setField).mean{acounter}(:,1) - xMean_cs(counter); yData = cs_pooled.(setField).mean{acounter}(:,2) - yMean_cs(counter); 
+
+    xData = cs_pooled.(setField).mean{acounter}(:,1) / xMean(1); % normalize to reward
+    xData = xData  - nanmean(xData);  % mean center
+    yData = cs_pooled.(setField).mean{acounter}(:,2) / yMean(1); % normalize to reward
+    yData = yData  - nanmean(yData);  % mean center  
     allX = [allX; xData]; allY = [allY; yData];
     h(end + 1) = scatter(xData, yData, noiseMarkerSize, trialSets_cs{counter, 2}, '.', 'MarkerEdgeColor', 'flat', 'MarkerEdgeAlpha', 1);%, 'MarkerFaceAlpha', 0.3, 'MarkerEdgeAlpha', 0.3);    
 %     sig_fit = fit(xData, yData, 'poly1');
 %     sig_line = sig_fit.p1 * noiseLims + sig_fit.p2;
 %     plot(noiseLims, sig_line, 'LineWidth', 1, 'Color', trialSets_us{counter, 2});
 end
+setXYsameLimit;
+noiseLims = get(gca, 'XLim');
+addOrginLines;
 sig_fit = fit(allX, allY, 'poly1');
 sig_line = sig_fit.p1 * noiseLims + sig_fit.p2;
 plot(noiseLims, sig_line, 'LineWidth', 2, 'Color', [0.5 0.5 0.5]);
@@ -402,14 +423,69 @@ for counter = 1:size(trialSets_cs, 1)
 scatter(0, 0, 40, trialSets_cs{counter, 2}, trialSets_cs{counter, 3}, 'MarkerFaceAlpha', 0.4, 'MarkerFaceColor', 'flat', 'MarkerEdgeColor', 'flat');            
 %         h(end + 1) = scatter(xMean(counter), yMean(counter), 40,  linecolors(counter, :), 'o');
 end
+set(gca, 'XTick', [-1 1], 'YTick', [-1 1]);
 
-formatFigurePublish('size', [1.5 1.5]);
+formatFigurePublish('size', figSize);
 
 if saveOn 
     print(gcf, '-dpdf', fullfile(savePath, [saveName_noise '.pdf']));
 %     export_fig(fullfile(savePath, saveName), '-eps');
 end
+%% same noise scatter plots but for 2 example mice shown in figure 2D: Ach_7 and Ach_15
 
+FluorField_us = 'phPeakMean_us';
+noiseMarkerSize = 10;
+figSize = [1 1.1];
+animals = {'ACh_7'};
+acounter = find(strcmp(DB.animals, animal));
+xylims = [-1 2];
+sigLims = [-3 7];
+linecolors = [mycolors('reward'); mycolors('puff'); mycolors('shock'); mycolors('reward'); mycolors('puff'); mycolors('shock'); mycolors('reward')];
+% linecolors = [0 1 1; 1 0 1; 0 1 0; 0 0 1; 1 0 0; 0 0.5 0];         
+trialSets_us = {...
+    'rew', mycolors('reward'), 'o';...
+    'puff', mycolors('puff'), 'o';...
+    'shock', mycolors('shock'), 'o';...
+    'rew_cued', mycolors('reward'), 's';...
+    'puff_cued', mycolors('puff'), 's';...
+    'shock_cued', mycolors('reward'), 's';...
+    };
+trialSets_cs = {...
+    'CSplus', mycolors('reward'), 'd';...
+    'CSminus', mycolors('puff'), 'd';...
+    'CSminus_shock', mycolors('shock'), 'd';...
+    };
+
+% linecolors = [mycolors('reward'); mycolors('reward_cued')];
+% trialSets = {'rew', 'rew_cued'};
+% trialSetNames = {'Reward', 'Reward cued'};   
+saveName_signal = sprintf('LeftRight_Signal_example_%s', FluorField_us);
+ensureFigure(saveName, 1);
+axes; hold on;     
+set(gca, 'XLim', xylims, 'YLim', xylims);
+% addOrginLines;
+% reward is first in the trialSets list, use it to normalize
+% 
+xDataStruct = struct('Mean', cell(size(trialSets_us, 2), 1), 'SEM', cell(size(trialSets_us, 2), 1));
+yDataStruct = struct('Mean', cell(size(trialSets_us, 2), 1), 'SEM', cell(size(trialSets_us, 2), 1));
+h=[];   
+[xMean, yMean] = deal(zeros(size(trialSets_us, 1), 1));
+for counter = 1:size(trialSets_us, 1)       
+    setField = trialSets_us{counter, 1};    
+    xData = us_pooled.(setField).mean{acounter}(:,1); yData = us_pooled.(setField).mean{acounter}(:,2);     
+%     h(end + 1) = scatter(xData, yData, noiseMarkerSize, trialSets_us{counter, 2}, '.', 'MarkerEdgeColor', 'flat', 'MarkerEdgeAlpha', .4);%, 'MarkerFaceAlpha', 0.3, 'MarkerEdgeAlpha', 0.3);
+    
+    xMean(counter) = nanmean(xData);
+    yMean(counter) = nanmean(yData);
+end
+[xMean_cs, yMean_cs] = deal(zeros(size(trialSets_cs, 1), 1));
+for counter = 1:size(trialSets_cs, 1)       
+    setField = trialSets_cs{counter, 1};
+    xData = cs_pooled.(setField).mean{acounter}(:,1); yData = cs_pooled.(setField).mean{acounter}(:,2); 
+%     h(end + 1) = scatter(xData, yData, noiseMarkerSize, trialSets_cs{counter, 2}, '.', 'MarkerEdgeColor', 'flat', 'MarkerEdgeAlpha', .4);%, 'MarkerFaceAlpha', 0.3, 'MarkerEdgeAlpha', 0.3);
+    xMean_cs(counter) = nanmean(xData);
+    yMean_cs(counter) = nanmean(yData);
+end
 %% calculate auROC
 % assuming that a linear relationship describes response of both L and R
 % BLA ACh release to different strengths of the different reinforcers/signals, then

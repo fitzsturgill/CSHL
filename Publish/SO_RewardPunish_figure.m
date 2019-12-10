@@ -12,7 +12,7 @@ success = dbLoadAnimal(DB, animal); % load TE and trial lookups
 
 %% photometry averages, zscored
 %     ylim = [-2 8];
-    window = [-5 4];
+    window = [-3 3];
     fdField = 'ZS';
     saveName = 'ChAT_22_phAverages_appetitive';
     ensureFigure(saveName, 1);
