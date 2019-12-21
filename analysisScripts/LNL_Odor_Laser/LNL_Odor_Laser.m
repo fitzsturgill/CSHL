@@ -58,7 +58,7 @@ subplot(1,2,1); hold on;
     'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
 set(lh, 'Color', 'b');
 [~, lh] = eventRasterFromTE(TE, Odor1Trials & csMinusTrials, 'Port1In', 'trialNumbering', 'global',...
-    'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUs  Recording');
+    'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
 set(lh, 'Color', 'r');
 title('Odor1'); ylabel('trial number');
 set(gca, 'XLim', xlim); 
@@ -91,6 +91,11 @@ showLaser(showLaser == 0) = NaN;
 showLaser(showLaser == 1) = 0;
 scatter(showLaser,globalTrials(Odor2Trials), 10, [1 0.75 0], '*');
 
+    if saveOn
+        saveas(gcf, fullfile(savepath, [saveName '.fig']));
+        saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    end
+
 %% calculate discriminability of csPlus from csMinus trials according to anticipatory licking
 [D, P, CI] = calc_auROC_reversalsFromTE(TE, TE.csLicks.rate, csPlusTrials, csMinusTrials,...
     'window', 30, 'windowMode', 'global', 'reset', 1, 'nBoot', 1000);
@@ -118,7 +123,10 @@ yLims2 = [min(TE.auROC.D) * 0.9; max(TE.auROC.D) * 0.9];
 line(repmat(find(TE.sessionChange)', 2, 1), repmat(yLims1, 1, sum(TE.sessionChange)), 'Color', 'r');
 line(repmat(find(TE.BlockChange)', 2, 1), repmat(yLims2, 1, sum(TE.BlockChange)), 'Color', 'g');
 
-
+    if saveOn
+        saveas(gcf, fullfile(savepath, [saveName '.fig']));
+        saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+    end
 
 %% auROC plots confidence interval
 saveName = [subjectName '_auROCboot_CI2'];
@@ -136,6 +144,11 @@ line(repmat(find(TE.BlockChange)', 2, 1), repmat(yLims2, 1, sum(TE.BlockChange))
 addOrginLines;
 set(gca, 'YLim', [-1.1 1.1]);
 
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+end
+
 %% plot p value
 saveName = [subjectName '_auROCboot_pValue_global'];
 h=ensureFigure(saveName, 1);
@@ -145,6 +158,11 @@ yLims2 = [0.1; 0.9];
 % line(repmat(find(TE.sessionChange)', 2, 1), repmat(yLims1, 1, sum(TE.sessionChange)), 'Color', 'r');
 line(repmat(find(TE.BlockChange)', 2, 1), repmat(yLims2, 1, sum(TE.BlockChange)), 'Color', 'g');
 addOrginLines;
+
+if saveOn
+    saveas(gcf, fullfile(savepath, [saveName '.fig']));
+    saveas(gcf, fullfile(savepath, [saveName '.jpg']));   
+end
 
 
 %% test thing for sanity check

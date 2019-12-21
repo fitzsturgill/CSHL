@@ -94,7 +94,7 @@ ax = subplot(1,1,1);
 plot(TE.PhotometryHF.xData - 2, TE.PhotometryHF.data(1).dFF(showTheseR(rixR(1:10)), :)', 'k', 'LineWidth', 0.15); set(gca, 'XLim', window); % xscale shifted relative to reinforcement
 addStimulusPatch(gca, [-2 -1]); addStimulusPatch(gca, [-0.1 0.1]);
 % set(gca, 'YTickLabel', {}); set(gca, 'XTickLabel', {}); 
-set(gca, 'YColor', 'none', 'YTick', [], 'XTickLabel', []);
+set(gca, 'YColor', 'none', 'YTick', [], 'XTickLabel', [], 'XLim', [-3 3], 'XTick', [-3 0 3]);
 set(gca, 'YLim', [-0.1 0.3]);
 
 formatFigurePublish('size', figSize);
@@ -108,15 +108,16 @@ end
 % also an uncued Example
 sessionIndex = 2;
 showTheseU = find(uncuedReward & ismember(TE.sessionIndex, sessionIndex));
-rixU = [ 7    15    19     1    10     4    18    11     6     8];
+% rixU = [ 7    15    19     1    10     4    18    11     6     8];
+rixU = [ 7    15    19     1    10     18    11     6     8];
 saveName = ['PE_BLA_exampleMouse_traces' num2str(whichOne) '_uncued'];  
 fig = ensureFigure(saveName, 1);    
 
 ax = subplot(1,1,1);
-plot(TE.PhotometryHF.xData - 2, TE.PhotometryHF.data(1).dFF(showTheseU(rixU(1:10)), :)', 'k', 'LineWidth', 0.15); set(gca, 'XLim', window); % xscale shifted relative to reinforcement
+plot(TE.PhotometryHF.xData - 2, TE.PhotometryHF.data(1).dFF(showTheseU(rixU), :)', 'k', 'LineWidth', 0.15); set(gca, 'XLim', window); % xscale shifted relative to reinforcement
 addStimulusPatch(gca, [-0.1 0.1]);
 % set(gca, 'YTickLabel', {}); set(gca, 'XTickLabel', {}); 
-set(gca, 'YColor', 'none', 'YTick', [], 'XTickLabel', []);
+set(gca, 'YColor', 'none', 'YTick', [], 'XTickLabel', [], 'XTick', [-3 0 3], 'XLim', [-3 3]);
 set(gca, 'YLim', [-0.1 0.3]);
 
 formatFigurePublish('size', figSize);

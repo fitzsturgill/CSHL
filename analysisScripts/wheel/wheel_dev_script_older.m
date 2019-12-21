@@ -13,8 +13,9 @@
  
  %%
 D = 12.7; % diameter of wheel in cm
-pr = 200; % pulses/rotation 
-dpp = pi * 12.7 / 200;
+pr = 20; % 200 if not downsampled, pulses/rotation
+warning('pulses per rotation is changed');
+dpp = pi * 12.7 / pr;
 
 wheelTimes = rawTimes(rawTimes < 30);
 edges = 0:1/20:30;
@@ -33,13 +34,17 @@ plot(wheel_t, gradient(wheel_X), 'g');
 
 %%
 window = [-2 2];
-[rewards_dat, ts, tn] = extractDataByTimeStamps(TE.Photometry.data(2).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2]);
+if ismember(TE.Photometry.settings.channels, 2)
+    [rewards_dat, ts, tn] = extractDataByTimeStamps(TE.Photometry.data(2).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2]);
+end
 rewards_chat = extractDataByTimeStamps(TE.Photometry.data(1).raw, TE.Photometry.startTime, 20, TE.Reward, [-2 2]);
 
 % local dFF
-bl_dat = nanmean(rewards_dat(:,1:40), 2);
-rewards_dat = bsxfun(@minus, rewards_dat, bl_dat);
-rewards_dat = bsxfun(@rdivide, rewards_dat, bl_dat);
+if ismember(TE.Photometry.settings.channels, 2)
+    bl_dat = nanmean(rewards_dat(:,1:40), 2);
+    rewards_dat = bsxfun(@minus, rewards_dat, bl_dat);
+    rewards_dat = bsxfun(@rdivide, rewards_dat, bl_dat);
+end
 bl_chat = nanmean(rewards_chat(:,1:40), 2);
 rewards_chat = bsxfun(@minus, rewards_chat, bl_chat);
 rewards_chat = bsxfun(@rdivide, rewards_chat, bl_chat);
@@ -52,17 +57,23 @@ iri_post = [diff(ts_abs); Inf];
 
 [~, I] = sort(iri_pre);
 iri_pre_sorted = iri_pre(I);
-rewards_dat_sorted = rewards_dat(I, :);
+if ismember(2, TE.Photometry.settings.channels)
+    rewards_dat_sorted = rewards_dat(I, :);
+end
 rewards_chat_sorted = rewards_chat(I, :);
 
 ensureFigure('random_rewards', 1); 
 % subplot(3,2,1); imshow(rewards_chat_sorted, [min(min(rewards_chat_sorted)), max(max(rewards_chat_sorted))]); colormap('jet'); title('chat'); ylabel('sorted');
 % subplot(3,2,2); imshow(rewards_dat_sorted, [min(min(rewards_dat_sorted)), max(max(rewards_dat_sorted))]); colormap('jet'); title('dat');
 subplot(3,2,1); image(rewards_chat, 'XData', window, 'CDataMapping', 'Scaled'); set(gca, 'CLim', [min(min(rewards_chat_sorted)), max(max(rewards_chat_sorted))]); colormap('jet');  title('ChAT');
-subplot(3,2,2); image(rewards_dat, 'XData', window,  'CDataMapping', 'Scaled'); set(gca, 'CLim', [min(min(rewards_dat_sorted)), max(max(rewards_dat_sorted))]); colormap('jet');    title('DAT');
+if ismember(2, TE.Photometry.settings.channels)
+    subplot(3,2,2); image(rewards_dat, 'XData', window,  'CDataMapping', 'Scaled'); set(gca, 'CLim', [min(min(rewards_dat_sorted)), max(max(rewards_dat_sorted))]); colormap('jet');    title('DAT');
+end
 xdata = linspace(window(1), window(2), size(rewards_chat, 2));
 subplot(3,2,3); plot(xdata, nanmean(rewards_chat));
-subplot(3,2,4); plot(xdata, nanmean(rewards_dat));
+if ismember(2, TE.Photometry.settings.channels)
+    subplot(3,2,4); plot(xdata, nanmean(rewards_dat));
+end
 subplot(3,2,5); triggeredEventRasterFromTE(TE, 'Port1In', TE.Reward);
 
 if saveOn
@@ -72,9 +83,6 @@ end
 
 
 %% spectrogram-  spectra calculated across moving window
-%   NOTE!!! MOVING WINDOW NEEDS TO BE SUBSTANTIALLY LARGER THAN WAVELENGTH
-%   OF COHERENCE!!!!  BE WARY OF CROSS SPECTROGRAMS AND ASSOCIATED DATA
-%   GENERATED PRIOR TO 8/2019 WITH NARROWER MOVING WINDOW
 
 % assume that photometry channels are consistent across sessions, bleach
 % fit dFF for GCaMP6f (ch1) and simple dFF for jRGECO1a (ch2)
@@ -92,8 +100,8 @@ if sessions(1).SessionData.Settings.GUI.LED2_amp > 0
 end
 
 
-TE.PhotometryHF = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit',...
-    'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 119], 'startField', 'Baseline', 'downsample', 10);
+% TE.PhotometryHF = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'expFit',...
+%     'zeroField', 'Baseline', 'channels', channels, 'baseline', [0 119], 'startField', 'Baseline', 'downsample', 10);
 %
 if saveOn
     save(fullfile(savepath, 'TE.mat'), 'TE');
@@ -122,9 +130,9 @@ data_dat = TE.(Photometry).data(2).ZS';
 params.Fs = Fs;
 params.trialave = 1;
 params.err = [2 0.05];
-params.tapers = [3 5];
+params.tapers = [8 15];
 params.pad = 1;
-params.fpass = [0 20];
+params.fpass = [0 40];
 
 [C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat, data_dat, params);
 f(1) = eps;
@@ -145,10 +153,10 @@ set(gca, 'YLim', [-2 2], 'XScale', 'log', 'XLim', [0.01 10]);
 % scramble trial labels
 si = randperm(size(data_dat, 2));
 
-[C,phi,S12,S1,S2,f,confC, phistd, Cerr] = coherencyc(data_chat(:,si), data_dat, params);
-f(1) = eps;
+[C_shuff,phi_shuff,S12_shuff,S1_shuff,S2_shuff,f_shuff,confC_shuff, phistd_shuff, Cerr_shuff] = coherencyc(data_chat(:,si), data_dat, params);
+f_shuff(1) = eps;
 subplot(1,2,1); %plot(f,C, 'k'); hold on;
-boundedline(f, C, Cerr(1,:)' - C, 'alpha', 'k');
+boundedline(f_shuff, C_shuff, Cerr_shuff(1,:)' - C_shuff, 'alpha', 'k');
 set(gca, 'XScale', 'log', 'XLim', [0.01 10]);
 xlabel('Frequency');
 ylabel('Coherence');
@@ -160,12 +168,35 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'coherence.jpg'));
 %     saveas(gcf, fullfile(savepath, 'coherence.epsc'));
 end
+
+
+%% something for burbach poster
+saveName = 'burbach_coherence';
+ensureFigure(saveName, 1); axes('FontSize', 12); hold on;
+
+f(1) = eps;
+subplot(1,1,1); hold on;
+hl = [];
+[th, ~] = boundedline(f, C, Cerr(1,:)' - C, 'b');
+hl(end + 1) = th;
+[th, ~] = boundedline(f_shuff, C_shuff, Cerr_shuff(1,:)' - C_shuff, 'k');
+hl(end + 1) = th;
+set(gca, 'XScale', 'log', 'XLim', [0.01 10]);
+xlabel('Frequency');
+ylabel('Cross coherence');
+legend(hl, {'matched', 'shuffled'}, 'Box', 'Off');
+
+formatFigurePublish('size', [3 2.4], 'fontSize', 12);
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
+end
+
 %% cross coherence and phase
 crossField = 'C';
 % crossField = 'S12';
 lag = 0;
 lagp = round(lag * Fs);
-movingwin = [5 0.5]; % formerly 1 .1
+movingwin = [1 0.1]; % 1 .1
 tapers = [3 5];     %3 5
 dc_cc = bpCalcCrossCoherence(TE.(Photometry).data(1).ZS', circshift(TE.(Photometry).data(2).ZS', lagp, 1), Fs, 'movingwin', movingwin, 'whiten', 0, 'tapers', tapers);
 
@@ -207,7 +238,6 @@ allShuffled = repmat(NaN(size(dc_cc.(crossField))), 1, 1, 1, nShuffles);
 allShuffled_phi = allShuffled;
 nTrials = length(TE.filename);
 h = waitbar(0, 'Processing Shuffled Coherence');   
-% IT MIGHT BE BETTER TO JUST SHIFT THE DATA BY ONE TRIAL
 for counter = 1:nShuffles
     idx = randperm(nTrials);
     data2 = circshift(TE.(Photometry).data(2).ZS(idx, :)', lagp, 1);
@@ -238,7 +268,7 @@ dc_phi_corrected = dc_cc.phi - allShuffled_phi;
 C_timeFromReward = bpCalcTimeFromEvent(TE, 'Reward', 'dataStart', TE.Photometry.startTime, 'trialStart', TE.TrialStartTimestamp, 'dataTimes', dc_cc.t);
 C_timeFromReward = repmat(permute(C_timeFromReward, [2 3 1]), 1, size(dc_cc.(crossField), 2));
 
-bins = [0:0.1:1 2:10];
+bins = [0:0.1:1 2:20];
 [xC_Means, xC_Errors, xC_timeFromReward] = binnedMeansXY(C_timeFromReward(:,coherenceBandIx(1):coherenceBandIx(2), :),...
     dc_C_corrected(:,coherenceBandIx(1):coherenceBandIx(2), :), bins);
 % [xC_Means, xC_Errors, xC_timeFromReward] = binnedMeansXY(C_timeFromReward(:,coherenceBandIx(1):coherenceBandIx(2), :),...
@@ -251,9 +281,9 @@ ensureFigure('crossCoherence_vs_timeFromReward', 1);
 subplot(1,2,1);
 errorbar(xC_timeFromReward, xC_Means, xC_Errors, 'b'); hold on; 
 % errorbar(xC_timeFromReward_shuff, xC_Means_shuff, xC_Errors_shuff, 'k');
-xlabel('time from reward'); ylabel('Cross coherence'); set(gca, 'XLim', [0 10]);% set(gca, 'YLim', [0 max(xC_Means + xC_Errors)]);
+xlabel('time from reward'); ylabel('Cross coherence'); set(gca, 'XLim', [0 20]);% set(gca, 'YLim', [0 max(xC_Means + xC_Errors)]);
 subplot(1,2,2); title(['Frequency band = ' num2str(coherenceBand(1)) ' to ' num2str(coherenceBand(2))]);
-errorbar(xPhi_timeFromReward, xPhi_Means, xPhi_Errors, 'b'); hold on; set(gca, 'XLim', [0 10]); 
+errorbar(xPhi_timeFromReward, xPhi_Means, xPhi_Errors, 'b'); hold on; set(gca, 'XLim', [0 20]); 
 % errorbar(xC_timeFromReward_shuff, xC_Means_shuff, xC_Errors_shuff, 'k');
 xlabel('time from reward'); ylabel('Coherence Phase');% set(gca, 'YLim', [0 max(xC_Means + xC_Errors)]);
 title(['Frequency band = ' num2str(coherenceBand(1)) ' to ' num2str(coherenceBand(2))]);
@@ -267,7 +297,7 @@ end
 ensureFigure(['rewards_mean_sg_corrected_' num2str(lag)], 1);
 % axes('YDir', 'reverse');
 image(xdata, dc_cc.f, rewards_mean_sg_corrected', 'CDataMapping', 'Scaled');
-colormap('jet'); set(gca, 'YDir', 'normal', 'YLim', [0 6]);
+colormap('jet'); set(gca, 'YDir', 'normal', 'YLim', [0 20]);
 xlabel('time from reward (s)'); ylabel('Frequency (Hz)'); title('Coherence');
 set(gca, 'Clim', [min(rewards_mean_sg_corrected(:)), max(rewards_mean_sg_corrected(:))]);
 %  set(gca, 'CLim', [-0.1156    0.2122]);
@@ -334,25 +364,24 @@ end
 
 %% plot individual trials with reward times annotated
 
-for channel = 1:2    
-    ensureFigure(['annotated_' num2str(channel)], 1);
-    for trial = 1:8
+channel = 1;
+ensureFigure(['annotated_' num2str(channel)], 1);
+for trial = 1:10
 
-        subplot(4,2,trial);
-        trial = trial + 18 * 0;
-        ydata = TE.Photometry.data(channel).raw(trial, :);    
-        plot(TE.Photometry.xData, ydata, 'k'); hold on;
-        tsx = repmat(TE.Reward{trial}(:,1), 1, 2)';
-        tsy = [repmat(min(min(ydata)), 1, size(tsx, 2)); repmat(max(max(ydata)), 1, size(tsx, 2))];    
-        plot(tsx, tsy, 'r');
-    end
+    subplot(6,3,trial);
+    trial = trial + 18 * 0;
+    ydata = TE.Photometry.data(channel).raw(trial, :);    
+    plot(TE.Photometry.xData, ydata, 'k'); hold on;
+    tsx = repmat(TE.Reward{trial}(:,1), 1, 2)';
+    tsy = [repmat(min(min(ydata)), 1, size(tsx, 2)); repmat(max(max(ydata)), 1, size(tsx, 2))];    
+    plot(tsx, tsy, 'r');
 end
 
 %% cross correlation
-
+trial = 1;
 maxLagInSeconds = 10;
 maxLag = round(maxLagInSeconds * Fs);
-
+% [r, lags] = xcorr(data_chat(:,trial), data_dat(:,trial), maxLag);
 [r, shiftR, rawR, lags] = correctedXCorr(data_chat, data_dat, maxLag);
 ensureFigure('xcorr', 1);
 plot(lags * 1/Fs, r, 'k'); hold on;
@@ -372,29 +401,25 @@ end
 % 
 % TE = addPupilometryToTE(TE, 'duration', 30, 'zeroField', 'Baseline', 'startField', 'Baseline', 'frameRate', 60, 'frameRateNew', 20);
 
+%% for Burbach poster, cross correlation
 
-% cross correlation, pre reward
-window = [-20 0];
-[data_dat_pr, ts, tn] = extractDataByTimeStamps(TE.Photometry.data(2).ZS, TE.Photometry.startTime, 20, TE.Reward, window);
-data_chat_pr = extractDataByTimeStamps(TE.Photometry.data(1).ZS, TE.Photometry.startTime, 20, TE.Reward, window);
+saveName = 'burbach_xcorr';
+ensureFigure(saveName, 1); axes('FontSize', 12); hold on;
 
-
-maxLagInSeconds = 5;
+maxLagInSeconds = 10;
 maxLag = round(maxLagInSeconds * Fs);
-
-[r, shiftR, rawR, lags] = correctedXCorr(data_chat_pr, data_dat_pr, maxLag, 2);
-ensureFigure('xcorr_preReward', 1);
-plot(lags * 1/Fs, r, 'k'); hold on;
+% [r, lags] = xcorr(data_chat(:,trial), data_dat(:,trial), maxLag);
+[r, shiftR, rawR, lags] = correctedXCorr(data_chat, data_dat, maxLag);
+ensureFigure('xcorr', 1);
+plot(lags * 1/Fs, r, 'b'); hold on;
 plot(lags * 1/Fs, rawR, 'r');
-plot(lags * 1/Fs, shiftR, 'b');
-title('Xcorr, pre-reward');
-xlabel('Time (s)'); ylabel('ChAT x DAT XCorr'); 
-legend({'corrected', 'raw', 'shift predictor'});
+plot(lags * 1/Fs, shiftR, 'k');
+xlabel('Time (s)'); ylabel('Ach. vs. Dop. XCorr'); 
+legend({'corrected', 'raw', 'shift predictor'}, 'Box', 'off', 'FontSize', 10, 'Location', 'northeast');
 
-
-if saveOn
-    saveas(gcf, fullfile(savepath, 'xcorr_preReward.fig'));
-    saveas(gcf, fullfile(savepath, 'xcorr_preReward.jpg'));
+formatFigurePublish('size', [4 2.4], 'fontSize', 12);
+if saveOn 
+    export_fig(fullfile(savepath, saveName), '-eps');
 end
 %%
 
@@ -419,10 +444,10 @@ plot(lags * 1/Fs, r, 'k'); hold on;
 plot(lags * 1/Fs, rawR, 'r');
 plot(lags * 1/Fs, shiftR, 'b');
 xlabel('Time (s)'); ylabel('ChAT AutoCorr'); 
-legend({'corrected', 'raw', 'shift predictor'}, 'Location', 'northwest', 'Box', 'off');
+legend({'corrected', 'raw', 'shift predictor', 'Location', 'northwest'});
 
 subplot(3,2,3);
-[r, shiftR, rawR, lags] = correctedXCorr(data_chat, data_chat, maxLag);
+[r, shiftR, rawR, lags] = correctedXCorr(data_dat, data_dat, maxLag);
 plot(lags * 1/Fs, r, 'k'); hold on;
 plot(lags * 1/Fs, rawR, 'r');
 plot(lags * 1/Fs, shiftR, 'b');
@@ -430,7 +455,6 @@ xlabel('Time (s)'); ylabel('DAT AutoCorr');
 % legend({'corrected', 'raw', 'shift predictor'});
 
 data_pupil = TE.pupil.pupDiameter';
-data_pupil = data_pupil(1:size(data_chat, 1), :);
 % data_pupil = data_pupil(:,2:end) - data_pupil(:,1:end-1); % whiten
 % data_pupil = nanzscore2(data_pupil);
 data_pupil = nanzscore(data_pupil);
@@ -461,7 +485,7 @@ plot(lags * 1/Fs, shiftR, 'b');
 xlabel('Time (s)'); ylabel('Pupil AutoCorr'); 
 % legend({'corrected', 'raw', 'shift predictor'});
 
-formatFigurePoster([8 8], '', 13);
+
 
 if saveOn
     saveas(gcf, fullfile(savepath, 'xcorr_pupil.fig'));
@@ -531,13 +555,15 @@ if saveOn
 end
 
 %% scatter
-ensureFigure('scatter_pupil', 1); 
-subplot(2,2,1); scatter(data_chat(:), reshape(data_pupil(1:size(data_chat, 1), :), numel(data_chat), 1), '.');
+ensureFigure('scatter_allTheThings', 1); 
+subplot(2,2,1); scatter(reshape(data_chat, numel(data_chat), 1), reshape(data_pupil, numel(data_pupil), 1), '.');
 ylabel('pupil'); xlabel('chat');
-subplot(2,2,2); scatter(reshape(data_dat, numel(data_dat), 1), reshape(data_pupil(1:size(data_chat, 1), :), numel(data_chat), 1), '.');
+subplot(2,2,2); scatter(reshape(data_dat, numel(data_dat), 1), reshape(data_pupil, numel(data_pupil), 1), '.');
 ylabel('pupil'); xlabel('dat');
-subplot(2,2,3); scatter(reshape(TE.Wheel.data.V(:, 1:size(data_dat, 1)), numel(data_dat), 1), reshape(data_pupil(1:size(data_chat, 1), :), numel(data_chat), 1), '.');
+subplot(2,2,3); scatter(reshape(TE.Wheel.data.V, numel(data_dat), 1), reshape(data_pupil, numel(data_pupil), 1), '.');
 ylabel('pupil'); xlabel('velocity');
+subplot(2,2,4); scatter(reshape(TE.Wheel.data.V, numel(data_dat), 1), reshape(data_chat, numel(data_pupil), 1), '.');
+ylabel('chat'); xlabel('velocity');
 
 if saveOn
     saveas(gcf, fullfile(savepath, ['coherence_pupil.fig']));
@@ -669,13 +695,12 @@ for counter = 1:2
 %     plot(xdata, nanzscore(data_pupil(:, trial)), 'b');
     plot(xdata, nanzscore(data_wheel(:, trial)), 'k');
     
-    set(gca, 'XLim', [0 30], 'YLim', [-5 10]); ylabel(['trial ' num2str(trial)]); 
+%     set(gca, 'XLim', [0 30], 'YLim', [-5 10]); ylabel(['trial ' num2str(trial)]); 
 end
 if saveOn
     saveas(gcf, fullfile(savepath, [figName '.fig']));
     saveas(gcf, fullfile(savepath, [figName '.jpg']));    
 end
-
 %% final example
 trial = 3;
 figName = ['coherence_ex_trial_' num2str(trial)];
@@ -686,27 +711,6 @@ plot(xdata, data_dat(:, trial), 'r');
 set(gca, 'YLim', [-3 7]);
 legend({'ChAT', 'DAT', 'Pupil'}); legend('boxoff');
 formatFigureGRC;
-if saveOn
-    saveas(gcf, fullfile(savepath, [figName '.fig']));
-    saveas(gcf, fullfile(savepath, [figName '.jpg']));    
-    saveas(gcf, fullfile(savepath, [figName '.epsc'])); 
-end
-
-%% 
-trial = 2;
-figName = 'allBehavior_examples';
-ensureFigure('allBehavior', 1);
-subplot(5,1,1);
-plot(TE.Wheel.xData, TE.Wheel.data.V(trial, :), 'LineWidth', 2, 'Color', [0.5 0.5 0.5]/256);  set(gca, 'XLim', [0 120]); ylabel('velocity'); set(gca, 'XTick', []);
-subplot(5,1,2);
-plot(TE.Whisk.xData, TE.Whisk.whiskNorm(trial, :), 'LineWidth', 2, 'Color', [0.5 0.5 0.5]/256); set(gca, 'XLim', [0 120]); ylabel('whisking'); set(gca, 'XTick', []);
-subplot(5,1,3);
-plot(TE.pupil.xData, TE.pupil.pupDiameterNorm(trial, :), 'LineWidth', 2, 'Color', [0.5 0.5 0.5]/256); set(gca, 'XLim', [0 120]); ylabel('pupil diameter'); set(gca, 'XTick', []);
-subplot(5,1,4);
-plot(TE.Photometry.xData, TE.Photometry.data(1).ZS(trial, :), 'LineWidth', 2, 'Color', [171 55 214]/256); set(gca, 'XLim', [0 120]); ylabel('ACh.'); set(gca, 'XTick', []);
-subplot(5,1,5);
-plot(TE.Photometry.xData, TE.Photometry.data(2).ZS(trial, :), 'LineWidth', 2, 'Color', [237 125 49]/256); set(gca, 'XLim', [0 120], 'YLim', [-5 5]);ylabel('Dop.');  xlabel('Time (s)');
-formatFigurePoster([8 8], '', 16);
 if saveOn
     saveas(gcf, fullfile(savepath, [figName '.fig']));
     saveas(gcf, fullfile(savepath, [figName '.jpg']));    

@@ -11,7 +11,7 @@ rewards_chat = bsxfun(@minus, rewards_chat, bl_chat);
 rewards_chat = bsxfun(@rdivide, rewards_chat, bl_chat);
 % 
 
-ts_abs = TE.trialStartTimeStamp;
+ts_abs = TE.TrialStartTimestamp;
 
 iri_pre = [Inf; diff(ts_abs)];
 iri_post = [diff(ts_abs); Inf];

@@ -24,6 +24,7 @@ function TE = makeTE_wheel_v1(sessions)
 
     TE(1).Baseline = bpAddStateAsTrialEvent(sessions, 'Baseline');
     TE(1).Reward = bpAddStateAsTrialEvent(sessions, 'Reward*');
+    TE(1).Laser = bpAddStateAsTrialEvent(sessions, 'Laser*');
     TE(1).Port1In = bpAddEventAsTrialEvent(sessions, 'Port1In');
     TE(1).IRI = bpAddStateAsTrialEvent(sessions, 'IRI*');
     TE.filename = cell(nTrials, 1);

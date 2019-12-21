@@ -75,23 +75,8 @@ if saveOn
     save(fullfile(savepath, 'TE.mat'), 'TE');
     disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
 end
-%% plot raw and smoothed scatter plots of all the data (excepting the first few trials)
-nPoints = numel(TE.Photometry.data(1).ZS(1:end,:)); 
-ensureFigure('scatter', 1); 
-ChAT_raw = TE.Photometry.data(1).ZS(:);
-DAT_raw = TE.Photometry.data(2).ZS(:);
-a=zeros(2,1);
-smoothfactor = 100;
-a(1) = subplot(1,2,1); scatter(DAT_raw, ChAT_raw, 8, 1:length(DAT_raw), '.'); xlabel('DAT fluor (Zscored)'); ylabel('ChAT fluor (Zscored)'); title('raw');
-a(2) = subplot(1,2,2); scatter(smooth(DAT_raw, smoothfactor), smooth(ChAT_raw, smoothfactor),8, 1:length(DAT_raw),'.'); xlabel('DAT fluor (Zscored)'); ylabel('ChAT fluor (Zscored)'); title('smoothed');
-sameXYScale(a); %sameXScale(a);sameYScale(a);
-% setXYsameLimit(a(1), 0);setXYsameLimit(a(2), 0);
 
-if saveOn
-    saveas(gcf, fullfile(savepath, 'scatter.fig'));
-    saveas(gcf, fullfile(savepath, 'scatter.jpg'));
-end
-%%
+%% rewards
 window = [-4 2];
 fs = 100; % sample rate
 blSamples = (0 - window(1)) * fs;
@@ -132,7 +117,8 @@ ensureFigure('random_rewards', 1);
 if ismember(2, channels)
     rewards_dat_sorted = rewards_dat(I, :);
     clim_dat = [-climFactor * sd_dat, climFactor * sd_dat];% + 0.03;
-    subplot(3,2,2); image(rewards_dat, 'XData', window,  'CDataMapping', 'Scaled'); set(gca, 'CLim', clim_dat); colormap('jet');    title('Ch2');
+    subplot(3,2,2); image(rewards_dat, 'XData', window,  'CDataMapping', 'Scaled'); 
+    set(gca, 'CLim', clim_dat, 'YLim', [1 size(rewards_dat, 1)]); colormap('parula');    title('Ch2');
     xdata = linspace(window(1), window(2), size(rewards_dat, 2));
     subplot(3,2,4); plot(xdata, nanmean(rewards_dat));
     nRewards = size(rewards_dat, 1);
@@ -142,7 +128,8 @@ if ismember(1, channels)
     rewards_chat_sorted = rewards_chat(I, :);
     clim_chat = [-climFactor * sd_chat, climFactor * sd_chat];% + 0.003;
     subplot(3,2,1); hold on;
-    image(rewards_chat, 'XData', window, 'CDataMapping', 'Scaled'); set(gca, 'CLim', clim_chat); colormap('jet');  title('Ch1');
+    image(rewards_chat, 'XData', window, 'CDataMapping', 'Scaled'); 
+    set(gca, 'CLim', clim_chat, 'YLim', [1 size(rewards_chat, 1)]); colormap('parula');  title('Ch1');
     xdata = linspace(window(1), window(2), size(rewards_chat, 2));
     
     line([-4 -4 -4; 2 2 2], [58 123 174; 58 123 174], 'Color', [1 1 1], 'LineWidth', 2);
@@ -172,6 +159,131 @@ if saveOn
     saveas(gcf, fullfile(savepath, 'random_rewards.jpg'));
 end
 
+
+%% laser
+window = [-4 2];
+fs = 100; % sample rate
+blSamples = (0 - window(1)) * fs;
+    
+climFactor = 3;
+
+% local dFF
+if ismember(2, channels)
+    [laser_dat, ts, tn] = extractDataByTimeStamps(TE.PhotometryHF.data(2).raw, TE.PhotometryHF.startTime, 100, TE.Laser, window);
+    bl_dat = nanmean(laser_dat(:,1:blSamples), 2);
+    laser_dat = bsxfun(@minus, laser_dat, bl_dat);
+    laser_dat = bsxfun(@rdivide, laser_dat, bl_dat);
+    sd_dat = nanmean(nanstd(laser_dat(:,1:blSamples)));
+end
+
+if ismember(1, channels)
+    [laser_chat, ts, tn] = extractDataByTimeStamps(TE.PhotometryHF.data(1).raw, TE.PhotometryHF.startTime, 100, TE.Laser, window);
+    bl_chat = nanmean(laser_chat(:,1:blSamples), 2);
+    laser_chat = bsxfun(@minus, laser_chat, bl_chat);
+    laser_chat = bsxfun(@rdivide, laser_chat, bl_chat);
+    sd_chat = nanmean(nanstd(laser_chat(:,1:blSamples)));
+end
+
+
+nTrials = length(TE.filename);
+ts_abs = zeros(size(ts));
+for counter = 1:length(ts)
+    ts_abs(counter) = ts(counter) + TE.TrialStartTimestamp(tn(counter));    
+end
+
+iri_pre = [Inf; diff(ts_abs)];
+iri_post = [diff(ts_abs); Inf];
+
+[~, I] = sort(iri_pre);
+iri_pre_sorted = iri_pre(I);
+
+ensureFigure('random_laser', 1); 
+if ismember(2, channels)
+    laser_dat_sorted = laser_dat(I, :);
+    clim_dat = [-climFactor * sd_dat, climFactor * sd_dat];% + 0.03;
+    subplot(3,2,2); image(laser_dat, 'XData', window,  'CDataMapping', 'Scaled'); 
+    set(gca, 'CLim', clim_dat, 'YLim', [1 size(laser_dat, 1)]); colormap('parula');    title('Ch2');
+    xdata = linspace(window(1), window(2), size(laser_dat, 2));
+    subplot(3,2,4); plot(xdata, nanmean(laser_dat));
+    nRewards = size(laser_dat, 1);
+end
+
+if ismember(1, channels)
+    laser_chat_sorted = laser_chat(I, :);
+    clim_chat = [-climFactor * sd_chat, climFactor * sd_chat];% + 0.003;
+    subplot(3,2,1); hold on;
+    image(laser_chat, 'XData', window, 'CDataMapping', 'Scaled'); 
+    set(gca, 'CLim', clim_chat, 'YLim', [1 size(laser_chat, 1)]); colormap('parula');  title('Ch1');
+    xdata = linspace(window(1), window(2), size(laser_chat, 2));
+    
+    line([-4 -4 -4; 2 2 2], [58 123 174; 58 123 174], 'Color', [1 1 1], 'LineWidth', 2);
+    set(gca, 'XLim', [-4 2]);    
+    subplot(3,2,3); plot(xdata, nanmean(laser_chat));
+    nRewards = size(laser_chat, 1);
+
+end
+
+subplot(3,2,5); triggeredEventRasterFromTE(TE, 'Port1In', TE.Laser);
+set(gca, 'YLim', [0 nRewards]);
+
+% % reward licks vs. trial number to truncate
+% rl = extractTriggeredEvents(TE, 'Port1In', TE.Reward);
+% ensureFigure('truncate', 1);
+% rl_trials = unique(rl.eventTrials);
+% rl_count = zeros(size(rl_trials));
+% for counter = 1:length(rl_trials)
+%     trial = rl_trials(counter);
+%     rl_count(counter) = sum(rl.eventTimes > 0 & rl.eventTrials == trial);    
+% end
+% plot(rl_trials, smooth(rl_count)); ylabel('# reward licks'); xlabel('trial #');
+    
+
+if saveOn
+    saveas(gcf, fullfile(savepath, 'random_laser.fig'));
+    saveas(gcf, fullfile(savepath, 'random_laser.jpg'));
+end
+
+%% whisk, rewards
+window = [-4 2];
+fs = 20; % sample rate
+blSamples = (0 - window(1)) * fs;
+    
+
+
+% local dFF
+
+    [rewards_whisk, ts, tn] = extractDataByTimeStamps(TE.Whisk.whisk, TE.Whisk.startTime, 20, TE.Reward, window);
+    bl_whisk = nanmean(rewards_whisk(:,1:blSamples), 2);
+    rewards_whisk = bsxfun(@minus, rewards_whisk, bl_whisk);
+    rewards_whisk = bsxfun(@rdivide, rewards_whisk, bl_whisk);
+    sd_whisk = nanmean(nanstd(rewards_whisk(:,1:blSamples)));
+
+
+
+nTrials = length(TE.filename);
+ts_abs = zeros(size(ts));
+for counter = 1:length(ts)
+    ts_abs(counter) = ts(counter) + TE.TrialStartTimestamp(tn(counter));    
+end
+
+iri_pre = [Inf; diff(ts_abs)];
+iri_post = [diff(ts_abs); Inf];
+
+
+
+climFactor = 3;
+ensureFigure('random_rewards_whisk', 1); 
+
+    
+clim_whisk = [-climFactor * sd_whisk, climFactor * sd_whisk];% + 0.03;
+axes; image(rewards_whisk, 'XData', window,  'CDataMapping', 'Scaled'); 
+set(gca, 'CLim', clim_whisk, 'YLim', [1 size(rewards_whisk, 1)]); colormap('parula');
+xdata = linspace(window(1), window(2), size(rewards_whisk, 2));
+    
+if saveOn
+    saveas(gcf, fullfile(savepath, 'random_rewards_whisk.fig'));
+    saveas(gcf, fullfile(savepath, 'random_rewards_whisk.jpg'));
+end
 
 %%
 % good trials for 5/31 session,  1, 2, 3, 17
