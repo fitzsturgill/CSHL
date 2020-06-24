@@ -27,8 +27,10 @@ end
 tau(2) = 1;
 
 %% baseline by trial
+tic
  TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', 'byTrial', 'zeroField', 'Cue', 'channels', channels, 'baseline', BL,...
     'tau', tau);   
+toc
 %% baseline expfit
 TE.Photometry = processTrialAnalysis_Photometry2(sessions, 'dFFMode', dFFMode, 'blMode', {'expFit', 'expFit'}, 'zeroField', 'Cue', 'channels', channels, 'baseline', BL,...
     'tau', tau);

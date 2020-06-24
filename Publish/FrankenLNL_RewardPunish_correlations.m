@@ -25,7 +25,7 @@ disp(['*** loading: ' fullfile(savePath, 'cs_pooled.mat') ' ***']);
 %% plot cum hists of noise correlations expressed as R
 
 % point out 2 example mice with vertical dotted lines
-figSize = [2 0.7];
+figSize = [1 1];
 examples = {'ACh_15', 'ACh_7'};
 ix = find(ismember(DB.animals, examples));
 
@@ -67,8 +67,8 @@ Rnoise.csMinus = cum(csMinusData);
 saveName = 'cumHist_Rnoise';
 ensureFigure(saveName, 1);
 axes; hold on;
-line(exData_rew, exData_y, 'Color', [0 114 178]/255, 'LineStyle', '--');
-line(exData_rewCued, exData_y, 'Color', [86 180 233]/255, 'LineStyle', '--');
+% line(exData_rew, exData_y, 'Color', [0 114 178]/255, 'LineStyle', '--');
+% line(exData_rewCued, exData_y, 'Color', [86 180 233]/255, 'LineStyle', '--');
 % plot(Rnoise.bl.sorted, Rnoise.bl.index, 'Color', 'k');
 plot(Rnoise.reward.sorted, Rnoise.reward.index, 'Color', mycolors('reward')); % blue   0   44.7059   69.8039
 plot(Rnoise.puff.sorted, Rnoise.puff.index, 'Color', mycolors('puff')); % vermillion       83.5294   36.8627   0
@@ -76,6 +76,8 @@ plot(Rnoise.shock.sorted, Rnoise.shock.index, 'Color', mycolors('shock')); % blu
 plot(Rnoise.reward_cued.sorted, Rnoise.reward_cued.index, 'Color', mycolors('reward_cued')); % sky blue   33.7255   70.5882   91.3725
 plot(Rnoise.puff_cued.sorted, Rnoise.puff_cued.index, 'Color', mycolors('puff_cued')); % reddish purple
 plot(Rnoise.shock_cued.sorted, Rnoise.shock_cued.index, 'Color', mycolors('shock')); % blueish green
+% plot(Rnoise.all.sorted, Rnoise.all.index, '-k'); hold on;
+plot(Rnoise.all_shift.sorted, Rnoise.all_shift.index, 'Color', [0.7 0.7 0.7]); hold on;
 % plot(Rnoise.csPlus.sorted, Rnoise.csPlus.index, 'LineStyle', ':', 'Color', mycolors('reward_cued')); % sky blue
 % plot(Rnoise.csMinus.sorted, Rnoise.csMinus.index, 'LineStyle', ':', 'Color', mycolors('puff_cued')); % reddish purple
 % plot(Rnoise.all.sorted, Rnoise.all.index, '-k', 'LineWidth', 1); hold on;

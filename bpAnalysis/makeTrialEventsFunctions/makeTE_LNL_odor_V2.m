@@ -13,7 +13,7 @@ function TE = makeTE_LNL_odor_V2(sessions)
         'Reward', 'Punish', 'WNoise', 'Neutral', 'PostUsRecording'};
 
     
-    sessions(3).SessionData.TrialSettings(200).Block.Table
+   
     %% initialize TE
     TE = struct(...
         'filename', [],... 

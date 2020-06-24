@@ -186,6 +186,7 @@ for counter = 1:length(PulseTimes)
     pulseTime = PulseTimes(counter);
     for channel = 1:nChannels
         spikesZeroed = spikeTimes{channel} - pulseTime;
+%         spikesZeroed = stimData(channel).spikeTimes_nlx - pulseTime;
         histCountsByChannel(:,channel) = histCountsByChannel(:,channel) + histcounts(spikesZeroed, edges)';        
     end
 end

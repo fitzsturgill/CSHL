@@ -29,10 +29,19 @@ function importRepositories(repos, varargin)
     
     for counter = 1:length(repos)
         repo = repos{counter};
+        if strcmp(repo, 'Bpod')
+            bpdir = true;
+        else
+            bpdir = false;
+        end
         if repo(end) ~= filesep
             repo = [repo filesep];
         end
         repo = fullfile(path, repo);
-        addpath(genpath(repo));
+        if bpdir
+            addpath(repo); % don't add with subfolders for Bpod
+        else
+            addpath(genpath(repo));
+        end
         disp(['*** added repository: ' repo ' ***']);
     end    
