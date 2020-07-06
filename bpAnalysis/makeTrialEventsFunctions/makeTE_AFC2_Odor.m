@@ -78,15 +78,21 @@ function TE = makeTE_AFC2_Odor(sessions)
             TE.odorValve(tcounter,1) = session.SessionData.OdorValve(counter);
             TE.odorValveIndex(tcounter,1) = session.SessionData.OdorValveIndex(counter);
             TE.blockNumber(tcounter,1) = session.SessionData.BlockNumber(counter);
-            TE.reinforcementOutcome{tcounter, 1} = session.SessionData.ReinforcementOutcome{counter};
             TE.trialStartTimestamp(tcounter, 1) = session.SessionData.TrialStartTimestamp(counter);
+            TE.choice{tcounter, 1} = session.SessionData.Choice{counter};
+            TE.correctResponse{tcounter, 1} = session.SessionData.CorrectResponse{counter};
+%             TE.switchParameter(tcounter, 1) = session.SessionData.SwitchParameter(counter);
+%             TE.switchParameterCriterion(tcounter, 1) = session.SessionData.SwitchParameterCriterion(counter);
+            TE.pf_EW(tcounter, 1) = session.SessionData.pf_EW(counter);
+            TE.pf_total(tcounter, 1) = session.SessionData.pf_total(counter);
+            TE.pf_left(tcounter, 1) = session.SessionData.pf_left(counter);
+            TE.pf_right(tcounter, 1) = session.SessionData.pf_right(counter);
 
             TE.sessionIndex(tcounter, 1) = sCounter;
-            usTimes = [TE.Reward{tcounter}; TE.Punish{tcounter}; TE.WNoise{tcounter}; TE.Neutral{tcounter}];
-            TE.Us{tcounter, 1} = [max(usTimes(:,1)) max(usTimes(:,2))];
             tcounter = tcounter + 1; % don't forget :)            
         end
     end
     
-    
+    TE.sessionChange = [0; diff(TE.sessionIndex)];
+    TE.blockChange = [0; diff(TE.blockNumber) ~= 0];    
     
