@@ -54,7 +54,14 @@ function TE = makeTE_LNL_Aud(sessions)
             TE.CSValence(tcounter,1) = session.SessionData.CSValence(counter);
             TE.BlockNumber(tcounter,1) = session.SessionData.BlockNumber(counter);
             TE.LickAction{tcounter,1} = session.SessionData.LickAction{counter};
-            TE.ReinforcementOutcome{tcounter, 1} = session.SessionData.ReinforcementOutcome{counter};   
+            
+            ReinforcementOutcome = session.SessionData.ReinforcementOutcome{counter};
+            if isempty(ReinforcementOutcome)
+                TE.ReinforcementOutcome{tcounter, 1} = '';
+            else
+                TE.ReinforcementOutcome{tcounter, 1} = session.SessionData.ReinforcementOutcome{counter};   
+            end
+            
             TE.sessionIndex(tcounter, 1) = sCounter;
             usTimes = [TE.Reward{tcounter}; TE.Punish{tcounter}; TE.Neutral{tcounter}];
             TE.Us{tcounter, 1} = [max(usTimes(:,1)) max(usTimes(:,2))];

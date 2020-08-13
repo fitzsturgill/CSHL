@@ -35,7 +35,9 @@ end
 SessionData.demod = cell(SessionData.nTrials, 2);
 
 
-for trial = 1:SessionData.nTrials
+for trial = 1:SessionData.nTrials     
+%      for counter = 1:length(s.channels)
+%         fCh = counter;
     for counter = 1:length(s.channels)
         fCh = s.channels(counter);
 %% Determine demodulation mode:    
@@ -65,10 +67,10 @@ for trial = 1:SessionData.nTrials
         end
 %% if data acq hiccupped and somehow didn't acquire during trial, replace with NaNs
         try
-            rawData = SessionData.NidaqData{trial,1}(:,fCh);
+            rawData = SessionData.NidaqData{trial,1}(:,counter);
         catch 
             SessionData.demod{trial,fCh} = NaN(size(rawData)); % rawData from previous loop iteration
-            SessionData.NidaqData{trial, 1}(:,fCh) = NaN(size(rawData));
+            SessionData.NidaqData{trial, 1}(:,counter) = NaN(size(rawData));
             disp(['*** demodulateSession: Trial lacks NidaqData: # ' num2str(trial) ' ***']);
             continue
         end
@@ -85,7 +87,7 @@ for trial = 1:SessionData.nTrials
                 finalData = phDemod_v2(rawData, refData, s.refChannels(counter), sampleRate, 'forceAmp', forceAmp); 
         end
         SessionData.demod{trial,fCh} = finalData;
-    end
+     end
 end        
 
 
