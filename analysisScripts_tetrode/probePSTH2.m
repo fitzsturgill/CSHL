@@ -111,7 +111,7 @@ nSegments = size(segments, 1);
 channelOrder = [16 5 12 4 10 2 9 1 7 3 8 6 14 13 15 11 17 28 21 29 23 31 24 32 26 30 25 27 19 20 18 22];
 
 % for E-2 probe:
-channelOrder = [16 12 10 9 7 5 4 2 15 11 14 13 8 6 3 1 17 21 23 24 26 28 29 31 18 22 19 20 25 27 30 32];
+% channelOrder = [16 12 10 9 7 5 4 2 15 11 14 13 8 6 3 1 17 21 23 24 26 28 29 31 18 22 19 20 25 27 30 32];
 
 % for tetrodes 
 % channelOrder = 1:32;
@@ -193,3 +193,39 @@ end
 
 histCountsByChannel_norm = (histCountsByChannel - mean(histCountsByChannel(1:3, :), 1)) ./ mean(histCountsByChannel(1:3, :), 1);
 
+
+
+%% scrapbook 2
+
+minSpike = 60; % minimum amplitude
+edges = 0:0.1:5;
+nBins = length(edges) - 1;
+
+spikeh = zeros(nBins, 32);
+for counter = 1:32
+    ix = stimData(counter).spikeAmplitudes > minSpike;
+    [N, ~, bin] = histcounts(stimData(counter).spikeTimes(ix), edges);
+    spikeh(:,counter) = N;    
+end
+
+ensureFigure('PSTH_multiunit');
+
+for counter = 1:32
+    subplot(16, 2, counter);
+    plot(edges(1:end-1), spikeh(:,counter));
+    set(gca, 'XTickLabel', {});
+end
+
+%%  
+
+ensureFigure('average_csc');
+
+nSamples = 640;
+plotNumbers = [1:2:31 2:2:32];
+for counter = 1:32
+    subplot(16, 2, plotNumbers(counter));
+    plot((0:nSamples-1)/3200, nanmean(stimData(counter).snippet(:,1:nSamples)));
+    if rem(counter, 16)
+        set(gca, 'XTickLabel', {});
+    end
+end

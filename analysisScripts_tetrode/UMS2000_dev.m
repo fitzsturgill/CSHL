@@ -15,7 +15,8 @@ function [spikes, sampleCheck] = UMS2000_dev(direction)
 Fs = 32000;
 % [fname, pname] = uiputfile('path', 'Choose CSC path...');
 % filepath = pname;
-filepath = 'F:\Cellbase\CD17\180822a\';
+% filepath = 'F:\Cellbase\CD17\180822a\';
+filepath = 'Z:\dev_shujing_csc\sj201\200808a\';
 
 nlxcsc2mat2(filepath,'Channels','Events')
 load(fullfile(filepath, 'Events.mat'));
@@ -27,7 +28,7 @@ startRecording = Events_TimeStamps(startRecording);
 % stopRecordingTime = Events_TimeStamps(startRecording);
 % how many microseconds after recording start?
 
-
+%%
 
 h = waitbar(0, 'Detecting Spikes');   
 % spikeData = struct(...
@@ -45,8 +46,9 @@ nChunks = ceil(nValidSamples / chunkSize);
 sampleRange = ((0:nChunks) * chunkSize);
 % for trodeCounter = 1:8
 
-trode = 4;
-ttch1 = (4 * (trode - 1)) + 1;
+trodeSize = 16; % formerly 4
+trode = 2; % formerly 4
+ttch1 = (trodeSize  * (trode - 1)) + 1;
 
 sampleCheck.perChunk = zeros(nChunks, 1);
 sampleCheck.range = zeros(nChunks, 2);
@@ -56,12 +58,17 @@ spikes = ss_default_params(Fs, {'display', 'trial_spacing'}, 0); % don't pad tim
 % sampleCheck.beforeSegments = zeros(nChunks, segSize);
 % sampleCheck.afterSegments = sampleCheck.beforeSegments;
 %%
+% for P-2 probe using neurolynx adapter
+% channelOrder = [16 5 12 4 10 2 9 1 7 3 8 6 14 13 15 11 17 28 21 29 23 31 24 32 26 30 25 27 19 20 18 22];
+
+% for E-2 probe:
+channelOrder = [16 12 10 9 7 5 4 2 15 11 14 13 8 6 3 1 17 21 23 24 26 28 29 31 18 22 19 20 25 27 30 32];
 
 for counter = 1:nChunks
     theseSamples = [(sampleRange(counter) + 1) min(sampleRange(counter + 1), nValidSamples)];
     sampleCheck.range(counter, :) = theseSamples;
-    for ttcounter = 1:4
-        cfilename = sprintf('CSC%d.ncs', ttch1 + ttcounter - 1);
+    for ttcounter = 1:trodeSize
+        cfilename = sprintf('CSC%d.ncs', channelOrder(ttch1 + ttcounter - 1));
         [Timestamps, Samples, header] = Nlx2MatCSC(fullfile(filepath, cfilename),[1 0 0 0 1],1,2, theseSamples); %, [startRecording TrialStart_nlx(1)]);        
         display(['loaded ' cfilename]);
         % get length of data chunk (last chunk is shorter), bitVolts
@@ -91,7 +98,10 @@ for counter = 1:nChunks
         [b, a] = butter(5, passBand/(Fs/2));
         Samples = filtfilt(b,a,Samples);
         data(1, :,ttcounter) = Samples;
-        waitbar(((counter - 1) * 4 + ttcounter) / (nChunks * 4));
+        ensureFigure('test', 1);
+        plot(Samples);
+        waitbar(((counter - 1) * trodeSize + ttcounter) / (nChunks * trodeSize));
+
     end   
     spikes = ss_detect(data, spikes);
     disp('spikes detected');
@@ -111,7 +121,7 @@ spikes = ss_aggregate(spikes);
 
 return
 %% scrapbook for converting into t files for cellbase
-show = spikes.assigns == 144;
+show = spikes.assigns == 91;
 tSpikes = spikes.unwrapped_times(show);
 tSpikes = double(tSpikes');
 tSpikes = tSpikes + spikes.startRecording;
