@@ -82,8 +82,8 @@ end
 %% Choose a good example trace set and plot them for the figure
 
 figSize = [1.6 0.6];
-sessionIndex = 2;
 whichOne = 7;
+sessionIndex = exampleArraySessionKey(whichOne);
 rixR = exampleArray(whichOne, :);
 showTheseR = find(Odor2Valve1Trials & rewardTrials & ismember(TE.sessionIndex, sessionIndex));
 
