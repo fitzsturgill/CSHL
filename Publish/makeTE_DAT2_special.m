@@ -1,4 +1,4 @@
-function TE = makeTE_SO_RewardPunish_Odor_v2(sessions)
+function TE = makeTE_DAT2_special(sessions)
 
     if nargin < 1
         sessions = bpLoadSessions;
@@ -23,14 +23,15 @@ function TE = makeTE_SO_RewardPunish_Odor_v2(sessions)
         'sessionChange', NaN(nTrials, 1),...
         'ITI', zeros(nTrials, 1),...
         'odorValve', zeros(nTrials, 1),...
-        'ReinforcementOutcome', []...
+        'ReinforcementOutcome', [],...
+        'rewardSize', zeros(nTrials,1),...
+        'rewardValveTime', zeros(nTrials, 1)...
         );
     
     TE.sessions = struct(... % sessions fields so that you can easily reload sessions data to modify TE
         'filename', cell(length(sessions), 1),...
         'filepath', [],...
         'index', [],...
-        'NeutralToneOn', [],...
         'OmitValveCode', []...
         );    
 
@@ -39,7 +40,7 @@ function TE = makeTE_SO_RewardPunish_Odor_v2(sessions)
     end
     TE(1).Port1In = bpAddEventAsTrialEvent(sessions, 'Port1In');
     TE.filename = cell(nTrials, 1);
-    
+%     sessions(4).SessionData.TrialSettings(1).RewardValveTime
     tcounter = 1;
     for sCounter = 1:length(sessions)
         session = sessions(sCounter);
@@ -77,17 +78,18 @@ function TE = makeTE_SO_RewardPunish_Odor_v2(sessions)
             else
                 TE.ReinforcementOutcome{tcounter} = 'Omit';                
             end
+            TE.rewardValveTime(tcounter) = sessions(sCounter).SessionData.TrialSettings(counter).RewardValveTime;
             tcounter = tcounter + 1; % don't forget :)            
         end
     end
     
+    % kludge for reward size
+    smallTime = min(TE.rewardValveTime);
+    bigTime = max(TE.rewardValveTime);
+    TE.rewardSize(TE.rewardValveTime == smallTime) = 2;
+    TE.rewardSize(TE.rewardValveTime == bigTime) = 8;
     TE.usZeros = cellfun(@(x) x(end), TE.Delay); %'Reward', 'Punish', 'WNoise', 'Neutral'
     
-    sessionNames = unique(TE.filename);
-    for counter = 1:length(sessionNames)
-        sname = sessionNames{counter};
-        TE.sessionIndex(cellfun(@(x) strcmp(x, sname), TE.filename)) = counter;
-    end
     TE.sessionChange = [0; diff(TE.sessionIndex)];    
     
     TE.cueCondition = ismember(TE.trialType, 1:2) * 1 + ismember(TE.trialType, 3:4) * 2; % 1 = rewarded odor, 2 = punished odor

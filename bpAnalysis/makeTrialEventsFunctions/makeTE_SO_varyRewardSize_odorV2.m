@@ -1,5 +1,17 @@
-function TE = makeTE_SO_RewardPunish_Odor_v2(sessions)
+function TE = makeTE_SO_varyRewardSize_odorV2(sessions)
 
+%% Key:
+%     typeMatrix = [...
+%         % odor
+%         1, 2/3 * 0.45;... % small reward
+%         2, 2/3 * 0.45;... % big reward
+%         3, 2/3 * 0.1;...  % omit (with dummy valve), turn punishment air pressure off
+%         % uncued
+%         4, 1/3 * 0.45;...  % small reward
+%         5, 1/3 * 0.45;...  % big reward
+%         6, 1/3 * 0.1;...   % omit (with dummy valve), turn punishment air pressure off.
+%         ];
+%%
     if nargin < 1
         sessions = bpLoadSessions;
     end
@@ -23,20 +35,21 @@ function TE = makeTE_SO_RewardPunish_Odor_v2(sessions)
         'sessionChange', NaN(nTrials, 1),...
         'ITI', zeros(nTrials, 1),...
         'odorValve', zeros(nTrials, 1),...
-        'ReinforcementOutcome', []...
+        'ReinforcementOutcome', [],...
+        'rewardSize', zeros(nTrials,1)...
         );
     
     TE.sessions = struct(... % sessions fields so that you can easily reload sessions data to modify TE
         'filename', cell(length(sessions), 1),...
         'filepath', [],...
         'index', [],...
-        'NeutralToneOn', [],...
         'OmitValveCode', []...
         );    
 
     for i = 1:length(statesToAdd)
         TE(1).(statesToAdd{i}) = bpAddStateAsTrialEvent(sessions, statesToAdd{i});
     end
+    
     TE(1).Port1In = bpAddEventAsTrialEvent(sessions, 'Port1In');
     TE.filename = cell(nTrials, 1);
     
@@ -46,11 +59,6 @@ function TE = makeTE_SO_RewardPunish_Odor_v2(sessions)
         TE.sessions(sCounter).filename = session.filename;
         TE.sessions(sCounter).filepath = session.filepath;
         TE.sessions(sCounter).index = sCounter;        
-        if isfield(session.SessionData.Settings, 'NeturalToneOn')
-            TE.sessions(sCounter).NeutralToneOn = session.SessionData.Settings.NeutralToneOn;
-        else
-            TE.sessions(sCounter).NeutralToneOn = 0;
-        end
         
         if isfield(session.SessionData.Settings, 'OmitValveCode')
             TE.sessions(sCounter).OmitValveCode = session.SessionData.Settings.OmitValveCode;
@@ -63,26 +71,33 @@ function TE = makeTE_SO_RewardPunish_Odor_v2(sessions)
             TE.trialNumber(tcounter) = counter;
             TE.trialType(tcounter) = session.SessionData.TrialTypes(counter);
             TE.trialOutcome(tcounter) = session.SessionData.TrialOutcome(counter);
-            TE.odorValve(tcounter) = session.SessionData.TrialSettings(counter).currentValve;
+            if isfield(session.SessionData.TrialSettings, 'OdorValveCode')
+                TE.odorValve(tcounter) = session.SessionData.TrialSettings(counter).OdorValveCode;
+            else
+                TE.odorValve(tcounter) = session.SessionData.TrialSettings(counter).GUI.OdorValveCode;
+            end
             if isfield(session.SessionData, 'Epoch')
                 TE.epoch(tcounter) = session.SessionData.Epoch(counter);
             else
                 TE.epoch(tcounter) = 1;
             end
+            if ismember(TE.trialType(tcounter), [1 4])
+                TE.rewardSize(tcounter) = 2;
+            elseif ismember(TE.trialType(tcounter), [2 5])
+                TE.rewardSize(tcounter) = 8;
+            else
+                TE.rewardSize(tcounter) = 0;
+            end
             TE.sessionIndex(tcounter, 1) = sCounter;
             if any(isfinite(TE.Reward{tcounter}))
                 TE.ReinforcementOutcome{tcounter} = 'Reward';
-            elseif any(isfinite(TE.Punish{tcounter}))
-                TE.ReinforcementOutcome{tcounter} = 'Punish';
             else
-                TE.ReinforcementOutcome{tcounter} = 'Omit';                
+                TE.ReinforcementOutcome{tcounter} = 'Omit';         
             end
             tcounter = tcounter + 1; % don't forget :)            
         end
     end
-    
     TE.usZeros = cellfun(@(x) x(end), TE.Delay); %'Reward', 'Punish', 'WNoise', 'Neutral'
-    
     sessionNames = unique(TE.filename);
     for counter = 1:length(sessionNames)
         sname = sessionNames{counter};

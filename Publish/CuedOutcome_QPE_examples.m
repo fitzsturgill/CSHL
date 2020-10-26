@@ -12,6 +12,7 @@ saveOn = 1;
 %% Lick histogram for graded value task
 figSize = [1.7 0.9];
 animal = 'ChAT_39';
+xlim = [-3 3];
 success = dbLoadAnimal(DB, animal); % load TE and trial lookups
  % cue types
     varargin = {'trialNumbering', 'consecutive',...
@@ -21,8 +22,8 @@ success = dbLoadAnimal(DB, animal); % load TE and trial lookups
     ensureFigure(saveName, 1); axes;
 
     [ha, hl] = plotEventAverageFromTE(TE, trialsByType([1 4 7]), 'Port1In', varargin{:});
-    set(gca, 'XLim', [-3 3], 'YLim', [-2 15]);
-    addStimulusPatch(gca, [-3 -2 10], '', [0.7 0.7 0.7]) 
+    set(gca, 'XLim', xlim, 'YLim', [-2 15], 'XTick', [-3 0 3]);
+    addStimulusPatch(gca, [-3 -2], '', [0.7 0.7 0.7]) 
     addStimulusPatch(gca, [-0.1 0.1], '');
 %     legend(hl, {'\color{blue} high value', '\color{red} low value', '\color{green} uncued'}, 'FontSize', 6, 'Interpreter', 'tex', 'Position', [0.25 0.6 0.3 0.4]); legend('boxoff');    
 %     ylabel('Licks (Hz)'); xlabel('Time from reinforcement (s)');
@@ -34,12 +35,63 @@ success = dbLoadAnimal(DB, animal); % load TE and trial lookups
     end    
     
     
+%% avgs
+figSize = [1.7 0.9];
+
+
+animal = 'ChAT_42';
+xlim = [-4 4];
+success = dbLoadAnimal(DB, animal); % load TE and trial lookups
+
+% reward and punish avgs
+saveName = 'CuedOutcome_avgs_complete';
+ensureFigure(saveName, 1); axes;
+[ha, hla] = phPlotAverageFromTE(TE, {lowValueTrials, highValueTrials}, 1,...
+    'window', [xlim(1) 0], 'linespec', {'b', 'm'}, 'FluorDataField', 'ZS'); hold on;
+
+[ha, hl] = phPlotAverageFromTE(TE, {rewardTrials, punishTrials}, 1,...
+    'window', [0 xlim(2)], 'cmap', [mycolors('reward'); mycolors('puff')], 'FluorDataField', 'ZS');
+hl = [hla hl]; 
+addStimulusPatch(gca, [-3 -2], '', [0.8 0.8 0.8], 0.5);
+addStimulusPatch(gca, [-0.1 0.1], '', [0.8 0.8 0.8], 0.5);
+formatFigurePublish('size', figSize);
+set(gca, 'XLim', xlim);
+if saveOn
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+end  
+    
+% reward avgs
+
+saveName = 'CuedOutcome_avgs_reward';
+ensureFigure(saveName, 1); axes;
+[ha, hla] = phPlotAverageFromTE(TE, {lowValueTrials & rewardTrials, highValueTrials & rewardTrials}, 1,...
+    'window', xlim, 'linespec', {'b', 'm'}, 'FluorDataField', 'ZS');
+addStimulusPatch(gca, [-3 -2], '', [0.8 0.8 0.8], 0.5);
+addStimulusPatch(gca, [-0.1 0.1], '', [0.8 0.8 0.8], 0.5);
+formatFigurePublish('size', figSize);
+set(gca, 'XLim', xlim);
+if saveOn
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+end  
+% punish avgs
+
+saveName = 'CuedOutcome_avgs_punish';
+ensureFigure(saveName, 1); axes;
+[ha, hla] = phPlotAverageFromTE(TE, {lowValueTrials & punishTrials, highValueTrials & punishTrials}, 1,...
+    'window', xlim, 'linespec', {'b', 'm'}, 'FluorDataField', 'ZS');
+addStimulusPatch(gca, [-3 -2], '', [0.8 0.8 0.8], 0.5);
+addStimulusPatch(gca, [-0.1 0.1], '', [0.8 0.8 0.8], 0.5);
+formatFigurePublish('size', figSize);
+set(gca, 'XLim', xlim);
+if saveOn
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+end      
 %% combined licking and photometry averages from ChAT_42
 
 
     load('Z:\SummaryAnalyses\CuedOutcome_Odor_Complete\ChAT_42\TE.mat');
     cuedOutcome_Conditions;
-    saveName = 'CuedOutcome_example_averages_combined_ChAT_42';
+    saveName = 'CuedOutcome_example_averages_combined_ChAT_39';
     window = [-1.5 5];
     ensureFigure(saveName, 1); 
         varargin = {'window', [window(1) 3], 'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording',...

@@ -250,8 +250,8 @@ outcome = struct(...
 [cueAligned, lickAligned, outcomes] = deal(outcome);
 
 
-w1 = [-2 5];
-w2 = [-2 5];
+w1 = [-3 3]; %old: [-2 5]
+w2 = [-3 3]; %old: [-2 5]
 wPre = [-0.5 0];
 wOutcome = [-0.5 3];
 
@@ -302,7 +302,7 @@ end
 animal = 'ChAT_42';
 success = dbLoadAnimal(DB, animal); % load TE and trial lookups
 
-figSize = [1.7 1.5];
+figSize = [1.1 1.5];
 photometryField = 'Photometry';
 fdField = 'ZS';
 saveOn = 1;
@@ -314,7 +314,7 @@ markerSize = 1;
 fontsize = 10;
 
 
-xwindow = [-2 5];
+xwindow = [-3 3];
 
 
 lickOnsets = TE.lickLatency_cs(highValueTrials & rewardTrials);
@@ -327,7 +327,8 @@ eventRasterFromTE(TE, highValueTrials & rewardTrials, 'Port1In', 'trialNumbering
     'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording', 'sortValues', TE.lickLatency_cs, 'LineWidth', lickTickLineWidth);
 set(gca, 'XLim', xwindow);
 set(gca, 'YTickLabel', {});
-xlabel('Time frome odor (s)');
+set(gca, 'XTick', [-3 0 3]);
+xlabel('Time from odor (s)');
 formatFigurePublish('size', figSize);
 if saveOn
     print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
@@ -338,7 +339,8 @@ ensureFigure(saveName, 1);
 phRasterFromTE(TE, highValueTrials & rewardTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'zeroTimes', TE.Cue, 'window', xwindow, 'sortValues', TE.lickLatency_cs); % 'CLimFactor', CLimFactor,
 line(lickOnsets, (1:sum(highValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'r', 'LineWidth', 1, 'LineStyle', '--');    
 set(gca, 'YTickLabel', {});
-xlabel('Time frome odor (s)');
+set(gca, 'XTick', [-3 0 3], 'XLim', xwindow);
+xlabel('Time from odor (s)');
 formatFigurePublish('size', figSize);
 if saveOn
     print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
@@ -351,8 +353,9 @@ phRasterFromTE(TE, highValueTrials & rewardTrials, 1, 'zeroTimes', lickZeros, 'w
     'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'showSessionBreaks', 0, 'sortValues', TE.lickLatency_cs); % 'CLimFactor', CLimFactor,
 line(-1 * lickOnsets, (1:sum(highValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'k', 'LineWidth', 1, 'LineStyle', '--');    
 % scatter(-1 * TE.lickLatency_cs(highValueTrials & rewardTrials), 1:sum(highValueTrials & rewardTrials), markerSize, [1 1 1], 'filled');
-xlabel('Time frome lick (s)');
+xlabel('Time from lick (s)');
 set(gca, 'YTickLabel', {});
+set(gca, 'XTick', [-3 0 3], 'XLim', xwindow);
 formatFigurePublish('size', figSize);
 if saveOn
     print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
@@ -370,7 +373,8 @@ eventRasterFromTE(TE, lowValueTrials & rewardTrials, 'Port1In', 'trialNumbering'
     'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording', 'sortValues', TE.lickLatency_cs, 'LineWidth', lickTickLineWidth);
 set(gca, 'XLim', xwindow);
 set(gca, 'YTickLabel', {});
-xlabel('Time frome odor (s)');
+xlabel('Time from odor (s)');
+set(gca, 'XTick', [-3 0 3]);
 formatFigurePublish('size', figSize);
 if saveOn
     print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
@@ -381,7 +385,8 @@ ensureFigure(saveName, 1);
 phRasterFromTE(TE, lowValueTrials & rewardTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'zeroTimes', TE.Cue, 'window', xwindow, 'sortValues', TE.lickLatency_cs); % 'CLimFactor', CLimFactor,
 line(lickOnsets, (1:sum(lowValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'r', 'LineWidth', 1, 'LineStyle', '--');    
 set(gca, 'YTickLabel', {});
-xlabel('Time frome odor (s)');
+xlabel('Time from odor (s)');
+set(gca, 'XTick', [-3 0 3], 'XLim', xwindow);
 formatFigurePublish('size', figSize);
 if saveOn
     print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
@@ -393,8 +398,9 @@ axes; hold on;
 phRasterFromTE(TE, lowValueTrials & rewardTrials, 1, 'zeroTimes', lickZeros, 'window', xwindow,...
     'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'showSessionBreaks', 0, 'sortValues', TE.lickLatency_cs); % 'CLimFactor', CLimFactor,
 line(-1 * lickOnsets, (1:sum(lowValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'k', 'LineWidth', 1, 'LineStyle', '--');    
-xlabel('Time frome lick (s)');
+xlabel('Time from lick (s)');
 set(gca, 'YTickLabel', {});
+set(gca, 'XTick', [-3 0 3], 'XLim', xwindow);
 formatFigurePublish('size', figSize);
 if saveOn
     print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
@@ -471,7 +477,7 @@ ensureFigure(saveName, 1);
 phRasterFromTE(TE, highValueTrials & rewardTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', photometryField, 'zeroTimes', TE.Us, 'window', xwindow, 'sortValues', TE.lickLatency_cs); % 'CLimFactor', CLimFactor,
 line(lickOnsets, (1:sum(highValueTrials & rewardTrials))', 'Parent', gca, 'Color', 'r', 'LineWidth', 1, 'LineStyle', '-');    
 set(gca, 'YTickLabel', {}, 'XTick', [-3 0 3], 'YTick', [0 200 400], 'XLim', xwindow);
-% xlabel('Time frome odor (s)');
+% xlabel('Time from odor (s)');
 formatFigurePublish('size', figSize);
 if saveOn
     print(gcf, '-dpdf', fullfile(figPath, [saveName '.pdf']));
@@ -502,7 +508,7 @@ predata = predata - nanmean(predata);
 cdata = alignedDataWindow(predata, true(size(predata, 1), 1), 'zeroTimes', lickZeros(ts), 'window', xwindow, 'Fs', 20, 'startTimes', TE.Photometry.startTime(ts));
 imagesc(cdata, [-2 2]); % 'CLimFactor', CLimFactor,
 
-xlabel('Time frome lick (s)');
+xlabel('Time from lick (s)');
 set(gca, 'YTickLabel', {});
 % formatFigurePublish('size', figSize);
 if saveOn
@@ -543,7 +549,7 @@ end
 
 saveName = 'grandAverages_cuedOutcome';
 ensureFigure(saveName, 1);
-figSize = [2 1];
+figSize = [1.1 1.5];
 ylim = [-0.2 2];
 axes;
 yData = [nanmean(cueAligned.reward.high.Avg)' nanmean(cueAligned.reward.low.Avg)'];
@@ -553,8 +559,8 @@ cmap = [1 0 1; 0 0 1];
 boundedline(cueAligned.reward.cued.xData(1,:)', yData, bData, 'cmap', cmap);
 addStimulusPatch(gca, [0 1], '', [0.8 0.8 0.8], 0.5);
 addStimulusPatch(gca, [2.9 3.1], '', [0.8 0.8 0.8], 0.5); 
-xlabel('time from odor (s)'); ylabel('Fluor. (\sigma-bl.)');
-set(gca, 'XLim', w1, 'YLim', ylim);
+% xlabel('time from odor (s)'); ylabel('Fluor. (\sigma-bl.)');
+set(gca, 'XLim', w1, 'YLim', ylim, 'XTick', [-3 0 3]);
 formatFigurePublish('size', figSize);    
 
 if saveOn
@@ -572,8 +578,8 @@ cmap = [1 0 1; 0 0 1];
 boundedline(lickAligned.reward.cued.xData(1,:)', yData, bData, 'cmap', cmap);
 addStimulusPatch(gca, [0 1], '', [0.8 0.8 0.8], 0.5);
 addStimulusPatch(gca, [2.9 3.1], '', [0.8 0.8 0.8], 0.5); 
-xlabel('time from first lick (s)'); ylabel('Fluor. (\sigma-bl.)');
-set(gca, 'XLim', w1, 'YLim', ylim);
+% xlabel('time from first lick (s)'); ylabel('Fluor. (\sigma-bl.)');
+set(gca, 'XLim', w1, 'YLim', ylim, 'XTick', [-3 0 3]);
 formatFigurePublish('size', figSize);    
 
 if saveOn
