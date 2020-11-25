@@ -50,6 +50,14 @@ if saveOn
     disp(['*** Saved: ' fullfile(savepath, 'TE.mat')]);
 end
 
+%% load TE if it's already made
+savepath = 'Z:\SummaryAnalyses\ChAT_PE_Manuscript\SO_RewardPunish_odor\DAT2_special\';
+animal = 'DAT_2';
+disp(animal);
+
+load(fullfile(savepath, 'TE.mat'));
+disp(['*** Loaded: ' fullfile(savepath, 'TE.mat')]);
+
 %% kludge conditions
 csPlusTrials = TE.odorValve == 5 & TE.reject == 0;
 csMinusTrials = TE.odorValve == 6  & TE.reject == 0;
@@ -90,6 +98,12 @@ if saveOn
 end
 
 %%
+climfactor = 3;  
+fdField = 'ZS';
+linewidth = 4;
+window = [-3 3];
+offset = -0.1;
+photometryField = 'Photometry';
     saveName = sprintf('rasters_%s', animal); 
     ensureFigure(saveName, 1);
     mcLandscapeFigSetup(gcf); 
@@ -166,6 +180,39 @@ if saveOn
     saveas(gcf, fullfile(savepath, [saveName '.epsc']));
 end
 
+%% make continuous early -> middle -> late lick raster
+
+figSize = [1.66 0.68];
+
+
+linewidth = 4;
+window = [-3 3];
+offset = -0.1;
+% tcolors = [204 153 255; 153 51 255; 51 0 102]; tcolors = tcolors ./ 255; 
+tcolors = [0 0 0; 0.8 0.8 0.8; 0.6 0.6 0.6];
+saveName = ['acquisition_lickRaster_' animal];
+ensureFigure(saveName, 1); axes; hold on;
+eventRasterFromTE(TE, csPlusTrials & bigRewardTrials & TE.reject == 0, 'Port1In', 'trialNumbering', 'consecutive',...
+    'zeroTimes', TE.usZeros, 'window', window); % 'CLimFactor', CLimFactor,
+
+% make lines to label early/middle/late trial sets for averages
+allTrials = TE.filename(csPlusTrials & bigRewardTrials & TE.reject == 0);
+theseTrials = find(ismember(allTrials, earlySessions));
+line([window(2) + offset window(2) + offset], [theseTrials(1) theseTrials(end)], 'Color', tcolors(1,:), 'LineWidth', linewidth);
+theseTrials = find(ismember(allTrials, midSessions));
+line([window(2) + offset window(2) + offset], [theseTrials(1) theseTrials(end)], 'Color', tcolors(2,:), 'LineWidth', linewidth);
+theseTrials = find(ismember(allTrials, lateSessions));
+line([window(2) + offset window(2) + offset], [theseTrials(1) theseTrials(end)], 'Color', tcolors(3,:), 'LineWidth', linewidth);
+
+% set(gca, 'Visible', 'off');
+set(gca, 'YTick', [100 200], 'XTick', [-3 0 3], 'XLim', window);
+formatFigurePublish('size', figSize, 'fontSize', 6);
+
+if saveOn 
+%     export_fig(fullfile(savepath, saveName), '-eps');
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+    saveas(gcf, fullfile(savepath, [saveName '.epsc']));
+end
 
 %% make overlaid phAverages
 

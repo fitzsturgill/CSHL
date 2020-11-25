@@ -133,6 +133,28 @@ if saveOn
     export_fig(fullfile(savepath, saveName), '-eps');
 end
 
+%% make overlaid lick averages
+
+figSize = [1.66 0.9];
+
+% tcolors = [204 153 255; 153 51 255; 51 0 102]; tcolors = tcolors ./ 255; 
+tcolors = [0 0 0; 0.8 0.8 0.8; 0.6 0.6 0.6];
+
+saveName = ['overlaid_lickAvg_' animal];
+ensureFigure(saveName, 1);
+[ha, hl] = plotEventAverageFromTE(TE, {rewardOdorTrials & rewardTrials & ismember(TE.filename, earlySessions),...
+    rewardOdorTrials & rewardTrials & ismember(TE.filename, midSessions),...
+    rewardOdorTrials & rewardTrials & ismember(TE.filename, lateLickSessions)}, 'Port1In',...
+    'zeroTimes', TE.usZeros, 'window', window, 'alpha', 1, 'cmap', tcolors); % cued reward
+set(gca, 'XLim', window, 'XTick', [-3 0 3]);
+addStimulusPatch(gca, [-2 -1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
+% ylabel('F(\fontsize{12}\sigma\fontsize{8}-baseline)');  set(gca, 'XLim', window);
+% xlabel('Time from reinforcement (s)');
+formatFigurePublish('size', figSize, 'fontSize', 6);
+if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+%     export_fig(fullfile(savepath, saveName), '-eps');
+end
 
 %% phRasters, cued, uncued, omission, example #1
 figSize = [1.6 0.81];
@@ -200,19 +222,19 @@ saveName = ['lickAvgs_complete_' animal];
 ensureFigure(saveName, 1);
 
 varargin = {'trialNumbering', 'consecutive',...
-    'window', [-1 4], 'zeroTimes', TE.usZeros, 'window', window, 'linespec', {'b', 'c', 'k'}, 'alpha', 1};
+    'zeroTimes', TE.usZeros, 'window', window, 'linespec', {'b', 'c', 'k'}, 'alpha', 1};
 
 [ha, hl] = plotEventAverageFromTE(TE, {...
     rewardOdorTrials & rewardTrials & ismember(TE.filename, lateSessions),...
     uncuedTrials & rewardTrials & ismember(TE.filename, lateSessions),...
     rewardOdorTrials & ~rewardTrials & ismember(TE.filename, lateSessions)}, 'Port1In', varargin{:});
 addStimulusPatch(gca, [-2 -1], '', [0.7 0.7 0.7], 0.4);  addStimulusPatch(gca, [-0.1 0.1], '', [0.7 0.7 0.7], 0.4);
-ylabel('Licks (1/s)');  set(gca, 'XLim', window);
-xlabel('Time from reinforcement (s)');
+set(gca, 'XLim', window, 'XTick', [-3 0 3], 'YTick', [0 10]);
+% xlabel('Time from reinforcement (s)');
 formatFigurePublish('size', figSize);
 if saveOn 
     print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
-    export_fig(fullfile(savepath, saveName), '-eps');
+%     export_fig(fullfile(savepath, saveName), '-eps');
 end    
 
 %% phAverages, cued, uncued, omission, example #2

@@ -85,7 +85,63 @@ formatFigurePublish('size', figSize);
 set(gca, 'XLim', xlim);
 if saveOn
     print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
-end      
+end
+%% lets try cue, reward, punish separately
+
+figSize = [1.7 0.9];
+
+
+animal = 'ChAT_42';
+
+success = dbLoadAnimal(DB, animal); % load TE and trial lookups
+
+% cue only
+window = [-1 3];
+saveName = 'CuedOutcome_avgs_cueOnly';
+ensureFigure(saveName, 1); axes;
+[ha, hla] = phPlotAverageFromTE(TE, {lowValueTrials, highValueTrials}, 1,...
+    'window', window, 'zeroTimes', TE.Cue, 'linespec', {'b', 'm'}, 'FluorDataField', 'ZS'); hold on;
+
+
+addStimulusPatch(gca, [0 1], '', [0.8 0.8 0.8], 0.5);
+
+formatFigurePublish('size', figSize);
+set(gca, 'XLim', window);
+if saveOn
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+end  
+
+% reward only
+window = [0 4];
+saveName = 'CuedOutcome_avgs_rewardOnly';
+ensureFigure(saveName, 1); axes;
+[ha, hla] = phPlotAverageFromTE(TE, {lowValueTrials & rewardTrials, highValueTrials & rewardTrials}, 1,...
+    'window', window, 'zeroTimes', TE.Us, 'linespec', {'b', 'm'}, 'FluorDataField', 'ZS'); hold on;
+
+
+addStimulusPatch(gca, [0 0.1], '', [0.8 0.8 0.8], 0.5);
+
+formatFigurePublish('size', figSize);
+set(gca, 'XLim', window);
+if saveOn
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+end  
+
+% punish only
+window = [0 4];
+saveName = 'CuedOutcome_avgs_punishOnly';
+ensureFigure(saveName, 1); axes;
+[ha, hla] = phPlotAverageFromTE(TE, {lowValueTrials & punishTrials, highValueTrials & punishTrials}, 1,...
+    'window', window, 'zeroTimes', TE.Us, 'linespec', {'b', 'm'}, 'FluorDataField', 'ZS'); hold on;
+
+
+addStimulusPatch(gca, [0 0.1], '', [0.8 0.8 0.8], 0.5);
+
+formatFigurePublish('size', figSize);
+set(gca, 'XLim', window);
+if saveOn
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+end  
 %% combined licking and photometry averages from ChAT_42
 
 
