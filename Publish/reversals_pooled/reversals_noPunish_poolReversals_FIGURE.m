@@ -91,6 +91,41 @@ if saveOn
     print(gcf, '-dpdf', fullfile(savepath, [savename '.pdf']));
 end   
 
+
+%% how long to attain criterion behavioral performance level for value reversals
+
+critData_value_acq = nanmean(newCsPlus.licks_cs(goodReversals, common));
+critData_value_acq = critData_value_acq - min(critData_value_acq);
+critData_value_acq = critData_value_acq ./ max(critData_value_acq);
+critData_value_acqX = newCsPlus.trialNumber(common);
+ensureFigure('crit_value_acq', 1);
+subplot(1,2,1); hold on; title('acquisition');
+plot(critData_value_acqX, critData_value_acq, '-o');
+line([min(critData_value_acqX) max(critData_value_acqX)], [0.8 0.8], 'Color', 'k', 'LineStyle', '--');
+set(gca, 'XLim', [0 40], 'XGrid', 'on', 'XMinorGrid', 'on');
+
+critData_value_ext = nanmean(newCsMinus.licks_cs(goodReversals, common));
+critData_value_ext = critData_value_ext - min(critData_value_ext);
+critData_value_ext = critData_value_ext ./ max(critData_value_ext);
+critData_value_extX = newCsMinus.trialNumber(common);
+subplot(1,2,2); hold on; title('extinction');
+plot(critData_value_extX, critData_value_ext, '-o');
+line([min(critData_value_extX) max(critData_value_extX)], [0.2 0.2], 'Color', 'k', 'LineStyle', '--');
+set(gca, 'XLim', [0 40], 'XGrid', 'on', 'XMinorGrid', 'on');
+
+%%
+rocData_value_acq= nanmean(newCsPlus.csLicksROC(goodReversals, common));
+rocData_value_acqX = newCsPlus.trialNumber(common);
+ensureFigure('crit_value_acq', 1);
+subplot(1,2,1); hold on; title('acquisition');
+plot(rocData_value_acqX, rocData_value_acq, '-o');
+set(gca, 'XLim', [0 40], 'XGrid', 'on', 'XMinorGrid', 'on');
+
+rocData_value_ext= nanmean(newCsMinus.csLicksROC(goodReversals, common));
+rocData_value_extX = newCsMinus.trialNumber(common);
+subplot(1,2,2); hold on; title('extinction');
+plot(rocData_value_extX, rocData_value_ext, '-o');
+set(gca, 'XLim', [0 40], 'XGrid', 'on', 'XMinorGrid', 'on');
 %% averages
 expType = 'valence';
 smoothWindow = 3;
@@ -167,8 +202,28 @@ if saveOn
     saveas(gcf, fullfile(savepath, [savename '.fig']));
     saveas(gcf, fullfile(savepath, [savename '.jpg']));   
     saveas(gcf, fullfile(savepath, [savename '.epsc']));
-end   
+end
 
+%% how long to attain criterion behavioral performance level for valence reversals
+
+critData_valence_acq = nanmean(newCsPlus.licks_cs(goodReversals, common));
+critData_valence_acq = critData_valence_acq - min(critData_valence_acq);
+critData_valence_acq = critData_valence_acq ./ max(critData_valence_acq);
+critData_valence_acqX = newCsPlus.trialNumber(common);
+ensureFigure('crit_valence_acq', 1);
+subplot(1,2,1); hold on; title('acquisition');
+plot(critData_valence_acqX, critData_valence_acq, '-o');
+line([min(critData_valence_acqX) max(critData_valence_acqX)], [0.8 0.8], 'Color', 'k', 'LineStyle', '--');
+set(gca, 'XLim', [0 40], 'XGrid', 'on', 'XMinorGrid', 'on');
+
+critData_valence_ext = nanmean(newCsMinus.licks_cs(goodReversals, common));
+critData_valence_ext = critData_valence_ext - min(critData_valence_ext);
+critData_valence_ext = critData_valence_ext ./ max(critData_valence_ext);
+critData_valence_extX = newCsMinus.trialNumber(common);
+subplot(1,2,2); hold on; title('extinction');
+plot(critData_valence_extX, critData_valence_ext, '-o');
+line([min(critData_valence_extX) max(critData_valence_extX)], [0.2 0.2], 'Color', 'k', 'LineStyle', '--');
+set(gca, 'XLim', [0 40], 'XGrid', 'on', 'XMinorGrid', 'on');
 
 %% subtraction averages- show run-down and difference upon extinction
 
@@ -714,4 +769,5 @@ if saveOn
     saveas(gcf, fullfile(savepath, [savename '.jpg']));   
     saveas(gcf, fullfile(savepath, [savename '.epsc']));
 end   
+
 

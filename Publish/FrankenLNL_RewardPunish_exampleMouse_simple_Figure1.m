@@ -153,7 +153,7 @@ saveName = 'PE_BLA_exampleMouse_Appetitive_Rasters_cued';
 ensureFigure(saveName, 1);
 climfactor = 3;  
 subplot(1,1,1); phRasterFromTE(TE, trialsByType{1} & hitTrials & ismember(TE.sessionIndex, sessionIndices), 1, 'trialNumbering', 'consecutive',...
-    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry', 'zeroTimes', TE.Us, 'window', window, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
+    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'PhotometryHF', 'zeroTimes', TE.Us, 'window', window, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
 set(gca, 'YTick', [1 50], 'XLim', window, 'XTick', [-3 0 3]);
 formatFigurePublish('size', figSize);
 if saveOn 
@@ -164,7 +164,7 @@ end
 saveName = 'PE_BLA_exampleMouse_Appetitive_Rasters_uncued';  
 ensureFigure(saveName, 1);
 subplot(1,1,1); phRasterFromTE(TE, uncuedReward & hitTrials & ismember(TE.sessionIndex, sessionIndices), 1, 'trialNumbering', 'consecutive',...
-    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'Photometry', 'zeroTimes', TE.Us, 'window', window, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
+    'CLimFactor', climfactor, 'FluorDataField', fdField, 'PhotometryField', 'PhotometryHF', 'zeroTimes', TE.Us, 'window', window, 'showSessionBreaks', 0); % 'CLimFactor', CLimFactor,
 set(gca, 'YTick', [1 30], 'XLim', window, 'XTick', [-3 0 3]);
 formatFigurePublish('size', figSize);
 
