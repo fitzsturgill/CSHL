@@ -39,9 +39,9 @@ shiftIx = -shift:binSize:shift;
 o = length(shiftIx);
 [bFull_all, bPupil_all, bTime_all] = deal(zeros(nm, kernalSize + o, 2));
 % [bPupil_all bTime_all] = deal(zeros(nm, kernalSize, 2));
+n = length(winIx);
 
-
-
+%%
 for counter = 1:nm
     animal = animals{counter};
     dbLoadAnimal(DB, animal);
@@ -61,7 +61,7 @@ for counter = 1:nm
 
 
     m = sum(lmTrials);
-    n = length(winIx);
+
 %     shiftPoints = 0.3 * 20;  % 0.3s lag and 20Hz sample rate
     for ch = 1:2
 
@@ -247,7 +247,39 @@ if saveOn
     saveas(gcf, fullfile(savePath, [saveName '.jpg']));
 end
 
+%% ChAT
+% statistics, 1 factor ANOVA follwed by multiple comparisons, treat DA and
+% ChAT seperately because hard to interpret interation, meaning that means
+% of DA aren't necessarily a scaled version of ACh means
 
+[anova1_chat,~, stats_chat] = anova1(squeeze(rsq_all(:,:,1)));
+c = multcompare(stats_chat); % tukey-kramer, honest significant difference
+colNames = {'group1', 'group2', 'Conf_lower', 'estimate', 'Conf_upper', 'p_value'};
+c_chat = table(c(:,1),c(:,2),c(:,3),c(:,4),c(:,5),c(:,6), 'VariableNames', colNames);
+%c is Matrix of multiple comparison results, returned as an p-by-6 matrix of 
+% scalar values, where p is the number of pairs of groups. Each row of the 
+% matrix contains the result of one paired comparison test. 
+% Columns 1 and 2 contain the indices of the two samples being compared. 
+% Column 3 contains the lower confidence interval, column 4 contains the estimate, 
+% and column 5 contains the upper confidence interval. Column 6 contains the 
+% p-value for the hypothesis test that the corresponding mean difference is not equal to 0.
+
+
+%% DAT
+[anova1_dat,~, stats_dat] = anova1(squeeze(rsq_all(:,:,2)));
+c = multcompare(stats_dat); % tukey-kramer, honest significant difference
+colNames = {'group1', 'group2', 'Conf_lower', 'estimate', 'Conf_upper', 'p_value'};
+c_dat = table(c(:,1),c(:,2),c(:,3),c(:,4),c(:,5),c(:,6), 'VariableNames', colNames);
+
+
+
+
+
+% statistics, 2 fator ANOVA followed by multiple comparisons,
+% rsq_2factor = reshape(permute(rsq_all, [1 3 2]), 12, 3); % columns are different models, rows are ChAT vs Dop., 6 replicates
+% [p, tbl, stats] = anova2(rsq_2factor, 6);
+% follow up with multiple comparisons, rows and columns
+% [c,m,h,nms] = multcompare(stats);
 %% example mouse beta coefficients
 
         saveName = 'beta_Coefficients_example';
