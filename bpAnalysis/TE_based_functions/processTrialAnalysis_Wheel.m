@@ -7,7 +7,7 @@ function Wheel = processTrialAnalysis_Wheel(sessions, varargin)
         'startField', 'Start';...
         'zeroField', '';... % if empty, startField defines zero
         'Fs', 20;...
-        'dpp', pi * 12.7 / 200; % distance per pulse
+        'dpp', pi * 12.7 / 300; % distance per pulse
         'duration', 30;...
         'dataField', 'Port3In';... % field providing pulse times from rotary encoder
         'smoothWindow', 1;... % smoothing window in seconds
@@ -75,7 +75,9 @@ function Wheel = processTrialAnalysis_Wheel(sessions, varargin)
             catch
                 position = smooth(position, 'linear', s.smoothWindow);
             end
+            position = position * s.dpp;
             velocity = gradient(position); % gradient preserves number of points unlike diff
+            velocity = velocity * s.Fs;
             Wheel.startTime(tcounter) = startTime;
             Wheel.data.X(tcounter,:) = position;
             Wheel.data.V(tcounter,:) = velocity;            
