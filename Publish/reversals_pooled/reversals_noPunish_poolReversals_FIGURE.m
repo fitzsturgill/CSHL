@@ -13,7 +13,7 @@ exp.all = [exp.value exp.valence];
 
 
 
-%% averages, value (supplementary figure)
+%% averages, value
 expType = 'value';
 smoothWindow = 3;
 compile_reversal_data;
@@ -91,14 +91,27 @@ if saveOn
     print(gcf, '-dpdf', fullfile(savepath, [savename '.pdf']));
 end   
 
+%% how long to attain criterion behavioral performance level for value reversals TRUE CRIETERION, ROC driven
 
+gr = find(goodReversals);
+revTrials  = zeros(length(gr), 1);
+for counter = 1:length(gr)
+    revTrials(counter) = find(isnan(AR.allTrials.phPeakMean_cs_ch1.after(gr(counter),:)), 1);
+end
+
+revTrials = max(AR.allTrials.trialNumber.after(goodReversals,:),[], 2) - min(AR.allTrials.trialNumber.after(goodReversals,:),[], 2);
 %% how long to attain criterion behavioral performance level for value reversals
 
 critData_value_acq = nanmean(newCsPlus.licks_cs(goodReversals, common));
 critData_value_acq = critData_value_acq - min(critData_value_acq);
 critData_value_acq = critData_value_acq ./ max(critData_value_acq);
 critData_value_acqX = newCsPlus.trialNumber(common);
-ensureFigure('crit_value_acq', 1);
+% also find the value and print it
+drd = nanmean(newCsPlus.licks_cs(goodReversals, common));
+dr = range(drd);
+sprintf('Acq Criterion is %2.2f' , dr*0.8 + min(drd))
+savename = 'crit_value_acq';
+ensureFigure(savename, 1);
 subplot(1,2,1); hold on; title('acquisition');
 plot(critData_value_acqX, critData_value_acq, '-o');
 line([min(critData_value_acqX) max(critData_value_acqX)], [0.8 0.8], 'Color', 'k', 'LineStyle', '--');
@@ -108,10 +121,20 @@ critData_value_ext = nanmean(newCsMinus.licks_cs(goodReversals, common));
 critData_value_ext = critData_value_ext - min(critData_value_ext);
 critData_value_ext = critData_value_ext ./ max(critData_value_ext);
 critData_value_extX = newCsMinus.trialNumber(common);
+% also find the value and print it
+drd = nanmean(newCsMinus.licks_cs(goodReversals, common));
+dr = range(drd);
+sprintf('Ext Criterion is %2.2f' , min(drd) - dr*0.2)
+
 subplot(1,2,2); hold on; title('extinction');
 plot(critData_value_extX, critData_value_ext, '-o');
 line([min(critData_value_extX) max(critData_value_extX)], [0.2 0.2], 'Color', 'k', 'LineStyle', '--');
 set(gca, 'XLim', [0 40], 'XGrid', 'on', 'XMinorGrid', 'on');
+
+if saveOn 
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));       
+end
 
 %%
 rocData_value_acq= nanmean(newCsPlus.csLicksROC(goodReversals, common));
@@ -210,7 +233,8 @@ critData_valence_acq = nanmean(newCsPlus.licks_cs(goodReversals, common));
 critData_valence_acq = critData_valence_acq - min(critData_valence_acq);
 critData_valence_acq = critData_valence_acq ./ max(critData_valence_acq);
 critData_valence_acqX = newCsPlus.trialNumber(common);
-ensureFigure('crit_valence_acq', 1);
+savename = 'crit_valence_acq';
+ensureFigure(savename, 1);
 subplot(1,2,1); hold on; title('acquisition');
 plot(critData_valence_acqX, critData_valence_acq, '-o');
 line([min(critData_valence_acqX) max(critData_valence_acqX)], [0.8 0.8], 'Color', 'k', 'LineStyle', '--');
@@ -224,6 +248,12 @@ subplot(1,2,2); hold on; title('extinction');
 plot(critData_valence_extX, critData_valence_ext, '-o');
 line([min(critData_valence_extX) max(critData_valence_extX)], [0.2 0.2], 'Color', 'k', 'LineStyle', '--');
 set(gca, 'XLim', [0 40], 'XGrid', 'on', 'XMinorGrid', 'on');
+
+
+if saveOn 
+    saveas(gcf, fullfile(savepath, [savename '.fig']));
+    saveas(gcf, fullfile(savepath, [savename '.jpg']));       
+end
 
 %% subtraction averages- show run-down and difference upon extinction
 
@@ -452,7 +482,7 @@ cp_rev = zeroTrials;
 % cp_rev_perm = zeroTrials_perm;
 
 % first images, sorted by reversal point.
-savename = ['cp_aligned_images_newCsPlus_' expType];
+savename = ['cp_aligned_images_newCsPlus_' expType ];% '_cbar'];
 ensureFigure(savename, 1);
 
 params = struct();    
@@ -465,11 +495,12 @@ hax = axesmatrix(3,2,1:6,params);
 axes(hax(1)); hold on;
 % ylabel('Cue licks');
 cData = good_licks;
-% use same clim for all images in each row
+% use same clim for all images 
 clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
 imagesc('XData', newCsPlus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
 scatter(cp_rev, 1:sum(goodOnes), markerSize, [1 1 1], 'filled');
 set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', [], 'YTick', [1 30]);
+% colorbar('Location', 'northoutside', 'TickDirection', 'out', 'Ticks', [-1 0 1]);
 
 axes(hax(2)); hold on;
 cData = aligned_licks(ix, :);
@@ -480,8 +511,8 @@ set(gca, 'XLim', trialWindow, 'YLim', [1 sum(goodOnes)], 'YTick', [], 'XTick', [
 axes(hax(3)); hold on;
 % ylabel('ACh.', 'Color', mycolors('ChAT'));
 cData = good_ch1;
-% use same clim for all images in each row
-clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
+
+% clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
 imagesc('XData', newCsPlus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
 scatter(cp_rev, 1:sum(goodOnes), markerSize, [1 1 1], 'filled');
 set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', [], 'YTick', [1 30]);
@@ -494,12 +525,13 @@ plot(reversalPoints(ix), 1:sum(goodOnes), ':r', 'LineWidth', lineWidth); set(gca
 axes(hax(5)); hold on;
 % ylabel('Dop.', 'Color', mycolors('DAT'));
 cData = good_ch2;
-% use same clim for all images in each row
-clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
+
+% clim =  [nanmean(nanmean(cData, 1), 2) - nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor nanmean(nanmean(cData, 1), 2) + nanstd(nanstd(cData, 0, 1), 0, 2) * cLimFactor];
 imagesc('XData', newCsPlus.trialNumber, 'CData', cData, clim); set(gca, 'XLim', trialWindow_rev); hold on; 
 scatter(cp_rev, 1:sum(goodOnes), markerSize, [1 1 1], 'filled');
 set(gca, 'YLim', [1 sum(goodOnes)], 'XTick', [0 10 20], 'YTick', [1 30]);
 xlabel('Trials from rev.');
+% colorbar('Location', 'northoutside', 'TickDirection', 'out', 'Ticks', [-1 0 1]);
 
 axes(hax(6)); hold on;
 cData = aligned_ch2(ix, :);
@@ -511,7 +543,7 @@ formatFigurePublish('size', figSize);
 if saveOn 
     saveas(gcf, fullfile(savepath, [savename '.fig']));
     saveas(gcf, fullfile(savepath, [savename '.jpg']));   
-    saveas(gcf, fullfile(savepath, [savename '.epsc']));
+%     saveas(gcf, fullfile(savepath, [savename '.epsc']));
     print(gcf, '-dpdf', fullfile(savepath, [savename '.pdf']));
 %     export_fig(fullfile(savepath, savename), '-eps');
 end

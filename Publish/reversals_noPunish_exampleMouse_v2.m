@@ -111,6 +111,147 @@ for counter = 1:length(animals)
     end
 end
 
+
+%% version with answerLicksROC, with and without colorbars
+    figSize = [4 4];
+% Define the positions of different axes matrices on the figure
+    % params.matpos defines position of axesmatrix [LEFT TOP WIDTH HEIGHT].    
+    params = struct();    
+    params.matpos = [0 0 1 1];    
+%     params.cellmargin = [.05 .05 0.05 0.05];    
+    params.figmargin = [0.15 0 0.1 0.1];
+    params.cellmargin = [0.025 0.025 0.025 0.025];    
+for cbar = 1:2
+    for counter = 1:length(animals)
+        animal = animals{counter};
+        session = sessions(counter);
+%         success = dbLoadAnimal(DB, animal); % load TE and trial lookups
+        if cbar == 1 % off
+            saveName = sprintf('example_allBehavior_v3_%s', animal);
+        elseif cbar == 2 % on
+             saveName = sprintf('example_allBehavior_v3_%s_cbar', animal);
+        end
+        ensureFigure(saveName, 1);
+
+        hax = axesmatrix(2,3,1:6,params);
+        exampleTrials = Odor1Trials & ismember(TE.sessionIndex, session);
+        reversals = find(diff(TE.BlockNumber(exampleTrials, :))) + 1;
+        sessionChanges = find(diff(TE.sessionIndex(exampleTrials, :))) + 1;
+        % make colors for auROC, different colormap
+        ef = ceil(sum(exampleTrials) / 64);
+        oldMap = copper;
+        rocMap = interp(oldMap(:,1), ef);
+        rocMap(:,2) = interp(oldMap(:,2), ef);
+        rocMap(:,3) = interp(oldMap(:,3), ef);
+        cix = abs(TE.AnswerLicksROC(exampleTrials));
+        nColors = size(rocMap, 1);
+        cix = round(cix .* nColors);
+        cMap = rocMap(max(cix, 1), :);
+        cMap = permute(cMap, [1 3 2]);
+        
+        climfactor = 3;
+        axes(hax(1)); hold on;
+        [~, lh] = eventRasterFromTE(TE, exampleTrials, 'Port1In', 'trialNumbering', 'consecutive',...
+            'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
+    %     line(repmat([-4; 7], 1, length(sessionChanges)), [sessionChanges'; sessionChanges'], 'Parent', gca, 'Color', 'k', 'LineWidth', 1); % reversal lines    
+        line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines       
+%         image(gca, repmat(-3, length(exampleTrials), 1), (1:sum(exampleTrials))', abs(TE.AnswerLicksROC(exampleTrials)), 'CDataMapping', 'Scaled');
+        image(gca, repmat(-3, length(exampleTrials), 1), (1:sum(exampleTrials))', cMap);
+        set(gca, 'XLim', [-4 7], 'XTick', [], 'CLim', [-1 1]);
+        if cbar == 2
+            colorbar('Location', 'northoutside', 'TickDirection', 'out', 'Ticks', [-1 0 1]);
+        end
+        set(lh, 'LineWidth', 0.3, 'Color', [0 0 0]);
+    %     title('licking');
+        ylabel('Odor 1 trial number');
+
+        axes(hax(2));
+        phRasterFromTE(TE, exampleTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor,...
+            'FluorDataField', fdField, 'PhotometryField', photometryField); % 'CLimFactor', CLimFactor,
+        line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
+        tcolor = mycolors('chat');
+        set(gca, 'XTick', [], 'YTick', []);
+        if cbar == 2
+            colorbar('Location', 'northoutside', 'TickDirection', 'out', 'Ticks', [-3 0 3]);
+        end
+    %     title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Ach.']);
+
+        axes(hax(3));
+        phRasterFromTE(TE, exampleTrials, 2, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor,...
+            'FluorDataField', fdField, 'PhotometryField', photometryField); % 'CLimFactor', CLimFactor,
+        line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
+        tcolor = mycolors('dat');
+        set(gca, 'XTick', [], 'YTick', []);
+    %     title(['\color[rgb]{' sprintf('%.4f,%.4f,%.4f', tcolor(1), tcolor(2), tcolor(3)) '}Dop.']);
+        if cbar == 2
+            colorbar('Location', 'northoutside', 'TickDirection', 'out', 'Ticks', [-4 0 4]);
+        end
+        
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% odor 2        
+        exampleTrials = Odor2Trials & ismember(TE.sessionIndex, session);
+        reversals = find(diff(TE.BlockNumber(exampleTrials, :))) + 1;
+        sessionChanges = find(diff(TE.sessionIndex(exampleTrials, :))) + 1;
+        % make colors for auROC, different colormap
+        ef = ceil(sum(exampleTrials) / 64);
+        oldMap = copper;
+        rocMap = interp(oldMap(:,1), ef);
+        rocMap(:,2) = interp(oldMap(:,2), ef);
+        rocMap(:,3) = interp(oldMap(:,3), ef);
+        cix = abs(TE.AnswerLicksROC(exampleTrials));
+        nColors = size(rocMap, 1);
+        cix = round(cix .* nColors);
+        cMap = rocMap(max(cix, 1), :);
+        cMap = permute(cMap, [1 3 2]);
+
+        axes(hax(4)); hold on;
+        [~, lh] = eventRasterFromTE(TE, exampleTrials, 'Port1In', 'trialNumbering', 'consecutive',...
+            'zeroField', 'Cue', 'startField', 'PreCsRecording', 'endField', 'PostUsRecording');
+    %     line(repmat([-4; 7], 1, length(sessionChanges)), [sessionChanges'; sessionChanges'], 'Parent', gca, 'Color', 'k', 'LineWidth', 1); % reversal lines    
+        line(repmat([-3; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines       
+%         image(gca, repmat(-3, length(exampleTrials), 1), (1:sum(exampleTrials))', abs(TE.AnswerLicksROC(exampleTrials)), 'CDataMapping', 'Scaled');
+        image(gca, repmat(-3, length(exampleTrials), 1), (1:sum(exampleTrials))', cMap);
+        set(gca, 'XLim', [-4 7], 'CLim', [-1 1]);
+        set(lh, 'LineWidth', 0.3, 'Color', [0 0 0]);
+        ylabel('Odor 2 trial number');
+
+        axes(hax(5));
+        phRasterFromTE(TE, exampleTrials, 1, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor,...
+            'FluorDataField', fdField, 'PhotometryField', photometryField); % 'CLimFactor', CLimFactor,
+        line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
+        xlabel('Time from odor (s)');
+        set(gca, 'YTick', []);
+
+        axes(hax(6));
+        phRasterFromTE(TE, exampleTrials, 2, 'trialNumbering', 'consecutive', 'CLimFactor', climfactor,...
+            'FluorDataField', fdField, 'PhotometryField', photometryField); % 'CLimFactor', CLimFactor,
+        line(repmat([-4; 7], 1, length(reversals)), [reversals'; reversals'], 'Parent', gca, 'Color', 'r', 'LineWidth', 1); % reversal lines    
+        set(gca, 'YTick', []);    
+
+
+
+
+        formatFigurePublish('size', figSize);
+        if saveOn 
+            print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+    %         export_fig(fullfile(savepath, saveName), '-eps');
+        end
+    end
+end
+
+% make a separate pdf with a colorbar for the auROC, it's just the colormap
+% you pick scaled from 0 to 1 (range of scaled auRoc metric, absolute value
+% of)
+saveName = 'auROC_colorbar';
+ensureFigure(saveName, 1); ax = axes;
+mymap = copper;
+image([0 1], [0 0], permute(copper, [3 1 2]));
+set(ax, 'YTick', [], 'XTick', [0 1]);
+formatFigurePublish('size', [1 0.5]);
+if saveOn 
+    print(gcf, '-dpdf', fullfile(savepath, [saveName '.pdf']));
+end
+
 %% averages
 
 animal = 'DC_56';
